@@ -225,10 +225,10 @@ public partial class Core
    /// than ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (unreliable when values are near 1).</description></item>
    /// </list>
@@ -295,10 +295,10 @@ public partial class Core
    /// than ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (unreliable when values are near 1).</description></item>
    /// </list>
@@ -482,9 +482,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

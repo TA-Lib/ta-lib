@@ -256,12 +256,8 @@
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>
@@ -341,12 +337,8 @@
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>
@@ -505,7 +497,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -539,10 +530,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period. It does allocate a small bounded amount
-       * per call — a size fixed by the indicator, never by the period.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -570,7 +559,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( StochrsiOut out ) {
          requireArgument("STOCHRSI value", "out", out);

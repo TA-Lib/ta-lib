@@ -278,14 +278,8 @@
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
@@ -377,14 +371,8 @@
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
@@ -542,7 +530,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -578,9 +565,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -639,7 +625,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( HaOut out ) {
          requireArgument("HA value", "out", out);

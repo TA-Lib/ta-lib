@@ -199,10 +199,12 @@
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
-    * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+    * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -269,10 +271,12 @@
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
-    * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+    * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -442,7 +446,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -474,9 +477,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

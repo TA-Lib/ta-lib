@@ -183,16 +183,13 @@
       return RetCode.Success ;
    }
    /**
-    * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+    * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
     * 1994): a simple moving average of the candle body, close minus open. It
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,
     * below zero they closed down, and the zero-line crossings are the signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -251,16 +248,13 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+    * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
     * 1994): a simple moving average of the candle body, close minus open. It
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,
     * below zero they closed down, and the zero-line crossings are the signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -398,7 +392,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -430,9 +423,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

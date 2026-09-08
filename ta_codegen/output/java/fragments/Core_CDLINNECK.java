@@ -205,10 +205,8 @@
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
@@ -277,10 +275,8 @@
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
@@ -454,7 +450,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -486,9 +481,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

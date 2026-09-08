@@ -43,19 +43,50 @@ def die(msg: str):
     sys.exit(1)
 
 
-def disassemble(classes: str) -> str:
-    """One javap call for both frames -- two would be two JVM startups."""
+def disassemble(classes: str) -> dict:
+    """One javap call for both frames -- two would be two JVM startups.
+
+    Returned per class, NOT as one blob: the two signatures are distinct today
+    only by luck, and a search over the concatenation would happily answer for
+    the wrong class. javap also exits 0 when only SOME of the named classes
+    resolve, reporting the rest on stderr, so its status says nothing and the
+    stderr has to be read.
+    """
     names = ["io.github.talib." + c for c, _ in FRAMES]
     try:
-        return subprocess.run(["javap", "-p", "-c", "-cp", classes] + names,
-                              capture_output=True, text=True, check=True).stdout
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        die("javap could not read %s from %s: %s" % (", ".join(names), classes, e))
+        p = subprocess.run(["javap", "-p", "-c", "-cp", classes] + names,
+                           capture_output=True, text=True)
+    except FileNotFoundError as e:
+        die("javap is not on PATH: %s" % e)
+    if p.returncode != 0:
+        die("javap failed on %s: %s" % (classes, p.stderr.strip() or p.stdout.strip()))
+    if p.stderr.strip():
+        die("javap could not read every class from %s -- it exits 0 for this, so "
+            "the gate must reject it explicitly: %s" % (classes, p.stderr.strip()))
+
+    # Split on the class header javap emits once per class.
+    sections, cur = {}, None
+    for line in p.stdout.splitlines():
+        m = re.match(r"(?:public |final |abstract )*class io\.github\.talib\.(\S+) ", line)
+        if m:
+            cur = m.group(1).rstrip("{").strip()
+            sections[cur] = []
+        elif cur is not None:
+            sections[cur].append(line)
+    for cls, _ in FRAMES:
+        if cls not in sections:
+            die("javap printed no section for io.github.talib.%s -- it was asked "
+                "for it and did not refuse, so the disassembly parse moved." % cls)
+    return sections
 
 
-def code_length(out: str, cls: str, sig: re.Pattern) -> int:
-    lines = out.splitlines()
-    start = next((i for i, l in enumerate(lines) if sig.match(l)), None)
+def code_length(sections: dict, cls: str, sig: re.Pattern) -> int:
+    lines = sections[cls]
+    matches = [i for i, l in enumerate(lines) if sig.match(l)]
+    if len(matches) > 1:
+        die("%s: %d methods match %s -- the gate cannot tell which frame it is "
+            "measuring." % (cls, len(matches), sig.pattern))
+    start = matches[0] if matches else None
     if start is None:
         die("%s: no method matching %s -- the signature moved, so this gate "
             "measured NOTHING. Fix the pattern in this script rather than "
@@ -82,10 +113,10 @@ def main():
         die("usage: check_java_inline_budget.py <classes-dir>")
     classes = sys.argv[1]
 
-    out = disassemble(classes)
+    sections = disassemble(classes)
     over = []
     for cls, sig in FRAMES:
-        n = code_length(out, cls, sig)
+        n = code_length(sections, cls, sig)
         name = "%s.%s" % (cls, "peek" if "peek" in sig.pattern else "maStepImpl")
         print("%-24s %3d bytes (budget %d, %+d)" % (name, n, BUDGET, n - BUDGET))
         if n > BUDGET:

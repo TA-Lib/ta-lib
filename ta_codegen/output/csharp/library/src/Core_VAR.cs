@@ -72,7 +72,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Window length for the variance (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">Deviation count accepted by the API but never used in the computation
-   /// (default 1; <c>-4e37</c> selects the default).</param>
+   /// (default 1; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
    {
@@ -403,10 +403,10 @@ public partial class Core
    /// dispersion; 0 means constant input.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</description></item>
    /// <item><description>The deviation-count parameter is accepted but has no effect on the result.</description></item>
@@ -425,7 +425,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Window length for the variance (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">Deviation count accepted by the API but never used in the computation
-   /// (default 1; <c>-4e37</c> selects the default).</param>
+   /// (default 1; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Rolling population variance. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -470,10 +470,10 @@ public partial class Core
    /// dispersion; 0 means constant input.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</description></item>
    /// <item><description>The deviation-count parameter is accepted but has no effect on the result.</description></item>
@@ -498,7 +498,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Window length for the variance (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">Deviation count accepted by the API but never used in the computation
-   /// (default 1; <c>-4e37</c> selects the default).</param>
+   /// (default 1; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Rolling population variance. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -671,9 +671,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -1203,8 +1201,7 @@ public partial class Core
    /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VAR_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

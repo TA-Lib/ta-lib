@@ -333,26 +333,8 @@
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
     * the ratio of average gains to average losses over the period. Used to
     * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * U_t &= \max(X_t - X_{t-1},\ 0)
-    * &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-    * \overline{U}_t &= \begin{cases}
-    * \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
-    * \end{cases}
-    * &  \overline{D}_t &= \begin{cases}
-    * \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
-    * \end{cases} \\[4pt]
-    * \mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
-    * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series and $n$ the period.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -407,26 +389,8 @@
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
     * the ratio of average gains to average losses over the period. Used to
     * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * U_t &= \max(X_t - X_{t-1},\ 0)
-    * &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-    * \overline{U}_t &= \begin{cases}
-    * \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
-    * \end{cases}
-    * &  \overline{D}_t &= \begin{cases}
-    * \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
-    * \end{cases} \\[4pt]
-    * \mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
-    * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series and $n$ the period.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -555,7 +519,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -587,9 +550,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

@@ -419,10 +419,10 @@ public partial class Core
    /// RSI. &gt;80 overbought, &lt;20 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP&gt;prevTP, negative if TP&lt;prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</description></item>
    /// <item><description>A window in which no bar contributed any money flow — every typical price unchanged, or no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not otherwise depend on the size of the money flow: scaling every volume, or quoting the instrument in a different unit, leaves the index unchanged.</description></item>
@@ -491,10 +491,10 @@ public partial class Core
    /// RSI. &gt;80 overbought, &lt;20 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP&gt;prevTP, negative if TP&lt;prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</description></item>
    /// <item><description>A window in which no bar contributed any money flow — every typical price unchanged, or no volume traded — leaves the index undefined (0/0); 0 is returned. The result does not otherwise depend on the size of the money flow: scaling every volume, or quoting the instrument in a different unit, leaves the index unchanged.</description></item>
@@ -693,9 +693,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

@@ -306,7 +306,7 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Alexander Elder's Force Index (*Trading for a Living*, 1993):
+   /// Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
    /// volume-weighted momentum. Each bar's close-to-close move is weighted by
    /// that bar's volume, and the result is smoothed with an exponential moving
    /// average. The sign is the direction of the move; the size combines how far
@@ -321,11 +321,10 @@ public partial class Core
    /// another instrument.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-   /// The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -379,7 +378,7 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Alexander Elder's Force Index (*Trading for a Living*, 1993):
+   /// Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
    /// volume-weighted momentum. Each bar's close-to-close move is weighted by
    /// that bar's volume, and the result is smoothed with an exponential moving
    /// average. The sign is the direction of the move; the size combines how far
@@ -394,11 +393,10 @@ public partial class Core
    /// another instrument.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-   /// The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -571,9 +569,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

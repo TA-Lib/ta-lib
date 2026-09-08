@@ -285,16 +285,13 @@ public partial class Core
    /// ...).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// lag = Integer( (n - 1) / 2 )
-   /// d = 2 * Price - Price[lag bars ago]
-   /// ZLEMA(n) = EMA( d, n )
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</see>.
+   /// </para>
    /// <list type="bullet">
-   /// <item><description>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
-   /// <item><description><c>lag</c> **truncates**: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>
+   /// <item><description><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
+   /// <item><description><c>lag</c> <b>truncates</b>: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>
    /// <item><description>The de-lag is computed as <c>2 * Price - Price[lag]</c> in one rounding, rather than the algebraically equal <c>Price + (Price - Price[lag])</c> that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value <c>lag</c> bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</description></item>
    /// <item><description>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first <c>n</c> de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</description></item>
    /// <item><description>ZLEMA inherits EMA's unstable period rather than owning one: <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> moves ZLEMA's first output too.</description></item>
@@ -370,16 +367,13 @@ public partial class Core
    /// ...).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// lag = Integer( (n - 1) / 2 )
-   /// d = 2 * Price - Price[lag bars ago]
-   /// ZLEMA(n) = EMA( d, n )
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</see>.
+   /// </para>
    /// <list type="bullet">
-   /// <item><description>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
-   /// <item><description><c>lag</c> **truncates**: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>
+   /// <item><description><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
+   /// <item><description><c>lag</c> <b>truncates</b>: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>
    /// <item><description>The de-lag is computed as <c>2 * Price - Price[lag]</c> in one rounding, rather than the algebraically equal <c>Price + (Price - Price[lag])</c> that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value <c>lag</c> bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</description></item>
    /// <item><description>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first <c>n</c> de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</description></item>
    /// <item><description>ZLEMA inherits EMA's unstable period rather than owning one: <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> moves ZLEMA's first output too.</description></item>
@@ -560,9 +554,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -791,8 +783,7 @@ public partial class Core
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ZLEMA_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

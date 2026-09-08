@@ -636,10 +636,10 @@ public partial class Core
    /// downtrend; compared against +DI to gauge directional dominance.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// -DM1 = (prevLow - low) if (prevLow-low)&gt;0 and (high-prevHigh)&lt;(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period&lt;=1: -DI1 = -DM1/TR1 (no ×100).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</description></item>
    /// </list>
@@ -706,10 +706,10 @@ public partial class Core
    /// downtrend; compared against +DI to gauge directional dominance.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// -DM1 = (prevLow - low) if (prevLow-low)&gt;0 and (high-prevHigh)&lt;(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period&lt;=1: -DI1 = -DM1/TR1 (no ×100).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</description></item>
    /// </list>
@@ -894,9 +894,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

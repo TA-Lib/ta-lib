@@ -22,7 +22,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
@@ -307,10 +307,8 @@
     * scale and never invents a level the series never traded at. At P = 50 with
     * an odd window it is the rolling median; at the extremes it degenerates to
     * the rolling minimum and maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
@@ -328,7 +326,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -379,10 +377,8 @@
     * scale and never invents a level the series never traded at. At P = 50 with
     * an odd window it is the rolling median; at the extremes it degenerates to
     * the rolling minimum and maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
@@ -403,7 +399,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -537,7 +533,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -569,9 +564,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

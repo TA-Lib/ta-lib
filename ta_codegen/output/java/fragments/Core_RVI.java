@@ -568,14 +568,8 @@
     * down bars. Dorsey proposed it as a confirming filter rather than a
     * stand-alone signal: take a long entry only while RVI is above 50, a short
     * only while it is below.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-    * U[i] = S[i] if C[i] > C[i-1], else 0
-    * D[i] = S[i] if C[i] < C[i-1], else 0
-    * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-    * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
@@ -652,14 +646,8 @@
     * down bars. Dorsey proposed it as a confirming filter rather than a
     * stand-alone signal: take a long entry only while RVI is above 50, a short
     * only while it is below.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-    * U[i] = S[i] if C[i] > C[i-1], else 0
-    * D[i] = S[i] if C[i] < C[i-1], else 0
-    * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-    * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
@@ -834,7 +822,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -866,9 +853,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

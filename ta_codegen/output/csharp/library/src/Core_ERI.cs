@@ -298,17 +298,16 @@ public partial class Core
    }
    /// <summary>
    /// Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-   /// *Trading for a Living* (1993) — how far the bar's high and low sit from an
-   /// EMA of the close. Bulls strong enough to push the high above the average
-   /// read as positive Bull Power; bears dragging the low below it read as
-   /// negative Bear Power.
+   /// <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+   /// from an EMA of the close. Bulls strong enough to push the high above the
+   /// average read as positive Bull Power; bears dragging the low below it read
+   /// as negative Bear Power.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-   /// Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</description></item>
    /// <item><description>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</description></item>
@@ -375,17 +374,16 @@ public partial class Core
    }
    /// <summary>
    /// Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-   /// *Trading for a Living* (1993) — how far the bar's high and low sit from an
-   /// EMA of the close. Bulls strong enough to push the high above the average
-   /// read as positive Bull Power; bears dragging the low below it read as
-   /// negative Bear Power.
+   /// <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+   /// from an EMA of the close. Bulls strong enough to push the high above the
+   /// average read as positive Bull Power; bears dragging the low below it read
+   /// as negative Bear Power.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-   /// Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</description></item>
    /// <item><description>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</description></item>
@@ -584,9 +582,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

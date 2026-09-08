@@ -266,17 +266,12 @@
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
-    * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+    * <li>A breakout rule compares the current bar against the <b>previous</b> bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
     * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
     * <li>The middle line is the channel midpoint, not a moving average of price.</li>
     * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
@@ -346,17 +341,12 @@
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
-    * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+    * <li>A breakout rule compares the current bar against the <b>previous</b> bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
     * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
     * <li>The middle line is the channel midpoint, not a moving average of price.</li>
     * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
@@ -515,7 +505,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -550,9 +539,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -623,7 +611,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( DonchianOut out ) {
          requireArgument("DONCHIAN value", "out", out);

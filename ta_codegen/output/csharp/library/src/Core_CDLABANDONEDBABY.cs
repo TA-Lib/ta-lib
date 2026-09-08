@@ -65,7 +65,8 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLABANDONEDBABY_Lookback( double optInPenetration )
    {
@@ -323,6 +324,10 @@ public partial class Core
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<see href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</see>)</description></item>
@@ -342,7 +347,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outInteger">+100 at a bullish abandoned baby bottom (3rd candle white), -100 at a
    /// bearish abandoned baby top (3rd candle black), 0 otherwise; sign = color
    /// of the 3rd candle. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
@@ -393,6 +399,10 @@ public partial class Core
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<see href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</see>)</description></item>
@@ -418,7 +428,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outInteger">+100 at a bullish abandoned baby bottom (3rd candle white), -100 at a
    /// bearish abandoned baby top (3rd candle black), 0 otherwise; sign = color
    /// of the 3rd candle. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
@@ -634,9 +645,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

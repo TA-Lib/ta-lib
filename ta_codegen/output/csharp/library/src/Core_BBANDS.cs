@@ -87,10 +87,10 @@ public partial class Core
    /// </remarks>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -647,24 +647,10 @@ public partial class Core
    /// price volatility.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// \text{middle}_t &amp;= \operatorname{MA}(X, n, \text{matype})_t \\
-   /// \sigma_t &amp;= \operatorname{STDDEV}(X, n)_t \\
-   /// \text{upper}_t &amp;= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-   /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
-   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-   /// lower deviation multipliers.
-   /// <list type="bullet">
-   /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
-   /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>
-   /// </list>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -678,10 +664,10 @@ public partial class Core
    /// <param name="inReal">Input data series.</param>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -740,24 +726,10 @@ public partial class Core
    /// price volatility.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// \text{middle}_t &amp;= \operatorname{MA}(X, n, \text{matype})_t \\
-   /// \sigma_t &amp;= \operatorname{STDDEV}(X, n)_t \\
-   /// \text{upper}_t &amp;= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-   /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
-   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-   /// lower deviation multipliers.
-   /// <list type="bullet">
-   /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
-   /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>
-   /// </list>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -777,10 +749,10 @@ public partial class Core
    /// <param name="inReal">Input data series.</param>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -968,9 +940,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -1238,8 +1208,7 @@ public partial class Core
    /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

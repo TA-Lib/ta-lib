@@ -424,11 +424,8 @@
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
@@ -509,11 +506,8 @@
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
@@ -691,7 +685,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -725,9 +718,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -817,7 +809,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( StochfOut out ) {
          requireArgument("STOCHF value", "out", out);

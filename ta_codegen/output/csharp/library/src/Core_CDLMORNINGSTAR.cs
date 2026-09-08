@@ -66,7 +66,7 @@ public partial class Core
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLMORNINGSTAR_Lookback( double optInPenetration )
    {
@@ -295,6 +295,10 @@ public partial class Core
    /// check).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>
@@ -316,7 +320,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -369,6 +373,10 @@ public partial class Core
    /// check).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>
@@ -396,7 +404,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -601,9 +609,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

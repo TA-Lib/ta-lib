@@ -375,17 +375,14 @@
    }
    /**
     * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-    * 2010). Positive and negative "vortex movement" — the reach from today's
-    * high to yesterday's low and from today's low to yesterday's high — each
-    * summed over the period and normalized by the summed true range. A +VI line
-    * crossing above −VI is the bullish signal the authors describe; the two
-    * lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+    * January 2010). Positive and negative "vortex movement" — the reach from
+    * today's high to yesterday's low and from today's low to yesterday's high —
+    * each summed over the period and normalized by the summed true range. A +VI
+    * line crossing above −VI is the bullish signal the authors describe; the
+    * two lines are conventionally plotted together.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
@@ -455,17 +452,14 @@
    }
    /**
     * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-    * 2010). Positive and negative "vortex movement" — the reach from today's
-    * high to yesterday's low and from today's low to yesterday's high — each
-    * summed over the period and normalized by the summed true range. A +VI line
-    * crossing above −VI is the bullish signal the authors describe; the two
-    * lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+    * January 2010). Positive and negative "vortex movement" — the reach from
+    * today's high to yesterday's low and from today's low to yesterday's high —
+    * each summed over the period and normalized by the summed true range. A +VI
+    * line crossing above −VI is the bullish signal the authors describe; the
+    * two lines are conventionally plotted together.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
@@ -633,7 +627,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -667,9 +660,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -797,7 +789,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( VortexOut out ) {
          requireArgument("VORTEX value", "out", out);

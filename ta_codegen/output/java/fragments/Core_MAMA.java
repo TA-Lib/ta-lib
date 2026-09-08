@@ -25,9 +25,11 @@
     * method.
     *
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
@@ -801,13 +803,8 @@
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -818,9 +815,11 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series to smooth.
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha
@@ -873,13 +872,8 @@
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -893,9 +887,11 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series to smooth.
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha
@@ -1110,7 +1106,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -1144,9 +1139,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -1318,7 +1312,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( MamaOut out ) {
          requireArgument("MAMA value", "out", out);

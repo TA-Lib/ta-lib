@@ -188,15 +188,12 @@
     * range a window covered divided by the path it actually travelled. Bounded
     * in [0,1]. Values near 1 mean the market covered most of its path in one
     * direction (trending); values near 0 mean it retraced repeatedly and went
-    * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-    * but it uses no smoothing and carries no recursion. A common use is regime
-    * selection: run trend-following logic while VHF is high, oscillator logic
-    * while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+    * direction, but it uses no smoothing and carries no recursion. A common use
+    * is regime selection: run trend-following logic while VHF is high,
+    * oscillator logic while it is low.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>
@@ -259,15 +256,12 @@
     * range a window covered divided by the path it actually travelled. Bounded
     * in [0,1]. Values near 1 mean the market covered most of its path in one
     * direction (trending); values near 0 mean it retraced repeatedly and went
-    * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-    * but it uses no smoothing and carries no recursion. A common use is regime
-    * selection: run trend-following logic while VHF is high, oscillator logic
-    * while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+    * direction, but it uses no smoothing and carries no recursion. A common use
+    * is regime selection: run trend-following logic while VHF is high,
+    * oscillator logic while it is low.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>
@@ -403,7 +397,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -435,9 +428,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

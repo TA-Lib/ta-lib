@@ -76,8 +76,7 @@ int pattern = c.update(o, h, l, cl);
 ```
 
 Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields
-rather than allocating a new one, so a hot loop costs nothing that grows with the
-period. The price is that
+rather than allocating a new one. The price is that
 **its contents are only valid until the next call that writes it**. It is a
 buffer, not a reading — a reference kept past that call, or one put in a
 collection, sees the value change underneath it. Copy the fields out if the
@@ -86,10 +85,6 @@ reason `<Name>Out` deliberately has no `equals`/`hashCode`: value equality on a
 mutable object breaks `HashMap`/`HashSet` the moment a reused sink becomes a key.
 Passing `null` is an `IllegalArgumentException`, taken before the bar is
 committed.
-
-A handle that drives a multi-output stream of its own allocates one further sink
-per `update` and per `peek`, of a size the indicator fixes and the period never
-does.
 
 ## Array-Fill Open
 

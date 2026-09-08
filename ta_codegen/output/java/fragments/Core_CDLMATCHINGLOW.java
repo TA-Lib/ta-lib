@@ -170,10 +170,8 @@
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
@@ -240,10 +238,8 @@
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
@@ -399,7 +395,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -431,9 +426,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

@@ -21,7 +21,7 @@
     *
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLMORNINGSTAR_Lookback( double optInPenetration )
@@ -239,6 +239,8 @@
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -259,7 +261,7 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -314,6 +316,8 @@
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -337,7 +341,7 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -503,7 +507,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -535,9 +538,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

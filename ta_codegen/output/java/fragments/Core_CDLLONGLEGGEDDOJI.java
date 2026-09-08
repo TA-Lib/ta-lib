@@ -195,10 +195,8 @@
     * Single-candle doji (open ~ close) with at least one long shadow. Signals
     * market indecision, not a directional bias. Marks indecision/uncertainty;
     * not inherently bullish or bearish despite the positive sign.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
@@ -267,10 +265,8 @@
     * Single-candle doji (open ~ close) with at least one long shadow. Signals
     * market indecision, not a directional bias. Marks indecision/uncertainty;
     * not inherently bullish or bearish despite the positive sign.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
@@ -433,7 +429,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -465,9 +460,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

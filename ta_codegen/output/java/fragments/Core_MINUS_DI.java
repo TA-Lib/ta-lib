@@ -579,10 +579,8 @@
     * directional movement (-DM) normalized by smoothed True Range. Measures the
     * strength of downward price movement. Higher -DI indicates a stronger
     * downtrend; compared against +DI to gauge directional dominance.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
@@ -652,10 +650,8 @@
     * directional movement (-DM) normalized by smoothed True Range. Measures the
     * strength of downward price movement. Higher -DI indicates a stronger
     * downtrend; compared against +DI to gauge directional dominance.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
@@ -802,7 +798,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -834,9 +829,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

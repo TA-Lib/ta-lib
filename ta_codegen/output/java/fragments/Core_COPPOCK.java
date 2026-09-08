@@ -414,17 +414,12 @@
    }
    /**
     * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-    * (*Barron's*, originally published as the "Trendex Model"), computed as a
-    * weighted moving average of the **sum** of two rates of change. Unbounded;
-    * positive turns from below zero are the signal the indicator was designed
-    * for (long-term buying opportunities on monthly index data).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-    * Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-    * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
-    * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-    * }</pre>
+    * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+    * as a weighted moving average of the <b>sum</b> of two rates of change.
+    * Unbounded; positive turns from below zero are the signal the indicator was
+    * designed for (long-term buying opportunities on monthly index data).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
@@ -485,17 +480,12 @@
    }
    /**
     * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-    * (*Barron's*, originally published as the "Trendex Model"), computed as a
-    * weighted moving average of the **sum** of two rates of change. Unbounded;
-    * positive turns from below zero are the signal the indicator was designed
-    * for (long-term buying opportunities on monthly index data).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-    * Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-    * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
-    * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-    * }</pre>
+    * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+    * as a weighted moving average of the <b>sum</b> of two rates of change.
+    * Unbounded; positive turns from below zero are the signal the indicator was
+    * designed for (long-term buying opportunities on monthly index data).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
@@ -662,7 +652,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -694,9 +683,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

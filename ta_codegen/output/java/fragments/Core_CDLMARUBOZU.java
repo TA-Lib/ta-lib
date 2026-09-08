@@ -194,10 +194,8 @@
     * Single candle with a long real body and no/very-short upper and lower
     * shadows, so open and close sit at the range extremes. Bullish (white) or
     * bearish (black) reversal/strength signal per the body color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
@@ -264,10 +262,8 @@
     * Single candle with a long real body and no/very-short upper and lower
     * shadows, so open and close sit at the range extremes. Bullish (white) or
     * bearish (black) reversal/strength signal per the body color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
@@ -428,7 +424,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -460,9 +455,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

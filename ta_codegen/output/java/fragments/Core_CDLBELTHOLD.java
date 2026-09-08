@@ -201,10 +201,8 @@
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
@@ -274,10 +272,8 @@
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
@@ -439,7 +435,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -471,9 +466,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

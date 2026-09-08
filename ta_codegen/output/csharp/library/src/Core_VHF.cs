@@ -241,17 +241,16 @@ public partial class Core
    /// range a window covered divided by the path it actually travelled. Bounded
    /// in [0,1]. Values near 1 mean the market covered most of its path in one
    /// direction (trending); values near 0 mean it retraced repeatedly and went
-   /// nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-   /// but it uses no smoothing and carries no recursion. A common use is regime
-   /// selection: run trend-following logic while VHF is high, oscillator logic
-   /// while it is low.
+   /// nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+   /// direction, but it uses no smoothing and carries no recursion. A common use
+   /// is regime selection: run trend-following logic while VHF is high,
+   /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-   /// The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num &lt;= den` always, so the result never leaves [0,1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</description></item>
    /// <item><description>Adam White later described an 18-bar VHF smoothed by a 6-bar moving average. That variant is not implemented here; apply a moving average to <c>outReal</c> to obtain it.</description></item>
@@ -311,17 +310,16 @@ public partial class Core
    /// range a window covered divided by the path it actually travelled. Bounded
    /// in [0,1]. Values near 1 mean the market covered most of its path in one
    /// direction (trending); values near 0 mean it retraced repeatedly and went
-   /// nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-   /// but it uses no smoothing and carries no recursion. A common use is regime
-   /// selection: run trend-following logic while VHF is high, oscillator logic
-   /// while it is low.
+   /// nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+   /// direction, but it uses no smoothing and carries no recursion. A common use
+   /// is regime selection: run trend-following logic while VHF is high,
+   /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-   /// The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num &lt;= den` always, so the result never leaves [0,1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</description></item>
    /// <item><description>Adam White later described an 18-bar VHF smoothed by a 6-bar moving average. That variant is not implemented here; apply a moving average to <c>outReal</c> to obtain it.</description></item>
@@ -496,9 +494,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -756,8 +752,7 @@ public partial class Core
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VHF_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

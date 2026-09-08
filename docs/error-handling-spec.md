@@ -731,12 +731,6 @@ remove. It is narrow in practice: every outer function validates its own
 parameters before it cross-calls, so reaching it needs a fault the outer
 prologue does not screen for first.
 
-**One surface gap, not an error-handling one:** the parameter-default sentinels
-are public API in C (`TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`), Java
-(`Core.REAL_DEFAULT`, `Core.INTEGER_DEFAULT`) and Rust
-(`Core::REAL_DEFAULT`, `Core::INTEGER_DEFAULT`), but `internal` in C#. A C#
-caller has no supported way to write rule N3 for a real parameter.
-
 ---
 
 ## Appendix B — How the marks were produced

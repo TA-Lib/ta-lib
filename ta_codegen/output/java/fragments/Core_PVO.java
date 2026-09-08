@@ -209,16 +209,13 @@
    /**
     * Percentage Volume Oscillator: a variation of the <a
     * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-    * price. It is the difference between a fast and slow moving average of
+    * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+    * of price. It is the difference between a fast and slow moving average of
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -286,16 +283,13 @@
    /**
     * Percentage Volume Oscillator: a variation of the <a
     * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-    * price. It is the difference between a fast and slow moving average of
+    * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+    * of price. It is the difference between a fast and slow moving average of
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -440,7 +434,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -472,9 +465,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

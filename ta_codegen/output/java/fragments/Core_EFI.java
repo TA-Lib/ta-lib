@@ -252,7 +252,7 @@
       return RetCode.Success ;
    }
    /**
-    * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+    * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
     * volume-weighted momentum. Each bar's close-to-close move is weighted by
     * that bar's volume, and the result is smoothed with an exponential moving
     * average. The sign is the direction of the move; the size combines how far
@@ -265,11 +265,8 @@
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -327,7 +324,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+    * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
     * volume-weighted momentum. Each bar's close-to-close move is weighted by
     * that bar's volume, and the result is smoothed with an exponential moving
     * average. The sign is the direction of the move; the size combines how far
@@ -340,11 +337,8 @@
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -479,7 +473,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -511,9 +504,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

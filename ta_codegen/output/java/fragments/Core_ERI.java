@@ -244,15 +244,12 @@
    }
    /**
     * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-    * *Trading for a Living* (1993) — how far the bar's high and low sit from an
-    * EMA of the close. Bulls strong enough to push the high above the average
-    * read as positive Bull Power; bears dragging the low below it read as
-    * negative Bear Power.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-    * }</pre>
+    * <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+    * from an EMA of the close. Bulls strong enough to push the high above the
+    * average read as positive Bull Power; bears dragging the low below it read
+    * as negative Bear Power.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
@@ -321,15 +318,12 @@
    }
    /**
     * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-    * *Trading for a Living* (1993) — how far the bar's high and low sit from an
-    * EMA of the close. Bulls strong enough to push the high above the average
-    * read as positive Bull Power; bears dragging the low below it read as
-    * negative Bear Power.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-    * }</pre>
+    * <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+    * from an EMA of the close. Bulls strong enough to push the high above the
+    * average read as positive Bull Power; bears dragging the low below it read
+    * as negative Bear Power.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
@@ -474,7 +468,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -508,9 +501,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -548,7 +540,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( EriOut out ) {
          requireArgument("ERI value", "out", out);

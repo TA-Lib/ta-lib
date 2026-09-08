@@ -269,13 +269,8 @@
     * its simple moving average, scaled by mean absolute deviation. Momentum
     * oscillator flagging overbought/oversold extremes. CCI &gt; +100
     * overbought; CCI &lt; -100 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_i = (High_i + Low_i + Close_i)/3
-    * SMA = (1/N) * sum(TP over N bars)
-    * meanDev = (1/N) * sum(|TP - SMA| over N bars)
-    * CCI = (TP_last - SMA) / (0.015 * meanDev)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -338,13 +333,8 @@
     * its simple moving average, scaled by mean absolute deviation. Momentum
     * oscillator flagging overbought/oversold extremes. CCI &gt; +100
     * overbought; CCI &lt; -100 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_i = (High_i + Low_i + Close_i)/3
-    * SMA = (1/N) * sum(TP over N bars)
-    * meanDev = (1/N) * sum(|TP - SMA| over N bars)
-    * CCI = (TP_last - SMA) / (0.015 * meanDev)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -482,7 +472,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -514,9 +503,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

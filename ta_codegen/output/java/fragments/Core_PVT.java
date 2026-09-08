@@ -109,11 +109,8 @@
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
@@ -183,11 +180,8 @@
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
@@ -321,7 +315,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -353,9 +346,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

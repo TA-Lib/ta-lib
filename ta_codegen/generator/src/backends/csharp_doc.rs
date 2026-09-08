@@ -57,23 +57,15 @@ pub fn guarded_docs(
     b.close("summary");
 
     b.open("remarks");
-    if let Some(formula) = &doc.formula {
-        b.text("<b>Formula</b>");
-        b.raw("<code>");
-        for line in formula.lines() {
-            let t = line.trim();
-            if !t.is_empty() {
-                b.raw(&xml_escape_raw(t));
-            }
-        }
-        b.raw("</code>");
-        if let Some(note) = &doc.formula_note {
-            b.text(&csdoc(note));
-        }
-    }
-    if !doc.notes.is_empty() {
+    let url = doc_meta::function_page_url(&func.name);
+    b.para(&format!(
+        "Formula and more info at <see href=\"{url}\">{}</see>.",
+        url.trim_start_matches("https://")
+    ));
+    let notes = doc_meta::renderable_notes(&doc.notes);
+    if !notes.is_empty() {
         b.raw("<list type=\"bullet\">");
-        for note in &doc.notes {
+        for note in notes {
             b.raw(&format!("<item><description>{}</description></item>", csdoc(note)));
         }
         b.raw("</list>");
@@ -269,7 +261,7 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         }
         // Every optional parameter accepts the cross-language default sentinel.
         meta.push(match opt.param_type {
-            ParamType::Real => "<c>-4e37</c> selects the default".to_string(),
+            ParamType::Real => "<see cref=\"Core.REAL_DEFAULT\"/> selects the default".to_string(),
             _ => "<c>int.MinValue</c> selects the default".to_string(),
         });
     }
@@ -286,15 +278,34 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
 // ---------------------------------------------------------------------------
 
 /// Turn canonical Markdown-ish prose into XML-doc-safe text: `&`/`<`/`>` become
-/// entities (CS1570 otherwise), backtick spans become `<c>...</c>`, and a
-/// Markdown inline link becomes a `<see href>`.
+/// entities (CS1570 otherwise), backtick spans become `<c>...</c>`, `**bold**`
+/// and `*italic*` become `<b>` and `<i>` — the XML docs are rendered as markup,
+/// so a delimiter left alone reaches the reader as an asterisk — and a Markdown
+/// inline link becomes a `<see href>`.
 pub(super) fn csdoc(text: &str) -> String {
     let mut out = String::new();
     let mut in_code = false;
+    // The delimiter length and closing tag of the emphasis run we are inside.
+    let mut emphasis: Option<(usize, &str)> = None;
     let chars: Vec<char> = text.chars().collect();
     let mut i = 0;
     while i < chars.len() {
         let c = chars[i];
+        if !in_code {
+            if let Some((len, close)) = emphasis {
+                if super::common::asterisks_at(&chars, i, len) {
+                    out.push_str(close);
+                    emphasis = None;
+                    i += len;
+                    continue;
+                }
+            } else if let Some(len) = super::common::emphasis_open(&chars, i) {
+                out.push_str(if len == 2 { "<b>" } else { "<i>" });
+                emphasis = Some((len, if len == 2 { "</b>" } else { "</i>" }));
+                i += len;
+                continue;
+            }
+        }
         match c {
             '`' => {
                 out.push_str(if in_code { "</c>" } else { "<c>" });
@@ -325,6 +336,9 @@ pub(super) fn csdoc(text: &str) -> String {
         // Unbalanced backtick in the source — close it rather than emit bad XML.
         out.push_str("</c>");
     }
+    // `emphasis` is unreachable here: a run only opens once its closer is
+    // found, and nothing between them consumes it.
+    debug_assert!(emphasis.is_none(), "emphasis opened without its closer: {text:?}");
     out
 }
 
@@ -368,8 +382,7 @@ fn inline_link(chars: &[char], start: usize) -> Option<(String, String, usize)> 
     Some((label, dest, paren + 1))
 }
 
-/// Escape a raw (formula) line for XML content — entities only, no backtick
-/// handling (formulas use `*`/`<`/`>` as math, not markup).
+/// Escape a line for XML content — entities only, no inline-markup handling.
 pub(crate) fn xml_escape_raw(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }

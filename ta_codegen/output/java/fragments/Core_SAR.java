@@ -24,10 +24,10 @@
     * output.
     *
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int SAR_Lookback( double optInAcceleration, double optInMaximum )
@@ -464,12 +464,8 @@
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -481,10 +477,10 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -533,12 +529,8 @@
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -553,10 +545,10 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -683,7 +675,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -715,9 +706,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

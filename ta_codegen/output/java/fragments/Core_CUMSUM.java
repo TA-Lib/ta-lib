@@ -97,15 +97,11 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-    * every bar since the anchor contributes.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-    * Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-    * **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-    * }</pre>
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+    * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+    * — every bar since the anchor contributes.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Lookback 0: {@code outBegIdx = startIdx}, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</li>
@@ -163,15 +159,11 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-    * every bar since the anchor contributes.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-    * Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-    * **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-    * }</pre>
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+    * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+    * — every bar since the anchor contributes.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Lookback 0: {@code outBegIdx = startIdx}, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</li>
@@ -294,7 +286,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -326,9 +317,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

@@ -170,26 +170,17 @@
     * Williams built it to catch that shift before price confirms it — traders
     * watch for the line to diverge from price, since a line that keeps rising
     * while price stalls or falls points to accumulation, and one that stalls
-    * while price pushes to a new high points to distribution. **It consumes no
-    * volume.** Larry Williams' original multiplies each move by that bar's
+    * while price pushes to a new high points to distribution. <b>It consumes no
+    * volume.</b> Larry Williams' original multiplies each move by that bar's
     * volume; Steven Achelis published the modification that drops the
-    * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-    * industry kept Williams' name on that no-volume form. That industry-wide
-    * decision is enough for TA-Lib to ship the same form under the same name.
-    * What remains once the multiplier is dropped is a signed close-to-close
-    * move measured on the true range, so it is grouped as a momentum indicator,
-    * not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+    * the industry kept Williams' name on that no-volume form. That
+    * industry-wide decision is enough for TA-Lib to ship the same form under
+    * the same name. What remains once the multiplier is dropped is a signed
+    * close-to-close move measured on the true range, so it is grouped as a
+    * momentum indicator, not a volume one.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -253,26 +244,17 @@
     * Williams built it to catch that shift before price confirms it — traders
     * watch for the line to diverge from price, since a line that keeps rising
     * while price stalls or falls points to accumulation, and one that stalls
-    * while price pushes to a new high points to distribution. **It consumes no
-    * volume.** Larry Williams' original multiplies each move by that bar's
+    * while price pushes to a new high points to distribution. <b>It consumes no
+    * volume.</b> Larry Williams' original multiplies each move by that bar's
     * volume; Steven Achelis published the modification that drops the
-    * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-    * industry kept Williams' name on that no-volume form. That industry-wide
-    * decision is enough for TA-Lib to ship the same form under the same name.
-    * What remains once the multiplier is dropped is a signed close-to-close
-    * move measured on the true range, so it is grouped as a momentum indicator,
-    * not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+    * the industry kept Williams' name on that no-volume form. That
+    * industry-wide decision is enough for TA-Lib to ship the same form under
+    * the same name. What remains once the multiplier is dropped is a signed
+    * close-to-close move measured on the true range, so it is grouped as a
+    * momentum indicator, not a volume one.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -403,7 +385,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -435,9 +416,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

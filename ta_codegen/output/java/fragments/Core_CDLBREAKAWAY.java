@@ -192,6 +192,8 @@
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
@@ -261,6 +263,8 @@
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
@@ -442,7 +446,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -474,9 +477,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

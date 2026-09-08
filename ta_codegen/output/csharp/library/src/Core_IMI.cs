@@ -213,10 +213,10 @@ public partial class Core
    /// up-body moves against total up+down body moves.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// upsum = Σ(close-open) for bars with close&gt;open; downsum = Σ(open-close) for bars with close&lt;=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -276,10 +276,10 @@ public partial class Core
    /// up-body moves against total up+down body moves.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// upsum = Σ(close-open) for bars with close&gt;open; downsum = Σ(open-close) for bars with close&lt;=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -457,9 +457,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

@@ -26,7 +26,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
@@ -167,10 +167,8 @@
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
@@ -187,7 +185,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -232,10 +230,8 @@
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
@@ -255,7 +251,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -370,7 +366,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -402,9 +397,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

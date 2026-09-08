@@ -410,9 +410,9 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-   /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator
+   /// Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+   /// Dimensions</i>, 1998): the rate at which market momentum is itself
+   /// speeding up or slowing down. Where the Awesome Oscillator
    /// (<see href="https://ta-lib.org/functions/ao"><c>AO</c></see>) measures
    /// momentum, this measures the change in that momentum, by taking the
    /// oscillator's distance above or below its own moving average. Because
@@ -429,12 +429,10 @@ public partial class Core
    /// Alligator.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// AC_t = AO_t − SMA(AO, signal)_t
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -497,9 +495,9 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-   /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator
+   /// Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+   /// Dimensions</i>, 1998): the rate at which market momentum is itself
+   /// speeding up or slowing down. Where the Awesome Oscillator
    /// (<see href="https://ta-lib.org/functions/ao"><c>AO</c></see>) measures
    /// momentum, this measures the change in that momentum, by taking the
    /// oscillator's distance above or below its own moving average. Because
@@ -516,12 +514,10 @@ public partial class Core
    /// Alligator.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// AC_t = AO_t − SMA(AO, signal)_t
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -730,9 +726,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

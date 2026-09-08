@@ -465,12 +465,8 @@
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
@@ -533,12 +529,8 @@
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
@@ -687,7 +679,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -719,9 +710,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

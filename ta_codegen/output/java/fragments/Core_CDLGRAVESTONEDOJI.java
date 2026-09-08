@@ -200,10 +200,8 @@
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -275,10 +273,8 @@
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -441,7 +437,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -473,9 +468,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

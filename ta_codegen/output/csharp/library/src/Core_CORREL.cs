@@ -504,10 +504,10 @@ public partial class Core
    /// strong inverse; near 0: no linear relationship.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</description></item>
    /// </list>
@@ -571,10 +571,10 @@ public partial class Core
    /// strong inverse; near 0: no linear relationship.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</description></item>
    /// </list>
@@ -783,9 +783,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

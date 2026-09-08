@@ -157,10 +157,8 @@
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
@@ -223,10 +221,8 @@
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
@@ -356,7 +352,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -388,9 +383,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

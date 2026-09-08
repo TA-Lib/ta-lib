@@ -260,10 +260,10 @@ public partial class Core
    /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles at i-1 and i. Both black: close[i-1] &lt; open[i-1] and close[i] &lt; open[i]. First body long: realbody[i-1] &gt; BodyLong average. Second body short: realbody[i] &lt;= BodyShort average. Second body contained by first: open[i] &lt; open[i-1] and close[i] &gt; close[i-1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<see href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</see>)</description></item>
@@ -330,10 +330,10 @@ public partial class Core
    /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles at i-1 and i. Both black: close[i-1] &lt; open[i-1] and close[i] &lt; open[i]. First body long: realbody[i-1] &gt; BodyLong average. Second body short: realbody[i] &lt;= BodyShort average. Second body contained by first: open[i] &lt; open[i-1] and close[i] &gt; close[i-1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<see href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</see>)</description></item>
@@ -548,9 +548,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -831,8 +829,7 @@ public partial class Core
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHOMINGPIGEON_Lookback(...) + 1</c>
    /// bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

@@ -228,17 +228,12 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-    * <li>{@code lag} **truncates**: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+    * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
+    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
     * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
     * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
     * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>
@@ -314,17 +309,12 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-    * <li>{@code lag} **truncates**: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+    * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
+    * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
     * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
     * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
     * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>
@@ -466,7 +456,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -498,9 +487,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

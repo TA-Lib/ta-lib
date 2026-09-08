@@ -155,13 +155,8 @@
     * That makes it flat-scaled across instruments and directly comparable
     * between them. It is best known as the third leg of Connors' ConnorsRSI,
     * applied there to one-day returns rather than to price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t, over the previous optInTimePeriod values:
-    * count = number of j in [t-optInTimePeriod, t-1] with inReal[j] < inReal[t]
-    * PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-    * The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's {@code ta.percentrank} counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</li>
@@ -234,13 +229,8 @@
     * That makes it flat-scaled across instruments and directly comparable
     * between them. It is best known as the third leg of Connors' ConnorsRSI,
     * applied there to one-day returns rather than to price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t, over the previous optInTimePeriod values:
-    * count = number of j in [t-optInTimePeriod, t-1] with inReal[j] < inReal[t]
-    * PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-    * The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's {@code ta.percentrank} counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</li>
@@ -378,7 +368,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -410,9 +399,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

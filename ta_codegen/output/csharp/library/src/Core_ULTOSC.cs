@@ -635,13 +635,10 @@ public partial class Core
    /// &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// trueLow = min(low, prevClose);  BP = close - trueLow
-   /// TR = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// avg_n = (sum BP over n bars) / (sum TR over n bars)
-   /// ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</description></item>
    /// </list>
@@ -715,13 +712,10 @@ public partial class Core
    /// &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// trueLow = min(low, prevClose);  BP = close - trueLow
-   /// TR = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// avg_n = (sum BP over n bars) / (sum TR over n bars)
-   /// ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</description></item>
    /// </list>
@@ -938,9 +932,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

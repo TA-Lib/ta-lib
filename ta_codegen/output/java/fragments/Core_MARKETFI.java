@@ -111,7 +111,7 @@
       return RetCode.Success ;
    }
    /**
-    * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+    * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
     * price range a bar travelled per unit of volume traded — how much movement
     * the market "facilitated" per tick. A rising index on rising volume is read
     * as a move the market is absorbing; a rising index on falling volume as one
@@ -122,11 +122,8 @@
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -184,7 +181,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+    * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
     * price range a bar travelled per unit of volume traded — how much movement
     * the market "facilitated" per tick. A rising index on rising volume is read
     * as a move the market is absorbing; a rising index on falling volume as one
@@ -195,11 +192,8 @@
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -326,7 +320,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -358,9 +351,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

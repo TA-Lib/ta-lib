@@ -237,18 +237,17 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+   /// Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
    /// 1994): a simple moving average of the candle body, close minus open. It
    /// measures how bullish or bearish the bodies have been over the window,
    /// independently of the wicks — above zero the bodies closed up on balance,
    /// below zero they closed down, and the zero-line crossings are the signal.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-   /// The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -305,18 +304,17 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+   /// Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
    /// 1994): a simple moving average of the candle body, close minus open. It
    /// measures how bullish or bearish the bodies have been over the window,
    /// independently of the wicks — above zero the bodies closed up on balance,
    /// below zero they closed down, and the zero-line crossings are the signal.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-   /// The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -495,9 +493,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

@@ -261,10 +261,10 @@ public partial class Core
    /// hit signals bearish continuation (the down move is expected to resume).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. First: black (close1 &lt; open1) with a long real body (realbody &gt; candleaverage(BodyLong)). Second: white (close2 &gt;= open2), opens below the first candle's low (open2 &lt; low1), and closes slightly into the first body: close2 &gt;= close1 AND close2 &lt;= close1 + candleaverage(Equal). No prior-trend check is performed.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<see href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</see>)</description></item>
@@ -333,10 +333,10 @@ public partial class Core
    /// hit signals bearish continuation (the down move is expected to resume).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. First: black (close1 &lt; open1) with a long real body (realbody &gt; candleaverage(BodyLong)). Second: white (close2 &gt;= open2), opens below the first candle's low (open2 &lt; low1), and closes slightly into the first body: close2 &gt;= close1 AND close2 &lt;= close1 + candleaverage(Equal). No prior-trend check is performed.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<see href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</see>)</description></item>
@@ -554,9 +554,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -835,8 +833,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLINNECK_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

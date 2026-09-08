@@ -82,8 +82,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int T3_Lookback( int optInTimePeriod, double optInVFactor )
    {
@@ -426,12 +426,10 @@ public partial class Core
    /// despite both being called "triple EMA".
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-   /// v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-   /// T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>
@@ -449,8 +447,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -494,12 +492,10 @@ public partial class Core
    /// despite both being called "triple EMA".
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-   /// v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-   /// T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>
@@ -523,8 +519,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -695,9 +691,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -1012,8 +1006,7 @@ public partial class Core
    /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

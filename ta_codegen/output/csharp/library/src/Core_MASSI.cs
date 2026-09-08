@@ -412,14 +412,10 @@ public partial class Core
    /// indicator, because the Mass Index has no sign of its own.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HL = high - low
-   /// single = EMA( HL, optInFastPeriod )
-   /// double = EMA( single, optInFastPeriod )
-   /// MASSI = SUM( single / double, optInSlowPeriod )
-   /// Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The two periods are not interchangeable and are never swapped: <c>optInFastPeriod</c> is the length of both exponential averages, <c>optInSlowPeriod</c> the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</description></item>
    /// <item><description>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly <c>optInSlowPeriod</c> rather than a spurious zero.</description></item>
@@ -497,14 +493,10 @@ public partial class Core
    /// indicator, because the Mass Index has no sign of its own.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HL = high - low
-   /// single = EMA( HL, optInFastPeriod )
-   /// double = EMA( single, optInFastPeriod )
-   /// MASSI = SUM( single / double, optInSlowPeriod )
-   /// Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The two periods are not interchangeable and are never swapped: <c>optInFastPeriod</c> is the length of both exponential averages, <c>optInSlowPeriod</c> the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</description></item>
    /// <item><description>A window in which every bar is exactly flat, high equal to low, leaves both averages at zero. The ratio is reported as 1 there, its continuous limit, so a flat market yields exactly <c>optInSlowPeriod</c> rather than a spurious zero.</description></item>
@@ -701,9 +693,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

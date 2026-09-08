@@ -21,8 +21,8 @@
     *
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
@@ -263,6 +263,8 @@
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -282,8 +284,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
     *        bullish; never emits -100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -338,6 +340,8 @@
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -360,8 +364,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
     *        bullish; never emits -100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -537,7 +541,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -569,9 +572,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

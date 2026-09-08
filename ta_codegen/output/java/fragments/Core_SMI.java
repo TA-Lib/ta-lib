@@ -609,7 +609,7 @@
    }
    /**
     * Stochastic Momentum Index: where the close sits relative to the
-    * **midpoint** of the recent high/low range, double-smoothed. Lane's
+    * <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
     * stochastic measures the close against the bottom of the range; Blau
     * measures it against the middle, then smooths numerator and denominator
     * separately with two exponential averages before dividing, which is what
@@ -618,13 +618,8 @@
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -706,7 +701,7 @@
    }
    /**
     * Stochastic Momentum Index: where the close sits relative to the
-    * **midpoint** of the recent high/low range, double-smoothed. Lane's
+    * <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
     * stochastic measures the close against the bottom of the range; Blau
     * measures it against the middle, then smooths numerator and denominator
     * separately with two exponential averages before dividing, which is what
@@ -715,13 +710,8 @@
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -919,7 +909,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -953,9 +942,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -1061,7 +1049,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( SmiOut out ) {
          requireArgument("SMI value", "out", out);

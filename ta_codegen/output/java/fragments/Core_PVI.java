@@ -140,16 +140,8 @@
     * percentage price change. The premise is that active, high-volume days
     * reflect the actions of the less-informed "crowd", so PVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * PVI[i] = PVI[i-1] + ( inVolume[i] > inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * PVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not rise (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -207,16 +199,8 @@
     * percentage price change. The premise is that active, high-volume days
     * reflect the actions of the less-informed "crowd", so PVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * PVI[i] = PVI[i-1] + ( inVolume[i] > inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * PVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not rise (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -344,7 +328,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -376,9 +359,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

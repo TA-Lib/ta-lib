@@ -69,9 +69,9 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInAcceleration">Step added to the acceleration factor on each new extreme point (default
-   /// 0.02; minimum 0; <c>-4e37</c> selects the default).</param>
-   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// 0.02; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SAR_Lookback( double optInAcceleration, double optInMaximum )
    {
@@ -519,12 +519,10 @@ public partial class Core
    /// above price = downtrend (short). Price crossing SAR flips direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// SAR_next = SAR + af * (EP - SAR)
-   /// EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-   /// On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -538,9 +536,9 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInAcceleration">Step added to the acceleration factor on each new extreme point (default
-   /// 0.02; minimum 0; <c>-4e37</c> selects the default).</param>
-   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// 0.02; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Parabolic SAR stop/reverse level per bar. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -588,12 +586,10 @@ public partial class Core
    /// above price = downtrend (short). Price crossing SAR flips direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// SAR_next = SAR + af * (EP - SAR)
-   /// EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-   /// On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -613,9 +609,9 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInAcceleration">Step added to the acceleration factor on each new extreme point (default
-   /// 0.02; minimum 0; <c>-4e37</c> selects the default).</param>
-   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// 0.02; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Parabolic SAR stop/reverse level per bar. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -778,9 +774,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

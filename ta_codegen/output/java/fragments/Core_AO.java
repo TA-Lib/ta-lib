@@ -255,25 +255,22 @@
       return RetCode.Success ;
    }
    /**
-    * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-    * momentum read as the spread between a short and a long simple moving
-    * average of the median price. It contrasts what the recent bars have done
-    * against a longer stretch of the same market, using the bar midpoint rather
-    * than the close so that intrabar range, not the settle, drives the reading.
-    * Above zero the short window sits higher than the long one and momentum is
-    * with the bulls; below zero it is with the bears. It is drawn as a
-    * zero-centred histogram, and the readings that get traded are the zero-line
-    * crossings, the twin-peaks divergence, and the run of consecutive same-side
-    * bars — which is why the sign and the bar-to-bar change matter more than
-    * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+    * market momentum read as the spread between a short and a long simple
+    * moving average of the median price. It contrasts what the recent bars have
+    * done against a longer stretch of the same market, using the bar midpoint
+    * rather than the close so that intrabar range, not the settle, drives the
+    * reading. Above zero the short window sits higher than the long one and
+    * momentum is with the bulls; below zero it is with the bears. It is drawn
+    * as a zero-centred histogram, and the readings that get traded are the
+    * zero-line crossings, the twin-peaks divergence, and the run of consecutive
+    * same-side bars — which is why the sign and the bar-to-bar change matter
+    * more than the level. The oscillator is the first leg of Williams'
+    * Profitunity system, alongside the Alligator and the
+    * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -334,25 +331,22 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-    * momentum read as the spread between a short and a long simple moving
-    * average of the median price. It contrasts what the recent bars have done
-    * against a longer stretch of the same market, using the bar midpoint rather
-    * than the close so that intrabar range, not the settle, drives the reading.
-    * Above zero the short window sits higher than the long one and momentum is
-    * with the bulls; below zero it is with the bears. It is drawn as a
-    * zero-centred histogram, and the readings that get traded are the zero-line
-    * crossings, the twin-peaks divergence, and the run of consecutive same-side
-    * bars — which is why the sign and the bar-to-bar change matter more than
-    * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+    * market momentum read as the spread between a short and a long simple
+    * moving average of the median price. It contrasts what the recent bars have
+    * done against a longer stretch of the same market, using the bar midpoint
+    * rather than the close so that intrabar range, not the settle, drives the
+    * reading. Above zero the short window sits higher than the long one and
+    * momentum is with the bulls; below zero it is with the bears. It is drawn
+    * as a zero-centred histogram, and the readings that get traded are the
+    * zero-line crossings, the twin-peaks divergence, and the run of consecutive
+    * same-side bars — which is why the sign and the bar-to-bar change matter
+    * more than the level. The oscillator is the first leg of Williams'
+    * Profitunity system, alongside the Alligator and the
+    * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -502,7 +496,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -534,9 +527,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

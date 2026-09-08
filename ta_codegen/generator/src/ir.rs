@@ -389,14 +389,6 @@ impl StreamTier {
 pub struct DocDef {
     /// `## Summary` — what the function is and how to read its output.
     pub summary: String,
-    /// `## Formula` — brief high-level formula, verbatim lines.
-    pub formula: Option<String>,
-    /// Prose that follows the formula's closing `$$` — the sentence defining its
-    /// symbols. Split out by the parser because every backend renders the formula
-    /// as preformatted text, and a sentence left inside that block renders as
-    /// code (rustdoc ```` ```text ````, javadoc `<pre>{@code`, C# `<code>`).
-    /// `None` for the formulas that carry no display math, which is most of them.
-    pub formula_note: Option<String>,
     /// `## Notes` — variations from the original indicator, one entry per bullet.
     pub notes: Vec<String>,
     /// `## Inputs` — `(name, description)` per input, keyed by the YAML input

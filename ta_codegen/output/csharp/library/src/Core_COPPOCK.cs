@@ -468,19 +468,16 @@ public partial class Core
    }
    /// <summary>
    /// Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-   /// (*Barron's*, originally published as the "Trendex Model"), computed as a
-   /// weighted moving average of the **sum** of two rates of change. Unbounded;
-   /// positive turns from below zero are the signal the indicator was designed
-   /// for (long-term buying opportunities on monthly index data).
+   /// (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+   /// as a weighted moving average of the <b>sum</b> of two rates of change.
+   /// Unbounded; positive turns from below zero are the signal the indicator was
+   /// designed for (long-term buying opportunities on monthly index data).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-   /// Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-   /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
-   /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
@@ -543,19 +540,16 @@ public partial class Core
    }
    /// <summary>
    /// Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-   /// (*Barron's*, originally published as the "Trendex Model"), computed as a
-   /// weighted moving average of the **sum** of two rates of change. Unbounded;
-   /// positive turns from below zero are the signal the indicator was designed
-   /// for (long-term buying opportunities on monthly index data).
+   /// (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+   /// as a weighted moving average of the <b>sum</b> of two rates of change.
+   /// Unbounded; positive turns from below zero are the signal the indicator was
+   /// designed for (long-term buying opportunities on monthly index data).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-   /// Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-   /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
-   /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
@@ -768,9 +762,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -1263,8 +1255,7 @@ public partial class Core
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>COPPOCK_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

@@ -197,10 +197,8 @@
     * only candle color, not a bullish/bearish direction. A hit marks indecision
     * (long-legged candle); not directional - sign encodes only the candle's
     * color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
@@ -271,10 +269,8 @@
     * only candle color, not a bullish/bearish direction. A hit marks indecision
     * (long-legged candle); not directional - sign encodes only the candle's
     * color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
@@ -437,7 +433,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -469,9 +464,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

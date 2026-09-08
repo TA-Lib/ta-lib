@@ -297,12 +297,10 @@ public partial class Core
    /// and a swing low at once.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-   /// swingHigh(i) = 100 if High[c] &gt; High[j] for every j in [c-L, c+R] other than c, else 0.
-   /// swingLow(i) = 100 if Low[c] &lt; Low[j] for every j in [c-L, c+R] other than c, else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
    /// <item><description>Each output is decided on its own side: a high tied with any other high in the window forces <c>outSwingHigh</c> to 0 while leaving <c>outSwingLow</c> free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</description></item>
@@ -384,12 +382,10 @@ public partial class Core
    /// and a swing low at once.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-   /// swingHigh(i) = 100 if High[c] &gt; High[j] for every j in [c-L, c+R] other than c, else 0.
-   /// swingLow(i) = 100 if Low[c] &lt; Low[j] for every j in [c-L, c+R] other than c, else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its <c>ta.pivothigh</c> / <c>ta.pivotlow</c> let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</description></item>
    /// <item><description>Each output is decided on its own side: a high tied with any other high in the window forces <c>outSwingHigh</c> to 0 while leaving <c>outSwingLow</c> free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</description></item>
@@ -598,9 +594,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

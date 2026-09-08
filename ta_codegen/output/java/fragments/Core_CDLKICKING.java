@@ -222,6 +222,8 @@
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
     * is set by the second candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
@@ -288,6 +290,8 @@
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
     * is set by the second candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
@@ -460,7 +464,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -492,9 +495,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

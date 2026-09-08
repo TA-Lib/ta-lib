@@ -224,28 +224,21 @@ public partial class Core
    /// Williams built it to catch that shift before price confirms it — traders
    /// watch for the line to diverge from price, since a line that keeps rising
    /// while price stalls or falls points to accumulation, and one that stalls
-   /// while price pushes to a new high points to distribution. **It consumes no
-   /// volume.** Larry Williams' original multiplies each move by that bar's
+   /// while price pushes to a new high points to distribution. <b>It consumes no
+   /// volume.</b> Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-   /// industry kept Williams' name on that no-volume form. That industry-wide
-   /// decision is enough for TA-Lib to ship the same form under the same name.
-   /// What remains once the multiplier is dropped is a signed close-to-close
-   /// move measured on the true range, so it is grouped as a momentum indicator,
-   /// not a volume one.
+   /// multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+   /// the industry kept Williams' name on that no-volume form. That
+   /// industry-wide decision is enough for TA-Lib to ship the same form under
+   /// the same name. What remains once the multiplier is dropped is a signed
+   /// close-to-close move measured on the true range, so it is grouped as a
+   /// momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t:
-   /// TRH_t = max(close_{t-1}, high_t)
-   /// TRL_t = min(close_{t-1}, low_t)
-   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
-   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
-   /// otherwise                     AD_t = 0
-   /// WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -306,28 +299,21 @@ public partial class Core
    /// Williams built it to catch that shift before price confirms it — traders
    /// watch for the line to diverge from price, since a line that keeps rising
    /// while price stalls or falls points to accumulation, and one that stalls
-   /// while price pushes to a new high points to distribution. **It consumes no
-   /// volume.** Larry Williams' original multiplies each move by that bar's
+   /// while price pushes to a new high points to distribution. <b>It consumes no
+   /// volume.</b> Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-   /// industry kept Williams' name on that no-volume form. That industry-wide
-   /// decision is enough for TA-Lib to ship the same form under the same name.
-   /// What remains once the multiplier is dropped is a signed close-to-close
-   /// move measured on the true range, so it is grouped as a momentum indicator,
-   /// not a volume one.
+   /// multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+   /// the industry kept Williams' name on that no-volume form. That
+   /// industry-wide decision is enough for TA-Lib to ship the same form under
+   /// the same name. What remains once the multiplier is dropped is a signed
+   /// close-to-close move measured on the true range, so it is grouped as a
+   /// momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t:
-   /// TRH_t = max(close_{t-1}, high_t)
-   /// TRL_t = min(close_{t-1}, low_t)
-   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
-   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
-   /// otherwise                     AD_t = 0
-   /// WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -498,9 +484,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -709,8 +693,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>WAD_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

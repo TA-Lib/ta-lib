@@ -207,10 +207,8 @@
     * likely trend reversal; true direction depends on the prevailing trend
     * (bullish in a downtrend, bearish in an uptrend), which the code does not
     * itself verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -284,10 +282,8 @@
     * likely trend reversal; true direction depends on the prevailing trend
     * (bullish in a downtrend, bearish in an uptrend), which the code does not
     * itself verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -460,7 +456,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -492,9 +487,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

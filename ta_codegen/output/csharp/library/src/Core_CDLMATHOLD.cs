@@ -65,7 +65,8 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLMATHOLD_Lookback( double optInPenetration )
    {
@@ -311,6 +312,10 @@ public partial class Core
    /// bullish continuation of the existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>
@@ -331,7 +336,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <param name="outInteger">+100 when the bullish Mat Hold is detected, 0 otherwise. Never emits -100.
    /// Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -383,6 +389,10 @@ public partial class Core
    /// bullish continuation of the existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>
@@ -409,7 +419,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <param name="outInteger">+100 when the bullish Mat Hold is detected, 0 otherwise. Never emits -100.
    /// Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -628,9 +639,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

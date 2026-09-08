@@ -37,7 +37,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int T3_Lookback( int optInTimePeriod, double optInVFactor )
@@ -369,12 +369,8 @@
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -392,7 +388,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal T3 smoothed line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -439,12 +435,8 @@
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -465,7 +457,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal T3 smoothed line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -603,7 +595,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -635,9 +626,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

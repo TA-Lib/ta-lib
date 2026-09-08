@@ -328,12 +328,8 @@
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -391,12 +387,8 @@
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -547,7 +539,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -579,9 +570,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

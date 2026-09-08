@@ -70,8 +70,8 @@ public partial class Core
    /// </remarks>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
    {
@@ -223,10 +223,10 @@ public partial class Core
    /// deviations multiplier. Delegates to VAR, then takes the square root.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</description></item>
    /// </list>
@@ -243,8 +243,8 @@ public partial class Core
    /// <param name="inReal">Series to measure dispersion of.</param>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -288,10 +288,10 @@ public partial class Core
    /// deviations multiplier. Delegates to VAR, then takes the square root.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</description></item>
    /// </list>
@@ -314,8 +314,8 @@ public partial class Core
    /// <param name="inReal">Series to measure dispersion of.</param>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -465,9 +465,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -650,8 +648,7 @@ public partial class Core
    /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STDDEV_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

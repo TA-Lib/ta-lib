@@ -268,6 +268,10 @@ public partial class Core
    /// bearish reversal signal, most meaningful in an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</description></item>
    /// <item><description>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<see href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</see>)</description></item>
@@ -336,6 +340,10 @@ public partial class Core
    /// bearish reversal signal, most meaningful in an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</description></item>
    /// <item><description>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<see href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</see>)</description></item>
@@ -556,9 +564,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -860,8 +866,7 @@ public partial class Core
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLUPSIDEGAP2CROWS_Lookback(...) + 1</c>
    /// bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

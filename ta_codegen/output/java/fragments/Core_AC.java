@@ -359,9 +359,9 @@
       return RetCode.Success ;
    }
    /**
-    * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-    * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator (<a
+    * Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+    * Dimensions</i>, 1998): the rate at which market momentum is itself
+    * speeding up or slowing down. Where the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
     * this measures the change in that momentum, by taking the oscillator's
     * distance above or below its own moving average. Because acceleration turns
@@ -375,12 +375,8 @@
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -449,9 +445,9 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-    * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator (<a
+    * Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+    * Dimensions</i>, 1998): the rate at which market momentum is itself
+    * speeding up or slowing down. Where the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
     * this measures the change in that momentum, by taking the oscillator's
     * distance above or below its own moving average. Because acceleration turns
@@ -465,12 +461,8 @@
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -640,7 +632,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -672,9 +663,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

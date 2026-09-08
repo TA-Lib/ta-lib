@@ -233,6 +233,8 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
@@ -300,6 +302,8 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
@@ -474,7 +478,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -506,9 +509,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

@@ -181,11 +181,8 @@
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
@@ -251,11 +248,8 @@
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
@@ -399,7 +393,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -431,9 +424,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

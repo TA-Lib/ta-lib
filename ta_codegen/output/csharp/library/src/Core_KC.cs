@@ -68,8 +68,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
    {
@@ -310,14 +310,10 @@ public partial class Core
    /// quiet ones.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High + Low + Close) / 3
-   /// Middle = EMA(TP, N)
-   /// Band = ATR(M)
-   /// Upper = Middle + Deviations * Band
-   /// Lower = Middle - Deviations * Band
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>
@@ -341,8 +337,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outRealUpperBand">Centre line plus the scaled Average True Range. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outRealMiddleBand">Exponential moving average of the typical price. Must hold at least
@@ -402,14 +398,10 @@ public partial class Core
    /// quiet ones.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High + Low + Close) / 3
-   /// Middle = EMA(TP, N)
-   /// Band = ATR(M)
-   /// Upper = Middle + Deviations * Band
-   /// Lower = Middle - Deviations * Band
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>
@@ -439,8 +431,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outRealUpperBand">Centre line plus the scaled Average True Range. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outRealMiddleBand">Exponential moving average of the typical price. Must hold at least
@@ -629,9 +621,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

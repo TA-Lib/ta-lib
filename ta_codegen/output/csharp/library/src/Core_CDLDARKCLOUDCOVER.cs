@@ -66,7 +66,7 @@ public partial class Core
    /// </remarks>
    /// <param name="optInPenetration">Fraction of candle 1's real body that candle 2's close must penetrate
    /// below close[i-1]; larger values require deeper penetration (default 0.5;
-   /// minimum 0; <c>-4e37</c> selects the default).</param>
+   /// minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
    {
@@ -252,6 +252,10 @@ public partial class Core
    /// hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>
@@ -271,7 +275,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of candle 1's real body that candle 2's close must penetrate
    /// below close[i-1]; larger values require deeper penetration (default 0.5;
-   /// minimum 0; <c>-4e37</c> selects the default).</param>
+   /// minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">-100 when the pattern is detected (always bearish), 0 otherwise; never
    /// emits +100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -322,6 +326,10 @@ public partial class Core
    /// hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>
@@ -347,7 +355,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of candle 1's real body that candle 2's close must penetrate
    /// below close[i-1]; larger values require deeper penetration (default 0.5;
-   /// minimum 0; <c>-4e37</c> selects the default).</param>
+   /// minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">-100 when the pattern is detected (always bearish), 0 otherwise; never
    /// emits +100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -526,9 +534,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

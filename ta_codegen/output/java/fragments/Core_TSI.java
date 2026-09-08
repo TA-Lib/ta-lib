@@ -362,12 +362,8 @@
     * conditions, and divergence against price is the classic Blau reading. A
     * signal line is not part of the output; apply {@code EMA} to
     * {@code outReal} to obtain one, since no source agrees on its period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = close - previous close
-    * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
-    * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -446,12 +442,8 @@
     * conditions, and divergence against price is the classic Blau reading. A
     * signal line is not part of the output; apply {@code EMA} to
     * {@code outReal} to obtain one, since no source agrees on its period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = close - previous close
-    * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
-    * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -603,7 +595,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -635,9 +626,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

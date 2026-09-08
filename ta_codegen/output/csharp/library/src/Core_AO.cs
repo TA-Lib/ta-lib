@@ -309,27 +309,26 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-   /// momentum read as the spread between a short and a long simple moving
-   /// average of the median price. It contrasts what the recent bars have done
-   /// against a longer stretch of the same market, using the bar midpoint rather
-   /// than the close so that intrabar range, not the settle, drives the reading.
-   /// Above zero the short window sits higher than the long one and momentum is
-   /// with the bulls; below zero it is with the bears. It is drawn as a
-   /// zero-centred histogram, and the readings that get traded are the zero-line
-   /// crossings, the twin-peaks divergence, and the run of consecutive same-side
-   /// bars — which is why the sign and the bar-to-bar change matter more than
-   /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+   /// market momentum read as the spread between a short and a long simple
+   /// moving average of the median price. It contrasts what the recent bars have
+   /// done against a longer stretch of the same market, using the bar midpoint
+   /// rather than the close so that intrabar range, not the settle, drives the
+   /// reading. Above zero the short window sits higher than the long one and
+   /// momentum is with the bulls; below zero it is with the bears. It is drawn
+   /// as a zero-centred histogram, and the readings that get traded are the
+   /// zero-line crossings, the twin-peaks divergence, and the run of consecutive
+   /// same-side bars — which is why the sign and the bar-to-bar change matter
+   /// more than the level. The oscillator is the first leg of Williams'
+   /// Profitunity system, alongside the Alligator and the
+   /// Accelerator/Decelerator
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -387,27 +386,26 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-   /// momentum read as the spread between a short and a long simple moving
-   /// average of the median price. It contrasts what the recent bars have done
-   /// against a longer stretch of the same market, using the bar midpoint rather
-   /// than the close so that intrabar range, not the settle, drives the reading.
-   /// Above zero the short window sits higher than the long one and momentum is
-   /// with the bulls; below zero it is with the bears. It is drawn as a
-   /// zero-centred histogram, and the readings that get traded are the zero-line
-   /// crossings, the twin-peaks divergence, and the run of consecutive same-side
-   /// bars — which is why the sign and the bar-to-bar change matter more than
-   /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+   /// market momentum read as the spread between a short and a long simple
+   /// moving average of the median price. It contrasts what the recent bars have
+   /// done against a longer stretch of the same market, using the bar midpoint
+   /// rather than the close so that intrabar range, not the settle, drives the
+   /// reading. Above zero the short window sits higher than the long one and
+   /// momentum is with the bulls; below zero it is with the bears. It is drawn
+   /// as a zero-centred histogram, and the readings that get traded are the
+   /// zero-line crossings, the twin-peaks divergence, and the run of consecutive
+   /// same-side bars — which is why the sign and the bar-to-bar change matter
+   /// more than the level. The oscillator is the first leg of Williams'
+   /// Profitunity system, alongside the Alligator and the
+   /// Accelerator/Decelerator
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -598,9 +596,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

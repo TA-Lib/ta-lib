@@ -210,13 +210,10 @@ public partial class Core
    /// applied there to one-day returns rather than to price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t, over the previous optInTimePeriod values:
-   /// count = number of j in [t-optInTimePeriod, t-1] with inReal[j] &lt; inReal[t]
-   /// PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-   /// The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's <c>ta.percentrank</c> counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</description></item>
    /// <item><description>+0.0 and -0.0 compare equal, so a sign-only difference never contributes to the count.</description></item>
@@ -287,13 +284,10 @@ public partial class Core
    /// applied there to one-day returns rather than to price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t, over the previous optInTimePeriod values:
-   /// count = number of j in [t-optInTimePeriod, t-1] with inReal[j] &lt; inReal[t]
-   /// PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-   /// The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's <c>ta.percentrank</c> counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</description></item>
    /// <item><description>+0.0 and -0.0 compare equal, so a sign-only difference never contributes to the count.</description></item>
@@ -469,9 +463,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -657,8 +649,7 @@ public partial class Core
    /// default and range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PERCENTRANK_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

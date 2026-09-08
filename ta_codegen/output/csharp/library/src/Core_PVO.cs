@@ -269,19 +269,18 @@ public partial class Core
    /// <summary>
    /// Percentage Volume Oscillator: a variation of the
    /// <see href="https://ta-lib.org/functions/ppo">Percentage Price
-   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the **volume**
-   /// series instead of price. It is the difference between a fast and slow
-   /// moving average of volume, expressed as a percentage of the slow MA.
-   /// Positive when short-term volume is above its longer-term average (rising
-   /// participation), negative when below. The default periods (12, 26) match
-   /// MACD and PPO.
+   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the
+   /// <b>volume</b> series instead of price. It is the difference between a fast
+   /// and slow moving average of volume, expressed as a percentage of the slow
+   /// MA. Positive when short-term volume is above its longer-term average
+   /// (rising participation), negative when below. The default periods (12, 26)
+   /// match MACD and PPO.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-   /// The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
    /// </list>
@@ -346,19 +345,18 @@ public partial class Core
    /// <summary>
    /// Percentage Volume Oscillator: a variation of the
    /// <see href="https://ta-lib.org/functions/ppo">Percentage Price
-   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the **volume**
-   /// series instead of price. It is the difference between a fast and slow
-   /// moving average of volume, expressed as a percentage of the slow MA.
-   /// Positive when short-term volume is above its longer-term average (rising
-   /// participation), negative when below. The default periods (12, 26) match
-   /// MACD and PPO.
+   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the
+   /// <b>volume</b> series instead of price. It is the difference between a fast
+   /// and slow moving average of volume, expressed as a percentage of the slow
+   /// MA. Positive when short-term volume is above its longer-term average
+   /// (rising participation), negative when below. The default periods (12, 26)
+   /// match MACD and PPO.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-   /// The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
    /// </list>
@@ -541,9 +539,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
@@ -758,8 +754,7 @@ public partial class Core
    /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PVO_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

@@ -218,13 +218,8 @@
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
@@ -328,13 +323,8 @@
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
@@ -514,7 +504,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -549,10 +538,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period. It does allocate a small bounded amount
-       * per call — a size fixed by the indicator, never by the period.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -582,7 +569,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( KdjOut out ) {
          requireArgument("KDJ value", "out", out);

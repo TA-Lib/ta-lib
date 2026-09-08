@@ -661,7 +661,7 @@ public partial class Core
    }
    /// <summary>
    /// Stochastic Momentum Index: where the close sits relative to the
-   /// **midpoint** of the recent high/low range, double-smoothed. Lane's
+   /// <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
    /// stochastic measures the close against the bottom of the range; Blau
    /// measures it against the middle, then smooths numerator and denominator
    /// separately with two exponential averages before dividing, which is what
@@ -672,13 +672,10 @@ public partial class Core
    /// signal line are the usual trade trigger.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-   /// num = close - 0.5 * (HH + LL);  den = HH - LL
-   /// SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-   /// Signal = EMA(SMI, signalPeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</description></item>
@@ -755,7 +752,7 @@ public partial class Core
    }
    /// <summary>
    /// Stochastic Momentum Index: where the close sits relative to the
-   /// **midpoint** of the recent high/low range, double-smoothed. Lane's
+   /// <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
    /// stochastic measures the close against the bottom of the range; Blau
    /// measures it against the middle, then smooths numerator and denominator
    /// separately with two exponential averages before dividing, which is what
@@ -766,13 +763,10 @@ public partial class Core
    /// signal line are the usual trade trigger.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-   /// num = close - 0.5 * (HH + LL);  den = HH - LL
-   /// SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-   /// Signal = EMA(SMI, signalPeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</description></item>
@@ -1024,9 +1018,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

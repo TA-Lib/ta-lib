@@ -25,7 +25,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -255,14 +255,8 @@
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
@@ -287,7 +281,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand Exponential moving average of the typical price.
@@ -350,14 +344,8 @@
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
@@ -385,7 +373,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand Exponential moving average of the typical price.
@@ -525,7 +513,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -560,9 +547,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -596,7 +582,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( KcOut out ) {
          requireArgument("KC value", "out", out);

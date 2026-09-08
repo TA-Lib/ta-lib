@@ -21,7 +21,8 @@
     *
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLEVENINGSTAR_Lookback( double optInPenetration )
@@ -238,6 +239,8 @@
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -257,7 +260,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
     *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -309,6 +313,8 @@
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -331,7 +337,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
     *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -495,7 +502,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -527,9 +533,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

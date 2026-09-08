@@ -306,13 +306,10 @@ public partial class Core
    /// range, not direction, so it says nothing about which way price is heading.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HL = high - low
-   /// E = EMA( HL, optInTimePeriod )
-   /// CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks <c>chaikvolat</c> signature. Implementations that expose a single length are the special case where both are set to the same value.</description></item>
    /// <item><description>Some vendors default the rate-of-change length to 12 rather than to Achelis's recommendation, which is the same for both lengths.</description></item>
@@ -389,13 +386,10 @@ public partial class Core
    /// range, not direction, so it says nothing about which way price is heading.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HL = high - low
-   /// E = EMA( HL, optInTimePeriod )
-   /// CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks <c>chaikvolat</c> signature. Implementations that expose a single length are the special case where both are set to the same value.</description></item>
    /// <item><description>Some vendors default the rate-of-change length to 12 rather than to Achelis's recommendation, which is the same for both lengths.</description></item>
@@ -588,9 +582,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

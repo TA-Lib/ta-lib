@@ -538,12 +538,10 @@ public partial class Core
    /// crossing %D signals momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-   /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</description></item>
    /// </list>
@@ -630,12 +628,10 @@ public partial class Core
    /// crossing %D signals momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-   /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</description></item>
    /// </list>
@@ -882,9 +878,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

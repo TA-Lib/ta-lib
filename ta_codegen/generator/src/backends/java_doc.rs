@@ -37,25 +37,17 @@ pub fn guarded_docs(
 
     b.para(&summary_text(func, doc));
 
-    if let Some(formula) = &doc.formula {
-        b.raw("<p><b>Formula</b>");
-        b.raw("<pre>{@code");
-        for line in formula.lines() {
-            let t = line.trim();
-            if !t.is_empty() {
-                b.raw(format!(" * {t}").trim_start_matches(" * "));
-            }
-        }
-        b.raw("}</pre>");
-        if let Some(note) = &doc.formula_note {
-            b.para(&jdoc(note));
-        }
-    }
+    let url = doc_meta::function_page_url(&func.name);
+    b.para(&format!(
+        "Formula and more info at <a href=\"{url}\">{}</a>.",
+        url.trim_start_matches("https://")
+    ));
 
-    if !doc.notes.is_empty() {
+    let notes = doc_meta::renderable_notes(&doc.notes);
+    if !notes.is_empty() {
         b.raw("<p><b>Notes</b>");
         b.raw("<ul>");
-        for note in &doc.notes {
+        for note in notes {
             b.raw(&format!("<li>{}</li>", jdoc(note)));
         }
         b.raw("</ul>");
@@ -264,7 +256,7 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         // and `Integer.MIN_VALUE` cannot be made into one (issue #162 — C, Rust
         // and C# all type it as an integer and must substitute).
         meta.push(match opt.param_type {
-            ParamType::Real => "{@code -4e37} selects the default".to_string(),
+            ParamType::Real => "{@link Core#REAL_DEFAULT} selects the default".to_string(),
             _ => "{@code Integer.MIN_VALUE} selects the default".to_string(),
         });
     }
@@ -305,15 +297,34 @@ fn see_also_link(entry: &str, func: &FuncDef, registry: &Registry) -> Option<Str
 /// Turn canonical Markdown-ish prose into Javadoc-safe HTML.
 ///
 /// `&`, `<` and `>` become entities (a stray `<` would silently swallow text as a
-/// bogus tag), backtick spans become `{@code ...}`, and a literal `@` is escaped
+/// bogus tag), backtick spans become `{@code ...}`, `**bold**` and `*italic*`
+/// become `<b>` and `<i>` — javadoc renders HTML, not Markdown, so a delimiter
+/// left alone reaches the reader as an asterisk — and a literal `@` is escaped
 /// so it cannot be read as a block tag.
 fn jdoc(text: &str) -> String {
     let mut out = String::new();
     let mut in_code = false;
+    // The delimiter length and closing tag of the emphasis run we are inside.
+    let mut emphasis: Option<(usize, &str)> = None;
     let chars: Vec<char> = text.chars().collect();
     let mut i = 0;
     while i < chars.len() {
         let c = chars[i];
+        if !in_code {
+            if let Some((len, close)) = emphasis {
+                if super::common::asterisks_at(&chars, i, len) {
+                    out.push_str(close);
+                    emphasis = None;
+                    i += len;
+                    continue;
+                }
+            } else if let Some(len) = super::common::emphasis_open(&chars, i) {
+                out.push_str(if len == 2 { "<b>" } else { "<i>" });
+                emphasis = Some((len, if len == 2 { "</b>" } else { "</i>" }));
+                i += len;
+                continue;
+            }
+        }
         match c {
             '`' => {
                 out.push_str(if in_code { "}" } else { "{@code " });
@@ -340,6 +351,9 @@ fn jdoc(text: &str) -> String {
         // Unbalanced backtick in the source — close it rather than emit `{@code`.
         out.push('}');
     }
+    // `emphasis` is unreachable here: a run only opens once its closer is
+    // found, and nothing between them consumes it.
+    debug_assert!(emphasis.is_none(), "emphasis opened without its closer: {text:?}");
     out
 }
 

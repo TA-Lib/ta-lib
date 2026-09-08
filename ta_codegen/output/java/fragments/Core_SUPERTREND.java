@@ -23,7 +23,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
@@ -404,16 +405,8 @@
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
@@ -437,7 +430,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outTrend Trend direction: +1 while the trend rides the lower band,
@@ -496,16 +490,8 @@
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
@@ -532,7 +518,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outTrend Trend direction: +1 while the trend rides the lower band,
@@ -674,7 +661,6 @@
 
       /**
        * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -708,9 +694,8 @@
        * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
@@ -798,7 +783,7 @@
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} wrote.
-       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
        */
       public void value( SupertrendOut out ) {
          requireArgument("SUPERTREND value", "out", out);

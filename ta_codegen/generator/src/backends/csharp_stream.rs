@@ -1149,25 +1149,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    // Conditional, because a frame that still has to copy an accumulator — no
-    // shipped one does — allocates per call, and the unconditional claim would
-    // be false for it. The flat-in-period cost, the claim the frame exists to
-    // keep, holds either way and is what both sentences lead with.
-    if frame.is_some_and(|f| f.contains("Array.Copy(")) {
-        d.para(
-            "It copies no buffer: the frame runs against this handle, reading its buffers \
-             and holding what the step would commit in locals, so the cost does not grow \
-             with the period. It does copy this indicator's fixed-size per-bar \
-             accumulators — a few elements, a count fixed by the indicator and not by the \
-             period — so <c>Peek</c> allocates a small bounded amount per call.",
-        );
-    } else {
-        d.para(
-            "It copies nothing: the frame runs against this handle, reading its buffers and \
-             holding what the step would commit in locals. The cost does not grow with the \
-             period, and <c>Peek</c> never allocates.",
-        );
-    }
+    d.para("Its cost does not grow with the period.");
     d.para(
         "It counts no bar, so it keeps answering past the <see cref=\"Core.MAX_INDEX\"/> \
          ceiling <c>Update</c> stops at.",
@@ -2808,11 +2790,25 @@ fn emit_open_wrappers(
         "InsufficientHistoryException",
         &format!("The history holds fewer than <c>{base}_Lookback(...) + 1</c> bars."),
     );
-    d.exception(
-        "System.ArgumentException",
-        "An optional parameter is outside its documented range, or the input series have \
-         different lengths.",
-    );
+    // Built from the same two facts the guards are: a function with no optional
+    // parameter and one input span can raise neither cause.
+    let mut causes: Vec<&str> = Vec::new();
+    if !func.optional_inputs.is_empty() {
+        causes.push("an optional parameter is outside its documented range");
+    }
+    if streaming::input_array_names(func).len() > 1 {
+        causes.push("the input series have different lengths");
+    }
+    if let Some((first, rest)) = causes.split_first() {
+        let mut text = (*first).to_string();
+        text[..1].make_ascii_uppercase();
+        for c in rest {
+            text.push_str(", or ");
+            text.push_str(c);
+        }
+        text.push('.');
+        d.exception("System.ArgumentException", &text);
+    }
     d.exception(
         "System.ArgumentOutOfRangeException",
         "The history is empty — which is what a null array becomes, since a span cannot be \

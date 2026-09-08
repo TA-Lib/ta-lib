@@ -294,20 +294,15 @@
    }
    /**
     * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-    * measure from *Smarter Trading* (1995) — the net directional movement over
-    * the period divided by the total path travelled to get there. 1.0 is a
+    * measure from <i>Smarter Trading</i> (1995) — the net directional movement
+    * over the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
     * exactly the efficiency ratio <a
     * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-    * The output is a hard 0..1 — the net move can never exceed the path travelled.
-    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
@@ -368,20 +363,15 @@
    }
    /**
     * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-    * measure from *Smarter Trading* (1995) — the net directional movement over
-    * the period divided by the total path travelled to get there. 1.0 is a
+    * measure from <i>Smarter Trading</i> (1995) — the net directional movement
+    * over the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
     * exactly the efficiency ratio <a
     * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-    * The output is a hard 0..1 — the net move can never exceed the path travelled.
-    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
@@ -526,7 +516,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -558,9 +547,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

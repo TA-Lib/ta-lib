@@ -579,13 +579,8 @@
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
@@ -659,13 +654,8 @@
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
@@ -839,7 +829,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -871,9 +860,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

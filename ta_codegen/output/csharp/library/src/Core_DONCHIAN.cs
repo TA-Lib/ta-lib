@@ -322,16 +322,13 @@ public partial class Core
    /// weeks and sells a break below their low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Window = the optInTimePeriod bars ending at the current bar
-   /// Upper  = Highest High of Window
-   /// Lower  = Lowest  Low  of Window
-   /// Middle = (Upper + Lower) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The window includes the current bar, matching TradingView (<c>ta.highest</c>/<c>ta.lowest</c>), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</description></item>
-   /// <item><description>A breakout rule compares the current bar against the **previous** bar's band — <c>High[t] &gt; Upper[t-1]</c> — which is where the one-bar offset belongs. Reading <c>Upper[t]</c> against <c>High[t]</c> can never signal, because <c>High[t]</c> is inside the window that produced it.</description></item>
+   /// <item><description>A breakout rule compares the current bar against the <b>previous</b> bar's band — <c>High[t] &gt; Upper[t-1]</c> — which is where the one-bar offset belongs. Reading <c>Upper[t]</c> against <c>High[t]</c> can never signal, because <c>High[t]</c> is inside the window that produced it.</description></item>
    /// <item><description>Upper, Middle and Lower are bit-identical to <c>MAX(high, N)</c>, <c>MIDPRICE(N)</c> and <c>MIN(low, N)</c>. DONCHIAN computes all three in one pass under the name users look for.</description></item>
    /// <item><description>The middle line is the channel midpoint, not a moving average of price.</description></item>
    /// <item><description>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</description></item>
@@ -406,16 +403,13 @@ public partial class Core
    /// weeks and sells a break below their low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Window = the optInTimePeriod bars ending at the current bar
-   /// Upper  = Highest High of Window
-   /// Lower  = Lowest  Low  of Window
-   /// Middle = (Upper + Lower) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The window includes the current bar, matching TradingView (<c>ta.highest</c>/<c>ta.lowest</c>), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</description></item>
-   /// <item><description>A breakout rule compares the current bar against the **previous** bar's band — <c>High[t] &gt; Upper[t-1]</c> — which is where the one-bar offset belongs. Reading <c>Upper[t]</c> against <c>High[t]</c> can never signal, because <c>High[t]</c> is inside the window that produced it.</description></item>
+   /// <item><description>A breakout rule compares the current bar against the <b>previous</b> bar's band — <c>High[t] &gt; Upper[t-1]</c> — which is where the one-bar offset belongs. Reading <c>Upper[t]</c> against <c>High[t]</c> can never signal, because <c>High[t]</c> is inside the window that produced it.</description></item>
    /// <item><description>Upper, Middle and Lower are bit-identical to <c>MAX(high, N)</c>, <c>MIDPRICE(N)</c> and <c>MIN(low, N)</c>. DONCHIAN computes all three in one pass under the name users look for.</description></item>
    /// <item><description>The middle line is the channel midpoint, not a moving average of price.</description></item>
    /// <item><description>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</description></item>
@@ -635,9 +629,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

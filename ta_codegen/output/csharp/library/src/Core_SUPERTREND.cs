@@ -68,7 +68,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
    {
@@ -466,16 +467,10 @@ public partial class Core
    /// the flip is the signal. Attributed to Olivier Seban.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Median = (High + Low) / 2
-   /// BasicUpper = Median + Multiplier * ATR(TimePeriod)
-   /// BasicLower = Median - Multiplier * ATR(TimePeriod)
-   /// Upper = BasicUpper, when BasicUpper &lt; previous Upper or previous Close &gt; previous Upper; otherwise the previous Upper
-   /// Lower = BasicLower, when BasicLower &gt; previous Lower or previous Close &lt; previous Lower; otherwise the previous Lower
-   /// SuperTrend = Lower while the trend is up, until Close &lt; Lower flips it down
-   /// SuperTrend = Upper while the trend is down, until Close &gt; Upper flips it up
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</description></item>
    /// <item><description>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</description></item>
@@ -500,7 +495,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
@@ -556,16 +552,10 @@ public partial class Core
    /// the flip is the signal. Attributed to Olivier Seban.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Median = (High + Low) / 2
-   /// BasicUpper = Median + Multiplier * ATR(TimePeriod)
-   /// BasicLower = Median - Multiplier * ATR(TimePeriod)
-   /// Upper = BasicUpper, when BasicUpper &lt; previous Upper or previous Close &gt; previous Upper; otherwise the previous Upper
-   /// Lower = BasicLower, when BasicLower &gt; previous Lower or previous Close &lt; previous Lower; otherwise the previous Lower
-   /// SuperTrend = Lower while the trend is up, until Close &lt; Lower flips it down
-   /// SuperTrend = Upper while the trend is down, until Close &gt; Upper flips it up
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</description></item>
    /// <item><description>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</description></item>
@@ -596,7 +586,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
@@ -787,9 +778,7 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
-      /// and holding what the step would commit in locals. The cost does not grow
-      /// with the period, and <c>Peek</c> never allocates.</para>
+      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

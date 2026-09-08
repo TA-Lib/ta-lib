@@ -356,14 +356,8 @@
     * above 27, then falling back under 26.5, warns that the prevailing trend is
     * about to reverse. Which way it reverses has to come from a trend
     * indicator, because the Mass Index has no sign of its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * single = EMA( HL, optInFastPeriod )
-    * double = EMA( single, optInFastPeriod )
-    * MASSI = SUM( single / double, optInSlowPeriod )
-    * Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
@@ -444,14 +438,8 @@
     * above 27, then falling back under 26.5, warns that the prevailing trend is
     * about to reverse. Which way it reverses has to come from a trend
     * indicator, because the Mass Index has no sign of its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * single = EMA( HL, optInFastPeriod )
-    * double = EMA( single, optInFastPeriod )
-    * MASSI = SUM( single / double, optInSlowPeriod )
-    * Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
@@ -610,7 +598,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -642,9 +629,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

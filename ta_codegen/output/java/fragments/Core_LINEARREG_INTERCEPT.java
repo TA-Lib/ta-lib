@@ -333,12 +333,8 @@
     * Returns the y-intercept (b) of the least-squares regression line fitted
     * over the last optInTimePeriod values. Part of the linear-regression family
     * (LINEARREG, SLOPE, ANGLE, TSF).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-    * m = (period·SumXY − SumX·SumY) / Divisor
-    * b = (SumY − m·SumX) / period   ← output
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -395,12 +391,8 @@
     * Returns the y-intercept (b) of the least-squares regression line fitted
     * over the last optInTimePeriod values. Part of the linear-regression family
     * (LINEARREG, SLOPE, ANGLE, TSF).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-    * m = (period·SumXY − SumX·SumY) / Divisor
-    * b = (SumY − m·SumX) / period   ← output
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -551,7 +543,6 @@
 
       /**
        * Commit one closed bar, returning the new current value.
-       * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so nothing moves — {@link #outRange()} included — and
@@ -583,9 +574,8 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-       * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * run concurrently with each other, and its cost does not grow with the
+       * period.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */

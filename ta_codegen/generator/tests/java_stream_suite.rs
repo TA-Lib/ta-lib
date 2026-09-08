@@ -120,8 +120,8 @@ fn test_java_sma_ring_stream_section() {
     // The range rides on the handle instead of a pair of out-params, and it is
     // the whole produced range, not one call's fill (#241): seeded by EVERY
     // opener — the plain one included, which wrote nothing before — and extended
-    // by each committed bar. The accessor builds the record, so `update` keeps
-    // its "never allocates handle state" promise.
+    // by each committed bar. The accessor builds the record rather than the
+    // handle holding one.
     assert!(s.contains("int outRangeBegIdx;") && s.contains("int outRangeCount;"));
     assert!(s.contains(
         "public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }"
@@ -938,12 +938,8 @@ fn no_java_peek_copies_the_handle() {
             // ONE copy is contract-legal, and only one: a FIXED-SIZE
             // accumulator, an array the batch body declares with a literal
             // dimension. The frame's job is that its cost not grow with the
-            // period, and such a copy cannot -- which is what `peek`'s own
-            // javadoc already promises the caller ("a small bounded amount per
-            // call, a size fixed by the indicator, never by the period"), and
-            // what the C# twin's doc comment has always claimed. Read off the
-            // emitted declaration, never a name list, so a period-sized buffer
-            // can never qualify.
+            // period, and such a copy cannot. Read off the emitted declaration,
+            // never a name list, so a period-sized buffer can never qualify.
             //
             // It stays an offender for a SHIPPED function even so. The emitter
             // reaches the copy only where it cannot shadow the write in place
