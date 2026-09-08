@@ -71,9 +71,9 @@ public partial class Core
    /// </para>
    /// </remarks>
    /// <param name="optInFastLimit">Upper bound on the adaptive smoothing factor (default 0.5; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
    {
@@ -877,9 +877,9 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Price series to smooth.</param>
    /// <param name="optInFastLimit">Upper bound on the adaptive smoothing factor (default 0.5; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
@@ -956,9 +956,9 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Price series to smooth.</param>
    /// <param name="optInFastLimit">Upper bound on the adaptive smoothing factor (default 0.5; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
-   /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
+   /// 0.01..0.99; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
@@ -2110,8 +2110,7 @@ public partial class Core
    /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

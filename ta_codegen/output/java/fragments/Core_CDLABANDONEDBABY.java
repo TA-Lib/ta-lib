@@ -20,8 +20,8 @@
     * output.
     *
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-    *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLABANDONEDBABY_Lookback( double optInPenetration )
@@ -286,8 +286,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-    *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @param outInteger +100 at a bullish abandoned baby bottom (3rd candle
     *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
     *        otherwise; sign = color of the 3rd candle. Must hold at least
@@ -362,8 +362,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-    *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @param outInteger +100 at a bullish abandoned baby bottom (3rd candle
     *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
     *        otherwise; sign = color of the 3rd candle. Must hold at least

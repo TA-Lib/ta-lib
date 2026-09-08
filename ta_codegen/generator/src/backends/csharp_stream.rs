@@ -2808,11 +2808,25 @@ fn emit_open_wrappers(
         "InsufficientHistoryException",
         &format!("The history holds fewer than <c>{base}_Lookback(...) + 1</c> bars."),
     );
-    d.exception(
-        "System.ArgumentException",
-        "An optional parameter is outside its documented range, or the input series have \
-         different lengths.",
-    );
+    // Built from the same two facts the guards are: a function with no optional
+    // parameter and one input span can raise neither cause.
+    let mut causes: Vec<&str> = Vec::new();
+    if !func.optional_inputs.is_empty() {
+        causes.push("an optional parameter is outside its documented range");
+    }
+    if streaming::input_array_names(func).len() > 1 {
+        causes.push("the input series have different lengths");
+    }
+    if let Some((first, rest)) = causes.split_first() {
+        let mut text = (*first).to_string();
+        text[..1].make_ascii_uppercase();
+        for c in rest {
+            text.push_str(", or ");
+            text.push_str(c);
+        }
+        text.push('.');
+        d.exception("System.ArgumentException", &text);
+    }
     d.exception(
         "System.ArgumentOutOfRangeException",
         "The history is empty — which is what a null array becomes, since a span cannot be \

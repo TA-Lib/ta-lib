@@ -68,8 +68,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
    {
@@ -341,8 +341,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outRealUpperBand">Centre line plus the scaled Average True Range. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outRealMiddleBand">Exponential moving average of the typical price. Must hold at least
@@ -439,8 +439,8 @@ public partial class Core
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInATRPeriod">Smoothing period of the Average True Range (default 10; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the Average True Range (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outRealUpperBand">Centre line plus the scaled Average True Range. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outRealMiddleBand">Exponential moving average of the typical price. Must hold at least

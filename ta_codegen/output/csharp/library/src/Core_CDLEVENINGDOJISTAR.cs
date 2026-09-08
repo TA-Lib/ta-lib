@@ -66,7 +66,7 @@ public partial class Core
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st real body the 3rd candle's close must penetrate;
    /// larger demands a deeper close into the first body (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLEVENINGDOJISTAR_Lookback( double optInPenetration )
    {
@@ -336,7 +336,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st real body the 3rd candle's close must penetrate;
    /// larger demands a deeper close into the first body (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">-100 when the pattern is detected, 0 otherwise. Always bearish; never
    /// emits +100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -412,7 +412,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st real body the 3rd candle's close must penetrate;
    /// larger demands a deeper close into the first body (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">-100 when the pattern is detected, 0 otherwise. Always bearish; never
    /// emits +100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

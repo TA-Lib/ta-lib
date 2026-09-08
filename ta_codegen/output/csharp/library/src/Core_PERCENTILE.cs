@@ -67,7 +67,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
    {
@@ -385,7 +385,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">The value at the requested rank within the trailing window. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -462,7 +462,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">The value at the requested rank within the trailing window. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -935,8 +935,7 @@ public partial class Core
    /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PERCENTILE_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

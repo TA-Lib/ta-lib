@@ -66,7 +66,7 @@ public partial class Core
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLMORNINGSTAR_Lookback( double optInPenetration )
    {
@@ -316,7 +316,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -396,7 +396,7 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
