@@ -142,7 +142,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | Call | Behaviour |
 |------|-----------|
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range — so to count a rejected bar rather than re-feed it, call `advance()`. (See the note below for the one composed-indicator corner.) |
+| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range — so to count a rejected bar rather than re-feed it, call `advance()`. |
 | `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses. `update` throws the same there, and that one does not clear: open a new stream on a shorter history. `peek` counts no bar and is not subject to it. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 

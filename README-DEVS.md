@@ -127,6 +127,8 @@ Any dev with permission to merge to main branch can do a release.
 (12) Monitor homebrew-core. The formula is updated within about an hour:
 https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/t/ta-lib.rb
 
+(13) If FMA_TRANSITION_TOLERANCE is still 1 in "src/tools/ta_regtest/test_codegen.c", re-freeze the bit-exact oracle onto the tag just published; the RE-FREEZE note beside that macro has the steps. Until it is done, "--fuzz-064" compares at 1e-9 instead of hash-exact.
+
 
 ## After a release
 

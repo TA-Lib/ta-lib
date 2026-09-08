@@ -268,9 +268,7 @@ Shape rules that are not visible in those lines:
   `clone` there reads as scikit-learn's, which returns the parameters WITHOUT
   the fitted state, the opposite of what a handle copy owes. Java's spelling
   needs no `Cloneable` and never calls `super.clone()`, which is what the
-  standard objection to Java `clone()` actually attaches to; the remedy that
-  objection prescribes is a copy constructor, which is what every backend
-  already emits.
+  standard objection to Java `clone()` actually attaches to.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality in Java (arrays are identical or disjoint, so that is complete) and by
   `Span<T>.Overlaps` in C#, which additionally catches the PARTIAL overlap Java
