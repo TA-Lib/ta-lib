@@ -53,6 +53,7 @@ TA_SMA_Close( s );
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
 - **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
+- **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 

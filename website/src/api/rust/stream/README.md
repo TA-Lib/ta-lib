@@ -50,8 +50,9 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 
 - **Warm-up.** `open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
-- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
+- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+- **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 
@@ -110,4 +111,4 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Discovering streamable functions
 
-When driving TA-Lib through the [abstraction layer](/api/#abstract), streamable functions carry the `TA_FUNC_FLG_STREAM` flag in their function info.
+When driving TA-Lib through the [abstraction layer](/api/rust/#abstract), streamable functions carry `FuncFlags::STREAM` in `FuncInfo::flags`.
