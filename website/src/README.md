@@ -1,6 +1,6 @@
 ---
 title: TA-Lib
-description: "Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI, Bollinger Bands), candlestick patterns, a C/C++ core and wrappers for Python and R."
+description: "Open-source technical analysis library: 200+ indicators (ADX, MACD, RSI), candlestick patterns. Native C/C++, Java, C# and Rust, plus Python and R wrappers."
 toc: false
 ---
 
