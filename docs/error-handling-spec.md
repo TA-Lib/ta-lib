@@ -190,6 +190,11 @@ has what happens instead.
 `[0, historyLen - 1]`, so S1–S6 are B1–B6 answering the same code for
 the same fault.
 
+**S6 is `—` in Rust because it cannot be provoked.** `OpenAndFill` takes each
+output as its own `&mut` slice, so two outputs, or an output and the input,
+cannot name the same buffer while the call is live. The batch tier emits B6's
+pointer comparison anyway; the streaming tier emits nothing.
+
 **The warm-up check comes last**, because it is the one thing the batch tier has
 no analogue for: a *history* shorter than the lookback cannot open a
 stream at all (`TA_INSUFFICIENT_HISTORY`).

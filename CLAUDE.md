@@ -37,8 +37,10 @@ The correctness baseline every backend is verified against is the frozen
 pre-cutover reference (tag `reference-pre-cutover`, served as `ta_ref_serve`)
 plus the hardcoded `ta_regtest` expected values.
 
-See `ta_codegen/generator/CLAUDE.md` for generator internals and
-`src/tools/ta_regtest/CLAUDE.md` for the test-runner spec.
+See `ta_codegen/generator/CLAUDE.md` for generator internals,
+`src/tools/ta_regtest/CLAUDE.md` for the test-runner spec, and
+`website/src/contribute/README.md` for the process of adding or changing an
+indicator, which the `/new-ta-func` skill drives.
 
 ### Source of Truth: ta_codegen/input/
 
@@ -55,11 +57,20 @@ the last word:
 
 - Every `.c` is re-indented in place by a format pre-pass before anything else
   runs. It changes whitespace only, but it does overwrite hand indentation — so
-  when the layout comes out wrong, fix `src/formatter.rs`, not the file.
+  when the layout comes out wrong, fix `ta_codegen/generator/src/formatter.rs`,
+  not the file.
 - `internal_error_ids.yaml` hands each C internal-error guard its
   `TA_INTERNAL_ERROR(<id>)`, so the number a caller reports keeps naming the same
   guard across releases. Append-only — a full C run assigns the new keys and
   drops the dead ones; never renumber an existing entry by hand.
+
+Do not hand-edit **generated** files under `ta_codegen/output/` — they are
+overwritten on the next `generate`. The converse trap: some hand-written source
+lives under `output/` too (the Java shared types, `Core.java` outside the GENCODE
+markers, the test suites, the C# `TALib.csproj`); the generator preserves those
+and never overwrites them. `pom.xml` is maintained by `ta_codegen`.
+
+### API tiers and entry points
 
 The managed backends have **two** batch tiers: `public OutRange <N>(...)`, which
 validates array lengths and throws on a rejection, and `<N>_Impl` — the
@@ -98,12 +109,11 @@ Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
 The guard sits on the public frame because that is the only one handed an array
 it did not vet: the plain open sinks into fresh arrays, and a composed call's
 destination is already proved disjoint by `SubCallStep::is_fusable`. Rust emits
-none — two aliasing `&mut` slices are unspellable in safe code, which is why the
-spec scores rule S6 `—` there. `MA`
-(Dispatch) and `MAVP` (PeriodBank) are exempt and hand-roll a body per entry
-point — theirs differ by which callee tier they call and by an anchor clamp, not
-by a stride — so their `_OpenImpl` takes no `outStride`, which is the
-discriminator the gates key on rather than a name list.
+none — two aliasing `&mut` slices are unspellable in safe code. `MA` (Dispatch)
+and `MAVP` (PeriodBank) are exempt and hand-roll a body per entry point — theirs
+differ by which callee tier they call and by an anchor clamp, not by a stride —
+so their `_OpenImpl` takes no `outStride`, which is the discriminator the gates
+key on rather than a name list.
 
 A cross-call inside a body calls the callee's *public* tier, in all four
 backends, and lets its rejection surface: a throw in Java and C#, an
@@ -129,12 +139,6 @@ macro keeps the flag guard so an unconsumed component is skipped rather than
 clobbered, which makes the fix a no-op on every call that succeeds.
 `metadata_price_setter_validates_before_writing` pins all four on the PR gate,
 because the four runtime probes are nightly-only.
-
-Do not hand-edit **generated** files under `ta_codegen/output/` — they are
-overwritten on the next `generate`. The converse trap: some hand-written source
-lives under `output/` too (the Java shared types, `Core.java` outside the GENCODE
-markers, the test suites, the C# `TALib.csproj`); the generator preserves those
-and never overwrites them. `pom.xml` is maintained by `ta_codegen`.
 
 ## Comments and docs: guidance, not narration
 
@@ -210,19 +214,17 @@ cargo test                                       # ta_codegen's own test suite
 
 ## Cross-Language Regression Testing
 
-`ta_regtest` is the **universal test runner**. Rather than linking each language's
-compiled code, it drives one generated JSON-RPC server per language over
-stdin/stdout and compares every call against the C reference.
+`ta_regtest` is the **universal test runner**: rather than linking each language's
+compiled code, it drives one generated JSON-RPC server per language over pipes and
+compares every call against the C reference.
 
 A **correctness** request goes through each language's PUBLIC API, and the server
-turns the exception back into the `retCode` / `outBegIdx` / `outNBElement` wire
-shape — normalisation is the server's job, not the library's. In **Java and C#** a
-request that declares itself timed (`"timed":1`, which only `ta_bench` sends)
-calls the BODY inside the timed loop, because these servers are also the
-cross-language benchmark and nothing measured may quietly acquire the public
-tier's argument checks. Rust has no such split: `tools` is a separate crate, so
-the public entry point is the only one it can reach. Flags, tolerances and the
-individual gates are specified in `src/tools/ta_regtest/CLAUDE.md`.
+normalises the exception back into the `retCode` / `outBegIdx` / `outNBElement`
+wire shape; that is the server's job, not the library's. In **Java and C#** a
+request declaring itself timed (`"timed":1`, sent only by `ta_bench`) calls the
+BODY instead: these servers double as the cross-language benchmark, and nothing
+measured may quietly acquire the public tier's argument checks. Rust cannot split,
+`tools` being a separate crate.
 
 A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the
 autotools `Makefile.am` — the dist-verification CI path builds with autotools, so
@@ -239,47 +241,15 @@ Indicators are methods on a `Core` struct, one file per indicator.
 - **The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`, and it
   owns the argument contract** — index range, parameters, then every buffer
   length, answering `BadParam`. Its input bound takes no sub-lookback escape, so
-  it is strictly stronger than the assert below and a `pub fn` call cannot reach
-  one that would reject it. It is also the tier every cross-indicator call
-  enters, so the same bound holds on the composed path.
+  it is strictly stronger than each body's bounds-assert preamble: a `pub fn`
+  call cannot reach an assert that would reject it, on the direct or the composed
+  path.
 - Indexing is safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds
-  precondition panics rather than being undefined behavior. Each body carries a
-  bounds-assert preamble (the LLVM proof that elides per-access bounds checks),
-  skipped when the lookback clamp means the call computes nothing, so a call
-  returning `Success` with zero elements cannot panic. Nothing but `pub fn <N>`
-  and the phantom-I/O sweep reaches it, so a panic there is a generator bug —
-  which is what an `assert!` is for.
-- **Cross-indicator calls target the callee's PUBLIC entry point**, as in C, Java
-  and C#. `<N>_Impl` stays the crate-private numerics tier — C's `RetCode` +
-  out-param shape, which is what the transcription is written against — with only
-  `pub fn <N>` and the phantom-I/O sweep calling it. `?` is unavailable inside
-  `<N>_Impl`, which returns a bare `RetCode`, so each site binds the returned
-  range with a `match`, assigns both out-params, then sets
-  `retCode = RetCode::Success`; the guard that followed is folded out
-  (`ir_cleanup::drop_answered_cross_call_guards`), while the assignment stays
-  because some sites fold "success with zero output" into the same conditional. A
-  `Result`-returning `<n>_open_impl` spells the error arm `return Err(_e)`. The
-  `mem::swap` shim for an in-place callee is unchanged and still owed. Reach is
-  what settles the tier choice: `no_phantom_io` probes `<N>_Impl`, so a callee's
-  public input bound answering before any array is touched would blind it —
-  `analyze_dispatch` admits a leading "nothing to produce" guard instead. C
-  cannot converge the other way: a cross-call is cross-TU there, so a C `_Impl`
-  could not be `static` and would be new ABI in the shipped `.so`.
+  precondition panics rather than being undefined behavior. Only `pub fn <N>` and
+  the phantom-I/O sweep reach `<N>_Impl`, so a panic there is a generator bug.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.
-
-## Adding or Modifying an Indicator
-
-1. Edit the definition in `ta_codegen/input/<name>/` (C logic) and/or its YAML
-2. `cd ta_codegen/generator && cargo run -- generate` (optionally `--func=<NAME>`)
-3. `scripts/build.py servers` to rebuild the language servers
-4. `cd bin && ./ta_regtest --codegen --function=<NAME>` to verify every backend
-   against the C reference
-5. **Verify other languages' output is unchanged** when fixing one backend
-   (`git diff` the generated files)
-
-The `/new-ta-func` skill automates picking up and resuming this work.
 
 ## Two build flags that must stay in step
 

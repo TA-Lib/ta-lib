@@ -18,7 +18,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - AO: Awesome Oscillator (#227)
   - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
-  - CVI: Chaikin's Volatility, the percent change of a smoothed high-low spread (#358)
+  - CVI: Chaikin's Volatility (#358)
   - COPPOCK: Coppock Curve (#362)
   - CUMSUM: Cumulative Sum (#372)
   - DONCHIAN: Donchian Channels (#342)
@@ -33,14 +33,14 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - KC: Keltner Channels (#273)
   - KDJ: KDJ Stochastic (#365)
   - MARKETFI: Market Facilitation Index (#230)
-  - MASSI: Mass Index, a range-expansion reversal-bulge detector (#359)
+  - MASSI: Mass Index (#359)
   - NVI: Negative Volume Index (#126)
   - PERCENTILE: Percentile, statistic of the trailing window (#368)
   - PERCENTRANK: Percent Rank, share of the previous window a value ranks above (#369)
   - PVI: Positive Volume Index (#126)
   - PVO: Percentage Volume Oscillator (#119)
   - PVT: Price Volume Trend (#364)
-  - QSTICK: Qstick (#226)
+  - QSTICK: Qstick, from Tushar Chande and Stanley Kroll (#226)
   - RMA: Wilder's Smoothed Moving Average (#348)
   - RVI: Relative Volatility Index (#366)
   - RVOL: Relative Volume (#370)
@@ -63,22 +63,20 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Faster
 - ~8x: MACD, MACDFIX and MACDEXT (when MA type is EMA).
 - ~3x to 7x: DEMA, TEMA and TRIX
+- ~2x to 4x: ATR and NATR (#338)
 - ~2x: ACCBANDS, MFI (#244), SQRT (#192). Thanks @kevinlincg !
 - ~1.6x to 15x: MIN, MAX, MINMAX, MIDPOINT, MIDPRICE and WILLR (#147). Thanks @kevinlincg !
 - ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
-- ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
+- ~27% Apple, ~8% GCC: AROON, AROONOSC and others (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
-- ~3x to 4.7x: ATR and NATR (#338), and ~1.4x SUPERTREND / ~1.3x KC with them. The upper end needs the gcc/glibc/x86_64 hardware-FMA clone; elsewhere it is ~2x.
 
 ### Changed
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
-- (#338) ATR, NATR and SUPERTREND smooth the true range with a fused two-coefficient step
-  instead of multiply, add, divide, which takes the divide out of the loop-carried chain.
-  Values move by at most 1.3e-15 relative from the reference series, and KC inherits the
-  same shift through its ATR. Period 1 and 2 are unchanged.
+- (#338) ATR, NATR smooth the true range with a fused two-coefficient step, thus changing
+  the order of operations. Values moved by at most 1.3e-15 from legacy results.
 - (#183) EMA now uses a fused multiply-add in its recursion, as the EMA cascades inside
   DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most 2.8e-16 relative
   from the reference series, and the same shift reaches MA, BBANDS, APO, PPO, PVO, MAVP,
@@ -87,9 +85,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
 - (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);
   above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX`.
-  A stream handle lives in the same domain: the last bar it can count is `TA_MAX_INDEX`,
-  and past it `Update` and `Advance` report `TA_OUT_OF_RANGE_END_INDEX`.
-- (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
+ - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 - (#386) API: the shared library's SONAME is now `libta-lib.so.1`. The two build systems
@@ -98,27 +94,18 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   `TALIB_LIBRARY_VERSION` in `configure.ac`, and it changes only when the ABI does, not
   every release. Binaries linked against the old names must be relinked; they will fail to
   load rather than silently misreading `TA_FuncInfo`.
+- (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 
 ### Removed
 - (#400) API: the shared library now exports only what the installed headers declare — 2,452
-  symbols instead of 3,968. The 1,516 removed were internals no header ever mentioned: the
-  `TA_<NAME>_OpenInternal` / `_OpenAndFillInternal` seams, the `_FramePP` / `_FramePPLB` frame
-  helpers, the `TA_DEF_*` / `TA_INFO_*` interface tables and the `target_clones` dispatch
-  resolvers. Nothing that compiles against `ta_libc.h` can have used them: no installed header
-  declared any of them, and none is reachable through the documented API. Code that linked one
-  anyway must stop. `TA_SetCompatibility()` and `TA_GetCompatibility()` are unaffected — they are
-  now exported from the Windows DLL too, which no released version did.
-- (#386) API: `include/ta_func_unguarded.h`, with the 161 `TA_<NAME>_Unguarded` functions and
-  `TA_EMA_Private`. The header declared them `TA_LIB_API` and described them as exported public
-  API. Call the ordinary `TA_<NAME>` functions instead, which validate their arguments.
+  symbols instead of 3,968. The 1,516 removed were internals no header ever mentioned.
 - (#386) API: `TA_FuncInfo.camelCaseName`. Code that reads it no longer compiles. Code that reads
   any field after it — `flags`, `nbInput`, `nbOptInput`, `nbOutput`, `handle` — must be rebuilt:
   the struct is 8 bytes smaller and every one of those fields moves.
-- (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared and exported, so existing sources still compile and link, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
+- (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared and exported, so existing sources still compile and link, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. Moving forward TA-Lib no longer supports "Compatibility Settings".
 
 ### Fixed
-- (#386) The `.deb` declared `prefix=/usr/local` in `ta-lib.pc` while installing into `/usr`, so `pkg-config` reported paths the package never populated — and preferred a stale TA-Lib under `/usr/local` where one existed.
-- (#385) KAMA could divide by zero and return `-Inf`, after which every remaining bar of the call was NaN. It needs a window whose one-bar changes sum to exactly zero through floating-point absorption while the net change over that window is negative.
+- (#385, #390) On divide by zero, KAMA could return `-Inf`, after which every remaining bar of the call was NaN, and could return values outside the range of the prices it was smoothing. Output is now always a valid number.
 - (#130) In-place calls (same buffer as input and output) returned wrong values for STOCH, STOCHF and MAVP. Regular (separate-buffer) calls were always correct.
 - (#118,#242) VAR, CORREL, STDDEV and BBANDS more precise and faster.
 - (#33) Float overflow in the single-precision (`TA_S_*`) functions. Thanks @iglesias !
@@ -130,7 +117,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#107) MFI and STOCHRSI could return a wrong value when floating-point rounding left a near-zero result that was then compared exactly against zero. Thanks @Caleblgx, @trufanov-nok and @mrjbq7 !
 - (#4,#14) MFI and IMI are no longer flagged as having an unstable period. Thanks @mw66 and @wony-zheng !
 - (#99) BBANDS with `TA_MAType_MAMA` and a period >= 34 returned a misaligned middle band.
-- (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance (regression only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
 - (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the calculation cancels to either side of zero; it now returns 0.0 instead.
@@ -138,9 +124,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#244) MFI returned 0 instead of the index whenever the window summed to less than 1.0. Also, no longer returns values slightly outside 0-100 (clamps the epsilon errors).
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
 - (#390) STOCH and STOCHF returned `inf` or `NaN` while reporting success, for prices near the bottom of the double range. A close sitting on the window high now comes out as exactly 100.
-- (#390) KAMA could return values outside the range of the prices it was smoothing, and ER values above 1. Both come from the same efficiency ratio exceeding its own maximum when floating-point drift left the running sum of price movement below the net move it bounds. The ratio is now clamped, making ER a hard 0..1.
-- (#395) CCI returned `+/-Inf` while reporting success, and CORREL returned `NaN` or a perfect +/-1 correlation from a window that had none, for prices near the bottom of the double range. Both now test the divisor itself, and answer such a window with 0 like any other degenerate one. Values are unchanged everywhere the old code returned a number.
-- (#395) WILLR could return values outside its documented [-100, 0] range, and answered 0 - the value meaning a close at the period high - for a close sitting on the period low whenever the window's high-low range was very small. A close on the period low now comes out as exactly -100, the range is guaranteed even for a close outside its own bar, and a window flat to within rounding of its own prices answers 0, as STOCH and STOCHF already did.
+- (#395) On extreme inputs, CCI could return `+/-Inf`, CORREL a `NaN` or a perfect +/-1 correlation from a window that had none, and WILLR a value outside its documented [-100, 0] range, all while reporting success. CCI and CORREL now answer such a window with 0, like any other degenerate one, and WILLR is always in range, with a close on the period low coming out as exactly -100.
 
 ## [0.7.1] 2026-07-03
 ### Added
