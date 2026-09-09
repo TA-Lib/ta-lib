@@ -3,7 +3,7 @@
 [![main nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml) [![dev nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml)
 
 # TA-Lib - Technical Analysis Library
-This is now the official home for C/C++ TA-Lib (instead of SourceForge).
+This is the official home for TA-Lib Core.
 
 More info [https://ta-lib.org](https://ta-lib.org)
 
