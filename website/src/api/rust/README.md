@@ -217,18 +217,11 @@ Optional parameters left unset carry the same default sentinel an omitted argume
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-Some indicators are recursive, so their earliest values depend on how much history precedes them. The [unstable period](/api/unstable-period/) setting controls how many of those warm-up bars are discarded. It lives on `Core` and is set through the builder:
+Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-```rust
-use ta_lib::{Core, FuncUnstId};
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core::MAX_INDEX`](#index_range).
 
-let core = Core::builder()
-    .unstable_period(FuncUnstId::EMA, 10)
-    .build()?;
-```
-
-The setters are infallible so that they chain; `build()` reports a rejected
-argument once, as `RetCode::BadParam`.
+Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
@@ -244,6 +237,9 @@ let core = Core::builder()
     )
     .build()?;
 ```
+
+The setters are infallible so that they chain; `build()` reports a rejected
+argument once, as `RetCode::BadParam`.
 
 ### 4.4 Index Range {#index_range}
 

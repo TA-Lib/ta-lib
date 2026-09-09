@@ -3,7 +3,7 @@ title: Numerical Stability
 description: "What it means for an indicator to be start-independent, to carry an initial unstable period, to depend on the MA type selected, or to be path-dependent."
 ---
 
-The [Function Documentation](/functions/) specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on how much history you passed in?**
+The [Function Documentation](/functions/) specifies which of the four categories below applies to each function. They answer a single practical question: **does the value at a given bar depend on where the series you passed in begins?**
 
 ## If Start-Independent, then... {#start-independent}
 

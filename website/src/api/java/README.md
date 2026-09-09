@@ -181,18 +181,11 @@ Streamable functions carry the `FuncFlags.STREAMING` bit in `FunctionInfo#flags(
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-Some indicators are recursive, so their earliest values depend on how much history precedes them. The [unstable period](/api/unstable-period/) setting controls how many of those warm-up bars are discarded. It lives on `Core` and is set through the builder:
+Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-```java
-import io.github.talib.Core;
-import io.github.talib.FuncUnstId;
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.MAX_INDEX`](#index_range).
 
-Core core = Core.builder()
-    .unstablePeriod(FuncUnstId.EMA, 10)
-    .build();
-```
-
-Each setter throws immediately (`IllegalArgumentException`) if the period is out of range — unlike Rust and C#, a Java builder has no `build()`-time rejection to defer to.
+Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
@@ -207,6 +200,8 @@ Core core = Core.builder()
     .candleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.0)
     .build();
 ```
+
+Each setter throws immediately (`IllegalArgumentException`) if an argument is out of range; unlike Rust and C#, a Java builder has no `build()`-time rejection to defer to.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 

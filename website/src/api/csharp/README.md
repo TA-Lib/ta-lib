@@ -177,15 +177,11 @@ An index out of range, a type that does not match the declared parameter, or an 
 
 ### 4.2 Numerical Stability {#numerical_stability}
 
-Some indicators are recursive, so their earliest values depend on how much history precedes them. The [unstable period](/api/unstable-period/) setting controls how many of those warm-up bars are discarded. It lives on `Core` and is set through the builder:
+Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-```csharp
-var core = Core.Builder()
-    .UnstablePeriod(FuncUnstId.RSI, 10)
-    .Build();
-```
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.MAX_INDEX`](#index_range).
 
-The setters chain, so they cannot report a rejection at the point it happens; the first one is latched and surfaced by `Build()`, which throws `ArgumentOutOfRangeException`.
+Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
@@ -196,6 +192,8 @@ var core = Core.Builder()
     .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 0.1)
     .Build();
 ```
+
+The setters chain, so they cannot report a rejection at the point it happens; the first one is latched and surfaced by `Build()`, which throws `ArgumentOutOfRangeException`.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 

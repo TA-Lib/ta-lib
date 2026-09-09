@@ -999,8 +999,8 @@ fn build_stability_page(
     s.push_str(
         "The [Function Documentation](/functions/) specifies which of the four categories below \
          applies to each function. They answer a single \
-         practical question: **does the value at a given bar depend on how much history you \
-         passed in?**\n\n",
+         practical question: **does the value at a given bar depend on where the series you \
+         passed in begins?**\n\n",
     );
 
     s.push_str("## If Start-Independent, then... {#start-independent}\n\n");
