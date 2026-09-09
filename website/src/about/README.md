@@ -33,6 +33,7 @@ The people behind some of TA-Lib's major features.
 | **Richard Gomes** | Java abstract/reflection layer — the `meta` package: annotation-based RTTI and late-bound (dynamic) TA-function invocation. |
 | **Paweł Konieczny** | Early contributor to `ta_regtest`, the build system and the now-defunct `ta_data` feature. |
 | **Alexander Trufanov** — [@trufanov-nok](https://github.com/trufanov-nok) | Numerical-robustness improvements and streaming-API inspiration. |
+| **[@kevinlincg](https://github.com/kevinlincg)** | Multiple new TA functions, plus optimizations, fixes and test coverage across the generator and every backend. |
 
 ### Language wrappers {#wrappers}
 
