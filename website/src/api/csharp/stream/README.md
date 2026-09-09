@@ -20,7 +20,7 @@ Each streamable function adds two factory methods on `Core` and a handful of mem
 
 One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
 
-Additional read-only [utility functions](#utility-calls) are available.
+Additional [utility functions](#utility-calls) are available.
 
 There is **no `Dispose`**: a stream owns only managed state — its arrays, its sub-streams and a `Core` reference — so an unreferenced stream is simply collected. The stream types deliberately do not implement `IDisposable`.
 
@@ -51,7 +51,6 @@ double provisional = s.Peek(formingClose);       // state left unchanged
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `Update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 - **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SmaOpen(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
-- **Not serializable.** The constructors are `internal`, so no partially built stream can be minted or deserialized. To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 
@@ -117,14 +116,14 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.MAX_INDEX`. A rejection changes nothing at all — no state, no value, and no range; to count a rejected bar rather than re-feed it, call `Advance()`. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `MAX_INDEX` ceiling.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, or a bar past `Core.MAX_INDEX`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `MAX_INDEX` ceiling.
 
 | Condition | Exception |
 |---|---|
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
 | A non-finite bar (NaN or ±Inf), or a non-finite real parameter | `ArgumentException` |
-| A bar past `Core.MAX_INDEX` — from `Update` or `Advance`; `Peek` counts no bar and is not subject to it | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex`. It does not clear: open a new stream on a shorter history. |
+| A bar past `Core.MAX_INDEX`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 

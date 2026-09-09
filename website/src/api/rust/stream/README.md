@@ -20,7 +20,7 @@ Each streamable function adds two constructors on `Core` and a handful of method
 
 One more call, `open_and_fill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
 
-Additional read-only [utility functions](#utility-calls) are available.
+Additional [utility functions](#utility-calls) are available.
 
 There is no `close` — dropping the stream closes it (RAII).
 
@@ -44,7 +44,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::MAX_INDEX` — the last index the batch API addresses — and that one does not clear, so a handle that reaches it is done; `peek` counts no bar and is not subject to it. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()` (see [Utility Calls](#utility-calls)).
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. They also reject a bar past `Core::MAX_INDEX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
 
 ## Rules
 
@@ -52,7 +52,6 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
-- **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 

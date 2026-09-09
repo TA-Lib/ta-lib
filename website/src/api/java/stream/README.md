@@ -24,7 +24,7 @@ pattern) return. A multi-output one writes into a sink you pass and own — see
 
 One more call, `openAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
 
-Additional read-only [utility functions](#utility-calls) are available.
+Additional [utility functions](#utility-calls) are available.
 
 There is no `close` — a stream is ordinary heap state, so an unreferenced stream is simply garbage-collected.
 
@@ -54,7 +54,6 @@ double provisional = s.peek(formingClose);      // state left unchanged
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
-- **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 
@@ -137,8 +136,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | Call | Behaviour |
 |------|-----------|
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range — so to count a rejected bar rather than re-feed it, call `advance()`. |
-| `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses. `update` throws the same there, and that one does not clear: open a new stream on a shorter history. `peek` counts no bar and is not subject to it. |
+| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
+| `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 
 ## Discovering streamable functions

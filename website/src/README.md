@@ -14,7 +14,8 @@ toc: false
 
 - 200+ indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... [See complete list...](/functions/)
 - Candlestick patterns recognition
-- Core written in [C/C++](/api/), with wrappers available for Python, R, and [more](/install/#wrappers).
+- Native implementation in [C/C++](/api/), [Java](/api/java/), [C#](/api/csharp/) and [Rust](/api/rust/).
+- Wrappers for Python, R, and [more](/install/#wrappers).
 - Open-Source (BSD License). Can be freely integrated in your own open-source or commercial applications.
 
 TA-Lib implements standard technical analysis algorithms used across the industry — stable, well-tested, and production-proven.

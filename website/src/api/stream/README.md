@@ -21,7 +21,7 @@ Every TA function gets these calls:
 
 One more call, `OpenAndFill`, writes array output instead of a single value — see [Array-Fill Open](#array-fill-open) below.
 
-Additional read-only [utility functions](#utility-calls) are available.
+Additional [utility functions](#utility-calls) are available.
 
 ## Example (SMA)
 
@@ -53,7 +53,6 @@ TA_SMA_Close( s );
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
 - **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
-- **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
 
@@ -113,7 +112,7 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | Call | Returns |
 |------|---------|
 | `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_START_INDEX` when `historyLen` is 0</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_MAX_INDEX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
-| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no output, and no range — so the next call sees exactly what the last accepted bar left. The exception is an overflow inside the library's own arithmetic, which is undefined in both APIs — close such a handle rather than feeding it further. To count a rejected bar rather than re-feed it, call `TA_<NAME>_Advance` (see [Utility Calls](#utility-calls)).<br>`TA_<NAME>_Update` also reports `TA_OUT_OF_RANGE_END_INDEX` once the range has reached bar `TA_MAX_INDEX`, the last index the batch API addresses. That one does not clear: close the handle and open a new one on a shorter history. `TA_<NAME>_Peek` counts no bar and is not subject to it. |
+| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | <ul><li>`TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf</li><li>`TA_OUT_OF_RANGE_END_INDEX` once the range has reached bar `TA_MAX_INDEX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no output, and no range — so the next call sees exactly what the last accepted bar left. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_<NAME>_Value` | `TA_BAD_PARAM` on a NULL stream or a NULL out-pointer for a required output. A declinable output may be NULL, and is then simply not written. |
 | `TA_<NAME>_Clone` | `TA_BAD_PARAM` on a NULL stream or a NULL `clone`; `TA_ALLOC_ERR` if any allocation fails. On either, `*clone` is NULL and the original is untouched. |
