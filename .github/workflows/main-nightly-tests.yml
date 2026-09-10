@@ -298,6 +298,42 @@ jobs:
         shell: bash
         run: python3 scripts/rust_package_check.py
 
+  # Java on the release branch (#172 C5), the mirror of the `rust` job above.
+  # `build --backend=java` builds the three publishable jars with the committed
+  # Maven wrapper and then tests THAT artifact. Until now it was reached only
+  # through dev-nightly's cross-language job, so on the branch a release is cut
+  # from, nothing had ever built the jar. `xlang-hash` looks like it covers this
+  # and does not: it builds the Java SERVER, which embeds its own Core copy, not
+  # the Maven artifact.
+  #
+  # Not gated on 'test', for the same reason the Rust job is not: no C build is
+  # needed, so a dist-pool failure must not skip the release branch's only Java
+  # coverage. `unzip` is preinstalled on ubuntu-latest and the wrapper downloads
+  # and SHA-256-verifies Maven itself, so the JDK is the only thing to install.
+  java:
+    name: Java jars built and tested (release branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Build the publishable jars and run every suite against them
+        shell: bash
+        run: |
+          if ! cargo run --release --manifest-path ta_codegen/generator/Cargo.toml -- build --backend=java; then
+            echo "::error::The Java artifact on main does not build or does not pass its own suites; see the log above. Central is immutable, so this must be green before a publish."
+            exit 1
+          fi
+
   # regen-check on the release branch (#179 E5): the same command the PR gate and
   # dev-nightly run, here for the commits only main sees (the dist bot's, which
   # rewrite a tracked header, and hotfixes). Not gated on 'test' -- it regenerates
