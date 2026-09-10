@@ -342,6 +342,33 @@ static int ref_diverges_on_partial_range( const char *name, TA_Integer startIdx,
  * dark. Mirrors the sentinel floor below. */
 static long g_codegenCompared[NUM_LANGUAGES];
 
+/* Offsets above each IntegerRange default that the large-period pass stresses.
+ * Two, because one alone fixes the PARITY of every stressed period: the defaults
+ * are usually even, so +50 reaches only even periods and never the odd arm of a
+ * parity-split body. It also fixes whether the period is a power of two, where
+ * 1/period is exact -- RSI's default+50 is 64, so a scaling change from a divide
+ * to a reciprocal is bit-identical there. That second effect is invisible to
+ * THIS leg, which diffs against ta_ref_serve at CODEGEN_EPSILON_DOUBLE, but the
+ * period it selects is also what --xlang-hash and the stream legs inherit, and
+ * those compare bitwise. */
+static const int LARGE_INT_OFFSETS[] = { 50, 51 };
+#define NB_LARGE_INT_OFFSETS ((int)(sizeof(LARGE_INT_OFFSETS)/sizeof(LARGE_INT_OFFSETS[0])))
+
+/* Output slots visited per large-period offset, one per (function, output) the
+ * pass reached. Not every visit ends in a value diff -- an unsupported or
+ * value-exempt function is counted here and compared nothing -- so this is a
+ * measure of REACH, which is what the floor below needs. */
+static long g_largePeriodCompared[NB_LARGE_INT_OFFSETS];
+
+/* Floors on the large-period pass, deliberately LITERAL rather than derived from
+ * LARGE_INT_OFFSETS: a count computed from the table would shrink with it, so
+ * deleting an offset would still "pass its floor" -- which is the regression this
+ * exists to catch. Same reasoning as LEGACY_FLOOR_* in ta_test_legacy.c. Raising
+ * the corpus only makes LARGE_PERIOD_FLOOR easier to clear; lowering it has to be
+ * said here. */
+#define LARGE_INT_OFFSETS_EXPECTED 2
+#define LARGE_PERIOD_FLOOR         200
+
 /* Which fuzz data shapes the stream legs actually requested this run. The
  * variant->shape mapping has drifted before (#240 left MONO_UP requested by
  * nobody), and nothing downstream notices a shape that is never asked for. */
@@ -935,8 +962,10 @@ typedef struct {
     /* Error tracking */
     ErrorNumber codegenError;
 
-    /* When set, build_json_request uses a large value for every IntegerRange
-     * opt param (Task 10 large-period coverage) instead of the default. */
+    /* When non-zero, the offset above the default that build_json_request uses
+     * for every IntegerRange opt param (Task 10 large-period coverage). Carries
+     * the offset rather than a flag so the two passes below emit the same period
+     * the holder was set to; 0 means "use the default". */
     int useLargePeriod;
 
     /* Ref differential sweep: when optOverrideActive, build_json_request
@@ -1002,15 +1031,19 @@ static void run_float_leg(CodegenRangeTestParam *p, int withSentinel);
 
 /* A stress period for an IntegerRange opt param: above the historical CIRCBUF
  * static buffers (50/30), clamped to [min,max] and bounded so meaningful output
- * remains. Uses default+50 (not a fixed constant) so multi-period functions like
- * APO/PPO/ADOSC keep their fast<slow ordering and don't collapse to an all-zero
- * difference series (which would make the comparison pass while verifying nothing). */
-static int compute_large_int(const TA_OptInputParameterInfo *optInfo, int nbBars)
+ * remains. Uses default+offset (not a fixed constant) so multi-period functions
+ * like APO/PPO/ADOSC keep their fast<slow ordering and don't collapse to an
+ * all-zero difference series (which would make the comparison pass while
+ * verifying nothing).
+ *
+ */
+static int compute_large_int(const TA_OptInputParameterInfo *optInfo, int nbBars,
+                             int offset)
 {
     const TA_IntegerRange *r = (const TA_IntegerRange *)optInfo->dataSet;
     int lo = r ? (int)r->min : 1;
     int hi = r ? (int)r->max : 1;
-    int target = (int)optInfo->defaultValue + 50;
+    int target = (int)optInfo->defaultValue + offset;
     if( target > hi ) target = hi;
     if( target > nbBars - 5 ) target = nbBars - 5;
     if( target < lo ) target = lo;
@@ -1021,7 +1054,8 @@ static int compute_large_int(const TA_OptInputParameterInfo *optInfo, int nbBars
  * (enums) and Real* params are left at their defaults. Returns the count that
  * ended up strictly larger than the default (so a large-period pass is meaningful). */
 static int set_large_opt_periods(TA_ParamHolder *paramHolder,
-                                 const TA_FuncInfo *funcInfo, int nbBars)
+                                 const TA_FuncInfo *funcInfo, int nbBars,
+                                 int offset)
 {
     unsigned int i;
     int nLarger = 0;
@@ -1031,7 +1065,7 @@ static int set_large_opt_periods(TA_ParamHolder *paramHolder,
         TA_GetOptInputParameterInfo(funcInfo->handle, i, &optInfo);
         if( optInfo->type != TA_OptInput_IntegerRange )
             continue;
-        int large = compute_large_int(optInfo, nbBars);
+        int large = compute_large_int(optInfo, nbBars, offset);
         if( large > (int)optInfo->defaultValue )
             nLarger++;
         TA_SetOptInputParamInteger(paramHolder, i, large);
@@ -1183,7 +1217,8 @@ static int build_json_request(CodegenRangeTestParam *p,
         case TA_OptInput_IntegerRange:
             pos = codegen_appendf(buf, bufSize, pos, "%d",
                 p->optOverrideActive ? (int)p->optOverride[i]
-                : p->useLargePeriod  ? compute_large_int(optInfo, p->nbBars)
+                : p->useLargePeriod  ? compute_large_int(optInfo, p->nbBars,
+                                                        p->useLargePeriod)
                                      : (int)optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerList:
@@ -2408,14 +2443,18 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * lookback exceeds the test history (e.g. high EMA-multiplier functions like T3)
      * produces no output and is skipped here — such functions have no period-sized
      * buffer, so the overflow class does not apply to them. */
-    if( params.codegenError == TA_TEST_PASS )
+    for( int lo = 0;
+         lo < NB_LARGE_INT_OFFSETS && params.codegenError == TA_TEST_PASS;
+         lo++ )
     {
-        int nLarge = set_large_opt_periods(paramHolder, funcInfo, params.nbBars);
+        const int largeOffset = LARGE_INT_OFFSETS[lo];
+        int nLarge = set_large_opt_periods(paramHolder, funcInfo, params.nbBars,
+                                           largeOffset);
         if( nLarge > 0 )
         {
             /* Large-period baseline also comes from ta_ref_serve; the same request
              * (built with useLargePeriod) then drives the language server. */
-            params.useLargePeriod = 1;
+            params.useLargePeriod = largeOffset;
             build_json_request(&params, 0, params.nbBars - 1);
             ErrorNumber lref = codegen_pipe_call(params.refCp, params.requestBuf,
                                                  params.responseBuf, JSON_BUF_SIZE);
@@ -2437,14 +2476,18 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         /* Reference produced output at this period but the backend
                          * errored only at the large period -- a real divergence, not
                          * an unsupported-skip. */
-                        printf("CODEGEN MISMATCH [TA_%s]: large-period (lnb=%d) server "
-                               "error where C reference succeeded\n",
-                               funcInfo->name, (int)params.lastNbElement);
+                        printf("CODEGEN MISMATCH [TA_%s]: large-period +%d (lnb=%d) "
+                               "server error where C reference succeeded\n",
+                               funcInfo->name, largeOffset,
+                               (int)params.lastNbElement);
                         params.codegenError = TA_CODEGEN_RETCODE_MISMATCH;
                     }
                     else
                         for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
+                        {
                             compare_codegen_output_generic(&params, o);
+                            g_largePeriodCompared[lo]++;
+                        }
                 }
             }
             /* else: reference produced no result at the large period (e.g. lookback
@@ -10108,6 +10151,42 @@ ErrorNumber test_codegen(const TA_History *history,
             write_timing_report("ta_regtest_timing.jsonl");
             write_markdown_report("ta_regtest_report.md", languageFilter);
             return TA_CODEGEN_OUTPUT_MISMATCH;
+        }
+
+        {
+            int lo;
+            printf("large-period offsets:");
+            for( lo = 0; lo < NB_LARGE_INT_OFFSETS; lo++ )
+                printf(" +%d=%ld compare(s)", LARGE_INT_OFFSETS[lo],
+                       g_largePeriodCompared[lo]);
+            printf("\n");
+            /* Floored only on a full run. A filtered one legitimately reaches
+             * nothing here when every function it selected has a stressed
+             * lookback outrunning the test history (T3 is one).
+             *
+             * Per-offset and literal, NOT a symmetry check between offsets:
+             * +51 sets a strictly longer lookback than +50, so a function may
+             * honestly produce output at one and not the other, and requiring
+             * the two counts to agree would fail on that. */
+            if( functionFilter == NULL )
+            {
+                if( NB_LARGE_INT_OFFSETS != LARGE_INT_OFFSETS_EXPECTED )
+                {
+                    printf("Fail: LARGE_INT_OFFSETS holds %d offset(s), expected %d\n",
+                           NB_LARGE_INT_OFFSETS, LARGE_INT_OFFSETS_EXPECTED);
+                    write_markdown_report("ta_regtest_report.md", languageFilter);
+                    return TA_CODEGEN_OUTPUT_MISMATCH;
+                }
+                for( lo = 0; lo < NB_LARGE_INT_OFFSETS; lo++ )
+                    if( g_largePeriodCompared[lo] < LARGE_PERIOD_FLOOR )
+                    {
+                        printf("Fail: large-period offset +%d reached %ld output(s),"
+                               " floor is %d\n", LARGE_INT_OFFSETS[lo],
+                               g_largePeriodCompared[lo], LARGE_PERIOD_FLOOR);
+                        write_markdown_report("ta_regtest_report.md", languageFilter);
+                        return TA_CODEGEN_OUTPUT_MISMATCH;
+                    }
+            }
         }
 
         printf("\n=============================================\n");
