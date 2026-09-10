@@ -1207,6 +1207,7 @@ fn no_csharp_peek_copies_the_handle() {
     let mut offenders: Vec<String> = Vec::new();
     let mut bounded: BTreeSet<String> = BTreeSet::new();
     let mut fixtures = 0usize;
+    let mut with_subs = 0usize;
 
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
@@ -1259,6 +1260,17 @@ fn no_csharp_peek_copies_the_handle() {
                         writes += 1;
                     }
                 }
+                // A sub-stream's committing tier writes the live handle
+                // through a heap reference, and the call carries no store of
+                // its own — so the sweep above reads the line, finds only the
+                // local it assigns, and passes it. C gates this in
+                // `peek_suite::no_peek_entry_point_commits_a_sub_stream`;
+                // Rust cannot express the bug, its `peek(&self)` binding the
+                // sub shared; C# had nothing until this arm.
+                if l.contains(".Update(") {
+                    offenders.push(format!("{name}: a Peek commits a sub-stream: {l}"));
+                    continue;
+                }
                 if l.contains("CopyFrom") || l.contains("peekScratch") {
                     offenders.push(format!("{name}: {l}"));
                     continue;
@@ -1300,6 +1312,9 @@ fn no_csharp_peek_copies_the_handle() {
             if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
                 fully_shadowed.insert(name.clone());
             }
+            if peek.contains(".Peek(") {
+                with_subs += 1;
+            }
         }
     }
 
@@ -1312,6 +1327,11 @@ fn no_csharp_peek_copies_the_handle() {
         fully_shadowed.len()
     );
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
+    assert!(
+        with_subs >= 14,
+        "only {with_subs} Peek(s) drive a sub-stream, so the commit arm is not watching \
+         the tiers it exists for"
+    );
     assert!(offenders.is_empty(), "a Peek copies:\n{}", offenders.join("\n"));
 
     // Non-vacuity for the exemption, asserted only where it can be: on the
