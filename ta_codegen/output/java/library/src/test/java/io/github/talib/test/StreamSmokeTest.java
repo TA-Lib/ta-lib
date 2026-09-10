@@ -778,6 +778,85 @@ public class StreamSmokeTest {
     private static int swNonCommit = 0;
     private static int swCopy = 0;
     private static int swMoved = 0;
+    private static int swStateLeaves = 0;
+    private static int swStateArrays = 0;
+    private static int swStateSubs = 0;
+
+    /**
+     * Append the path of every field where {@code a} and {@code b} differ,
+     * walking arrays element by element and sub-handles recursively.
+     *
+     * <p>Reference identity ends the walk; that is what keeps the shared
+     * {@link Core} and the enums out of it, so nothing here needs a name list
+     * of fields to skip.
+     */
+    private static void stateDiff(Object a, Object b, String path,
+                                  java.util.List<String> out, int depth) {
+        if (a == b) {
+            return;
+        }
+        if (a == null || b == null) {
+            out.add(path + ": one side is null");
+            return;
+        }
+        if (a.getClass() != b.getClass()) {
+            out.add(path + ": " + a.getClass().getName() + " vs " + b.getClass().getName());
+            return;
+        }
+        if (depth > 24) {
+            out.add(path + ": nested deeper than this walk goes");
+            return;
+        }
+        if (a.getClass().isArray()) {
+            int na = java.lang.reflect.Array.getLength(a);
+            int nb = java.lang.reflect.Array.getLength(b);
+            if (na != nb) {
+                out.add(path + ": length " + na + " vs " + nb);
+                return;
+            }
+            for (int i = 0; i < na; i++) {
+                stateDiff(java.lang.reflect.Array.get(a, i), java.lang.reflect.Array.get(b, i),
+                          path + "[" + i + "]", out, depth + 1);
+            }
+            return;
+        }
+        /* Array.get and Field.get both box, so every primitive slot arrives
+         * here. Raw bits, not equals: a ring slot holding -0.0 where the twin
+         * holds 0.0 was written, and equals would call it untouched. */
+        if (a instanceof Double) {
+            swStateLeaves++;
+            if (Double.doubleToRawLongBits((Double) a) != Double.doubleToRawLongBits((Double) b)) {
+                out.add(path + ": " + a + " vs " + b);
+            }
+            return;
+        }
+        if (a instanceof Float) {
+            swStateLeaves++;
+            if (Float.floatToRawIntBits((Float) a) != Float.floatToRawIntBits((Float) b)) {
+                out.add(path + ": " + a + " vs " + b);
+            }
+            return;
+        }
+        if (a instanceof Number || a instanceof Boolean || a instanceof Character
+                || a instanceof String) {
+            swStateLeaves++;
+            if (!a.equals(b)) {
+                out.add(path + ": " + a + " vs " + b);
+            }
+            return;
+        }
+        for (java.lang.reflect.Field f : a.getClass().getDeclaredFields()) {
+            if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                continue;
+            }
+            try {
+                f.setAccessible(true);
+                stateDiff(f.get(a), f.get(b), path + "." + f.getName(), out, depth + 1);
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                out.add(path + "." + f.getName() + ": unreadable (" + e + ")");
+            }
+        }
+    }
 
     /**
      * Bar {@code i} of the series feeding one input slot.
@@ -1235,6 +1314,39 @@ public class StreamSmokeTest {
                       name + ": peek must not move outRange()");
                 swNonCommit++;
 
+                /* 1a. The whole handle, not just what it reports: `ref` had
+                 * the same opener and no peek, so every field of the two must
+                 * still agree bit for bit. This is the only arm that does not
+                 * depend on what the output is worth. On a candlestick whose
+                 * pattern this series never fires, every check either side of
+                 * it reads 0 == 0 whatever a peek wrote; a peek that drives a
+                 * sub-stream's `update` is invisible to them and to the
+                 * emitter sweeps too, which read write targets and see a
+                 * local. */
+                java.util.List<String> drift = new java.util.ArrayList<String>();
+                stateDiff(h, ref, name, drift, 0);
+                check(drift.isEmpty(), name + ": peek wrote the handle -> "
+                      + (drift.size() > 4 ? drift.subList(0, 4) + " (+" + (drift.size() - 4) + " more)"
+                                          : drift.toString()));
+                boolean anyArray = false;
+                boolean anySub = false;
+                for (java.lang.reflect.Field fld : h.getClass().getDeclaredFields()) {
+                    anyArray |= fld.getType().isArray();
+                    /* The runtime class, not the declared one: the dispatch
+                     * handle holds its sub-stream in an `Object` field, and the
+                     * walk reaches it either way. A field this cannot read is
+                     * one stateDiff has already failed on. */
+                    fld.setAccessible(true);
+                    Object fv = fld.get(h);
+                    anySub |= fv != null && fv.getClass().getSimpleName().endsWith("Stream");
+                }
+                if (anyArray) {
+                    swStateArrays++;
+                }
+                if (anySub) {
+                    swStateSubs++;
+                }
+
                 /* 1b/2 — and it predicts the update that follows. */
                 double[] peeked = rd.read(peek, h, barA);
                 double[] updated = rd.read(update, h, barA);
@@ -1302,6 +1414,19 @@ public class StreamSmokeTest {
         check(swMoved > registered / 2,
               "the sweep's bars move most handles off their open value (" + swMoved + "/"
               + registered + ")");
+        /* The state arm needs floors of its own, being the arm that reads
+         * green on a handle it cannot see into: a walk that stopped at the
+         * first field, or one that never reached an array or a sub-handle,
+         * agrees with a correct tree on every assertion above. */
+        check(swStateLeaves > 5000,
+              "the state walk compared only " + swStateLeaves + " field value(s), too few to "
+              + "have entered the handles");
+        check(swStateArrays > 100,
+              "only " + swStateArrays + " handle(s) carry an array field, so the walk's "
+              + "element-by-element arm is sweeping air");
+        check(swStateSubs >= 13,
+              "only " + swStateSubs + " handle(s) hold a sub-stream, so a peek that commits one "
+              + "has nothing to be caught by");
     }
 
     public static void main(String[] args) {
