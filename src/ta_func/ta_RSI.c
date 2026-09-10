@@ -59,6 +59,9 @@
  *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
+ *               gain/loss without a branch; the loop-carried chain keeps
+ *               neither a divide nor a 50/50 mispredict.
  */
 
 TA_LIB_API int TA_RSI_Lookback( int optInTimePeriod )
@@ -84,6 +87,8 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
    int today;
    int lookbackTotal;
    int i;
+   double gainDelta;
+   double invPeriod;
    double prevGain;
    double prevLoss;
    double prevValue;
@@ -109,10 +114,6 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
    /* The following algorithm is base on the original
     * work from Wilder's and shall represent the
     * original idea behind the classic RSI.
-    */
-   /* If changing this function, please check also CMO
-    * which is mostly identical (just different in one step
-    * of calculation).
     */
    *outBegIdx= 0;
    *outNBElement= 0;
@@ -149,6 +150,7 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
       }
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
     * among the initial period.
     */
@@ -163,22 +165,20 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
       today = today + 1;
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
    /* Subsequent prevLoss and prevGain are smoothed
     * using the previous values (Wilder's approach).
     *  1) Multiply the previous by 'period-1'.
-    *  2) Add today value.
-    *  3) Divide by 'period'.
+    *  2) Add today's gain to one accumulator and today's loss to the other,
+    *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+    *     for every finite tempValue2, so no branch on a 50/50 predicate.
+    *  3) Scale by 1/'period'.
     */
-   prevLoss /= (double)optInTimePeriod;
-   prevGain /= (double)optInTimePeriod;
+   prevLoss *= invPeriod;
+   prevGain *= invPeriod;
    /* Often documentation present the RSI calculation as follow:
     *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
     *
@@ -217,15 +217,11 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          today = today + 1;
       }
    }
@@ -240,15 +236,11 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
       prevValue = tempValue1;
       prevLoss *= (double)(optInTimePeriod - 1);
       prevGain *= (double)(optInTimePeriod - 1);
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 )
       {
@@ -277,6 +269,8 @@ TA_RetCode TA_S_RSI( int    startIdx,
    int today;
    int lookbackTotal;
    int i;
+   double gainDelta;
+   double invPeriod;
    double prevGain;
    double prevLoss;
    double prevValue;
@@ -323,6 +317,7 @@ TA_RetCode TA_S_RSI( int    startIdx,
       }
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
    prevGain = 0.0;
@@ -334,16 +329,12 @@ TA_RetCode TA_S_RSI( int    startIdx,
       today = today + 1;
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
-   prevLoss /= (double)optInTimePeriod;
-   prevGain /= (double)optInTimePeriod;
+   prevLoss *= invPeriod;
+   prevGain *= invPeriod;
    if( today > startIdx )
    {
       tempValue1 = prevGain + prevLoss;
@@ -365,15 +356,11 @@ TA_RetCode TA_S_RSI( int    startIdx,
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          today = today + 1;
       }
    }
@@ -385,15 +372,11 @@ TA_RetCode TA_S_RSI( int    startIdx,
       prevValue = tempValue1;
       prevLoss *= (double)(optInTimePeriod - 1);
       prevGain *= (double)(optInTimePeriod - 1);
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 )
       {
@@ -419,6 +402,7 @@ struct TA_RSI_Stream {
    /* The value(s) at the last bar the stream counted (see TA_RSI_Value). */
    double cur_outReal;
    int optInTimePeriod;
+   double invPeriod;
    double prevGain;
    double prevLoss;
    double prevValue;
@@ -427,6 +411,7 @@ struct TA_RSI_Stream {
 /* Private function, not in public API. */
 static void TA_RSI_StepImpl( struct TA_RSI_Stream *sp, double inReal, double *outReal )
 {
+   double gainDelta;
    double tempValue1;
    double tempValue2;
 
@@ -441,15 +426,11 @@ static void TA_RSI_StepImpl( struct TA_RSI_Stream *sp, double inReal, double *ou
    sp->prevValue = tempValue1;
    sp->prevLoss *= (double)(sp->optInTimePeriod - 1);
    sp->prevGain *= (double)(sp->optInTimePeriod - 1);
-   if( tempValue2 < 0.0 )
-   {
-      sp->prevLoss -= tempValue2;
-   } else 
-   {
-      sp->prevGain += tempValue2;
-   }
-   sp->prevLoss /= (double)sp->optInTimePeriod;
-   sp->prevGain /= (double)sp->optInTimePeriod;
+   gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+   sp->prevGain += gainDelta;
+   sp->prevLoss += gainDelta - tempValue2;
+   sp->prevLoss *= sp->invPeriod;
+   sp->prevGain *= sp->invPeriod;
    tempValue1 = sp->prevGain + sp->prevLoss;
    if( tempValue1 > 0.0 )
    {
@@ -526,6 +507,8 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
       int today;
       int lookbackTotal;
       int i;
+      double gainDelta;
+      double invPeriod = 0.0;
       double prevGain = 0.0;
       double prevLoss = 0.0;
       double prevValue = 0.0;
@@ -534,10 +517,6 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       */
-      /* If changing this function, please check also CMO
-       * which is mostly identical (just different in one step
-       * of calculation).
        */
       *outBegIdx= 0;
       *outNBElement= 0;
@@ -554,6 +533,7 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
       }
       outIdx = 0;
       /* Index into the output. */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -568,22 +548,20 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
        * using the previous values (Wilder's approach).
        *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       *  2) Add today's gain to one accumulator and today's loss to the other,
+       *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+       *     for every finite tempValue2, so no branch on a 50/50 predicate.
+       *  3) Scale by 1/'period'.
        */
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       /* Often documentation present the RSI calculation as follow:
        *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
        *
@@ -622,15 +600,11 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            if( tempValue2 < 0.0 )
-            {
-               prevLoss -= tempValue2;
-            } else 
-            {
-               prevGain += tempValue2;
-            }
-            prevLoss /= (double)optInTimePeriod;
-            prevGain /= (double)optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             today = today + 1;
          }
       }
@@ -645,15 +619,11 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 )
          {
@@ -673,6 +643,7 @@ static TA_RetCode TA_RSI_OpenImpl( struct TA_RSI_Stream **stream, const double i
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
+      sp->invPeriod = invPeriod;
       sp->prevGain = prevGain;
       sp->prevLoss = prevLoss;
       sp->prevValue = prevValue;
@@ -741,6 +712,7 @@ TA_LIB_API TA_RetCode TA_RSI_Update( TA_RSI_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_RSI_Stream *sp = stream;
+   double gainDelta;
    double tempValue1;
    double tempValue2;
    double prevGain;
@@ -762,15 +734,11 @@ TA_LIB_API TA_RetCode TA_RSI_Peek( const TA_RSI_Stream *stream, double inReal, d
    prevValue = tempValue1;
    prevLoss *= (double)(sp->optInTimePeriod - 1);
    prevGain *= (double)(sp->optInTimePeriod - 1);
-   if( tempValue2 < 0.0 )
-   {
-      prevLoss -= tempValue2;
-   } else 
-   {
-      prevGain += tempValue2;
-   }
-   prevLoss /= (double)sp->optInTimePeriod;
-   prevGain /= (double)sp->optInTimePeriod;
+   gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+   prevGain += gainDelta;
+   prevLoss += gainDelta - tempValue2;
+   prevLoss *= sp->invPeriod;
+   prevGain *= sp->invPeriod;
    tempValue1 = prevGain + prevLoss;
    if( tempValue1 > 0.0 )
    {

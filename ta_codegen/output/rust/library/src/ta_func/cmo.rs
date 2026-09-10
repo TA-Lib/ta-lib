@@ -131,15 +131,6 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        // CMO calculation is mostly identical to RSI.
-        //
-        // The only difference is in the last step of calculation:
-        //
-        //   RSI = gain / (gain+loss)
-        //   CMO = (gain-loss) / (gain+loss)
-        //
-        // See the RSI function for potentially some more info
-        // on this algo.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
@@ -491,15 +482,6 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
-        // CMO calculation is mostly identical to RSI.
-        //
-        // The only difference is in the last step of calculation:
-        //
-        //   RSI = gain / (gain+loss)
-        //   CMO = (gain-loss) / (gain+loss)
-        //
-        // See the RSI function for potentially some more info
-        // on this algo.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.

@@ -59,6 +59,9 @@ public partial class Core
     *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
     *               the fixed TA_IS_ZERO band, which zeroed the index for any
     *               instrument quoted small enough to fall under it.
+    *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
+    *               gain/loss without a branch; the loop-carried chain keeps
+    *               neither a divide nor a 50/50 mispredict.
     */
    /// <summary>
    /// Number of leading input bars <c>RSI</c> consumes before it can produce its
@@ -102,6 +105,8 @@ public partial class Core
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
+      double invPeriod = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
@@ -124,10 +129,6 @@ public partial class Core
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       */
-      /* If changing this function, please check also CMO
-       * which is mostly identical (just different in one step
-       * of calculation).
        */
       outBegIdx = 0;
       outNBElement = 0;
@@ -160,6 +161,7 @@ public partial class Core
          }
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -173,20 +175,20 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
        * using the previous values (Wilder's approach).
        *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       *  2) Add today's gain to one accumulator and today's loss to the other,
+       *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+       *     for every finite tempValue2, so no branch on a 50/50 predicate.
+       *  3) Scale by 1/'period'.
        */
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       /* Often documentation present the RSI calculation as follow:
        *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
        *
@@ -220,13 +222,11 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= (double)optInTimePeriod;
-            prevGain /= (double)optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             today = today + 1;
          }
       }
@@ -240,13 +240,11 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
@@ -274,6 +272,8 @@ public partial class Core
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
+      double invPeriod = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
@@ -313,6 +313,7 @@ public partial class Core
          }
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       prevGain = 0.0;
@@ -323,14 +324,12 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
@@ -347,13 +346,11 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= (double)optInTimePeriod;
-            prevGain /= (double)optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             today = today + 1;
          }
       }
@@ -364,13 +361,11 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx] = 100.0 * (prevGain / tempValue1);
@@ -532,6 +527,7 @@ public partial class Core
    {
       internal Core core;
       internal int optInTimePeriod;
+      internal double invPeriod;
       internal double prevGain;
       internal double prevLoss;
       internal double prevValue;
@@ -578,6 +574,7 @@ public partial class Core
       {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
+         this.invPeriod = other.invPeriod;
          this.prevGain = other.prevGain;
          this.prevLoss = other.prevLoss;
          this.prevValue = other.prevValue;
@@ -632,6 +629,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("RSI", "peek", RetCode.BadParam);
          RsiStream sp = this;
+         double gainDelta = 0.0;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
          double cur_outReal = 0.0;
@@ -647,13 +645,11 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(sp.optInTimePeriod - 1);
          prevGain *= (double)(sp.optInTimePeriod - 1);
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)sp.optInTimePeriod;
-         prevGain /= (double)sp.optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= sp.invPeriod;
+         prevGain *= sp.invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             cur_outReal = 100.0 * (prevGain / tempValue1);
@@ -682,6 +678,7 @@ public partial class Core
 
    internal void RsiStepImpl( RsiStream sp, double inReal )
    {
+      double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
       if( sp.optInTimePeriod == 1 ) {
@@ -693,13 +690,11 @@ public partial class Core
       sp.prevValue = tempValue1;
       sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
       sp.prevGain *= (double)(sp.optInTimePeriod - 1);
-      if( tempValue2 < 0.0 ) {
-         sp.prevLoss -= tempValue2;
-      } else {
-         sp.prevGain += tempValue2;
-      }
-      sp.prevLoss /= (double)sp.optInTimePeriod;
-      sp.prevGain /= (double)sp.optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      sp.prevGain += gainDelta;
+      sp.prevLoss += gainDelta - tempValue2;
+      sp.prevLoss *= sp.invPeriod;
+      sp.prevGain *= sp.invPeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
       if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * (sp.prevGain / tempValue1);
@@ -716,6 +711,8 @@ public partial class Core
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
+      double invPeriod = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
@@ -746,6 +743,7 @@ public partial class Core
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
+         sp.invPeriod = 0.0;
          sp.prevGain = 0.0;
          sp.prevLoss = 0.0;
          sp.prevValue = 0.0;
@@ -765,10 +763,6 @@ public partial class Core
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
        */
-      /* If changing this function, please check also CMO
-       * which is mostly identical (just different in one step
-       * of calculation).
-       */
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
@@ -782,6 +776,7 @@ public partial class Core
       }
       outIdx = 0;
       /* Index into the output. */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -795,20 +790,20 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
        * using the previous values (Wilder's approach).
        *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       *  2) Add today's gain to one accumulator and today's loss to the other,
+       *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+       *     for every finite tempValue2, so no branch on a 50/50 predicate.
+       *  3) Scale by 1/'period'.
        */
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       /* Often documentation present the RSI calculation as follow:
        *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
        *
@@ -842,13 +837,11 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            if( tempValue2 < 0.0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= (double)optInTimePeriod;
-            prevGain /= (double)optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             today = today + 1;
          }
       }
@@ -862,13 +855,11 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         if( tempValue2 < 0.0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
@@ -882,6 +873,7 @@ public partial class Core
       outNBElement = outIdx;
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
+      sp.invPeriod = invPeriod;
       sp.prevGain = prevGain;
       sp.prevLoss = prevLoss;
       sp.prevValue = prevValue;

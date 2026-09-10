@@ -38,17 +38,6 @@ TA_RetCode cmo(int startIdx, int endIdx,
    double prevGain, prevLoss, prevValue;
    double tempValue1, tempValue2;
 
-   /* CMO calculation is mostly identical to RSI.
-    *
-    * The only difference is in the last step of calculation:
-    *
-    *   RSI = gain / (gain+loss)
-    *   CMO = (gain-loss) / (gain+loss)
-    *
-    * See the RSI function for potentially some more info
-    * on this algo.
-    */
-
    *outBegIdx = 0;
    *outNBElement = 0;
 

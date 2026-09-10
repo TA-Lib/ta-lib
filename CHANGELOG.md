@@ -70,6 +70,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: AROON, AROONOSC and others (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
+- ~2.6x batch, ~1.8x streaming update, ~1.5x peek: RSI (#410).
 
 ### Changed
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
@@ -81,6 +82,13 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most 2.8e-16 relative
   from the reference series, and the same shift reaches MA, BBANDS, APO, PPO, PVO, MAVP,
   STOCH, STOCHF and STOCHRSI when the MAtype is EMA.
+- (#410) RSI scales Wilder's average gain and loss by a hoisted `1/period` instead of dividing by
+  the period each bar, taking the divide out of the loop-carried chain. On the 0-100 scale
+  values move by at most 5.7e-14 at the default period, growing slowly with the period
+  (7.8e-14 at 100, 5.3e-13 at 20000) and unaffected by the price scale. STOCHRSI inherits
+  the shift amplified, because it renormalises the RSI series by that series' own window
+  range: measured up to 1.1e-11 with a short `optInFastK_Period`. A period that is a power
+  of two is unaffected: `1/period` is then exact, so the two forms agree bit for bit.
 - (#4,#14) API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
 - (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);

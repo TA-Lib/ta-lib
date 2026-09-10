@@ -106,16 +106,6 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* CMO calculation is mostly identical to RSI.
-    *
-    * The only difference is in the last step of calculation:
-    *
-    *   RSI = gain / (gain+loss)
-    *   CMO = (gain-loss) / (gain+loss)
-    *
-    * See the RSI function for potentially some more info
-    * on this algo.
-    */
    *outBegIdx= 0;
    *outNBElement= 0;
    /* Adjust startIdx to account for the lookback period. */
@@ -521,16 +511,6 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
       double prevValue = 0.0;
       double tempValue1;
       double tempValue2;
-      /* CMO calculation is mostly identical to RSI.
-       *
-       * The only difference is in the last step of calculation:
-       *
-       *   RSI = gain / (gain+loss)
-       *   CMO = (gain-loss) / (gain+loss)
-       *
-       * See the RSI function for potentially some more info
-       * on this algo.
-       */
       *outBegIdx= 0;
       *outNBElement= 0;
       /* Adjust startIdx to account for the lookback period. */

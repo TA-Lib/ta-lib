@@ -5833,6 +5833,13 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
      * dimensionless oscillator -- its error floor is a ULP of 100 whatever the
      * input magnitude, so neither input- nor output-relative is its dimension. */
     { "WILLR",               TOL_ABS,     5e-14, 0.0 }, /* #395  measured 1.42e-14 */
+    /* RSI's Wilder step scales by a hoisted 1/period instead of dividing by
+     * period. Named for the reason #338 gives above. Absolute because the
+     * divergence is unmoved by the price scale -- measured identical at 1e-7,
+     * 1 and 1e9 -- so neither input- nor output-relative is its dimension. What
+     * it does grow with is the PERIOD, and this corpus stops at 17: the bound
+     * does not cover the long-period end of the 2..100000 range. */
+    { "RSI",                 TOL_ABS,     2e-13, 0.0 }, /* #410  measured 5.68e-14 */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 

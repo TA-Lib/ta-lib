@@ -57,6 +57,9 @@
  *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
+ *               gain/loss without a branch; the loop-carried chain keeps
+ *               neither a divide nor a 50/50 mispredict.
  */
 
 // Import types from parent module
@@ -125,6 +128,8 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut gainDelta: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevGain: f64 = 0.0_f64;
         let mut prevLoss: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
@@ -133,9 +138,6 @@ impl Core {
         // The following algorithm is base on the original
         // work from Wilder's and shall represent the
         // original idea behind the classic RSI.
-        // If changing this function, please check also CMO
-        // which is mostly identical (just different in one step
-        // of calculation).
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
@@ -168,6 +170,7 @@ impl Core {
             }
             return RetCode::Success;
         }
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Accumulate Wilder's "Average Gain" and "Average Loss"
         // among the initial period.
         today = startIdx - lookbackTotal;
@@ -182,20 +185,20 @@ impl Core {
             today = today + 1;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            if tempValue2 < 0.0 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
             i -= 1;
         }
         // Subsequent prevLoss and prevGain are smoothed
         // using the previous values (Wilder's approach).
         //  1) Multiply the previous by 'period-1'.
-        //  2) Add today value.
-        //  3) Divide by 'period'.
-        prevLoss /= optInTimePeriod as f64;
-        prevGain /= optInTimePeriod as f64;
+        //  2) Add today's gain to one accumulator and today's loss to the other,
+        //     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+        //     for every finite tempValue2, so no branch on a 50/50 predicate.
+        //  3) Scale by 1/'period'.
+        prevLoss *= invPeriod;
+        prevGain *= invPeriod;
         // Often documentation present the RSI calculation as follow:
         //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
         //
@@ -227,13 +230,11 @@ impl Core {
                 prevValue = tempValue1;
                 prevLoss *= (optInTimePeriod - 1) as f64;
                 prevGain *= (optInTimePeriod - 1) as f64;
-                if tempValue2 < 0.0 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                prevLoss /= optInTimePeriod as f64;
-                prevGain /= optInTimePeriod as f64;
+                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                prevLoss *= invPeriod;
+                prevGain *= invPeriod;
                 today = today + 1;
             }
         }
@@ -246,13 +247,11 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            if tempValue2 < 0.0 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod as f64;
-            prevGain /= optInTimePeriod as f64;
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
@@ -387,6 +386,7 @@ pub struct RsiStream {
 #[allow(non_snake_case, dead_code)]
 struct RsiStreamState {
     optInTimePeriod: i32,
+    invPeriod: f64,
     prevGain: f64,
     prevLoss: f64,
     prevValue: f64,
@@ -400,6 +400,7 @@ struct RsiStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn rsi_step_impl(sp: &mut RsiStreamState, inReal: f64, outReal: &mut f64) {
+        let mut gainDelta: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -412,13 +413,11 @@ impl Core {
         sp.prevValue = tempValue1;
         sp.prevLoss *= (sp.optInTimePeriod - 1) as f64;
         sp.prevGain *= (sp.optInTimePeriod - 1) as f64;
-        if tempValue2 < 0.0 {
-            sp.prevLoss -= tempValue2;
-        } else {
-            sp.prevGain += tempValue2;
-        }
-        sp.prevLoss /= sp.optInTimePeriod as f64;
-        sp.prevGain /= sp.optInTimePeriod as f64;
+        gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+        sp.prevGain += gainDelta;
+        sp.prevLoss += gainDelta - tempValue2;
+        sp.prevLoss *= sp.invPeriod;
+        sp.prevGain *= sp.invPeriod;
         tempValue1 = sp.prevGain + sp.prevLoss;
         if tempValue1 > 0.0 {
             (*outReal) = 100.0 * (sp.prevGain / tempValue1);
@@ -463,6 +462,7 @@ impl Core {
             let state = RsiStreamState {
                 cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
+                invPeriod: 0.0_f64,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
                 prevValue: 0.0_f64,
@@ -484,6 +484,8 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut gainDelta: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevGain: f64 = 0.0_f64;
         let mut prevLoss: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
@@ -492,9 +494,6 @@ impl Core {
         // The following algorithm is base on the original
         // work from Wilder's and shall represent the
         // original idea behind the classic RSI.
-        // If changing this function, please check also CMO
-        // which is mostly identical (just different in one step
-        // of calculation).
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
@@ -508,6 +507,7 @@ impl Core {
         }
         outIdx = 0;
         // Index into the output.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Accumulate Wilder's "Average Gain" and "Average Loss"
         // among the initial period.
         today = startIdx - lookbackTotal;
@@ -522,20 +522,20 @@ impl Core {
             today = today + 1;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            if tempValue2 < 0.0 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
             i -= 1;
         }
         // Subsequent prevLoss and prevGain are smoothed
         // using the previous values (Wilder's approach).
         //  1) Multiply the previous by 'period-1'.
-        //  2) Add today value.
-        //  3) Divide by 'period'.
-        prevLoss /= optInTimePeriod as f64;
-        prevGain /= optInTimePeriod as f64;
+        //  2) Add today's gain to one accumulator and today's loss to the other,
+        //     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+        //     for every finite tempValue2, so no branch on a 50/50 predicate.
+        //  3) Scale by 1/'period'.
+        prevLoss *= invPeriod;
+        prevGain *= invPeriod;
         // Often documentation present the RSI calculation as follow:
         //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
         //
@@ -567,13 +567,11 @@ impl Core {
                 prevValue = tempValue1;
                 prevLoss *= (optInTimePeriod - 1) as f64;
                 prevGain *= (optInTimePeriod - 1) as f64;
-                if tempValue2 < 0.0 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                prevLoss /= optInTimePeriod as f64;
-                prevGain /= optInTimePeriod as f64;
+                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                prevLoss *= invPeriod;
+                prevGain *= invPeriod;
                 today = today + 1;
             }
         }
@@ -586,13 +584,11 @@ impl Core {
             prevValue = tempValue1;
             prevLoss *= (optInTimePeriod - 1) as f64;
             prevGain *= (optInTimePeriod - 1) as f64;
-            if tempValue2 < 0.0 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod as f64;
-            prevGain /= optInTimePeriod as f64;
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= invPeriod;
+            prevGain *= invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 outReal[(outIdx * outStride) as usize] = 100.0 * (prevGain / tempValue1);
@@ -608,6 +604,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = RsiStreamState {
             optInTimePeriod,
+            invPeriod,
             prevGain,
             prevLoss,
             prevValue,
@@ -779,6 +776,7 @@ impl RsiStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut gainDelta: f64 = 0.0_f64;
             let mut tempValue1: f64 = 0.0_f64;
             let mut tempValue2: f64 = 0.0_f64;
             let mut prevGain = sp.prevGain;
@@ -793,13 +791,11 @@ impl RsiStream {
             prevValue = tempValue1;
             prevLoss *= (sp.optInTimePeriod - 1) as f64;
             prevGain *= (sp.optInTimePeriod - 1) as f64;
-            if tempValue2 < 0.0 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= sp.optInTimePeriod as f64;
-            prevGain /= sp.optInTimePeriod as f64;
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
+            prevLoss *= sp.invPeriod;
+            prevGain *= sp.invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 (*outReal) = 100.0 * (prevGain / tempValue1);

@@ -70914,16 +70914,6 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          /* CMO calculation is mostly identical to RSI.
-           *
-           * The only difference is in the last step of calculation:
-           *
-           *   RSI = gain / (gain+loss)
-           *   CMO = (gain-loss) / (gain+loss)
-           *
-           * See the RSI function for potentially some more info
-           * on this algo.
-           */
           outBegIdx.value = 0;
           outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
@@ -71535,16 +71525,6 @@ class Core {
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
           }
-          /* CMO calculation is mostly identical to RSI.
-           *
-           * The only difference is in the last step of calculation:
-           *
-           *   RSI = gain / (gain+loss)
-           *   CMO = (gain-loss) / (gain+loss)
-           *
-           * See the RSI function for potentially some more info
-           * on this algo.
-           */
           outBegIdx.value = 0;
           outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
@@ -146477,6 +146457,9 @@ class Core {
      *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
      *               the fixed TA_IS_ZERO band, which zeroed the index for any
      *               instrument quoted small enough to fall under it.
+     *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
+     *               gain/loss without a branch; the loop-carried chain keeps
+     *               neither a divide nor a 50/50 mispredict.
      */
 
        /**
@@ -146517,6 +146500,8 @@ class Core {
           int today = 0;
           int lookbackTotal = 0;
           int i = 0;
+          double gainDelta = 0;
+          double invPeriod = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
@@ -146536,10 +146521,6 @@ class Core {
           /* The following algorithm is base on the original
            * work from Wilder's and shall represent the
            * original idea behind the classic RSI.
-           */
-          /* If changing this function, please check also CMO
-           * which is mostly identical (just different in one step
-           * of calculation).
            */
           outBegIdx.value = 0;
           outNBElement.value = 0;
@@ -146572,6 +146553,7 @@ class Core {
              }
              return RetCode.Success ;
           }
+          invPeriod = 1.0 / (double)optInTimePeriod;
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -146585,20 +146567,20 @@ class Core {
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
              prevValue = tempValue1;
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
           }
           /* Subsequent prevLoss and prevGain are smoothed
            * using the previous values (Wilder's approach).
            *  1) Multiply the previous by 'period-1'.
-           *  2) Add today value.
-           *  3) Divide by 'period'.
+           *  2) Add today's gain to one accumulator and today's loss to the other,
+           *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+           *     for every finite tempValue2, so no branch on a 50/50 predicate.
+           *  3) Scale by 1/'period'.
            */
-          prevLoss /= (double)optInTimePeriod;
-          prevGain /= (double)optInTimePeriod;
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
           /* Often documentation present the RSI calculation as follow:
            *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
            *
@@ -146632,13 +146614,11 @@ class Core {
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-                prevLoss /= (double)optInTimePeriod;
-                prevGain /= (double)optInTimePeriod;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                prevLoss *= invPeriod;
+                prevGain *= invPeriod;
                 today = today + 1;
              }
           }
@@ -146652,13 +146632,11 @@ class Core {
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
-             prevLoss /= (double)optInTimePeriod;
-             prevGain /= (double)optInTimePeriod;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
              tempValue1 = prevGain + prevLoss;
              if( tempValue1 > 0.0 ) {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
@@ -146684,6 +146662,8 @@ class Core {
           int today = 0;
           int lookbackTotal = 0;
           int i = 0;
+          double gainDelta = 0;
+          double invPeriod = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
@@ -146720,6 +146700,7 @@ class Core {
              }
              return RetCode.Success ;
           }
+          invPeriod = 1.0 / (double)optInTimePeriod;
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
           prevGain = 0.0;
@@ -146730,14 +146711,12 @@ class Core {
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
              prevValue = tempValue1;
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
           }
-          prevLoss /= (double)optInTimePeriod;
-          prevGain /= (double)optInTimePeriod;
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
              if( tempValue1 > 0.0 ) {
@@ -146754,13 +146733,11 @@ class Core {
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-                prevLoss /= (double)optInTimePeriod;
-                prevGain /= (double)optInTimePeriod;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                prevLoss *= invPeriod;
+                prevGain *= invPeriod;
                 today = today + 1;
              }
           }
@@ -146771,13 +146748,11 @@ class Core {
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
-             prevLoss /= (double)optInTimePeriod;
-             prevGain /= (double)optInTimePeriod;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
              tempValue1 = prevGain + prevLoss;
              if( tempValue1 > 0.0 ) {
                 outReal[outIdx] = 100.0 * (prevGain / tempValue1);
@@ -146925,6 +146900,7 @@ class Core {
        public static final class RsiStream {
           private Core core;
           private int optInTimePeriod;
+          private double invPeriod;
           private double prevGain;
           private double prevLoss;
           private double prevValue;
@@ -146971,6 +146947,7 @@ class Core {
           private RsiStream( RsiStream other ) {
              this.core = other.core;
              this.optInTimePeriod = other.optInTimePeriod;
+             this.invPeriod = other.invPeriod;
              this.prevGain = other.prevGain;
              this.prevLoss = other.prevLoss;
              this.prevValue = other.prevValue;
@@ -147021,6 +146998,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
              RsiStream sp = this;
+             double gainDelta = 0.0;
              double tempValue1 = 0.0;
              double tempValue2 = 0.0;
              double cur_outReal = 0.0;
@@ -147036,13 +147014,11 @@ class Core {
              prevValue = tempValue1;
              prevLoss *= (double)(sp.optInTimePeriod - 1);
              prevGain *= (double)(sp.optInTimePeriod - 1);
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
-             prevLoss /= (double)sp.optInTimePeriod;
-             prevGain /= (double)sp.optInTimePeriod;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= sp.invPeriod;
+             prevGain *= sp.invPeriod;
              tempValue1 = prevGain + prevLoss;
              if( tempValue1 > 0.0 ) {
                 cur_outReal = 100.0 * (prevGain / tempValue1);
@@ -147080,6 +147056,7 @@ class Core {
        }
        private void rsiStepImpl( RsiStream sp, double inReal )
        {
+          double gainDelta = 0.0;
           double tempValue1 = 0.0;
           double tempValue2 = 0.0;
           if( sp.optInTimePeriod == 1 ) {
@@ -147091,13 +147068,11 @@ class Core {
           sp.prevValue = tempValue1;
           sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
           sp.prevGain *= (double)(sp.optInTimePeriod - 1);
-          if( tempValue2 < 0.0 ) {
-             sp.prevLoss -= tempValue2;
-          } else {
-             sp.prevGain += tempValue2;
-          }
-          sp.prevLoss /= (double)sp.optInTimePeriod;
-          sp.prevGain /= (double)sp.optInTimePeriod;
+          gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+          sp.prevGain += gainDelta;
+          sp.prevLoss += gainDelta - tempValue2;
+          sp.prevLoss *= sp.invPeriod;
+          sp.prevGain *= sp.invPeriod;
           tempValue1 = sp.prevGain + sp.prevLoss;
           if( tempValue1 > 0.0 ) {
              sp.cur_outReal = 100.0 * (sp.prevGain / tempValue1);
@@ -147111,6 +147086,8 @@ class Core {
           int today = 0;
           int lookbackTotal = 0;
           int i = 0;
+          double gainDelta = 0;
+          double invPeriod = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
@@ -147141,6 +147118,7 @@ class Core {
                 return RetCode.InsufficientHistory;
              }
              sp.optInTimePeriod = optInTimePeriod;
+             sp.invPeriod = 0.0;
              sp.prevGain = 0.0;
              sp.prevLoss = 0.0;
              sp.prevValue = 0.0;
@@ -147160,10 +147138,6 @@ class Core {
            * work from Wilder's and shall represent the
            * original idea behind the classic RSI.
            */
-          /* If changing this function, please check also CMO
-           * which is mostly identical (just different in one step
-           * of calculation).
-           */
           outBegIdx.value = 0;
           outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
@@ -147177,6 +147151,7 @@ class Core {
           }
           outIdx = 0;
           /* Index into the output. */
+          invPeriod = 1.0 / (double)optInTimePeriod;
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -147190,20 +147165,20 @@ class Core {
              today = today + 1;
              tempValue2 = tempValue1 - prevValue;
              prevValue = tempValue1;
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
           }
           /* Subsequent prevLoss and prevGain are smoothed
            * using the previous values (Wilder's approach).
            *  1) Multiply the previous by 'period-1'.
-           *  2) Add today value.
-           *  3) Divide by 'period'.
+           *  2) Add today's gain to one accumulator and today's loss to the other,
+           *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+           *     for every finite tempValue2, so no branch on a 50/50 predicate.
+           *  3) Scale by 1/'period'.
            */
-          prevLoss /= (double)optInTimePeriod;
-          prevGain /= (double)optInTimePeriod;
+          prevLoss *= invPeriod;
+          prevGain *= invPeriod;
           /* Often documentation present the RSI calculation as follow:
            *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
            *
@@ -147237,13 +147212,11 @@ class Core {
                 prevValue = tempValue1;
                 prevLoss *= (double)(optInTimePeriod - 1);
                 prevGain *= (double)(optInTimePeriod - 1);
-                if( tempValue2 < 0.0 ) {
-                   prevLoss -= tempValue2;
-                } else {
-                   prevGain += tempValue2;
-                }
-                prevLoss /= (double)optInTimePeriod;
-                prevGain /= (double)optInTimePeriod;
+                gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                prevLoss *= invPeriod;
+                prevGain *= invPeriod;
                 today = today + 1;
              }
           }
@@ -147257,13 +147230,11 @@ class Core {
              prevValue = tempValue1;
              prevLoss *= (double)(optInTimePeriod - 1);
              prevGain *= (double)(optInTimePeriod - 1);
-             if( tempValue2 < 0.0 ) {
-                prevLoss -= tempValue2;
-             } else {
-                prevGain += tempValue2;
-             }
-             prevLoss /= (double)optInTimePeriod;
-             prevGain /= (double)optInTimePeriod;
+             gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+             prevGain += gainDelta;
+             prevLoss += gainDelta - tempValue2;
+             prevLoss *= invPeriod;
+             prevGain *= invPeriod;
              tempValue1 = prevGain + prevLoss;
              if( tempValue1 > 0.0 ) {
                 outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
@@ -147277,6 +147248,7 @@ class Core {
           outNBElement.value = outIdx;
           /* Capture the live batch state into the handle. */
           sp.optInTimePeriod = optInTimePeriod;
+          sp.invPeriod = invPeriod;
           sp.prevGain = prevGain;
           sp.prevLoss = prevLoss;
           sp.prevValue = prevValue;
@@ -181005,7 +180977,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4dcc0b4c20c76c63";
+    static final String SPLICED_GENCODE_DIGEST = "3e15b19931e1f5f4";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -15,6 +15,9 @@
  *  082326 MF,CC Fix #253. Test the gain+loss total exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  090926 MF,CC #410 Scale the Wilder step by a hoisted 1/period and split the
+ *               gain/loss without a branch; the loop-carried chain keeps
+ *               neither a divide nor a 50/50 mispredict.
  */
 
 int rsi_lookback(int optInTimePeriod)
@@ -36,6 +39,8 @@ TA_RetCode rsi(int startIdx, int endIdx,
    size_t today;
    size_t lookbackTotal;
    int i;
+   double gainDelta;
+   double invPeriod;
    double prevGain;
    double prevLoss;
    double prevValue;
@@ -45,11 +50,6 @@ TA_RetCode rsi(int startIdx, int endIdx,
    /* The following algorithm is base on the original
     * work from Wilder's and shall represent the
     * original idea behind the classic RSI.
-    */
-
-   /* If changing this function, please check also CMO
-    * which is mostly identical (just different in one step
-    * of calculation).
     */
 
    *outBegIdx = 0;
@@ -89,6 +89,8 @@ TA_RetCode rsi(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
+   invPeriod = 1.0 / (double)optInTimePeriod;
+
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
     * among the initial period.
     */
@@ -102,24 +104,21 @@ TA_RetCode rsi(int startIdx, int endIdx,
       tempValue1 = (double)(inReal[today]); today = today + 1;
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      }
-      else
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
 
    /* Subsequent prevLoss and prevGain are smoothed
     * using the previous values (Wilder's approach).
     *  1) Multiply the previous by 'period-1'.
-    *  2) Add today value.
-    *  3) Divide by 'period'.
+    *  2) Add today's gain to one accumulator and today's loss to the other,
+    *     both unconditionally: gainDelta - tempValue2 is the exact loss delta
+    *     for every finite tempValue2, so no branch on a 50/50 predicate.
+    *  3) Scale by 1/'period'.
     */
-   prevLoss /= (double)optInTimePeriod;
-   prevGain /= (double)optInTimePeriod;
+   prevLoss *= invPeriod;
+   prevGain *= invPeriod;
 
    /* Often documentation present the RSI calculation as follow:
     *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
@@ -160,17 +159,12 @@ TA_RetCode rsi(int startIdx, int endIdx,
 
          prevLoss *= (double)(optInTimePeriod-1);
          prevGain *= (double)(optInTimePeriod-1);
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         }
-         else
-         {
-            prevGain += tempValue2;
-         }
+         gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
 
-         prevLoss /= (double)optInTimePeriod;
-         prevGain /= (double)optInTimePeriod;
+         prevLoss *= invPeriod;
+         prevGain *= invPeriod;
 
          today = today + 1;
       }
@@ -187,17 +181,12 @@ TA_RetCode rsi(int startIdx, int endIdx,
 
       prevLoss *= (double)(optInTimePeriod-1);
       prevGain *= (double)(optInTimePeriod-1);
-      if( tempValue2 < 0.0 )
-      {
-         prevLoss -= tempValue2;
-      }
-      else
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
 
-      prevLoss /= (double)optInTimePeriod;
-      prevGain /= (double)optInTimePeriod;
+      prevLoss *= invPeriod;
+      prevGain *= invPeriod;
       tempValue1 = prevGain+prevLoss;
       if( tempValue1 > 0.0 )
       {

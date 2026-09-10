@@ -528,6 +528,41 @@ reported, and no gate holds anything about it — the caller is the only one who
 can prevent it. Each entry also names the neighbouring cases that *are* defined,
 because the boundary is the useful part.
 
+### The input domain
+
+Every real element of an input series is expected to satisfy
+`TA_REAL_MIN <= x <= TA_REAL_MAX` (±3e37, `ta_defs.h`). Inside that range the
+library is expected to behave; outside it **nothing is defined**, and an
+intermediate may overflow to ±Inf or produce a NaN, a signed zero, or a
+plausible-looking wrong number. Not detected, not reported, no gate. The bound
+is not enforced, deliberately: checking it would cost a pass over every input
+array on every call, to reject values no caller sends.
+
+Two things the bound is not. It is not an accuracy guarantee, in the same way
+`TA_MAX_INDEX` bounds the index axis without promising anything about precision.
+And it is not the range the gates exercise: the fuzz corpus tops out around 1e9
+(`FUZZ_EXTREME`), so between 1e9 and 3e37 the domain rests on the arithmetic
+rather than on measurement.
+
+The constant is reused rather than invented: it already bounds a real optional
+parameter, and it sits inside `FLT_MAX`, so a value in the domain is
+representable in the single-precision `TA_S_*` variants. `DBL_MAX` and `DBL_MIN`
+are not used for it. `ta_defs.h` calls those macros troublesome across compilers,
+and `DBL_MIN` would mislead anyway, being the smallest normalised *positive*
+double rather than a signed lower bound.
+
+**Why this section exists.** It licenses an implementation to be correct only
+inside the domain, so that a formulation which is exact for every value a caller
+may legally pass is not given up for what it would do near `DBL_MAX`. RSI is the
+worked example: its gain/loss split derives the loss delta by subtraction, which
+is exact for every finite difference and degenerates to `Inf - Inf` only when two
+adjacent bars of opposite sign are each near 9e307. That is outside the domain by
+some 270 orders of magnitude. Absent this rule the case argues for a slower
+formulation buying nothing any caller can observe.
+
+Sizing a future change against a value outside the domain is over-engineering,
+and this section is the citation for saying so.
+
 ### Non-finite input — NaN and ±Inf
 
 What the library does with a non-finite value depends on **where it arrives** —

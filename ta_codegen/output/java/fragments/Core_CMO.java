@@ -71,16 +71,6 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      /* CMO calculation is mostly identical to RSI.
-       *
-       * The only difference is in the last step of calculation:
-       *
-       *   RSI = gain / (gain+loss)
-       *   CMO = (gain-loss) / (gain+loss)
-       *
-       * See the RSI function for potentially some more info
-       * on this algo.
-       */
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
@@ -692,16 +682,6 @@
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
-      /* CMO calculation is mostly identical to RSI.
-       *
-       * The only difference is in the last step of calculation:
-       *
-       *   RSI = gain / (gain+loss)
-       *   CMO = (gain-loss) / (gain+loss)
-       *
-       * See the RSI function for potentially some more info
-       * on this algo.
-       */
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
