@@ -30,7 +30,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "gate: fail on a regression, refresh the baseline on a pass. accept: adopt today's counts, regressions included. measure: report only, commit nothing."
+        description: "gate: fail above the threshold, and on a pass lower any row today beat. accept: adopt today's counts wholesale, regressions included (a human decision). measure: report only, commit nothing."
         type: choice
         options: [gate, accept, measure]
         default: gate
@@ -90,10 +90,11 @@ jobs:
           esac
           python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" $flags
 
-      # Only reached when the step above exited 0, and bench_icount.py leaves
-      # the baseline untouched whenever it reports a regression; this cannot
-      # ratchet a regression into the baseline even if it did run.
-      - name: Commit the refreshed baseline
+      # Reached only when the step above exited 0, and in `gate` mode
+      # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
+      # here one green night at a time; raising a row needs mode=accept, which
+      # is a person deciding to.
+      - name: Commit the lowered baseline
         if: success() && env.MODE != 'measure'
         run: |
           changes=$(git status --porcelain .github/perf/)
@@ -105,7 +106,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/perf/
-          git commit -m "perf: refresh the instruction-count baseline"
+          git commit -m "perf: lower the instruction-count baseline"
           # Same retry as the dist commit in dev-nightly-tests.yml: dev can move
           # under a run that takes minutes.
           for i in {1..5}; do

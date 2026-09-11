@@ -5,7 +5,8 @@ Runs `bin/ta_bench_icount` under callgrind and compares each entry point's
 retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
 
     scripts/bench_icount.py                     # build, measure, compare
-    scripts/bench_icount.py --update-baseline   # ... and rewrite the baseline
+    scripts/bench_icount.py --update-baseline   # ... and lower any row it beat
+    scripts/bench_icount.py --force-baseline    # ... and ADOPT the run wholesale
     scripts/bench_icount.py --no-build --function=RSI,SMA
 
 The counts are EXACT, not sampled: the same binary on the same input returns the
@@ -18,6 +19,13 @@ out-of-order execution, port pressure and dependency-chain latency are all
 invisible, and it over-charges branchy code: a branchless rewrite can read here
 as a regression. Use it for the algorithmic class (a lost fast path, an extra
 pass over the window, an un-inlined call); never quote a percentage from it.
+
+The baseline only ever moves DOWN. A passing run lowers a row it beat and leaves
+every row it did not, so a regression under the threshold is never absorbed:
+three nights of +9% is +30% against a baseline that never moved, and the gate
+catches it, where a wholesale nightly rewrite would have read green three times
+and lost the drift. Raising a row is a human decision (`--force-baseline`), so
+accepting a regression is always somebody's choice and never a side effect.
 
 A baseline is only comparable within one (architecture, compiler) pair. On a
 mismatch this refuses to compare, says so, and asks to be re-baselined rather
@@ -202,13 +210,33 @@ def join(rows, dumps, filtered):
 
 # ---------------------------------------------------------------- baseline
 
-def write_baseline(path, measured, meta, toolchain, commit):
+def ratchet(measured, base_rows):
+    """The rows a passing run should write: each at its lowest observed count.
+
+    Load-bearing. A run may lower a row and never raise one, which is what keeps
+    a sub-threshold regression from being absorbed one green night at a time.
+    Returns (rows, held), `held` counting the rows this run came in above."""
+    rows, held = [], 0
+    for name, kind, rc, ir in measured:
+        prev = base_rows.get((name, kind))
+        if prev is not None and prev[0] == rc and prev[1] < ir:
+            rows.append((name, kind, rc, prev[1]))
+            held += 1
+        else:
+            rows.append((name, kind, rc, ir))
+    return rows, held
+
+
+def write_baseline(path, measured, meta, toolchain, commit, policy):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     corpus = " ".join(f"{k}={meta[k]}" for k in sorted(meta))
     with open(path, "w") as f:
         f.write("# Instruction counts per C entry point, from scripts/bench_icount.py.\n")
-        f.write("# Regenerate with `scripts/bench_icount.py --update-baseline`;\n")
-        f.write("# a count is comparable only against the same toolchain line.\n")
+        f.write("# A count is comparable only against the same toolchain line.\n")
+        f.write("# policy=monotone: a passing run lowers a row it beat and holds every\n")
+        f.write("# other, so a row may predate the commit below. Raising one is a human\n")
+        f.write("# decision: `scripts/bench_icount.py --force-baseline`.\n")
+        f.write(f"#policy\t{policy}\n")
         f.write(f"#toolchain\t{toolchain}\n")
         f.write(f"#corpus\t{corpus}\n")
         f.write(f"#commit\t{commit}\n")
@@ -380,7 +408,8 @@ def main():
                             f"**Not compared.** {incomparable}. "
                             f"Measured {len(measured)} entry points.\n")
         if (args.update_baseline or args.force_baseline) and not filtered:
-            write_baseline(baseline_path, measured, meta, toolchain, commit)
+            write_baseline(baseline_path, measured, meta, toolchain, commit,
+                           "accepted" if args.force_baseline else "monotone")
             print(f"baseline written: {BASELINE_REL}")
         return 0
 
@@ -424,7 +453,7 @@ def main():
         print(f"\nACCEPTED: {len(failures)} entry point(s) over "
               f"{args.threshold:.0%} adopted into the baseline by "
               "--force-baseline.")
-        write_baseline(baseline_path, measured, meta, toolchain, commit)
+        write_baseline(baseline_path, measured, meta, toolchain, commit, "accepted")
         print(f"baseline written: {BASELINE_REL}")
         return 0
 
@@ -439,8 +468,17 @@ def main():
         return 1
 
     print(f"\nPASS: no entry point grew more than {args.threshold:.0%}.")
-    if (args.update_baseline or args.force_baseline) and not filtered:
-        write_baseline(baseline_path, measured, meta, toolchain, commit)
+    if not filtered and (args.update_baseline or args.force_baseline):
+        if args.force_baseline:
+            write_baseline(baseline_path, measured, meta, toolchain, commit, "accepted")
+        else:
+            rows, held = ratchet(measured, base_rows)
+            write_baseline(baseline_path, rows, meta, toolchain, commit, "monotone")
+            if held:
+                print(f"{held} row(s) came in above the baseline but under the "
+                      "threshold; the baseline holds the lower count, so the "
+                      "drift keeps accumulating against it rather than being "
+                      "absorbed.")
         print(f"baseline written: {BASELINE_REL}")
     return 0
 

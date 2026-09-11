@@ -111,7 +111,8 @@ retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
 
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)
-scripts/bench_icount.py --update-baseline     # ... and adopt the result
+scripts/bench_icount.py --update-baseline     # ... and lower any row it beat
+scripts/bench_icount.py --force-baseline      # ... and ADOPT the run, regressions too
 scripts/bench_icount.py --no-build --function=RSI,SMA   # narrowed: report only
 ```
 
@@ -130,11 +131,19 @@ What a count cannot see, and where it actively misleads:
   release note.** Use it for the algorithmic class (a lost fast path, an extra
   pass over the window, an un-inlined call) and the devbox for magnitudes.
 
-Two properties to hold on to. `--function` narrows the run, and the allocating
-tiers (`open`, `openfill`) then shift by a few hundred instructions because the
-heap history they see is different; that is why a narrowed run reports and never
-gates. And the baseline is per (architecture, compiler): on a mismatch the
-script refuses to compare rather than printing a thousand false rows.
+**The baseline only ever moves down.** A passing nightly lowers a row it beat and
+holds every row it did not, so a regression under the threshold is never
+absorbed: three nights of +9% is +30% against a baseline that never moved, and
+the gate catches it. A wholesale nightly rewrite would have read green three
+times and lost the drift. Raising a row is `--force-baseline` (workflow
+`mode=accept`), so accepting a regression is always someone's decision.
+
+Two more properties to hold on to. `--function` narrows the run, and the
+allocating tiers (`open`, `openfill`) then shift by a few hundred instructions
+because the heap history they see is different; that is why a narrowed run
+reports and never gates. And the baseline is per (architecture, compiler): on a
+mismatch the script refuses to compare rather than printing a thousand false
+rows.
 
 ## Streaming vs batch
 
