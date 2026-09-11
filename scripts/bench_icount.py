@@ -259,7 +259,16 @@ def ratchet(measured, base_rows, tokens=frozenset()):
     return rows, held
 
 
-def write_baseline(path, measured, meta, toolchain, commit, policy):
+def write_baseline(path, measured, meta, toolchain, commit, policy, prev_rows=None):
+    """Writes only when a COUNT changed, and answers whether it did.
+
+    The header carries the run's commit and a timestamp, so writing
+    unconditionally would dirty the file on every run and commit a daily
+    no-op to dev forever. A baseline commit has to mean a number moved."""
+    rows = sorted(measured)
+    if prev_rows is not None and prev_rows == {
+            (n, k): (rc, ir) for n, k, rc, ir in rows}:
+        return False
     os.makedirs(os.path.dirname(path), exist_ok=True)
     corpus = " ".join(f"{k}={meta[k]}" for k in sorted(meta))
     with open(path, "w") as f:
@@ -273,8 +282,9 @@ def write_baseline(path, measured, meta, toolchain, commit, policy):
         f.write(f"#corpus\t{corpus}\n")
         f.write(f"#commit\t{commit}\n")
         f.write(f"#generated\t{datetime.datetime.now(datetime.timezone.utc):%Y-%m-%dT%H:%M:%SZ}\n")
-        for name, kind, rc, ir in sorted(measured):
+        for name, kind, rc, ir in rows:
             f.write(f"{name}\t{kind}\t{rc}\t{ir}\n")
+    return True
 
 
 def read_baseline(path):
@@ -502,8 +512,9 @@ def main():
         print(f"\nACCEPTED: {len(failures)} entry point(s) over "
               f"{args.threshold:.0%} raised into the baseline by --accept="
               f"{args.accept}. Every other row keeps its accumulated best.")
-        rows, held = ratchet(measured, base_rows, accept_tokens)
-        write_baseline(baseline_path, rows, meta, toolchain, commit, "accepted")
+        rows, _held = ratchet(measured, base_rows, accept_tokens)
+        write_baseline(baseline_path, rows, meta, toolchain, commit, "accepted",
+                       base_rows)
         print(f"baseline written: {BASELINE_REL}")
         return 0
 
@@ -527,13 +538,15 @@ def main():
     print(f"\nPASS: no entry point grew more than {args.threshold:.0%}.")
     if not filtered and (args.update_baseline or accept_tokens):
         rows, held = ratchet(measured, base_rows, accept_tokens)
-        write_baseline(baseline_path, rows, meta, toolchain, commit,
-                       "accepted" if accept_tokens else "monotone")
+        wrote = write_baseline(baseline_path, rows, meta, toolchain, commit,
+                               "accepted" if accept_tokens else "monotone",
+                               base_rows)
         if held:
             print(f"{held} row(s) came in above the baseline but under the "
                   "threshold; the baseline holds the lower count, so the drift "
                   "keeps accumulating against it rather than being absorbed.")
-        print(f"baseline written: {BASELINE_REL}")
+        print(f"baseline written: {BASELINE_REL}" if wrote
+              else "baseline unchanged: no count moved, nothing to commit.")
     return 0
 
 
