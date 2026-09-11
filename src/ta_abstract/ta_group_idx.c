@@ -205,6 +205,7 @@ extern const TA_FuncDef TA_DEF_ROCR;
 extern const TA_FuncDef TA_DEF_ROCR100;
 extern const TA_FuncDef TA_DEF_RSI;
 extern const TA_FuncDef TA_DEF_RVI;
+extern const TA_FuncDef TA_DEF_RVIR;
 extern const TA_FuncDef TA_DEF_RVOL;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SAREXT;
@@ -313,6 +314,7 @@ const TA_FuncDef *TA_PerGroupFunc_3[] = {
 &TA_DEF_MASSI,
 &TA_DEF_NATR,
 &TA_DEF_RVI,
+&TA_DEF_RVIR,
 &TA_DEF_TRANGE,
 NULL };
 #define SIZE_GROUP_3 ((sizeof(TA_PerGroupFunc_3)/sizeof(const TA_FuncDef *))-1)

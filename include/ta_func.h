@@ -14381,6 +14381,100 @@ TA_LIB_API TA_RetCode TA_RVI_Advance( TA_RVI_Stream *stream );
 TA_LIB_API TA_RetCode TA_RVI_Clone( const TA_RVI_Stream *stream, TA_RVI_Stream **clone );
 
 /*
+ * TA_RVIR - Relative Volatility Index, refined high/low form
+ * 
+ * Input  = High, Low
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period of the Wilder smoothing applied to both legs
+ * 
+ * optInStdDevPeriod:(From 2 to 100000)
+ *    Time period of the standard deviation
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_RVIR( int    startIdx,
+                               int    endIdx,
+                                          const double inHigh[],
+                                          const double inLow[],
+                                          int           optInTimePeriod, /* From 1 to 100000 */
+                                          int           optInStdDevPeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_RVIR( int    startIdx,
+                                 int    endIdx,
+                                            const float  inHigh[],
+                                            const float  inLow[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int           optInStdDevPeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_RVIR_Lookback( int           optInTimePeriod, /* From 1 to 100000 */
+                                          int           optInStdDevPeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_RVIR — incremental per-bar evaluation.
+ */
+typedef struct TA_RVIR_Stream TA_RVIR_Stream;
+
+TA_LIB_API TA_RetCode TA_RVIR_Open( TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int optInStdDevPeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_RVIR_Update( TA_RVIR_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_RVIR_Peek( const TA_RVIR_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_RVIR_Close( TA_RVIR_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_RVIR( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_RVIR_OpenAndFill( TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_RVIR_OutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_RVIR_Value( const TA_RVIR_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_RVIR reports
+ * over the same bars. Open seeds it; every accepted Update and every
+ * TA_RVIR_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_RVIR_OutRange( const TA_RVIR_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed — one an Update rejected and
+ * that will not be re-fed, or a session with no print. The range moves by one
+ * and nothing else does, so TA_RVIR_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
+ */
+TA_LIB_API TA_RetCode TA_RVIR_Advance( TA_RVIR_Stream *stream );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_RVIR_Clone( const TA_RVIR_Stream *stream, TA_RVIR_Stream **clone );
+
+/*
  * TA_RVOL - Relative Volume
  * 
  * Input  = Volume

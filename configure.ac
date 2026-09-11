@@ -116,7 +116,10 @@ AC_SUBST([LIBM])
 # exporting 1,516 internals, which moves no interface anyone was promised and no
 # line in ABI.manifest -- and libta-lib.so.1 has not shipped, so there is nothing
 # for it to break compatibility WITH.
-TALIB_LIBRARY_VERSION=2:0:1
+#
+# 3:0:2 -- TA_RVIR and its streaming entry points are added and nothing is
+# removed or changed, so the soname stays libta-lib.so.1.
+TALIB_LIBRARY_VERSION=3:0:2
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 
