@@ -180,6 +180,7 @@ struct TA_ROCR_Stream;
 struct TA_ROCR100_Stream;
 struct TA_RSI_Stream;
 struct TA_RVI_Stream;
+struct TA_RVIR_Stream;
 struct TA_RVOL_Stream;
 struct TA_SAR_Stream;
 struct TA_SAREXT_Stream;
@@ -381,6 +382,7 @@ TA_RetCode TA_ROCR_OpenInternal( struct TA_ROCR_Stream **stream, const double in
 TA_RetCode TA_ROCR100_OpenInternal( struct TA_ROCR100_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_RSI_OpenInternal( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_RVI_OpenInternal( struct TA_RVI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, double *outReal );
+TA_RetCode TA_RVIR_OpenInternal( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, double *outReal );
 TA_RetCode TA_RVOL_OpenInternal( struct TA_RVOL_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_SAR_OpenInternal( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, double *outReal );
 TA_RetCode TA_SAREXT_OpenInternal( struct TA_SAREXT_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double *outReal );
@@ -583,6 +585,7 @@ TA_RetCode TA_ROCR_OpenAndFillInternal( struct TA_ROCR_Stream **stream, const do
 TA_RetCode TA_ROCR100_OpenAndFillInternal( struct TA_ROCR100_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_RSI_OpenAndFillInternal( struct TA_RSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_RVI_OpenAndFillInternal( struct TA_RVI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_RVIR_OpenAndFillInternal( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_RVOL_OpenAndFillInternal( struct TA_RVOL_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_SAR_OpenAndFillInternal( struct TA_SAR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInAcceleration, double optInMaximum, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_SAREXT_OpenAndFillInternal( struct TA_SAREXT_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, int *outBegIdx, int *outNBElement, double outReal[] );

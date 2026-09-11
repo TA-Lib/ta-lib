@@ -1532,6 +1532,15 @@ TA_RetCode TA_RVI_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_RVI_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_RVIR_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_RVIR_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_RVOL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
