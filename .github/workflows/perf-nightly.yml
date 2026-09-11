@@ -195,7 +195,7 @@ jobs:
 
       - name: Upload the raw callgrind output
         if: steps.decide.outputs.measure == 'true'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: callgrind-icount
           path: temp/callgrind.icount.out
