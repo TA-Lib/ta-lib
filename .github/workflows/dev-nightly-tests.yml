@@ -24,6 +24,10 @@ on:
       perf_accept:
         description: "perf_mode=accept only. Entry points to raise: SMA for every tier, SMA/batch for one, comma-separated. ALL discards what every other row accumulated, so name what you mean."
         default: ""
+      perf_force_measure:
+        description: "Measure even when this exact tree was already measured. Untick to exercise the skip path on demand."
+        type: boolean
+        default: true
 
 # Least-privilege default for every job; 'test' overrides to write because it
 # commits the refreshed dist package back to dev.
@@ -1275,6 +1279,9 @@ jobs:
       MODE: ${{ inputs.perf_mode || 'gate' }}
       THRESHOLD: "0.10"
       ACCEPT: ${{ inputs.perf_accept || '' }}
+      # Empty on a schedule, so the skip is armed there; 'true' by default on a
+      # dispatch, because someone who asked for a run gets one.
+      FORCE: ${{ inputs.perf_force_measure }}
 
     steps:
       - name: Checkout dev Branch
@@ -1308,7 +1315,7 @@ jobs:
 
       - name: Has this exact tree already been measured?
         id: seen
-        if: github.event_name == 'schedule'
+        if: env.FORCE != 'true'
         uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/perf
@@ -1398,10 +1405,12 @@ jobs:
             git pull --rebase origin dev && git push origin dev && break || sleep 10
           done
 
-      # Only after a measurement that got that far, so a skipped run does not
-      # record that this tree was measured when it was not.
+      # After any measurement, not just a scheduled one: a skipped run must not
+      # record a tree it never measured, but a forced run legitimately did, and
+      # saving there is what makes the skip reachable on demand instead of only
+      # after two consecutive scheduled runs.
       - name: Remember this tree as measured
-        if: steps.decide.outputs.measure == 'true' && github.event_name == 'schedule'
+        if: steps.decide.outputs.measure == 'true'
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/perf
