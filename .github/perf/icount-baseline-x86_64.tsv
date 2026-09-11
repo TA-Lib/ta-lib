@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	e0b0babe57140240ba577d089c2bd4f283345f8a
-#generated	2026-09-11T04:11:10Z
+#commit	c990c2d6763e49f1385a05841dcfe1f6fe8dd793
+#generated	2026-09-11T12:38:54Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
