@@ -2,12 +2,12 @@
 # A count is comparable only against the same toolchain line.
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
-# decision: `scripts/bench_icount.py --force-baseline`.
+# decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	b00c2e20d4de83e8375dee7ef2aaae6255cf1006
-#generated	2026-09-11T03:19:23Z
+#commit	e0b0babe57140240ba577d089c2bd4f283345f8a
+#generated	2026-09-11T04:11:10Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624

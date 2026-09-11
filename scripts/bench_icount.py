@@ -6,7 +6,8 @@ retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
 
     scripts/bench_icount.py                     # build, measure, compare
     scripts/bench_icount.py --update-baseline   # ... and lower any row it beat
-    scripts/bench_icount.py --force-baseline    # ... and ADOPT the run wholesale
+    scripts/bench_icount.py --accept=SMA        # ... and RAISE only SMA's rows
+    scripts/bench_icount.py --accept=SMA/batch  # ... and only that one tier
     scripts/bench_icount.py --no-build --function=RSI,SMA
 
 The counts are EXACT, not sampled: the same binary on the same input returns the
@@ -24,8 +25,14 @@ The baseline only ever moves DOWN. A passing run lowers a row it beat and leaves
 every row it did not, so a regression under the threshold is never absorbed:
 three nights of +9% is +30% against a baseline that never moved, and the gate
 catches it, where a wholesale nightly rewrite would have read green three times
-and lost the drift. Raising a row is a human decision (`--force-baseline`), so
-accepting a regression is always somebody's choice and never a side effect.
+and lost the drift.
+
+Raising a row takes `--accept`, and `--accept` NAMES the rows. Accepting one
+deliberate regression must not re-baseline the corpus: every row not named keeps
+the monotone rule, so the drift accumulated against the other thousand entry
+points survives. A failure on a row nobody accepted still fails the run, so
+`--accept=SMA` cannot paper over a regression in RSI. `--accept=ALL` exists for
+a toolchain change and says what it does.
 
 A baseline is only comparable within one (architecture, compiler) pair. On a
 mismatch this refuses to compare, says so, and asks to be re-baselined rather
@@ -210,16 +217,41 @@ def join(rows, dumps, filtered):
 
 # ---------------------------------------------------------------- baseline
 
-def ratchet(measured, base_rows):
+def accept_spec(spec):
+    """`--accept` tokens, as a set. `NAME` accepts every tier of a function,
+    `NAME/kind` one tier, `ALL` the whole run."""
+    return {t.strip() for t in spec.split(",") if t.strip()} if spec else set()
+
+
+def accepts(tokens, name, kind):
+    if not tokens:
+        return False
+    if "ALL" in {t.upper() for t in tokens}:
+        return True
+    for t in tokens:
+        if "/" in t:
+            n, k = t.split("/", 1)
+            if n.upper() == name.upper() and k.lower() == kind.lower():
+                return True
+        elif t.upper() == name.upper():
+            return True
+    return False
+
+
+def ratchet(measured, base_rows, tokens=frozenset()):
     """The rows a passing run should write: each at its lowest observed count.
 
     Load-bearing. A run may lower a row and never raise one, which is what keeps
     a sub-threshold regression from being absorbed one green night at a time.
+    Only a row named in `tokens` is allowed to rise, so accepting one function
+    leaves every other row's accumulated best where it was.
+
     Returns (rows, held), `held` counting the rows this run came in above."""
     rows, held = [], 0
     for name, kind, rc, ir in measured:
         prev = base_rows.get((name, kind))
-        if prev is not None and prev[0] == rc and prev[1] < ir:
+        if (prev is not None and prev[0] == rc and prev[1] < ir
+                and not accepts(tokens, name, kind)):
             rows.append((name, kind, rc, prev[1]))
             held += 1
         else:
@@ -235,7 +267,7 @@ def write_baseline(path, measured, meta, toolchain, commit, policy):
         f.write("# A count is comparable only against the same toolchain line.\n")
         f.write("# policy=monotone: a passing run lowers a row it beat and holds every\n")
         f.write("# other, so a row may predate the commit below. Raising one is a human\n")
-        f.write("# decision: `scripts/bench_icount.py --force-baseline`.\n")
+        f.write("# decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.\n")
         f.write(f"#policy\t{policy}\n")
         f.write(f"#toolchain\t{toolchain}\n")
         f.write(f"#corpus\t{corpus}\n")
@@ -338,10 +370,12 @@ def main():
                     help="measure bin/ta_bench_icount as it stands")
     ap.add_argument("--update-baseline", action="store_true",
                     help="rewrite the baseline when the run does not regress")
-    ap.add_argument("--force-baseline", action="store_true",
-                    help="adopt today's counts as the baseline even where they "
-                         "regressed, and exit 0. For a perf change that is "
-                         "intended; it accepts everything the run measured")
+    ap.add_argument("--accept", default=None, metavar="NAME[/KIND],...",
+                    help="raise these rows to today's count, and only these: "
+                         "SMA for every tier of a function, SMA/batch for one, "
+                         "ALL for the whole run. Every row not named keeps the "
+                         "monotone rule, and a failure on a row nobody named "
+                         "still fails the run")
     ap.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
                     help=f"fractional growth that FAILS a row (default {DEFAULT_THRESHOLD})")
     ap.add_argument("--report-threshold", type=float, default=REPORT_THRESHOLD,
@@ -379,6 +413,18 @@ def main():
     meta, rows = parse_rows(stdout)
     measured = join(rows, parse_dumps(out_file), filtered)
 
+    # A token that matches nothing is a typo, and a typo that silently accepts
+    # nothing would read as an unexplained failure later.
+    accept_tokens = accept_spec(args.accept)
+    for tok in accept_tokens:
+        if tok.upper() != "ALL" and not any(
+                accepts({tok}, n, k) for n, k, _rc, _ir in measured):
+            sys.exit(f"bench_icount: --accept token {tok!r} matches no measured "
+                     "entry point")
+    if accept_tokens and filtered:
+        sys.exit("bench_icount: --accept needs a whole-corpus run; --function "
+                 "narrows the measurement into something the baseline cannot judge")
+
     toolchain = toolchain_id(root)
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root,
                             capture_output=True, text=True).stdout.strip()
@@ -407,9 +453,9 @@ def main():
         emit_github_summary("## Instruction-count suite\n\n"
                             f"**Not compared.** {incomparable}. "
                             f"Measured {len(measured)} entry points.\n")
-        if (args.update_baseline or args.force_baseline) and not filtered:
+        if (args.update_baseline or accept_tokens) and not filtered:
             write_baseline(baseline_path, measured, meta, toolchain, commit,
-                           "accepted" if args.force_baseline else "monotone")
+                           "accepted" if accept_tokens else "monotone")
             print(f"baseline written: {BASELINE_REL}")
         return 0
 
@@ -449,15 +495,26 @@ def main():
             f"- `{n}` {k}: {w} {d}".rstrip() for n, k, w, d in structural[:40]) + "\n")
     emit_github_summary("".join(summary))
 
-    if failures and args.force_baseline and not filtered:
+    # A failure the caller named is accepted; one it did not still fails, so
+    # --accept=SMA cannot quietly absorb a regression in RSI.
+    unaccepted = [f for f in failures if not accepts(accept_tokens, f[0], f[1])]
+    if failures and accept_tokens and not unaccepted and not filtered:
         print(f"\nACCEPTED: {len(failures)} entry point(s) over "
-              f"{args.threshold:.0%} adopted into the baseline by "
-              "--force-baseline.")
-        write_baseline(baseline_path, measured, meta, toolchain, commit, "accepted")
+              f"{args.threshold:.0%} raised into the baseline by --accept="
+              f"{args.accept}. Every other row keeps its accumulated best.")
+        rows, held = ratchet(measured, base_rows, accept_tokens)
+        write_baseline(baseline_path, rows, meta, toolchain, commit, "accepted")
         print(f"baseline written: {BASELINE_REL}")
         return 0
 
-    if failures:
+    if unaccepted:
+        if accept_tokens:
+            print(f"\n{len(failures) - len(unaccepted)} of {len(failures)} row(s) "
+                  f"over threshold are covered by --accept={args.accept}; "
+                  f"{len(unaccepted)} are not:")
+            for name, kind, base_ir, ir, delta in unaccepted:
+                print(f"  {name} {kind} {base_ir:,} -> {ir:,} ({delta:+.1%})")
+        failures = unaccepted
         if filtered:
             print(f"\n{len(failures)} entry point(s) over {args.threshold:.0%}, "
                   "but --function makes this run report-only. Re-run whole-corpus "
@@ -468,17 +525,14 @@ def main():
         return 1
 
     print(f"\nPASS: no entry point grew more than {args.threshold:.0%}.")
-    if not filtered and (args.update_baseline or args.force_baseline):
-        if args.force_baseline:
-            write_baseline(baseline_path, measured, meta, toolchain, commit, "accepted")
-        else:
-            rows, held = ratchet(measured, base_rows)
-            write_baseline(baseline_path, rows, meta, toolchain, commit, "monotone")
-            if held:
-                print(f"{held} row(s) came in above the baseline but under the "
-                      "threshold; the baseline holds the lower count, so the "
-                      "drift keeps accumulating against it rather than being "
-                      "absorbed.")
+    if not filtered and (args.update_baseline or accept_tokens):
+        rows, held = ratchet(measured, base_rows, accept_tokens)
+        write_baseline(baseline_path, rows, meta, toolchain, commit,
+                       "accepted" if accept_tokens else "monotone")
+        if held:
+            print(f"{held} row(s) came in above the baseline but under the "
+                  "threshold; the baseline holds the lower count, so the drift "
+                  "keeps accumulating against it rather than being absorbed.")
         print(f"baseline written: {BASELINE_REL}")
     return 0
 

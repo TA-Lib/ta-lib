@@ -112,7 +112,8 @@ retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)
 scripts/bench_icount.py --update-baseline     # ... and lower any row it beat
-scripts/bench_icount.py --force-baseline      # ... and ADOPT the run, regressions too
+scripts/bench_icount.py --accept=SMA          # ... and RAISE only SMA's rows
+scripts/bench_icount.py --accept=SMA/batch    # ... and only that one tier
 scripts/bench_icount.py --no-build --function=RSI,SMA   # narrowed: report only
 ```
 
@@ -135,8 +136,12 @@ What a count cannot see, and where it actively misleads:
 holds every row it did not, so a regression under the threshold is never
 absorbed: three nights of +9% is +30% against a baseline that never moved, and
 the gate catches it. A wholesale nightly rewrite would have read green three
-times and lost the drift. Raising a row is `--force-baseline` (workflow
-`mode=accept`), so accepting a regression is always someone's decision.
+times and lost the drift. Raising a row takes `--accept`, and `--accept` names the rows (workflow
+`mode=accept` + the `accept` input). Accepting one deliberate regression does
+not re-baseline the corpus: every row not named keeps the monotone rule, so what
+the other thousand entry points accumulated survives. A failure on a row nobody
+named still fails the run, so `--accept=SMA` cannot absorb a regression in RSI.
+`--accept=ALL` exists for a toolchain change and says what it does.
 
 Two more properties to hold on to. `--function` narrows the run, and the
 allocating tiers (`open`, `openfill`) then shift by a few hundred instructions

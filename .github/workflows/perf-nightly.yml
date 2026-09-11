@@ -30,10 +30,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "gate: fail above the threshold, and on a pass lower any row today beat. accept: adopt today's counts wholesale, regressions included (a human decision). measure: report only, commit nothing."
+        description: "gate: fail above the threshold, and on a pass lower any row today beat. accept: additionally RAISE the rows named below, and only those. measure: report only, commit nothing."
         type: choice
         options: [gate, accept, measure]
         default: gate
+      accept:
+        description: "mode=accept only. Entry points to raise to today's count: SMA for every tier, SMA/batch for one, comma-separated. ALL re-baselines the corpus and discards what every other row accumulated, so name what you mean."
+        default: ""
       threshold:
         description: "Fractional growth that fails one entry point"
         default: "0.10"
@@ -57,6 +60,7 @@ jobs:
     env:
       MODE: ${{ inputs.mode || 'gate' }}
       THRESHOLD: ${{ inputs.threshold || '0.10' }}
+      ACCEPT: ${{ inputs.accept || '' }}
 
     steps:
       - name: Checkout dev Branch
@@ -84,7 +88,14 @@ jobs:
         run: |
           case "$MODE" in
             gate)    flags="--update-baseline" ;;
-            accept)  flags="--force-baseline"  ;;
+            accept)
+              # No silent wholesale re-baseline: accepting a regression has to
+              # name the rows it is accepting.
+              if [ -z "$ACCEPT" ]; then
+                echo "mode=accept needs the 'accept' input (e.g. SMA, or SMA/batch)."
+                exit 2
+              fi
+              flags="--accept=$ACCEPT" ;;
             measure) flags=""                  ;;
             *) echo "unknown mode '$MODE'"; exit 2 ;;
           esac
@@ -92,8 +103,8 @@ jobs:
 
       # Reached only when the step above exited 0, and in `gate` mode
       # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
-      # here one green night at a time; raising a row needs mode=accept, which
-      # is a person deciding to.
+      # here one green night at a time; raising a row needs mode=accept naming
+      # that row, which is a person deciding to.
       - name: Commit the lowered baseline
         if: success() && env.MODE != 'measure'
         run: |
