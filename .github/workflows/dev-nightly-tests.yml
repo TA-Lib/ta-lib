@@ -16,6 +16,14 @@ on:
         description: "Force rebuild + tests even when dist digests match"
         type: boolean
         default: false
+      perf_mode:
+        description: "Instruction counts. gate: fail above 10% and lower any row today beat. accept: additionally RAISE the rows named below. measure: report only, commit nothing."
+        type: choice
+        options: [gate, accept, measure]
+        default: gate
+      perf_accept:
+        description: "perf_mode=accept only. Entry points to raise: SMA for every tier, SMA/batch for one, comma-separated. ALL discards what every other row accumulated, so name what you mean."
+        default: ""
 
 # Least-privilege default for every job; 'test' overrides to write because it
 # commits the refreshed dist package back to dev.
@@ -1236,3 +1244,174 @@ jobs:
             echo "::error::A candlestick's trailing total is wired to the wrong bar — see the log above."
             exit 1
           fi
+
+  # Instruction-count regression detection for every C entry point (issue #412).
+  #
+  # A JOB here rather than its own workflow, deliberately. On its own schedule it
+  # was a second asynchronous writer to dev: it could land a baseline commit
+  # between a green dev-nightly and a merge.py, so "green means mergeable" stopped
+  # being true. Here its commit is a product of the run that goes green, exactly
+  # like the dist commits, and there is one schedule and one writer window.
+  #
+  # No `needs:`. The critical path is the arm64 job at ~21 min and this is ~5
+  # (~1 when the fingerprint skip fires), so running it in parallel costs ZERO
+  # wall clock, while `needs:` would serialise it onto the end and charge the
+  # nightly for every minute. For the same reason it rebuilds the library rather
+  # than consuming another job's artifact: an artifact needs `needs:`, which
+  # trades a 2-minute duplicate build for 5 minutes of critical path.
+  #
+  # Wall clock is not measurable on a shared vCPU, which is why this counts
+  # retired instructions under callgrind instead: exact, byte-identical across
+  # runs on a loaded box, which is what lets a 10% threshold mean anything. It is
+  # blind to out-of-order execution and over-charges branches, so a percentage
+  # from it is never a quoted performance figure.
+  icount:
+    name: Instruction counts (x86_64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      MODE: ${{ inputs.perf_mode || 'gate' }}
+      THRESHOLD: "0.10"
+      ACCEPT: ${{ inputs.perf_accept || '' }}
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      # An instruction count can only move if the library, the headers, the
+      # CMake build or the generated bench moved, so a day of docs-only commits
+      # should not spend a runner. The fingerprint is git's own tree hashes, so
+      # it needs no state in the repo and costs no commit to maintain, and the
+      # cache key IS the fingerprint: a hit means this exact tree was already
+      # measured. Anything unexpected (no fingerprint, cache miss, cache
+      # evicted) falls through to measuring, so the failure mode is a wasted
+      # run and never a silent skip.
+      #
+      # Scheduled runs only. A human who dispatched this asked for a
+      # measurement and gets one.
+      - name: Fingerprint the sources a count can depend on
+        id: fp
+        run: |
+          set -o pipefail
+          if ! fp=$(git rev-parse HEAD:src HEAD:include HEAD:CMakeLists.txt \
+                                  HEAD:ta_codegen/output/c | tr '\n' '-'); then
+            echo "could not fingerprint the tree; measuring."
+            fp="unfingerprinted-$GITHUB_RUN_ID"
+          fi
+          echo "fp=$fp" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/perf"
+          echo "$fp" > "$RUNNER_TEMP/perf/fingerprint"
+
+      - name: Has this exact tree already been measured?
+        id: seen
+        if: github.event_name == 'schedule'
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+          lookup-only: true
+
+      - name: Decide whether to measure
+        id: decide
+        env:
+          SEEN: ${{ steps.seen.outputs.cache-hit }}
+        run: |
+          if [ "$SEEN" = "true" ]; then
+            echo "measure=false" >> "$GITHUB_OUTPUT"
+            msg="Skipped: nothing that can move an instruction count changed since the last measured run."
+            echo "$msg"
+            echo "## Instruction-count suite" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "measure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Python
+        if: steps.decide.outputs.measure == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # Supplies both the tool and <valgrind/callgrind.h>. The header is needed
+      # at COMPILE time, so this has to precede the build step, not the run.
+      - name: Install valgrind
+        if: steps.decide.outputs.measure == 'true'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: |
+            valgrind
+
+      - name: Build ta_bench_icount
+        if: steps.decide.outputs.measure == 'true'
+        run: python3 scripts/build.py ta_bench_icount
+
+      - name: Measure and compare
+        if: steps.decide.outputs.measure == 'true'
+        run: |
+          case "$MODE" in
+            gate)    flags="--update-baseline" ;;
+            accept)
+              # No silent wholesale re-baseline: accepting a regression has to
+              # name the rows it is accepting.
+              if [ -z "$ACCEPT" ]; then
+                echo "mode=accept needs the 'accept' input (e.g. SMA, or SMA/batch)."
+                exit 2
+              fi
+              flags="--accept=$ACCEPT" ;;
+            measure) flags=""                  ;;
+            *) echo "unknown mode '$MODE'"; exit 2 ;;
+          esac
+          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" $flags
+
+      # Reached only when the step above exited 0, and in `gate` mode
+      # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
+      # here one green night at a time; raising a row needs mode=accept naming
+      # that row, which is a person deciding to.
+      - name: Commit the lowered baseline
+        if: success() && env.MODE != 'measure' && steps.decide.outputs.measure == 'true'
+        run: |
+          changes=$(git status --porcelain .github/perf/)
+          if [ -z "$changes" ]; then
+            echo "Baseline unchanged."
+            exit 0
+          fi
+          echo "$changes"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/perf/
+          git commit -m "perf: lower the instruction-count baseline"
+          # dev moves under a run that takes minutes: dev-nightly commits dist/
+          # and include/ta_common.h on its own schedule. Disjoint paths, so the
+          # rebase never has to resolve anything.
+          #
+          # NO --strategy-option=ours, unlike the dist commit in
+          # dev-nightly-tests.yml. During a rebase "ours" is the UPSTREAM side,
+          # so a conflict here would silently discard the baseline this run just
+          # measured. Nothing else writes .github/perf/, so a conflict means an
+          # assumption broke and the run should say so rather than drop it.
+          for i in {1..5}; do
+            git pull --rebase origin dev && git push origin dev && break || sleep 10
+          done
+
+      # Only after a measurement that got that far, so a skipped run does not
+      # record that this tree was measured when it was not.
+      - name: Remember this tree as measured
+        if: steps.decide.outputs.measure == 'true' && github.event_name == 'schedule'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+
+      - name: Upload the raw callgrind output
+        if: steps.decide.outputs.measure == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: callgrind-icount
+          path: temp/callgrind.icount.out
+          if-no-files-found: warn
+          retention-days: 14
