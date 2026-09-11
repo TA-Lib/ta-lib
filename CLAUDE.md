@@ -191,7 +191,7 @@ scripts/build.py regen-check    # The PR gate: regenerating must change nothing
                                 # (cargo + Python only; the same command CI runs)
 scripts/build.py test           # C reference tests only (quick)
 scripts/build.py ta_ref_serve   # The frozen pre-cutover oracle, from the pinned-tag worktree
-scripts/build.py ta_bench_icount # Instruction-count bench, for the perf nightly
+scripts/build.py ta_bench_icount # Instruction-count bench (dev-nightly's icount job)
 scripts/bench_icount.py         # Run it under callgrind and compare against the
                                 # committed baseline (needs valgrind; the script
                                 # header says what a count cannot see)

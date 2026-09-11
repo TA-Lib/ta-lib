@@ -102,7 +102,7 @@ def show_help():
     ta_ref_serve        Build the frozen pre-cutover reference oracle from the
                         pinned-tag worktree. `regtest` and `ta_regtest --codegen`
                         need it present; neither builds it.
-    ta_bench_icount     Build the instruction-count bench the perf nightly runs
+    ta_bench_icount     Build the instruction-count bench dev-nightly's icount job runs
                         (scripts/bench_icount.py). Needs valgrind's headers to
                         measure anything; without them it still builds and only
                         --dry-run works.

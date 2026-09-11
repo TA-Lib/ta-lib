@@ -108,9 +108,9 @@ observe.
 `icount` job of `dev-nightly`, never a PR or a push. A job there rather than its
 own workflow so its baseline commit is a product of the run that goes green,
 which is what keeps "green dev-nightly means mergeable dev" true. It runs every
-C entry point once under
-callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`, `_Peek`) and compares the
-retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
+C entry point once under callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`,
+`_Peek`) and compares the retired-instruction count against
+`.github/perf/icount-baseline-<arch>.tsv`.
 
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)

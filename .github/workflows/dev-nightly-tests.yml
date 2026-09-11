@@ -28,6 +28,9 @@ on:
         description: "Measure even when this exact tree was already measured. Untick to exercise the skip path on demand."
         type: boolean
         default: true
+      perf_threshold:
+        description: "Fractional growth that fails one entry point (default 0.10)."
+        default: "0.10"
 
 # Least-privilege default for every job; 'test' overrides to write because it
 # commits the refreshed dist package back to dev.
@@ -1251,24 +1254,18 @@ jobs:
 
   # Instruction-count regression detection for every C entry point (issue #412).
   #
-  # A JOB here rather than its own workflow, deliberately. On its own schedule it
-  # was a second asynchronous writer to dev: it could land a baseline commit
-  # between a green dev-nightly and a merge.py, so "green means mergeable" stopped
-  # being true. Here its commit is a product of the run that goes green, exactly
-  # like the dist commits, and there is one schedule and one writer window.
+  # A job here rather than its own workflow because it COMMITS to dev: keeping it
+  # inside the nightly's single writer window is what keeps "green dev-nightly
+  # means mergeable dev" true. Do not give it `needs:` and do not feed it another
+  # job's build artifact (which would require one): the critical path is the
+  # arm64 job at ~21 min and this is ~1, so in parallel it costs zero wall clock,
+  # while serialising it charges the nightly for every minute it takes.
   #
-  # No `needs:`. The critical path is the arm64 job at ~21 min and this is ~5
-  # (~1 when the fingerprint skip fires), so running it in parallel costs ZERO
-  # wall clock, while `needs:` would serialise it onto the end and charge the
-  # nightly for every minute. For the same reason it rebuilds the library rather
-  # than consuming another job's artifact: an artifact needs `needs:`, which
-  # trades a 2-minute duplicate build for 5 minutes of critical path.
-  #
-  # Wall clock is not measurable on a shared vCPU, which is why this counts
-  # retired instructions under callgrind instead: exact, byte-identical across
-  # runs on a loaded box, which is what lets a 10% threshold mean anything. It is
-  # blind to out-of-order execution and over-charges branches, so a percentage
-  # from it is never a quoted performance figure.
+  # It counts retired instructions under callgrind rather than timing anything:
+  # exact, byte-identical across runs on a loaded box, which is what lets a 10%
+  # threshold mean anything on a shared vCPU. It is blind to out-of-order
+  # execution and over-charges branches, so a percentage from it is never a
+  # quoted performance figure.
   icount:
     name: Instruction counts (x86_64)
     runs-on: ubuntu-latest
@@ -1277,7 +1274,7 @@ jobs:
       contents: write
     env:
       MODE: ${{ inputs.perf_mode || 'gate' }}
-      THRESHOLD: "0.10"
+      THRESHOLD: ${{ inputs.perf_threshold || '0.10' }}
       ACCEPT: ${{ inputs.perf_accept || '' }}
       # Empty on a schedule, so the skip is armed there; 'true' by default on a
       # dispatch, because someone who asked for a run gets one.
@@ -1304,8 +1301,13 @@ jobs:
         id: fp
         run: |
           set -o pipefail
+          # The measurement harness counts as much as the library: a change to
+          # bench_icount.py's threshold or valgrind flags, or to build.py's
+          # cmake knobs, moves the number without touching a single indicator.
           if ! fp=$(git rev-parse HEAD:src HEAD:include HEAD:CMakeLists.txt \
-                                  HEAD:ta_codegen/output/c | tr '\n' '-'); then
+                                  HEAD:ta_codegen/output/c \
+                                  HEAD:scripts/bench_icount.py \
+                                  HEAD:scripts/build.py | tr '\n' '-'); then
             echo "could not fingerprint the tree; measuring."
             fp="unfingerprinted-$GITHUB_RUN_ID"
           fi
@@ -1360,27 +1362,29 @@ jobs:
       - name: Measure and compare
         if: steps.decide.outputs.measure == 'true'
         run: |
+          # An array, not a string: `SMA, RSI` word-splits and `SMA*` globs
+          # against the repo root if this is expanded unquoted.
           case "$MODE" in
-            gate)    flags="--update-baseline" ;;
+            gate)    flags=(--update-baseline) ;;
             accept)
               # No silent wholesale re-baseline: accepting a regression has to
               # name the rows it is accepting.
               if [ -z "$ACCEPT" ]; then
-                echo "mode=accept needs the 'accept' input (e.g. SMA, or SMA/batch)."
+                echo "perf_mode=accept needs the 'perf_accept' input (e.g. SMA, or SMA/batch)."
                 exit 2
               fi
-              flags="--accept=$ACCEPT" ;;
-            measure) flags=""                  ;;
-            *) echo "unknown mode '$MODE'"; exit 2 ;;
+              flags=(--accept="${ACCEPT// /}") ;;
+            measure) flags=() ;;
+            *) echo "unknown perf_mode '$MODE'"; exit 2 ;;
           esac
-          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" $flags
+          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" "${flags[@]}"
 
       # Reached only when the step above exited 0, and in `gate` mode
       # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
       # here one green night at a time; raising a row needs mode=accept naming
       # that row, which is a person deciding to.
       - name: Commit the lowered baseline
-        if: success() && env.MODE != 'measure' && steps.decide.outputs.measure == 'true'
+        if: success() && steps.decide.outputs.measure == 'true'
         run: |
           changes=$(git status --porcelain .github/perf/)
           if [ -z "$changes" ]; then
@@ -1392,32 +1396,56 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/perf/
           git commit -m "perf: lower the instruction-count baseline"
-          # dev moves under a run that takes minutes: dev-nightly commits dist/
-          # and include/ta_common.h on its own schedule. Disjoint paths, so the
-          # rebase never has to resolve anything.
+          # The `test` job commits dist/ and include/ta_common.h while this runs,
+          # so dev moves underneath. Disjoint paths, so the rebase has nothing to
+          # resolve.
           #
-          # NO --strategy-option=ours, unlike the dist commit in
-          # dev-nightly-tests.yml. During a rebase "ours" is the UPSTREAM side,
-          # so a conflict here would silently discard the baseline this run just
-          # measured. Nothing else writes .github/perf/, so a conflict means an
-          # assumption broke and the run should say so rather than drop it.
-          for i in {1..5}; do
-            git pull --rebase origin dev && git push origin dev && break || sleep 10
+          # NO --strategy-option=ours, which the `test` job's push carries:
+          # during a rebase "ours" is the UPSTREAM side, so a conflict would
+          # discard the baseline this run just measured.
+          #
+          # `|| sleep 10` makes the loop body succeed, so a for-loop that ends
+          # on it exits 0 and the step reads GREEN with nothing pushed. Keep the
+          # explicit failure after the loop, and abort the half-finished rebase
+          # each round or attempts 2-5 die on "a rebase-merge directory already
+          # exists" rather than retrying anything.
+          pushed=""
+          for i in $(seq 1 5); do
+            if git pull --rebase origin dev && git push origin dev; then
+              pushed=yes
+              break
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep 10
           done
+          if [ -z "$pushed" ]; then
+            echo "::error::could not push the measured baseline after 5 attempts;"\
+                 " it is NOT recorded and the next run will re-measure from a stale one."
+            exit 1
+          fi
 
-      # After any measurement, not just a scheduled one: a skipped run must not
-      # record a tree it never measured, but a forced run legitimately did, and
-      # saving there is what makes the skip reachable on demand instead of only
-      # after two consecutive scheduled runs.
+      # Not in measure mode. That run writes no baseline, so arming the skip
+      # would let the next scheduled run pass over a tree whose improvement the
+      # ratchet never recorded, leaving a later regression measured against the
+      # stale higher count.
+      #
+      # Caches are scoped per ref, and a scheduled run's ref is the DEFAULT
+      # branch however the job checks out dev. So this arms the skip for the
+      # next run on the same ref: schedule to schedule, or a dispatch to a
+      # dispatch on that same ref. It does not carry a `--ref dev` dispatch over
+      # to the 5AM schedule.
       - name: Remember this tree as measured
-        if: steps.decide.outputs.measure == 'true'
+        if: steps.decide.outputs.measure == 'true' && env.MODE != 'measure'
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/perf
           key: perf-icount-fp-${{ steps.fp.outputs.fp }}
 
+      # always(), not the implicit success(): the per-function dump is worth most
+      # on the run that failed the gate, which is exactly when a bare condition
+      # would skip it.
       - name: Upload the raw callgrind output
-        if: steps.decide.outputs.measure == 'true'
+        if: always() && steps.decide.outputs.measure == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: callgrind-icount

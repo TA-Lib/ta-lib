@@ -513,9 +513,10 @@ def main():
               f"{args.threshold:.0%} raised into the baseline by --accept="
               f"{args.accept}. Every other row keeps its accumulated best.")
         rows, _held = ratchet(measured, base_rows, accept_tokens)
-        write_baseline(baseline_path, rows, meta, toolchain, commit, "accepted",
-                       base_rows)
-        print(f"baseline written: {BASELINE_REL}")
+        wrote = write_baseline(baseline_path, rows, meta, toolchain, commit,
+                               "accepted", base_rows)
+        print(f"baseline written: {BASELINE_REL}" if wrote
+              else "baseline unchanged: no count moved, nothing to commit.")
         return 0
 
     if unaccepted:
