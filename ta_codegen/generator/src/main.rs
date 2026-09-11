@@ -957,6 +957,7 @@ fn generate_bench(backend_filter: Option<&str>) {
             std::fs::create_dir_all(&dir).unwrap();
             ta_codegen_lib::bench_gen::write_c_bench(&funcs, &dir);
             ta_codegen_lib::bench_gen::write_c_stream_bench(&funcs, &dir);
+            ta_codegen_lib::bench_gen::write_c_icount_bench(&funcs, &dir);
         } else {
             eprintln!("generate-bench: unsupported backend '{}' (only 'c' is supported)", backend);
         }

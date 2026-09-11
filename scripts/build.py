@@ -102,6 +102,10 @@ def show_help():
     ta_ref_serve        Build the frozen pre-cutover reference oracle from the
                         pinned-tag worktree. `regtest` and `ta_regtest --codegen`
                         need it present; neither builds it.
+    ta_bench_icount     Build the instruction-count bench the perf nightly runs
+                        (scripts/bench_icount.py). Needs valgrind's headers to
+                        measure anything; without them it still builds and only
+                        --dry-run works.
 
   Building (Rust ta_codegen, via cargo — CMake never invokes cargo):
     ta_codegen          Build the Rust codegen tool
@@ -436,6 +440,7 @@ REGEN_PROBE_FILES = (
     'ta_codegen/output/rust/tools/src/bin/ta_codegen_serve.rs',
     'ta_codegen/output/c/tools/ta_bench_cg.c',
     'ta_codegen/output/c/tools/ta_bench_stream.c',
+    'ta_codegen/output/c/tools/ta_bench_icount.c',
     'website/src/functions/sma.md',
 )
 
@@ -613,10 +618,12 @@ CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
 # is anything to rebuild, so the added step is a no-op on an unchanged tree, and
 # cmake was already a prerequisite of `servers` for every --language filter.
 SIMPLE_TARGETS = {
-    'ta_regtest':  'ensure_ta_regtest_in_bin',
-    'servers':     'ensure_ta_regtest_in_bin',
-    'test':        'test',
-    'regtest':     'regtest',
+    'ta_regtest':      'ensure_ta_regtest_in_bin',
+    'servers':         'ensure_ta_regtest_in_bin',
+    'test':            'test',
+    'regtest':         'regtest',
+    # stage_benchmarks, not the raw target: bin/ is where bench_icount.py looks.
+    'ta_bench_icount': 'stage_benchmarks',
 }
 
 # Targets that build language servers and therefore honour --language, both for
@@ -628,6 +635,7 @@ LANG_FILTERED_TARGETS = ('servers', 'regtest', 'xlang-hash')
 TARGET_PREREQS = {
     'all':          PREREQS_BUILD_BASIC,
     'ta_regtest':   PREREQS_BUILD_BASIC,
+    'ta_bench_icount': PREREQS_BUILD_BASIC,
     'ta_codegen':   PREREQS_BUILD_CODEGEN,
     'generate':     PREREQS_BUILD_CODEGEN,
     # Cargo only, deliberately: the point of this gate is that anyone can run

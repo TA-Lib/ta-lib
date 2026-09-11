@@ -276,21 +276,21 @@ pub fn write_c_bench(funcs: &[FuncDef], output_dir: &Path) {
 /// optimizer cannot dead-code-eliminate calls whose only observable effect is
 /// the (overwritten) scalar output — the load-bearing anti-DCE dependency that
 /// makes stateless (T1) and non-committing (peek) measurements honest.
-fn stream_out_bits(func: &FuncDef) -> (String, String, String) {
+fn stream_out_bits(func: &FuncDef, decl_ind: &str, acc_ind: &str) -> (String, String, String) {
     let mut decls = String::new();
     let mut addrs = Vec::new();
     let mut acc = String::new();
     let (mut r, mut i) = (0usize, 0usize);
     for out in &func.outputs {
         if out.param_type == ParamType::Integer {
-            decls.push_str(&format!("            int iv{i} = 0;\n"));
+            decls.push_str(&format!("{decl_ind}int iv{i} = 0;\n"));
             addrs.push(format!("&iv{i}"));
-            acc.push_str(&format!("                    acc += (double)iv{i};\n"));
+            acc.push_str(&format!("{acc_ind}acc += (double)iv{i};\n"));
             i += 1;
         } else {
-            decls.push_str(&format!("            double v{r} = 0.0;\n"));
+            decls.push_str(&format!("{decl_ind}double v{r} = 0.0;\n"));
             addrs.push(format!("&v{r}"));
-            acc.push_str(&format!("                    acc += v{r};\n"));
+            acc.push_str(&format!("{acc_ind}acc += v{r};\n"));
             r += 1;
         }
     }
@@ -378,7 +378,8 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         let ta = format!("TA_{name}");
         let input_names = expand_input_names(&func.inputs);
         let opt_args = stream_opt_args(func);
-        let (out_decls, out_addrs, out_acc) = stream_out_bits(func);
+        let (out_decls, out_addrs, out_acc) =
+            stream_out_bits(func, "            ", "                    ");
 
         // Input array args (Open + batch@last) and per-bar scalar args (Update/Peek).
         let periods = periods_slots(func);
@@ -867,3 +868,318 @@ __CORPUS_ARGS__    }
     return 0;
 }
 "#;
+
+// =====================================================================
+// Instruction-count benchmark (ta_bench_icount)
+// =====================================================================
+//
+// One measured region per public C entry point (batch, `_Open`, `_OpenAndFill`,
+// `_Update`, `_Peek`), counted in retired instructions by callgrind rather than
+// timed. Unlike the other three benches this one links
+// the shipped static library instead of `#include`-ing the indicator TUs: a
+// single-TU `-flto` build lets gcc re-decide inlining corpus-wide, which moves
+// hundreds of unrelated rows on an unrelated commit.
+//
+// The counts are exact, not sampled: the same binary on the same input yields
+// the same number on a loaded or idle machine. That is the whole reason a >10%
+// threshold can mean anything on a shared CI runner.
+//
+// Each region is bracketed by CALLGRIND_ZERO_STATS / CALLGRIND_DUMP_STATS_AT,
+// so the count excludes process startup, corpus generation and every other
+// region. The marker string is `<NAME>/<kind>`; `scripts/bench_icount.py`
+// joins those dumps against this binary's stdout rows and fails if the two
+// disagree, so a region that silently stopped dumping cannot read as green.
+
+const ICOUNT_PREAMBLE: &str = r#"/* Auto-generated instruction-count benchmark for ta_codegen C output.
+ * Links the shipped library; measures retired instructions per entry point.
+ * Output: `NAME KIND measured|skipped RETCODE` per line, plus one callgrind
+ * dump named `NAME/KIND` per measured region.
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
+
+#include "ta_libc.h"
+#include "bench_corpus.h"
+#include "tools/ta_alloc_check.h"
+
+/* Built without the valgrind headers the binary still compiles and still
+   prints its rows, so `--dry-run` works anywhere; anything that would report a
+   MEASUREMENT refuses to start (main), because a no-op dump is a suite that
+   compares nothing and reads green. */
+#if defined(__has_include)
+#  if __has_include(<valgrind/callgrind.h>)
+#    include <valgrind/callgrind.h>
+#    define ICOUNT_HAVE_CALLGRIND 1
+#  endif
+#endif
+
+#ifdef ICOUNT_HAVE_CALLGRIND
+#  define ICOUNT_ZERO()        CALLGRIND_ZERO_STATS
+#  define ICOUNT_DUMP(marker)  CALLGRIND_DUMP_STATS_AT(marker)
+#  define ICOUNT_UNDER_VG()    (RUNNING_ON_VALGRIND != 0)
+#else
+#  define ICOUNT_ZERO()        do { } while(0)
+#  define ICOUNT_DUMP(marker)  do { (void)(marker); } while(0)
+#  define ICOUNT_UNDER_VG()    0
+#endif
+
+/* The per-bar feed rotates over the first ICOUNT_MASK+1 bars, so the update
+   and peek regions stay in cache and are reproducible at any --points. */
+#define ICOUNT_MASK 4095
+
+static int g_rows = 0, g_measured = 0, g_skipped = 0;
+
+static void icount_row(const char *nm, const char *kind, int measured, TA_RetCode rc)
+{
+    printf("%s %s %s %d\n", nm, kind, measured ? "measured" : "skipped", (int)rc);
+    g_rows++;
+    if( measured ) g_measured++; else g_skipped++;
+}
+
+"#;
+
+const ICOUNT_MAIN_FUNC: &str = r##"
+int main(int argc, char *argv[]) {
+    int n_points = 20000;
+    int n_iters = 1024;
+    int verify_corpus = 0;
+    int dry_run = 0;
+    const char *func_filter = NULL;
+    TA_Initialize();
+    bench_corpus_defaults(&g_corpus);
+    for( int i = 1; i < argc; i++ ) {
+        if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
+        else if( strncmp(argv[i], "--stream-iters=", 15) == 0 ) n_iters = atoi(argv[i]+15);
+        else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
+        /* Prints the rows without measuring, so the row set can be checked
+           where valgrind is not installed. Never used by the comparator. */
+        else if( strcmp(argv[i], "--dry-run") == 0 ) dry_run = 1;
+__CORPUS_ARGS__    }
+    if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
+    if( n_points < ICOUNT_MASK + 1 ) n_points = ICOUNT_MASK + 1;
+    if( n_iters < 1 ) n_iters = 1;
+    if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
+    if( !dry_run ) {
+#ifndef ICOUNT_HAVE_CALLGRIND
+        fprintf(stderr, "ta_bench_icount: built without <valgrind/callgrind.h>;"
+                        " install valgrind and rebuild, or pass --dry-run\n");
+        return 3;
+#endif
+        if( !ICOUNT_UNDER_VG() ) {
+            fprintf(stderr, "ta_bench_icount: not running under valgrind; invoke as\n"
+                            "  valgrind --tool=callgrind --combine-dumps=yes ./ta_bench_icount\n");
+            return 3;
+        }
+    }
+    generate_price_data(n_points);
+    printf("# ta_bench_icount points=%d stream_iters=%d shape=%s seed=%d regime_period=%d trend_strength=%.6f\n",
+           n_points, n_iters, bench_shape_name(g_corpus.shape), g_corpus.seed,
+           g_corpus.refPeriod, g_corpus.trendStrength);
+    fflush(stdout);
+    icount_all(func_filter, n_iters);
+    printf("# rows=%d measured=%d skipped=%d sink=%d\n", g_rows, g_measured, g_skipped, g_sink);
+    free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
+    return 0;
+}
+"##;
+
+/// Emit one `icount_<NAME>` measuring every entry point the function has.
+fn generate_icount_one(s: &mut String, func: &FuncDef) {
+    let name = &func.name;
+    let ta = format!("TA_{name}");
+    let input_names = expand_input_names(&func.inputs);
+    let opt_args = stream_opt_args(func);
+    let (out_decls, out_addrs, out_acc) = stream_out_bits(func, "    ", "            ");
+
+    // Input array args (batch / Open / OpenAndFill) and the per-bar scalars
+    // Update and Peek take.
+    let periods = periods_slots(func);
+    let mut in_arrays = Vec::new();
+    let mut bar_scalars = Vec::new();
+    let mut real_idx = 0usize;
+    for (k, inp) in input_names.iter().enumerate() {
+        let g = input_slot_to_global(inp, real_idx, periods.get(k).copied().unwrap_or(false));
+        bar_scalars.push(format!("{g}[it & ICOUNT_MASK]"));
+        in_arrays.push(g);
+        if !matches!(
+            inp.as_str(),
+            "inOpen" | "inHigh" | "inLow" | "inClose" | "inVolume" | "inOpenInterest"
+        ) {
+            real_idx += 1;
+        }
+    }
+
+    // Output array args, in declared order (same selection as the batch bench).
+    let mut out_arrays = Vec::new();
+    let mut out_first = String::new();
+    {
+        let (mut r, mut i) = (0usize, 0usize);
+        for out in &func.outputs {
+            if out.param_type == ParamType::Integer {
+                out_arrays.push(format!("g_outIntBuf{i}"));
+                let _ = writeln!(out_first, "    acc += (double)g_outIntBuf{i}[0];");
+                i += 1;
+            } else {
+                out_arrays.push(format!("g_outBuf{r}"));
+                let _ = writeln!(out_first, "    acc += g_outBuf{r}[0];");
+                r += 1;
+            }
+        }
+    }
+
+    let _ = writeln!(s, "static void icount_{name}(int iters) {{");
+    let _ = writeln!(s, "    const char *nm = \"{name}\";");
+    s.push_str("    int outBegIdx = 0, outNBElement = 0;\n");
+    s.push_str("    double acc = 0.0;\n");
+    s.push_str("    TA_RetCode rc;\n");
+    if func.streaming {
+        let _ = writeln!(s, "    {ta}_Stream *st = NULL;");
+        let _ = writeln!(s, "    {ta}_Stream *stf = NULL;");
+        s.push_str(&out_decls);
+    }
+
+    // --- batch ---
+    {
+        let mut a = vec!["0".to_string(), "g_nPoints - 1".to_string()];
+        a.extend(in_arrays.iter().cloned());
+        a.extend(opt_args.iter().cloned());
+        a.push("&outBegIdx".to_string());
+        a.push("&outNBElement".to_string());
+        a.extend(out_arrays.iter().cloned());
+        s.push_str("\n    ICOUNT_ZERO();\n");
+        let _ = writeln!(s, "    rc = {ta}({});", a.join(", "));
+        let _ = writeln!(s, "    ICOUNT_DUMP(\"{name}/batch\");");
+        s.push_str("    icount_row(nm, \"batch\", 1, rc);\n");
+        s.push_str(&out_first);
+    }
+
+    if func.streaming {
+        generate_icount_stream(s, func, &in_arrays, &bar_scalars, &out_arrays,
+                               &out_first, &opt_args, &out_addrs, &out_acc);
+    }
+    s.push_str("    g_sink += (int)acc + outNBElement;\n}\n\n");
+}
+
+/// The four streaming regions, appended to the body `generate_icount_one` opened.
+#[allow(clippy::too_many_arguments)]
+fn generate_icount_stream(
+    s: &mut String,
+    func: &FuncDef,
+    in_arrays: &[String],
+    bar_scalars: &[String],
+    out_arrays: &[String],
+    out_first: &str,
+    opt_args: &[String],
+    out_addrs: &str,
+    out_acc: &str,
+) {
+    let name = &func.name;
+    let ta = format!("TA_{name}");
+    let opt_only = opt_args.join(", ");
+
+    // --- OpenAndFill (its own handle, released immediately) ---
+    {
+        let mut a = vec!["&stf".to_string()];
+        a.extend(in_arrays.iter().cloned());
+        a.push("g_nPoints".to_string());
+        a.extend(opt_args.iter().cloned());
+        a.push("&outBegIdx".to_string());
+        a.push("&outNBElement".to_string());
+        a.extend(out_arrays.iter().cloned());
+        s.push_str("\n    ICOUNT_ZERO();\n");
+        let _ = writeln!(s, "    rc = {ta}_OpenAndFill({});", a.join(", "));
+        let _ = writeln!(s, "    ICOUNT_DUMP(\"{name}/openfill\");");
+        s.push_str("    icount_row(nm, \"openfill\", 1, rc);\n");
+        s.push_str(out_first);
+        let _ = writeln!(s, "    if( stf ) {ta}_Close(stf);");
+    }
+
+    // --- Open (kept open: Update and Peek measure a steady-state handle) ---
+    {
+        let mut a = vec!["&st".to_string()];
+        a.extend(in_arrays.iter().cloned());
+        a.push("g_nPoints".to_string());
+        if !opt_only.is_empty() {
+            a.push(opt_only.clone());
+        }
+        a.push(out_addrs.to_string());
+        let joined = a.iter().filter(|x| !x.is_empty()).cloned().collect::<Vec<_>>().join(", ");
+        s.push_str("\n    ICOUNT_ZERO();\n");
+        let _ = writeln!(s, "    rc = {ta}_Open({joined});");
+        let _ = writeln!(s, "    ICOUNT_DUMP(\"{name}/open\");");
+        s.push_str("    icount_row(nm, \"open\", 1, rc);\n");
+    }
+
+    // --- Update, then Peek on the state those updates left behind ---
+    s.push_str("\n    if( rc == TA_SUCCESS && st ) {\n");
+    s.push_str("        TA_RetCode src = TA_SUCCESS;\n");
+    for (kind, call) in [("update", "Update"), ("peek", "Peek")] {
+        let mut a = vec!["st".to_string()];
+        a.extend(bar_scalars.iter().cloned());
+        a.push(out_addrs.to_string());
+        s.push_str("        ICOUNT_ZERO();\n");
+        s.push_str("        for( int it = 0; it < iters; it++ ) {\n");
+        let _ = writeln!(s, "            src = {ta}_{call}({});", a.join(", "));
+        s.push_str(out_acc);
+        s.push_str("        }\n");
+        let _ = writeln!(s, "        ICOUNT_DUMP(\"{name}/{kind}\");");
+        let _ = writeln!(s, "        icount_row(nm, \"{kind}\", 1, src);");
+    }
+    s.push_str("    } else {\n");
+    s.push_str("        icount_row(nm, \"update\", 0, rc);\n");
+    s.push_str("        icount_row(nm, \"peek\", 0, rc);\n");
+    s.push_str("    }\n");
+    let _ = writeln!(s, "    if( st ) {ta}_Close(st);");
+}
+
+/// Generate the standalone instruction-count benchmark TU.
+pub fn generate_c_icount_bench(funcs: &[FuncDef]) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language before anything reads a body.
+    let resolved = crate::ir::resolve_all(funcs, crate::ir::Lang::C);
+    let funcs: &[FuncDef] = &resolved;
+    let mut s = String::new();
+
+    s.push_str(ICOUNT_PREAMBLE);
+    s.push_str(PRICE_DATA_GEN);
+
+    s.push_str("#define MAX_POINTS 200000\n");
+    let (n_out_real, n_out_int) = crate::backends::common::max_output_arity(funcs);
+    for k in 0..n_out_real {
+        let _ = writeln!(s, "static double g_outBuf{k}[MAX_POINTS];");
+    }
+    for k in 0..n_out_int {
+        let _ = writeln!(s, "static int g_outIntBuf{k}[MAX_POINTS];");
+    }
+    s.push_str("\nstatic volatile int g_sink = 0;\n");
+
+    s.push_str(FUNC_MATCHES);
+
+    for func in funcs {
+        generate_icount_one(&mut s, func);
+    }
+
+    s.push_str("static void icount_all(const char *filter, int iters) {\n");
+    for func in funcs {
+        let name = &func.name;
+        let _ = writeln!(
+            s,
+            "    if( func_matches(filter, \"{name}\") ) {{ icount_{name}(iters); fflush(stdout); }}"
+        );
+    }
+    s.push_str("}\n");
+
+    s.push_str(&ICOUNT_MAIN_FUNC.replace("__CORPUS_ARGS__", CORPUS_ARGS));
+    s
+}
+
+pub fn write_c_icount_bench(funcs: &[FuncDef], output_dir: &Path) {
+    let content = generate_c_icount_bench(funcs);
+    let path = output_dir.join("ta_bench_icount.c");
+    crate::emit::write_if_changed(&path, &content).unwrap_or_else(|e| {
+        panic!("Failed to write {}: {e}", path.display());
+    });
+    eprintln!("  C icount bench -> {}", path.display());
+}

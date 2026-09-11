@@ -1,0 +1,122 @@
+# Instruction-count regression detection for every C entry point (issue #412).
+#
+# Separate from dev-nightly-tests.yml, and deliberately NOT on push or
+# pull_request. The committed baseline is a single-writer file: concurrent runs
+# would race to push it, which is why even the daily trigger is serialised by
+# the concurrency group below.
+#
+# Wall clock is not measurable here. Every runner is a shared vCPU; the existing
+# tools already concede it (`ta_bench_direct --max-spread=25 --no-signal=1.20`,
+# `ta_bench_stream --min-ratio=0.35`), so a 10% time threshold would be alarm
+# noise, not a gate. Counting retired instructions under callgrind instead makes
+# the measurement exact: byte-identical across runs on a loaded box. That is what
+# lets a 10% threshold mean something.
+#
+# What it does NOT see: out-of-order execution, port pressure, dependency-chain
+# latency. Valgrind also over-charges branchy code, so a branchless rewrite can
+# read here as a regression. The counts catch the algorithmic class (a lost fast
+# path, an extra pass over the window, an un-inlined call), and nothing from this
+# job ever becomes a quoted performance figure. The devbox stays the oracle for
+# that.
+
+name: perf nightly
+
+on:
+  schedule:
+    # Clear of both other nightlies (dev 5AM, which can run 90 minutes, and
+    # main 7AM): all three push to a branch, and this one commits to dev.
+    - cron: "0 8 * * *" # every day 8AM
+
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "gate: fail on a regression, refresh the baseline on a pass. accept: adopt today's counts, regressions included. measure: report only, commit nothing."
+        type: choice
+        options: [gate, accept, measure]
+        default: gate
+      threshold:
+        description: "Fractional growth that fails one entry point"
+        default: "0.10"
+
+permissions:
+  contents: read
+
+# The baseline is one committed file with one writer. Overlapping runs would
+# race to push it; queueing costs nothing on a daily job.
+concurrency:
+  group: perf-nightly
+  cancel-in-progress: false
+
+jobs:
+  icount:
+    name: Instruction counts (x86_64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      MODE: ${{ inputs.mode || 'gate' }}
+      THRESHOLD: ${{ inputs.threshold || '0.10' }}
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # Supplies both the tool and <valgrind/callgrind.h>. The header is needed
+      # at COMPILE time, so this has to precede the build step, not the run.
+      - name: Install valgrind
+        uses: ./.github/actions/apt-install
+        with:
+          packages: |
+            valgrind
+
+      - name: Build ta_bench_icount
+        run: python3 scripts/build.py ta_bench_icount
+
+      - name: Measure and compare
+        run: |
+          case "$MODE" in
+            gate)    flags="--update-baseline" ;;
+            accept)  flags="--force-baseline"  ;;
+            measure) flags=""                  ;;
+            *) echo "unknown mode '$MODE'"; exit 2 ;;
+          esac
+          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" $flags
+
+      # Only reached when the step above exited 0, and bench_icount.py leaves
+      # the baseline untouched whenever it reports a regression; this cannot
+      # ratchet a regression into the baseline even if it did run.
+      - name: Commit the refreshed baseline
+        if: success() && env.MODE != 'measure'
+        run: |
+          changes=$(git status --porcelain .github/perf/)
+          if [ -z "$changes" ]; then
+            echo "Baseline unchanged."
+            exit 0
+          fi
+          echo "$changes"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/perf/
+          git commit -m "perf: refresh the instruction-count baseline"
+          # Same retry as the dist commit in dev-nightly-tests.yml: dev can move
+          # under a run that takes minutes.
+          for i in {1..5}; do
+            git pull --rebase --strategy-option=ours origin dev && git push origin dev && break || sleep 10
+          done
+
+      - name: Upload the raw callgrind output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: callgrind-icount
+          path: temp/callgrind.icount.out
+          if-no-files-found: warn
+          retention-days: 14

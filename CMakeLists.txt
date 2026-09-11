@@ -19,7 +19,7 @@ message(STATUS "BUILD_DEV_TOOLS: ${BUILD_DEV_TOOLS}")
 # Separate from BUILD_DEV_TOOLS on purpose. ta_regtest has a user-facing job, so
 # it is ON; the benchmarks are for people working ON TA-Lib and nobody else, so
 # they are OFF and a plain `cmake ..` from a clone does not compile them.
-option(BUILD_BENCHMARKS "Build ta_bench/ta_bench_direct (TA-Lib developers only)" OFF)
+option(BUILD_BENCHMARKS "Build ta_bench/ta_bench_direct/ta_bench_icount (TA-Lib developers only)" OFF)
 message(STATUS "BUILD_BENCHMARKS: ${BUILD_BENCHMARKS}")
 
 # Optional AddressSanitizer + UndefinedBehaviorSanitizer instrumentation (issue
@@ -860,6 +860,38 @@ if(_TA_BUILD_TOOLS)
 		target_compile_options(ta_bench_direct PRIVATE -O3)
 	endif()
 
+	####################
+	# ta_bench_icount #
+	####################
+	# The nightly instruction-count suite (scripts/bench_icount.py). Generated
+	# by ta_codegen, but built HERE rather than by cargo like the other two
+	# generated benches, because it must link the shipped library: the single-TU
+	# -flto builds let gcc re-decide inlining corpus-wide, which moves hundreds
+	# of unrelated rows on an unrelated commit.
+	add_executable(ta_bench_icount
+		"${CMAKE_CURRENT_SOURCE_DIR}/ta_codegen/output/c/tools/ta_bench_icount.c"
+	)
+	target_include_directories(ta_bench_icount PRIVATE
+		"${CMAKE_CURRENT_SOURCE_DIR}/include"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_common"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/tools/ta_bench"
+	)
+	if(WIN32)
+		target_link_libraries(ta_bench_icount PRIVATE ${TA_LIB_TOOL_TARGET})
+	else()
+		target_link_libraries(ta_bench_icount PRIVATE ${TA_LIB_TOOL_TARGET} m)
+	endif()
+	set_target_properties(ta_bench_icount PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+	)
+	if(NOT MSVC)
+		# -g is not for symbol attribution (the counts come from callgrind client
+		# requests, not from the call graph); it is so callgrind_annotate can name
+		# a line when someone follows a regression by hand.
+		target_compile_options(ta_bench_icount PRIVATE -O3 -g)
+	endif()
+
 	# Stage the benches into bin/, which is where the docs and the perf skill
 	# invoke them, and where ta_bench_direct must find ./ta_bench_cg (cargo puts
 	# the two generated benches there).
@@ -877,7 +909,10 @@ if(_TA_BUILD_TOOLS)
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		"$<TARGET_FILE:ta_bench_direct>"
 		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_bench_direct>"
-		DEPENDS ta_bench ta_bench_direct
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:ta_bench_icount>"
+		"${CMAKE_CURRENT_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:ta_bench_icount>"
+		DEPENDS ta_bench ta_bench_direct ta_bench_icount
 	)
 	endif() # BUILD_BENCHMARKS
 

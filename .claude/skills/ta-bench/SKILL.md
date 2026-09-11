@@ -1,6 +1,6 @@
 ---
 name: ta-bench
-description: Benchmarking TA-Lib — ta_bench, ta_bench_direct, ta_bench_stream and scripts/stream_ab.py, what each ratio actually compares (the six-binary build matrix), streaming vs batch, and the --shape= input corpus. Use when running a benchmark in this repo, interpreting a speedup or ratio, or defending a performance number.
+description: Benchmarking TA-Lib — ta_bench, ta_bench_direct, ta_bench_stream, ta_bench_icount and scripts/stream_ab.py, what each ratio actually compares (the six-binary build matrix), streaming vs batch, instruction counts, and the --shape= input corpus. Use when running a benchmark in this repo, interpreting a speedup or ratio, or defending a performance number.
 ---
 
 # Benchmarking TA-Lib
@@ -67,6 +67,9 @@ Which tool measures which:
   Different code, not just a different build; the only cross-*version* number.
 - `ta_bench_stream` — itself, both arms, which is why its speedup column is the
   one ratio here that isn't cross-configuration.
+- `ta_bench_icount` — `libta-lib.a` (row 1), the shipped build. The only
+  instrument here that reports no ratio at all: one absolute instruction count
+  per entry point. See below.
 
 Consequences worth internalising before quoting any number: a function's ns from
 `ta_bench_direct` and from `ta_bench --language=c` are not comparable; a ratio
@@ -98,6 +101,40 @@ function that does nothing but write `*out` — is **1.06 ns**. That is ~30% of
 SMA's 3.5 ns `Update`, ~15% of MFI's 6.9 ns, and ~1.5% of HT_TRENDLINE's 69 ns.
 A saving well under that floor on a cheap function is one no caller can
 observe.
+
+## Counting instructions instead of timing
+
+`ta_bench_icount` + `scripts/bench_icount.py` is the nightly regression net
+(`perf-nightly`, never a PR or a push). It runs every C entry point once under
+callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`, `_Peek`) and compares the
+retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
+
+```bash
+scripts/bench_icount.py                       # build, measure, compare (needs valgrind)
+scripts/bench_icount.py --update-baseline     # ... and adopt the result
+scripts/bench_icount.py --no-build --function=RSI,SMA   # narrowed: report only
+```
+
+Why it exists next to five timing tools: a count is **exact**. Two runs of the
+same binary on a loaded runner and an idle one agree to the instruction, which
+is what lets a 10% threshold gate anything on a shared vCPU. The timing tools
+all concede that ground: `--max-spread=25`, `--no-signal=1.20`,
+`--min-ratio=0.35`.
+
+What a count cannot see, and where it actively misleads:
+
+- Out-of-order execution, port pressure, dependency-chain latency: all free.
+- Valgrind over-charges branches, so a branchless rewrite can read here as a
+  regression while being a win on hardware.
+- **A percentage from this tool is not a speed figure and never goes in a
+  release note.** Use it for the algorithmic class (a lost fast path, an extra
+  pass over the window, an un-inlined call) and the devbox for magnitudes.
+
+Two properties to hold on to. `--function` narrows the run, and the allocating
+tiers (`open`, `openfill`) then shift by a few hundred instructions because the
+heap history they see is different; that is why a narrowed run reports and never
+gates. And the baseline is per (architecture, compiler): on a mismatch the
+script refuses to compare rather than printing a thousand false rows.
 
 ## Streaming vs batch
 
