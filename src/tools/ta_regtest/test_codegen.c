@@ -364,10 +364,19 @@ static long g_largePeriodCompared[NB_LARGE_INT_OFFSETS];
  * LARGE_INT_OFFSETS: a count computed from the table would shrink with it, so
  * deleting an offset would still "pass its floor" -- which is the regression this
  * exists to catch. Same reasoning as LEGACY_FLOOR_* in ta_test_legacy.c. Raising
- * the corpus only makes LARGE_PERIOD_FLOOR easier to clear; lowering it has to be
- * said here. */
-#define LARGE_INT_OFFSETS_EXPECTED 2
-#define LARGE_PERIOD_FLOOR         200
+ * the corpus only makes the floor easier to clear; lowering it has to be said
+ * here.
+ *
+ * PER LANGUAGE, because g_largePeriodCompared counts one visit per (function,
+ * output, language): the reach of a run is proportional to how many servers it
+ * started, so one total cannot floor both a four-language run and a
+ * --language=rust one. A single 200 floored the two narrowed nightly legs
+ * (--language=c,rust reached 158, --language=rust 79) while asserting nothing
+ * either had actually lost. Measured reach is ~79 per language, so this keeps
+ * about a quarter in hand at every width and is STRICTER than the old total
+ * wherever that one applied. */
+#define LARGE_INT_OFFSETS_EXPECTED  2
+#define LARGE_PERIOD_FLOOR_PER_LANG 60
 
 /* Which fuzz data shapes the stream legs actually requested this run. The
  * variant->shape mapping has drifted before (#240 left MONO_UP requested by
@@ -10160,9 +10169,11 @@ ErrorNumber test_codegen(const TA_History *history,
                 printf(" +%d=%ld compare(s)", LARGE_INT_OFFSETS[lo],
                        g_largePeriodCompared[lo]);
             printf("\n");
-            /* Floored only on a full run. A filtered one legitimately reaches
-             * nothing here when every function it selected has a stressed
-             * lookback outrunning the test history (T3 is one).
+            /* Not floored under a --function filter: such a run legitimately
+             * reaches nothing here when every function it selected has a
+             * stressed lookback outrunning the test history (T3 is one). A
+             * --language filter is different and IS floored, scaled by
+             * langsTested.
              *
              * Per-offset and literal, NOT a symmetry check between offsets:
              * +51 sets a strictly longer lookback than +50, so a function may
@@ -10170,6 +10181,8 @@ ErrorNumber test_codegen(const TA_History *history,
              * the two counts to agree would fail on that. */
             if( functionFilter == NULL )
             {
+                const long largePeriodFloor =
+                    (long)LARGE_PERIOD_FLOOR_PER_LANG * (long)langsTested;
                 if( NB_LARGE_INT_OFFSETS != LARGE_INT_OFFSETS_EXPECTED )
                 {
                     printf("Fail: LARGE_INT_OFFSETS holds %d offset(s), expected %d\n",
@@ -10178,11 +10191,12 @@ ErrorNumber test_codegen(const TA_History *history,
                     return TA_CODEGEN_OUTPUT_MISMATCH;
                 }
                 for( lo = 0; lo < NB_LARGE_INT_OFFSETS; lo++ )
-                    if( g_largePeriodCompared[lo] < LARGE_PERIOD_FLOOR )
+                    if( g_largePeriodCompared[lo] < largePeriodFloor )
                     {
-                        printf("Fail: large-period offset +%d reached %ld output(s),"
-                               " floor is %d\n", LARGE_INT_OFFSETS[lo],
-                               g_largePeriodCompared[lo], LARGE_PERIOD_FLOOR);
+                        printf("Fail: large-period offset +%d reached %ld output(s)"
+                               " over %d language(s), floor is %ld\n",
+                               LARGE_INT_OFFSETS[lo], g_largePeriodCompared[lo],
+                               langsTested, largePeriodFloor);
                         write_markdown_report("ta_regtest_report.md", languageFilter);
                         return TA_CODEGEN_OUTPUT_MISMATCH;
                     }
