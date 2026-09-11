@@ -286,6 +286,7 @@ public class TaCodegenServe {
             else if (method == "TA_ROCR100") return Handle_ROCR100(p, startIdx, endIdx);
             else if (method == "TA_RSI") return Handle_RSI(p, startIdx, endIdx);
             else if (method == "TA_RVI") return Handle_RVI(p, startIdx, endIdx);
+            else if (method == "TA_RVIR") return Handle_RVIR(p, startIdx, endIdx);
             else if (method == "TA_RVOL") return Handle_RVOL(p, startIdx, endIdx);
             else if (method == "TA_SAR") return Handle_SAR(p, startIdx, endIdx);
             else if (method == "TA_SAREXT") return Handle_SAREXT(p, startIdx, endIdx);
@@ -653,6 +654,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_RSI\"");
                 sb.Append(",");
                 sb.Append("\"TA_RVI\"");
+                sb.Append(",");
+                sb.Append("\"TA_RVIR\"");
                 sb.Append(",");
                 sb.Append("\"TA_RVOL\"");
                 sb.Append(",");
@@ -34187,6 +34190,198 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
+    static string Sv_RVIR(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
+        int optInStdDevPeriod = GetInt(req, "optInStdDevPeriod", 10);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            cb = cb.UnstablePeriod((FuncUnstId)26, svK);
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.RVIR_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.RvirOpen(fz_h, fz_l, optInTimePeriod, optInStdDevPeriod); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                Core.RvirStream _fh = c2.RvirOpenAndFill(fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, f0);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.RvirOpenAndFill(fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, fz_h); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
+                try { _ = c2.RvirOpenAndFill(fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, fz_l); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_h, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.RvirOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, optInStdDevPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.RvirStream st;
+                try { st = c2.RvirOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInStdDevPeriod); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                double v0 = st.Value;
+                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    double pk = default;
+                    try { pk = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        double rp = default;
+                        try { rp = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (pkTook && (SvBne(pk, up))) peekAll = false;
+                    try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.Advance();
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.RvirStream sA = c2.RvirOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod, optInStdDevPeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
+                        Core.RvirStream sB = sA.Clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.Update(fz_h[t], fz_l[t]);
+                            double uB = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.RvirStream sQ = c2.RvirOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod, optInStdDevPeriod);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            double uq = sQ.Update(fz_h[t], fz_l[t]);
+                            sink += uq;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.RvirOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.RvirStream sD = c2.RvirOpen(fz_h, fz_l, int.MinValue, int.MinValue);
+                Core.RvirStream sE = c2.RvirOpen(fz_h, fz_l, 14, 10);
+                double vD = sD.Value;
+                double vE = sE.Value;
+                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.RVIR_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, optInStdDevPeriod, out begS, out nbS, b0); }
+                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.RvirStream stA = c2.RvirOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod, optInStdDevPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
     static string Sv_RVOL(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -41338,6 +41533,7 @@ public class TaCodegenServe {
         case "TA_ROCR100": return Sv_ROCR100(req);
         case "TA_RSI": return Sv_RSI(req);
         case "TA_RVI": return Sv_RVI(req);
+        case "TA_RVIR": return Sv_RVIR(req);
         case "TA_RVOL": return Sv_RVOL(req);
         case "TA_SAR": return Sv_SAR(req);
         case "TA_SAREXT": return Sv_SAREXT(req);
@@ -41992,6 +42188,11 @@ public class TaCodegenServe {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
             return core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+        }
+        case "RVIR": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
+            return core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
         }
         case "RVOL": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -64014,6 +64215,136 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
             try {
                 OutRange _fr = core.RVI(startIdx, endIdx, f_inReal, optInTimePeriod, optInStdDevPeriod, outArr0);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITaLibFailure) {
+                rc = ((ITaLibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_RVIR(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inHigh;
+        double[] inLow;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
+            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
+        } else {
+            inHigh = GetDoubleArray(p, "inHigh");
+            inLow = GetDoubleArray(p, "inLow");
+        }
+        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
+        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.RVIR_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.RVIR(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outArr0);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.RvirOpen(_warm_inHigh, _warm_inLow, optInTimePeriod, optInStdDevPeriod);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.RvirStream _wh = core.RvirOpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, optInStdDevPeriod, outArr0);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inHigh = new float[inHigh.Length];
+            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            var f_inLow = new float[inLow.Length];
+            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            try {
+                OutRange _fr = core.RVIR(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, optInStdDevPeriod, outArr0);
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;

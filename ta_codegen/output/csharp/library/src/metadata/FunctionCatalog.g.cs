@@ -278,6 +278,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeRocr100(),
             MakeRsi(),
             MakeRvi(),
+            MakeRvir(),
             MakeRvol(),
             MakeSar(),
             MakeSarext(),
@@ -3969,6 +3970,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.RVI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
+
+    private static FunctionInfo MakeRvir() => new(
+        name: "RVIR",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Relative Volatility Index, refined high/low form",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period of the Wilder smoothing applied to both legs", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 4, 200, 1)),
+            new OptInputInfo("optInStdDevPeriod", "StdDev Period", "Time period of the standard deviation", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.RVIR_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.RVIR(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
     private static FunctionInfo MakeRvol() => new(
         name: "RVOL",

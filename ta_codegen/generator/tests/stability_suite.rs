@@ -57,6 +57,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
     ("MASSI", "EMA"),
+    ("RVIR", "RVI"),
     ("SMI", "EMA"),
     ("STOCHRSI", "RSI"),
     ("SUPERTREND", "ATR"),
