@@ -163,6 +163,7 @@ ROCR                Rate of change ratio: (price/prevPrice)
 ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI                 Relative Strength Index
 RVI                 Relative Volatility Index
+RVIR                Relative Volatility Index, refined high/low form
 RVOL                Relative Volume
 SAR                 Parabolic SAR
 SAREXT              Parabolic SAR - Extended

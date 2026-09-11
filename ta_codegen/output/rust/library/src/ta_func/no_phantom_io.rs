@@ -14386,6 +14386,79 @@ fn legs_RVI(r: &mut Report) {
     r.legs_done("RVI", 1);
 }
 
+const V_RVIR: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 1i32, 2i32),
+];
+
+fn sub_RVIR(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInStdDevPeriod) in V_RVIR {
+        let Ok(lb) = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod) else { continue; };
+        r.control("RVIR", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVIR_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("RVIR", label); continue; }
+        r.quiet("RVIR", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVIR_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_RVIR(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInStdDevPeriod = i32::MIN;
+    let Ok(lb) = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod) else { r.no_legs("RVIR"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("RVIR", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("RVIR", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("RVIR", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("RVIR", 2);
+}
+
 const V_RVOL: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -17221,6 +17294,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ROCR100", sub_ROCR100, legs_ROCR100),
     ("RSI", sub_RSI, legs_RSI),
     ("RVI", sub_RVI, legs_RVI),
+    ("RVIR", sub_RVIR, legs_RVIR),
     ("RVOL", sub_RVOL, legs_RVOL),
     ("SAR", sub_SAR, legs_SAR),
     ("SAREXT", sub_SAREXT, legs_SAREXT),
@@ -17295,7 +17369,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 201, "probe count");
+    assert_eq!(PROBES.len(), 202, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
