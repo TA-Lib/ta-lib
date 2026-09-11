@@ -68,7 +68,57 @@ jobs:
         with:
           ref: dev
 
+      # An instruction count can only move if the library, the headers, the
+      # CMake build or the generated bench moved, so a day of docs-only commits
+      # should not spend a runner. The fingerprint is git's own tree hashes, so
+      # it needs no state in the repo and costs no commit to maintain, and the
+      # cache key IS the fingerprint: a hit means this exact tree was already
+      # measured. Anything unexpected (no fingerprint, cache miss, cache
+      # evicted) falls through to measuring, so the failure mode is a wasted
+      # run and never a silent skip.
+      #
+      # Scheduled runs only. A human who dispatched this asked for a
+      # measurement and gets one.
+      - name: Fingerprint the sources a count can depend on
+        id: fp
+        run: |
+          set -o pipefail
+          if ! fp=$(git rev-parse HEAD:src HEAD:include HEAD:CMakeLists.txt \
+                                  HEAD:ta_codegen/output/c | tr '\n' '-'); then
+            echo "could not fingerprint the tree; measuring."
+            fp="unfingerprinted-$GITHUB_RUN_ID"
+          fi
+          echo "fp=$fp" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/perf"
+          echo "$fp" > "$RUNNER_TEMP/perf/fingerprint"
+
+      - name: Has this exact tree already been measured?
+        id: seen
+        if: github.event_name == 'schedule'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+          lookup-only: true
+
+      - name: Decide whether to measure
+        id: decide
+        env:
+          SEEN: ${{ steps.seen.outputs.cache-hit }}
+        run: |
+          if [ "$SEEN" = "true" ]; then
+            echo "measure=false" >> "$GITHUB_OUTPUT"
+            msg="Skipped: nothing that can move an instruction count changed since the last measured run."
+            echo "$msg"
+            echo "## Instruction-count suite" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "measure=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Python
+        if: steps.decide.outputs.measure == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
@@ -76,15 +126,18 @@ jobs:
       # Supplies both the tool and <valgrind/callgrind.h>. The header is needed
       # at COMPILE time, so this has to precede the build step, not the run.
       - name: Install valgrind
+        if: steps.decide.outputs.measure == 'true'
         uses: ./.github/actions/apt-install
         with:
           packages: |
             valgrind
 
       - name: Build ta_bench_icount
+        if: steps.decide.outputs.measure == 'true'
         run: python3 scripts/build.py ta_bench_icount
 
       - name: Measure and compare
+        if: steps.decide.outputs.measure == 'true'
         run: |
           case "$MODE" in
             gate)    flags="--update-baseline" ;;
@@ -106,7 +159,7 @@ jobs:
       # here one green night at a time; raising a row needs mode=accept naming
       # that row, which is a person deciding to.
       - name: Commit the lowered baseline
-        if: success() && env.MODE != 'measure'
+        if: success() && env.MODE != 'measure' && steps.decide.outputs.measure == 'true'
         run: |
           changes=$(git status --porcelain .github/perf/)
           if [ -z "$changes" ]; then
@@ -124,8 +177,17 @@ jobs:
             git pull --rebase --strategy-option=ours origin dev && git push origin dev && break || sleep 10
           done
 
+      # Only after a measurement that got that far, so a skipped run does not
+      # record that this tree was measured when it was not.
+      - name: Remember this tree as measured
+        if: steps.decide.outputs.measure == 'true' && github.event_name == 'schedule'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+
       - name: Upload the raw callgrind output
-        if: always()
+        if: steps.decide.outputs.measure == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: callgrind-icount
