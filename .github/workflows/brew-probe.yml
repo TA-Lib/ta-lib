@@ -1,0 +1,78 @@
+name: brew-formula-probe
+
+on:
+  push:
+    branches: [scratch/brew-formula]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brew:
+    name: ${{ matrix.os }} / ${{ matrix.version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15, macos-15-intel, macos-26, ubuntu-24.04]
+        version: ['0.7.1', '0.8.1']
+        include:
+          - version: '0.8.1'
+            sha256: ec59ccd88c0c77f618587d858787c8f9d06c40460a09d66751926f6fd670f985
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_ENV_HINTS: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+    steps:
+      - name: Put Linuxbrew on PATH
+        if: runner.os == 'Linux'
+        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+
+      - name: Environment
+        run: |
+          brew --version
+          brew config
+          uname -a
+          if [ "$RUNNER_OS" = macOS ]; then sw_vers; xcode-select -p; clang --version; pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true; fi
+
+      - name: Tap the homebrew-core formula (bumped to ${{ matrix.version }})
+        env:
+          VERSION: ${{ matrix.version }}
+          SHA256: ${{ matrix.sha256 }}
+        run: |
+          set -euo pipefail
+          brew tap-new --no-git local/probe
+          F="$(brew --repository)/Library/Taps/local/homebrew-probe/Formula/ta-lib.rb"
+          curl -fsSL https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/Formula/t/ta-lib.rb -o "$F"
+          perl -0pi -e 's/\n  bottle do.*?\n  end\n//s' "$F"
+          if [ "$VERSION" != 0.7.1 ]; then
+            perl -pi -e "s/0\.7\.1/$VERSION/g; s/sha256 \"[0-9a-f]{64}\"/sha256 \"$SHA256\"/" "$F"
+          fi
+          cat "$F"
+
+      - name: brew install --build-from-source
+        run: brew install --build-from-source --verbose local/probe/ta-lib 2>&1 | tee "$RUNNER_TEMP/install.log"
+        shell: bash -o pipefail {0}
+
+      - name: brew test
+        run: brew test --verbose local/probe/ta-lib
+
+      - name: brew linkage
+        run: brew linkage --test local/probe/ta-lib
+
+      - name: brew audit
+        if: always()
+        continue-on-error: true
+        run: brew audit --strict local/probe/ta-lib
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.os }}-${{ matrix.version }}
+          if-no-files-found: ignore
+          path: |
+            ${{ runner.temp }}/install.log
+            ~/Library/Logs/Homebrew/ta-lib/
+            ~/.cache/Homebrew/Logs/ta-lib/
