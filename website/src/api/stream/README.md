@@ -4,10 +4,6 @@ description: "The TA-Lib C/C++ streaming API for live feeds: open a stream once,
 toc: false
 ---
 
-::: warning Not yet released
-This feature is planned for v0.8.x.
-:::
-
 The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch function](/api/) (`TA_SMA`, `TA_RSI`, …) would return by recomputing over the whole array.
 
 Every TA function gets these calls:

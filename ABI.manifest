@@ -3,7 +3,7 @@
 # TALIB_LIBRARY_VERSION in configure.ac -- see the rules beside it.
 format 8
 soname libta-lib.so.1
-released-soname libta-lib.so.0
+released-soname libta-lib.so.1
 version-info 2:0:1
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
 function-count 2451
