@@ -19,7 +19,7 @@
 #                packaging), build from shipped configure, drop Buildroot
 #                and clean sections, keep debuginfo, split -devel subpackage.
 
-%define ta_ver 0.8.1
+%define ta_ver 0.8.2
 
 Summary: Technical Analysis Library
 Name: ta-lib

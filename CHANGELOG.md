@@ -6,6 +6,8 @@ Just re-install to upgrade. Older versions are automatically removed.
 
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
+## [0.8.2] Not Released Yet
+
 ## [0.8.1] 2026-09-12
 ### Added
 - New Streaming API. See https://ta-lib.org/api/stream/
