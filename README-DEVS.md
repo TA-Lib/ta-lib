@@ -118,9 +118,9 @@ Any dev with permission to merge to main branch can do a release.
 
 (8) Optionally edit the draft "Release notes" on the Github website. A good time to add thank you to contributors. You can still edit after the official release.
 
-(9) Manually trig "Release (step 2)" Github action. This will make the release official/public and update the website.
+(9) Manually trig "Release (step 2)" Github action. This will make the release official/public.
 
-(10) Verify the Github release page shows the new version with all assets attached and downloadable. The website (https://ta-lib.org/install) catches up on its own within a nightly cycle afterward — see "After a release" below.
+(10) Verify the Github release page shows the new version with all assets attached and downloadable. The website (https://ta-lib.org/install) still shows the previous release until "After a release" below is done.
 
 (11) Run "./scripts/post-release-vcpkg.py". It bumps the version + SHA512, runs x-add-version, opens the microsoft/vcpkg PR, and opens a "[monitor] VCPkg release <ver>" issue here to track it. It does not review the port, and that is where the time goes: before pushing, delete any patch that no longer applies to the new source (a vcpkg PR checklist item) and verify with a local "./vcpkg install talib". vcpkg CI can be green on every triplet and still be sent back by review, and each round costs days rather than a re-run. Close the monitor issue once "vcpkg install talib" installs the new version.
 
@@ -139,12 +139,10 @@ stop advertising an already-released version:
 
 (B) Add a `## [0.7.3] Not Released Yet` entry at the top of CHANGELOG.md.
 
-(C) Run `./scripts/sync.py`, push dev, then merge to main as usual.
-
-The website catches up on its own within a nightly cycle. Confirm with:
+(C) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published. Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
 
 ```bash
-./scripts/sync-website.py --check   # non-zero if the website is behind
+./scripts/sync-website.py --check   # non-zero if the page is behind, or the release could not be looked up
 ```
 
 

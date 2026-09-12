@@ -34,10 +34,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install Python dependencies
-        run: |
-          pip install PyGithub
-
       - name: Prepare shell envs (Linux)
         if: runner.os == 'Linux'
         shell: bash
@@ -167,9 +163,8 @@ jobs:
         shell: bash
         run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py verify
 
-      # Soft check only: the website (website/src/install/c/README.md) is expected to lag briefly
-      # after a release until dev-nightly syncs it and it merges to main. Surface
-      # a warning if it is behind, but never fail -- keep the main badge green.
+      # Soft: the install page lags a release until the post-release sync.py commit
+      # reaches main.
       - name: Warn if website is out of date (soft)
         if: runner.os == 'Linux'
         env:

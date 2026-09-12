@@ -8,8 +8,11 @@
 #      may need to be resolved manually (an error will be displayed).
 #
 #  (2) METADATA. Sync the TA-Lib versioning (see the VERSION file) consistently
-#      across the files that need it, and update the TA-Lib source digest in
-#      ta_common.h as needed.
+#      across the files that need it, update the TA-Lib source digest in
+#      ta_common.h as needed, and point the website install page at the latest
+#      *published* GitHub release. That last one is the only thing that puts a new
+#      release on the website: it lands with the post-release commit and deploys
+#      when that commit reaches main.
 #
 # NOOP if nothing to merge or sync.
 #
@@ -42,6 +45,7 @@ import sys
 
 from utilities.common import verify_git_repo, run_command
 from utilities.versions import sync_sources_digest, sync_versions
+from utilities.website import latest_release_version, sync_install_page
 
 def generate_short_unique_id(length=20) -> str:
     # Generate a "unique enough" short identifier.
@@ -207,6 +211,14 @@ def main():
             print(f"Updated sources digest (ta_common.h): [{digest}]")
         else:
             print(f"No changes to sources digest (ta_common.h) [{digest}]")
+
+        released = latest_release_version()
+        if released is None:
+            print("Warning: website install page NOT synced; re-run once GitHub is reachable.")
+        elif sync_install_page(root_dir, released):
+            print(f"Updated website install page to released [{released}]")
+        else:
+            print(f"No changes to website install page [{released}]")
 
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")

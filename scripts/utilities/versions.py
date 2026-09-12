@@ -668,13 +668,8 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         refresh_cargo_lock(root_dir)
         is_updated = True
 
-    # NOTE: website/src/install/c/README.md (the website install page) is
-    # intentionally NOT synced here. It must advertise the latest *published*
-    # release, not this in-development VERSION, so rewriting it from
-    # `highest_version` would leak a not-yet-released version onto the live website
-    # (which deploys from main on every push). That sync lives in
-    # scripts/sync-website.py (GitHub-API driven) and runs only where CI commits
-    # back to the repo (dev-nightly-tests.yml).
+    # Never sync the website install page from VERSION here: it must name the latest
+    # *published* release, and main deploys the website on every push.
 
     # highest_version, not version_c: that was read before the updates above, so a
     # run that DID bump handed its caller the version it had just replaced --

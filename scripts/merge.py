@@ -91,6 +91,16 @@ def main():
         # This is to avoid conflicts when merging dev into main.
         sync.main()
 
+        # sync.main() rewrites tracked files (versions, digest, the website install
+        # page). Left uncommitted they would never reach main, and the rebase below
+        # would refuse the dirty tree after main had already moved locally.
+        dirty = run_command(['git', 'status', '--porcelain', '--untracked-files=no'])
+        if dirty:
+            print("sync.py changed these files on dev:")
+            print(dirty)
+            print("Commit them, push dev, then re-run this merge.")
+            sys.exit(1)
+
         # Switch to main branch
         print("Switching to main branch")
         run_command(['git', 'checkout', 'main'])

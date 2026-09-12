@@ -31,13 +31,13 @@ Everything else CI gates on lives in `ta_regtest` (C) or is a step inside
 
 | Script | When |
 |---|---|
-| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions + `TA_LIB_SOURCES_DIGEST`. Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
+| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions, `TA_LIB_SOURCES_DIGEST` and the website install page (from the latest published release). Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
 | `merge.py` | Merge dev into main (maintainers) |
 | `package.py` | Build this platform's `dist/` assets. Run by both nightlies |
 | `test-dist.py` | Verify those assets as a user would, including a ta-lib-python build. Run by both nightlies |
 | `pre-release-checks.py` | Gate for `release-step-1`/`-2`: version consistency, digest, CHANGELOG entry, assets present |
 | `post-release-vcpkg.py` | Open the microsoft/vcpkg PR after a release |
-| `sync-website.py` | Point the website install page at the latest *published* release; `--check` to test only |
+| `sync-website.py` | The website half of `sync.py` on its own; `--check` exits non-zero if the page is behind or the release could not be looked up |
 
 ## Support (imported or called, never run directly)
 
