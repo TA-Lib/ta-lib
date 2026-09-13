@@ -14,6 +14,12 @@ name: Release (step 1)
 on:
   workflow_dispatch:
 
+# Shared with release-step-2: step 2 publishing while step 1 runs would let step 1
+# move the tag of a release its early check saw as unpublished.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 # Pushes the release tag and creates/updates the draft release + its assets.
 permissions:
   contents: write
@@ -44,6 +50,23 @@ jobs:
           echo "PYTHON=python3" >> $GITHUB_ENV
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Must run before the tag step, which deletes and re-pushes $TAG whenever it is
+      # not on main's HEAD. The by-tag endpoint never returns a draft, so 200 means
+      # published; anything but 200 or 404 is an unanswered question, not a pass.
+      - name: Refuse if the release is already published
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}") || code=000
+          case "$code" in
+            404) echo "No published release for ${TAG}." ;;
+            200) echo "::error::Release ${TAG} is already published. Bump VERSION before running step 1."; exit 1 ;;
+            *)   echo "::error::Could not check whether ${TAG} is published (HTTP ${code})."; exit 1 ;;
+          esac
 
       # Restore the release packages from the asset pool BEFORE the pre-release
       # gate. That gate verifies each package against the sha256 recorded in its

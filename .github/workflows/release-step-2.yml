@@ -8,6 +8,10 @@ name: Release (step 2)
 on:
   workflow_dispatch:
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 # Flips the draft release to public via the Releases API.
 permissions:
   contents: write
