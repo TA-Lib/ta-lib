@@ -10,17 +10,19 @@ permissions:
 
 jobs:
   brew:
-    name: ${{ matrix.os }} / ${{ matrix.version }}
+    name: ${{ matrix.os }} as macOS ${{ matrix.fake }} / ${{ matrix.version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15, macos-15-intel, macos-26, ubuntu-24.04]
+        os: [macos-14, macos-15-intel]
+        fake: ['13.7', '12.7']
         version: ['0.7.1', '0.8.1']
         include:
           - version: '0.8.1'
             sha256: ec59ccd88c0c77f618587d858787c8f9d06c40460a09d66751926f6fd670f985
     env:
+      HOMEBREW_FAKE_MACOS: ${{ matrix.fake }}
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_ENV_HINTS: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
@@ -34,7 +36,8 @@ jobs:
           brew --version
           brew config
           uname -a
-          if [ "$RUNNER_OS" = macOS ]; then sw_vers; xcode-select -p; clang --version; pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true; fi
+          if [ "$RUNNER_OS" = macOS ]; then sw_vers; xcode-select -p; clang --version; pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true; ls -d /Applications/Xcode* || true; fi
+          brew ruby -e 'puts "brew sees macOS #{MacOS.version}, bottle tag #{Utils::Bottles.tag}, sdk #{MacOS.sdk_path}"'
 
       - name: Tap the homebrew-core formula (bumped to ${{ matrix.version }})
         env:
@@ -70,9 +73,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.os }}-${{ matrix.version }}
+          name: logs-${{ matrix.os }}-${{ matrix.fake }}-${{ matrix.version }}
           if-no-files-found: ignore
           path: |
             ${{ runner.temp }}/install.log
-            ~/Library/Logs/Homebrew/ta-lib/
-            ~/.cache/Homebrew/Logs/ta-lib/
+            ~/Library/Logs/Homebrew/
