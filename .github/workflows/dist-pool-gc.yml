@@ -56,5 +56,5 @@ jobs:
         run: |
           python3 scripts/dist-pool.py gc \
             --refs=origin/dev,origin/main \
-            --grace-days=14 \
+            --grace-days=7 \
             ${{ inputs.dry_run && '--dry-run' || '' }}

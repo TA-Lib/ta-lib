@@ -259,7 +259,7 @@ def main() -> int:
     ap.add_argument("command", choices=["push", "pull", "verify", "gc"])
     ap.add_argument("--dry-run", action="store_true",
                     help="Show what would happen without any network call.")
-    ap.add_argument("--grace-days", type=float, default=14.0,
+    ap.add_argument("--grace-days", type=float, default=7.0,
                     help="gc only: never delete an asset younger than this. Covers the "
                          "window where a nightly has uploaded a package but not yet "
                          "pushed the digest that references it.")
