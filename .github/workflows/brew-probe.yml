@@ -9,18 +9,26 @@ permissions:
   contents: read
 
 jobs:
-  brew:
-    name: ${{ matrix.os }} as macOS ${{ matrix.fake }} / ${{ matrix.version }}
+  upgrade:
+    name: ${{ matrix.os }} fake=${{ matrix.fake || 'none' }} xcode=${{ matrix.xcode || 'default' }} / ${{ matrix.from }} -> ${{ matrix.to }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15-intel]
-        fake: ['13.7', '12.7']
-        version: ['0.7.1', '0.8.1']
+        os: [macos-14, macos-15-intel, ubuntu-24.04]
+        pair: ['0.6.4>0.7.1', '0.7.1>0.8.1']
         include:
-          - version: '0.8.1'
-            sha256: ec59ccd88c0c77f618587d858787c8f9d06c40460a09d66751926f6fd670f985
+          - pair: '0.6.4>0.7.1'
+            from: '0.6.4'
+            to: '0.7.1'
+          - pair: '0.7.1>0.8.1'
+            from: '0.7.1'
+            to: '0.8.1'
+          - os: macos-14
+            fake: '13.7'
+            xcode: '15.0.1'
+          - os: macos-15-intel
+            fake: '13.7'
     env:
       HOMEBREW_FAKE_MACOS: ${{ matrix.fake }}
       HOMEBREW_NO_AUTO_UPDATE: 1
@@ -31,50 +39,65 @@ jobs:
         if: runner.os == 'Linux'
         run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
 
+      - name: Select Xcode ${{ matrix.xcode }}
+        if: matrix.xcode
+        run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
+
       - name: Environment
         run: |
-          brew --version
+          [ -n "$HOMEBREW_FAKE_MACOS" ] || unset HOMEBREW_FAKE_MACOS
           brew config
-          uname -a
-          if [ "$RUNNER_OS" = macOS ]; then sw_vers; xcode-select -p; clang --version; pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true; ls -d /Applications/Xcode* || true; fi
-          brew ruby -e 'puts "brew sees macOS #{MacOS.version}, bottle tag #{Utils::Bottles.tag}, sdk #{MacOS.sdk_path}"'
+          if [ "$RUNNER_OS" = macOS ]; then sw_vers; xcode-select -p; clang --version; fi
+          brew ruby -e 'puts "brew sees #{OS.mac? ? "macOS #{MacOS.version}" : "Linux"}, bottle tag #{Utils::Bottles.tag}"'
 
-      - name: Tap the homebrew-core formula (bumped to ${{ matrix.version }})
-        env:
-          VERSION: ${{ matrix.version }}
-          SHA256: ${{ matrix.sha256 }}
+      - name: Write the formula helper
         run: |
+          cat > "$RUNNER_TEMP/formula.sh" <<'EOF'
           set -euo pipefail
-          brew tap-new --no-git local/probe
-          F="$(brew --repository)/Library/Taps/local/homebrew-probe/Formula/ta-lib.rb"
-          curl -fsSL https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/Formula/t/ta-lib.rb -o "$F"
+          case "$1" in
+            0.6.4) SHA=aa04066d17d69c73b1baaef0883414d3d56ab3775872d82916d1cdb376a3ae86 ;;
+            0.7.1) SHA=508981a5b85edab42ecee0b2d9c7dcd2c4ae9831e859e1aa4e549232734c27e1 ;;
+            0.8.1) SHA=ec59ccd88c0c77f618587d858787c8f9d06c40460a09d66751926f6fd670f985 ;;
+          esac
+          D="$(brew --repository)/Library/Taps/local/homebrew-probe/Formula"
+          [ -d "$D" ] || brew tap-new --no-git local/probe >/dev/null
+          F="$D/ta-lib.rb"
+          [ -f "$RUNNER_TEMP/ta-lib.rb.orig" ] || curl -fsSL https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/Formula/t/ta-lib.rb -o "$RUNNER_TEMP/ta-lib.rb.orig"
+          cp "$RUNNER_TEMP/ta-lib.rb.orig" "$F"
           perl -0pi -e 's/\n  bottle do.*?\n  end\n//s' "$F"
-          if [ "$VERSION" != 0.7.1 ]; then
-            perl -pi -e "s/0\.7\.1/$VERSION/g; s/sha256 \"[0-9a-f]{64}\"/sha256 \"$SHA256\"/" "$F"
-          fi
-          cat "$F"
+          perl -pi -e "s/0\.7\.1/$1/g; s/sha256 \"[0-9a-f]{64}\"/sha256 \"$SHA\"/" "$F"
+          grep -E '^\s*(url|sha256)' "$F"
+          EOF
 
-      - name: brew install --build-from-source
-        run: brew install --build-from-source --verbose local/probe/ta-lib 2>&1 | tee "$RUNNER_TEMP/install.log"
+      - name: Install ${{ matrix.from }} from source
         shell: bash -o pipefail {0}
+        run: |
+          [ -n "$HOMEBREW_FAKE_MACOS" ] || unset HOMEBREW_FAKE_MACOS
+          bash "$RUNNER_TEMP/formula.sh" ${{ matrix.from }}
+          brew install --build-from-source local/probe/ta-lib 2>&1 | tee "$RUNNER_TEMP/install-from.log"
+          ls -la "$(brew --prefix)/lib" | grep ta-lib; ls "$(brew --prefix)/include" | grep -i ta || true
+
+      - name: Upgrade to ${{ matrix.to }} from source
+        shell: bash -o pipefail {0}
+        run: |
+          [ -n "$HOMEBREW_FAKE_MACOS" ] || unset HOMEBREW_FAKE_MACOS
+          bash "$RUNNER_TEMP/formula.sh" ${{ matrix.to }}
+          brew upgrade --build-from-source --verbose local/probe/ta-lib 2>&1 | tee "$RUNNER_TEMP/upgrade.log"
+          brew list --versions local/probe/ta-lib
 
       - name: brew test
-        run: brew test --verbose local/probe/ta-lib
-
-      - name: brew linkage
-        run: brew linkage --test local/probe/ta-lib
-
-      - name: brew audit
-        if: always()
-        continue-on-error: true
-        run: brew audit --strict local/probe/ta-lib
+        run: |
+          [ -n "$HOMEBREW_FAKE_MACOS" ] || unset HOMEBREW_FAKE_MACOS
+          brew test --verbose local/probe/ta-lib
+          brew linkage --test local/probe/ta-lib
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.os }}-${{ matrix.fake }}-${{ matrix.version }}
+          name: logs-${{ matrix.os }}-${{ matrix.from }}-${{ matrix.to }}
           if-no-files-found: ignore
           path: |
-            ${{ runner.temp }}/install.log
-            ~/Library/Logs/Homebrew/
+            ${{ runner.temp }}/*.log
+            ~/Library/Logs/Homebrew/ta-lib/
+            ~/.cache/Homebrew/Logs/ta-lib/
