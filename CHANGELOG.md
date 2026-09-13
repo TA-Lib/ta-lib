@@ -7,6 +7,8 @@ Just re-install to upgrade. Older versions are automatically removed.
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
 ## [0.8.2] Not Released Yet
+### Fixed
+- CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
 
 ## [0.8.1] 2026-09-12
 ### Added
