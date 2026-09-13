@@ -188,6 +188,22 @@
       <id>release</id>
       <build>
         <plugins>
+          <!-- maven-javadoc-plugin never counts a source edit as a change, so
+               without this the javadoc jar repackages whatever an earlier build
+               left behind, doclint never runs, and the build still succeeds. -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-clean-plugin</artifactId>
+            <version>3.2.0</version>
+            <executions>
+              <execution>
+                <id>release-from-nothing</id>
+                <phase>initialize</phase>
+                <goals><goal>clean</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>

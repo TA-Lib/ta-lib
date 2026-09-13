@@ -221,4 +221,4 @@ Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to chang
 
 ## 5.0 Documentation {#docs}
 
-Every function's Javadoc is rendered from the same canonical description as every other backend's docs. Browse it with `mvn javadoc:javadoc`, or, once published, on javadoc.io.
+Every function's Javadoc is rendered from the same canonical description as every other backend's docs. Browse it on javadoc.io once published, or build it with `./mvnw clean javadoc:javadoc` in `ta_codegen/output/java/library`.

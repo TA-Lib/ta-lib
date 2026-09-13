@@ -102,7 +102,7 @@ jobs:
   # `-Xdoclint:all,-missing` on the library is load-bearing and not tidiness:
   # javac's doclint is OFF by default, so a plain compile is blind to it, while
   # the pom turns it on for the DEFAULT build (maven-javadoc-plugin's jar goal
-  # binds to `package`). An unresolvable @link therefore fails `./mvnw package`
+  # binds to `package`). An unresolvable @link therefore fails `./mvnw clean package`
   # — one of #326's four — and would still reach dev green without this flag.
   # `-missing` matches the pom: streaming handles are deliberately undocumented.
   #
@@ -130,7 +130,7 @@ jobs:
           cd ta_codegen/output/java
           if ! javac --release 17 -Xdoclint:all,-missing -d /tmp/ta-java-main \
                $(find library/src/main -name '*.java'); then
-            echo "::error::The generated Java library does not compile. Fix the emitter (ta_codegen/generator/src/backends/java*.rs), never the generated file. 'error: reference not found' is doclint: an @link naming a signature that no longer exists — the pom runs this on the default build, so it fails ./mvnw package too."
+            echo "::error::The generated Java library does not compile. Fix the emitter (ta_codegen/generator/src/backends/java*.rs), never the generated file. 'error: reference not found' is doclint: an @link naming a signature that no longer exists — the pom runs this on the default build, so it fails ./mvnw clean package too."
             exit 1
           fi
 

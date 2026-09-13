@@ -1438,12 +1438,9 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     // backend needs no Maven installed -- a JDK and `unzip` -- and "which Maven
     // built the release" has one answer on every machine instead of one per distro.
     //
-    // `clean` on purpose. maven-compiler-plugin's incremental check is
-    // all-or-nothing on the sources it can see, but a class whose source was
-    // DELETED survives in target/classes and would be packaged -- and this repo
-    // has already been bitten twice by a stale Java artifact reading green
-    // (a class directory javac would not refresh, and a stale server binary).
-    // The jar is the artifact; it gets built from nothing, every time.
+    // `clean` is load-bearing: maven-javadoc-plugin never counts a source edit as
+    // a change, so without it the javadoc jar and its doclint pass would reflect
+    // an earlier build's sources and still succeed.
     //
     // Tests are skipped here, not run: the suites are junit-free `main()`
     // classes, so surefire discovers them and executes zero methods. They are
