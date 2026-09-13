@@ -1015,33 +1015,33 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
     // one). A new tier that could not would fail loudly in `generate`, never
     // silently skip — so the declaration is unconditional, not gated.
     let open_and_fill = format!(
-        "\n/*\n * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays\n * with the whole warm-up history — bit-identical to TA_{n}( 0, historyLen-1,\n * ... ).\n */\n{};\n",
+        "\n/*\n * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays\n * with the whole warm-up history. The fill is bit-identical to\n * TA_{n}( 0, historyLen-1, ... ).\n */\n{};\n",
         open_and_fill_signature(func)
     );
     // Clone: an independent fork at the same bar. Declared unconditionally —
     // every tier can duplicate what it owns.
     let clone = format!(
-        "\n/*\n * Clone: fork the stream — an independent stream at the same bar, owning its\n * own copy of everything the original owns. Both must be closed. The fork\n * carries the value and the range verbatim.\n */\n{};\n",
+        "\n/*\n * Clone: fork the stream. The fork is an independent stream at the same bar,\n * owning its own copy of everything the original owns. Both must be closed.\n * The fork carries the value and the range verbatim.\n */\n{};\n",
         clone_signature(func)
     );
     // Value: declared unconditionally beside the rest — every tier retains the
     // `cur_` fields, so there is no shape that could lack it.
     let value = format!(
-        "\n/*\n * Value: the value(s) at the last bar the stream counted — the bar\n * TA_{n}_OutRange ends on — without recomputing. Seeded by Open, refreshed by\n * every accepted Update, left alone by Peek.\n */\n{};\n",
+        "\n/*\n * Value: the value(s) at the last bar the stream counted (the bar\n * TA_{n}_OutRange ends on), without recomputing. Seeded by Open, refreshed by\n * every accepted Update, left alone by Peek.\n */\n{};\n",
         value_signature(func)
     );
     // OutRange / Advance: declared unconditionally too — every tier's struct
     // leads with the range head these two read.
     let out_range = format!(
-        "\n/*\n * OutRange: the bars this stream has an output for, in the input series'\n * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_{n} reports\n * over the same bars. Open seeds it; every accepted Update and every\n * TA_{n}_Advance adds one; a rejected Update and a Peek change nothing. The\n * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer\n * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.\n */\n{};\n",
+        "\n/*\n * OutRange: the bars this stream has an output for, in the input series'\n * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range\n * TA_{n} reports over the same bars. Open seeds it; every accepted Update and every\n * TA_{n}_Advance adds one; a rejected Update and a Peek change nothing. The\n * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer\n * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.\n */\n{};\n",
         out_range_signature(func)
     );
     let advance = format!(
-        "\n/*\n * Advance: count one bar this stream was not fed — one an Update rejected and\n * that will not be re-fed, or a session with no print. The range moves by one\n * and nothing else does, so TA_{n}_Value keeps answering the previous output,\n * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has\n * reached TA_MAX_INDEX.\n */\n{};\n",
+        "\n/*\n * Advance: count one bar this stream was not fed (one an Update rejected and\n * that will not be re-fed, or a session with no print). The range moves by one\n * and nothing else does, so TA_{n}_Value keeps answering the previous output,\n * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has\n * reached TA_MAX_INDEX.\n */\n{};\n",
         advance_signature(func)
     );
     format!(
-        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}{}{}{}",
+        "\n/*\n * Streaming API for TA_{n}: incremental per-bar evaluation.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}{}{}{}",
         open_signature(func),
         update_signature(func),
         peek_signature(func),

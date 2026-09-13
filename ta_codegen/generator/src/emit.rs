@@ -2,7 +2,8 @@
 
 use std::path::Path;
 
-/// `std::fs::write`, except an identical file is left alone.
+/// `std::fs::write`, except an identical file is left alone. Panics on a non-ASCII
+/// header under `include/`.
 ///
 /// Every consumer downstream of `generate` decides what to rebuild from
 /// mtimes: cargo, CMake, `make`, and the `build.py servers` gcc step. Writing
@@ -18,12 +19,31 @@ use std::path::Path;
 /// rewritten. `regen-check` still compares committed bytes and is unaffected.
 pub fn write_if_changed<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
     let path = path.as_ref();
+    assert_installed_header_is_ascii(path, contents.as_ref());
     if let Ok(existing) = std::fs::read(path) {
         if existing == contents.as_ref() {
             return Ok(());
         }
     }
     std::fs::write(path, contents)
+}
+
+pub fn assert_installed_header_is_ascii(path: &Path, contents: &[u8]) {
+    let installed = path.extension().is_some_and(|e| e == "h")
+        && path.parent().and_then(Path::file_name).is_some_and(|d| d == "include");
+    if !installed {
+        return;
+    }
+    let mut lines = contents.split(|&b| b == b'\n').enumerate();
+    if let Some((n, line)) = lines.find(|(_, l)| !l.is_ascii()) {
+        panic!(
+            "{}:{}: installed header must be ASCII (MSVC decodes a BOM-less header in the \
+             consumer's code page); first non-ASCII line: {}",
+            path.display(),
+            n + 1,
+            String::from_utf8_lossy(line)
+        );
+    }
 }
 
 /// `std::fs::copy`, except an identical destination is left alone.

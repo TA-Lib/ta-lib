@@ -8,6 +8,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.2] Not Released Yet
 ### Fixed
+- `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
 
 ## [0.8.1] 2026-09-12

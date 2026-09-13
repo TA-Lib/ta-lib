@@ -61,6 +61,18 @@ if __name__ == "__main__":
         print(f"Error: {pom_path} <description> does not say '200+ indicators'.")
         exit(1)
 
+    # generate refuses non-ASCII only in the headers it writes; the rest of
+    # include/ is hand-written.
+    for header in sorted(os.listdir(path_join(root_dir, 'include'))):
+        if not header.endswith('.h'):
+            continue
+        with open(path_join(root_dir, 'include', header), 'rb') as f:
+            for n, line in enumerate(f, 1):
+                if not line.isascii():
+                    print(f"Error: include/{header}:{n} is not ASCII. MSVC reads a BOM-less header in the")
+                    print("       consumer's code page, so non-ASCII text warns (C4819) on CJK systems.")
+                    exit(1)
+
     # Nothing else takes this banner down, and the page is hand-written, so
     # regen-check cannot see it. Named explicitly rather than globbed: the
     # per-language pages carry the same banner and it is still true there.

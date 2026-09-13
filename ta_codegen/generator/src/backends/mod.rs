@@ -475,6 +475,7 @@ pub fn get(name: &str) -> Option<Box<dyn LanguageBackend>> {
 /// Write `content` to `path` only if it differs from the current file contents.
 /// Prints a one-line status message using `label` and `count`.
 pub fn write_if_changed(path: &std::path::Path, content: &str, label: &str, count: usize) {
+    crate::emit::assert_installed_header_is_ascii(path, content.as_bytes());
     let existing = std::fs::read_to_string(path).unwrap_or_default();
     if existing == content {
         println!("  {label} is up to date ({count} functions)");
@@ -487,10 +488,7 @@ pub fn write_if_changed(path: &std::path::Path, content: &str, label: &str, coun
 /// Like [`write_if_changed`] but without the status message — for high-volume
 /// callers (e.g. the per-file `ta_abstract` writers) that report progress themselves.
 pub fn write_if_changed_silent(path: &std::path::Path, content: &str) {
-    let existing = std::fs::read_to_string(path).unwrap_or_default();
-    if existing != content {
-        crate::emit::write_if_changed(path, content).unwrap();
-    }
+    crate::emit::write_if_changed(path, content).unwrap();
 }
 
 /// The sorted `ta_<STEM>.c` source stems for the generated C library, shared by the
