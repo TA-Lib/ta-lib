@@ -10241,6 +10241,92 @@ TA_LIB_API TA_RetCode TA_KDJ_Advance( TA_KDJ_Stream *stream );
 TA_LIB_API TA_RetCode TA_KDJ_Clone( const TA_KDJ_Stream *stream, TA_KDJ_Stream **clone );
 
 /*
+ * TA_KURTOSIS - Rolling Excess Kurtosis
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 4 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 4 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_KURTOSIS( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 4 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
+
+TA_LIB_API int TA_KURTOSIS_Lookback( int           optInTimePeriod );  /* From 4 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_KURTOSIS: incremental per-bar evaluation.
+ */
+typedef struct TA_KURTOSIS_Stream TA_KURTOSIS_Stream;
+
+TA_LIB_API TA_RetCode TA_KURTOSIS_Open( TA_KURTOSIS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_KURTOSIS_Update( TA_KURTOSIS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_KURTOSIS_Peek( const TA_KURTOSIS_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_KURTOSIS_Close( TA_KURTOSIS_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_KURTOSIS( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS_OpenAndFill( TA_KURTOSIS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_KURTOSIS_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS_Value( const TA_KURTOSIS_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_KURTOSIS reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_KURTOSIS_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS_OutRange( const TA_KURTOSIS_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_KURTOSIS_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS_Advance( TA_KURTOSIS_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_KURTOSIS_Clone( const TA_KURTOSIS_Stream *stream, TA_KURTOSIS_Stream **clone );
+
+/*
  * TA_LINEARREG - Linear Regression
  * 
  * Input  = double

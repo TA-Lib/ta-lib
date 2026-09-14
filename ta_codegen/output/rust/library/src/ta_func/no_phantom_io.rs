@@ -11116,6 +11116,63 @@ fn legs_KDJ(r: &mut Report) {
     r.legs_done("KDJ", 3);
 }
 
+const V_KURTOSIS: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 4i32),
+];
+
+fn sub_KURTOSIS(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_KURTOSIS {
+        let Ok(lb) = core.KURTOSIS_Lookback(optInTimePeriod) else { continue; };
+        r.control("KURTOSIS", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KURTOSIS_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KURTOSIS", label); continue; }
+        r.quiet("KURTOSIS", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KURTOSIS_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KURTOSIS(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.KURTOSIS_Lookback(optInTimePeriod) else { r.no_legs("KURTOSIS"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KURTOSIS", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KURTOSIS_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KURTOSIS", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KURTOSIS_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KURTOSIS", 1);
+}
+
 const V_LINEARREG: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -17174,6 +17231,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("KAMA", sub_KAMA, legs_KAMA),
     ("KC", sub_KC, legs_KC),
     ("KDJ", sub_KDJ, legs_KDJ),
+    ("KURTOSIS", sub_KURTOSIS, legs_KURTOSIS),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
     ("LINEARREG_INTERCEPT", sub_LINEARREG_INTERCEPT, legs_LINEARREG_INTERCEPT),
@@ -17295,7 +17353,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 201, "probe count");
+    assert_eq!(PROBES.len(), 202, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

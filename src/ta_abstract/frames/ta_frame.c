@@ -2698,6 +2698,26 @@ unsigned int TA_KDJ_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[3].data.optInInteger, /* optInSlowD_Period*/
                     (TA_MAType)params->optIn[4].data.optInInteger /* optInSlowD_MAType*/ );
 }
+TA_RetCode TA_KURTOSIS_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_KURTOSIS(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_KURTOSIS_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_KURTOSIS_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

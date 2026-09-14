@@ -811,6 +811,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["KURTOSIS"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.KURTOSIS_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["LINEARREG"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.LinearregImpl(
