@@ -201,6 +201,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 - [BETA](/functions/beta.md) — Beta
 - [CORREL](/functions/correl.md) — Pearson's Correlation Coefficient (r)
+- [KURTOSIS](/functions/kurtosis.md) — Rolling Excess Kurtosis
 - [LINEARREG](/functions/linearreg.md) — Linear Regression
 - [LINEARREG_ANGLE](/functions/linearreg_angle.md) — Linear Regression Angle
 - [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) — Linear Regression Intercept

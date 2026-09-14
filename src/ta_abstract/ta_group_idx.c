@@ -158,6 +158,7 @@ extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_KC;
 extern const TA_FuncDef TA_DEF_KDJ;
+extern const TA_FuncDef TA_DEF_KURTOSIS;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
@@ -461,6 +462,7 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_BETA,
 &TA_DEF_CORREL,
+&TA_DEF_KURTOSIS,
 &TA_DEF_LINEARREG,
 &TA_DEF_LINEARREG_ANGLE,
 &TA_DEF_LINEARREG_INTERCEPT,
