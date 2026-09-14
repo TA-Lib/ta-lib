@@ -3880,6 +3880,47 @@
 	</FinancialFunction>
 
 
+	<!-- CTI -->
+	<FinancialFunction>
+		<Abbreviation>CTI</Abbreviation>
+		<ShortDescription>Correlation Trend Indicator</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Number of bars correlated against the ramp</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>5</SuggestedStart>
+					<SuggestedEnd>100</SuggestedEnd>
+					<SuggestedIncrement>5</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- CUMSUM -->
 	<FinancialFunction>
 		<Abbreviation>CUMSUM</Abbreviation>
