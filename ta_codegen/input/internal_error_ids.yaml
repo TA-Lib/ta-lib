@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 429
+next: 433
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -205,6 +205,10 @@ sites:
   MAX.circbuf.sufHighest: 347
   MAX.extrema: 349
   MAXINDEX.extrema: 350
+  MEDIAN.cbsize.ring: 431
+  MEDIAN.cbsize.sorted: 432
+  MEDIAN.circbuf.ring: 429
+  MEDIAN.circbuf.sorted: 430
   MFI.cbsize.mflow: 352
   MFI.circbuf.mflow: 351
   MIDPOINT.circbuf.preHighest: 354
