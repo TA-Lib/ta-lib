@@ -12378,6 +12378,63 @@ fn legs_MAXINDEX(r: &mut Report) {
     r.legs_done("MAXINDEX", 1);
 }
 
+const V_MEDIAN: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_MEDIAN(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_MEDIAN {
+        let Ok(lb) = core.MEDIAN_Lookback(optInTimePeriod) else { continue; };
+        r.control("MEDIAN", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.MEDIAN_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("MEDIAN", label); continue; }
+        r.quiet("MEDIAN", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.MEDIAN_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_MEDIAN(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.MEDIAN_Lookback(optInTimePeriod) else { r.no_legs("MEDIAN"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MEDIAN", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.MEDIAN_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MEDIAN", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.MEDIAN_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("MEDIAN", 1);
+}
+
 const V_MEDPRICE: &[&str] = &[
     "defaults",
 ];
@@ -17379,6 +17436,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("MAVP", sub_MAVP, legs_MAVP),
     ("MAX", sub_MAX, legs_MAX),
     ("MAXINDEX", sub_MAXINDEX, legs_MAXINDEX),
+    ("MEDIAN", sub_MEDIAN, legs_MEDIAN),
     ("MEDPRICE", sub_MEDPRICE, legs_MEDPRICE),
     ("MFI", sub_MFI, legs_MFI),
     ("MIDPOINT", sub_MIDPOINT, legs_MIDPOINT),

@@ -545,6 +545,45 @@ DEF_FUNCTION( MAXINDEX,
              );
 /* MAXINDEX END */
 
+/* MEDIAN BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MEDIAN_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   30,
+   "Number of bars in the window",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_MEDIAN_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MEDIAN_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MEDIAN_OptInputs[] =
+{ &TA_DEF_UI_D_MEDIAN_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( MEDIAN,
+              TA_GroupId_Statistic,
+              "Rolling Median",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* MEDIAN END */
+
 /* MEDPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_MEDPRICE_Inputs[]    =
 {
@@ -872,6 +911,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MAVP),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MAXINDEX),
+   ADD_TO_TABLE(MEDIAN),
    ADD_TO_TABLE(MEDPRICE),
    ADD_TO_TABLE(MFI),
    ADD_TO_TABLE(MIDPOINT),
