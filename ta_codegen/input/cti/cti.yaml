@@ -1,0 +1,19 @@
+name: CTI
+group: Momentum Indicators
+hint: Correlation Trend Indicator
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of bars correlated against the ramp
+    range: [2, 100000]
+    default: 20
+    suggested: [5, 100, 5]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
