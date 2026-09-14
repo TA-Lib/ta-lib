@@ -1,6 +1,6 @@
 [package]
 name = "ta-lib-tools"
-version = "0.8.2"
+version = "0.8.1"
 edition = "2021"
 publish = false
 
