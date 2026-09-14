@@ -263,6 +263,54 @@ DEF_FUNCTION( KDJ,
              );
 /* KDJ END */
 
+/* KURTOSIS BEGIN */
+static const TA_IntegerRange TA_DEF_KURTOSIS_TimePeriod =
+{
+   4,
+   100000,
+   10,
+   200,
+   5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KURTOSIS_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_KURTOSIS_TimePeriod,
+   30,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_KURTOSIS_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KURTOSIS_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KURTOSIS_OptInputs[] =
+{ &TA_DEF_UI_D_KURTOSIS_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( KURTOSIS,
+              TA_GroupId_Statistic,
+              "Rolling Excess Kurtosis",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+             );
+/* KURTOSIS END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -272,6 +320,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
    ADD_TO_TABLE(KAMA),
    ADD_TO_TABLE(KC),
    ADD_TO_TABLE(KDJ),
+   ADD_TO_TABLE(KURTOSIS),
    NULL
 };
 

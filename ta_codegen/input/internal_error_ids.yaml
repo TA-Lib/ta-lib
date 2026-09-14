@@ -193,6 +193,7 @@ sites:
   HT_TRENDMODE.wincap.j: 335
   IMI.wincap.i: 337
   KAMA.ringcap.trailingIdx: 338
+  KURTOSIS.extrema: 429
   LINEARREG.extrema: 339
   LINEARREG_ANGLE.extrema: 340
   LINEARREG_INTERCEPT.extrema: 341
