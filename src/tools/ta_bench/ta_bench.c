@@ -239,10 +239,19 @@ static void thermal_wait(char *respBuf, int respSz) {
     }
 }
 
-/* Spread of the cref arm across BENCH_PASSES, accumulated over all rows. The
- * ratio columns below are only as meaningful as this is small. */
-static double g_spread_sum = 0.0, g_spread_worst = 0.0;
-static int    g_spread_n = 0;
+/* Spread across BENCH_PASSES, accumulated over all rows, PER ARM. The ratio
+ * columns below are only as meaningful as these are small -- and that is true
+ * of every arm, not only the reference.
+ *
+ * This used to track cref alone, which left the arm most likely to be noisy
+ * unwatched: a managed runtime's first passes are spent compiling, so its rows
+ * move far more between passes than a native one's. MEASURED on this tree, MIN
+ * at 100k points on a random walk, five repeats of the identical command: the
+ * Java arm's run-to-run range was 7.2x (ratios 4.34, 5.26, 5.82, 8.56, 26.86)
+ * at the default --iters, and 1.16x at --iters=1000. Nothing in the tool said
+ * so, because nothing was looking. */
+static double g_spread_sum[16], g_spread_worst[16];
+static int    g_spread_n[16];
 
 /* ---- Per-indicator benchmark callback ---- */
 
@@ -328,20 +337,16 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
         }
     }
 
-    /* Extract ref timing for ratio coloring */
-    double ref_spread = -1.0;
+    /* Accumulate each arm's spread, and pick up cref's timing for the ratio
+     * colouring on the same pass. */
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
-        if( has_timing[li] && strcmp(LANGUAGES[li].name, "cref") == 0 ) {
+        if( !has_timing[li] || timings[li] <= 0 ) continue;
+        if( strcmp(LANGUAGES[li].name, "cref") == 0 )
             ref_ns = timings[li];
-            if( ref_ns > 0 )
-                ref_spread = (double)(t_max[li] - timings[li]) / (double)ref_ns;
-        }
-    }
-    /* Track the worst row so the footer can say whether the run was quiet. */
-    if( ref_spread >= 0.0 ) {
-        g_spread_sum += ref_spread;
-        g_spread_n++;
-        if( ref_spread > g_spread_worst ) g_spread_worst = ref_spread;
+        double sp = (double)(t_max[li] - timings[li]) / (double)timings[li];
+        g_spread_sum[li] += sp;
+        g_spread_n[li]++;
+        if( sp > g_spread_worst[li] ) g_spread_worst[li] = sp;
     }
 
     /* Print row */
@@ -516,18 +521,36 @@ int main(int argc, char *argv[]) {
            ctx.count, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
-    /* Say how quiet the box was. Without this the ratios above look equally
-       authoritative whether the spread was 2% or 200%. */
+    /* Say how quiet the box was, per arm. Without this the ratios above look
+       equally authoritative whether the spread was 2% or 200% -- and reporting
+       only the reference hides the arm most likely to be moving, since a
+       managed runtime spends its first passes compiling. The gate fires on the
+       WORST arm: a ratio is a quotient of two timings and is no better than
+       the noisier of them. */
     int too_noisy = 0;
-    if( g_spread_n > 0 ) {
-        double mean = g_spread_sum / (double)g_spread_n;
-        printf("C-ref spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
-               BENCH_PASSES, mean * 100.0, g_spread_worst * 100.0, g_spread_n);
-        if( max_spread > 0.0 && mean > max_spread ) {
+    int any_arm = 0;
+    double worst_arm_mean = 0.0;
+    const char *worst_arm_label = NULL;
+    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
+        if( g_spread_n[li] <= 0 ) continue;
+        any_arm = 1;
+        double mean = g_spread_sum[li] / (double)g_spread_n[li];
+        printf("%s spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
+               LANGUAGES[li].display, BENCH_PASSES, mean * 100.0,
+               g_spread_worst[li] * 100.0, g_spread_n[li]);
+        if( mean > worst_arm_mean ) {
+            worst_arm_mean  = mean;
+            worst_arm_label = LANGUAGES[li].display;
+        }
+    }
+    if( any_arm ) {
+        if( max_spread > 0.0 && worst_arm_mean > max_spread ) {
             fprintf(stderr,
-                    "ta_bench: mean C-ref spread %.0f%% exceeds --max-spread=%.0f%% — "
-                    "treat the ratios above as unresolved.\n",
-                    mean * 100.0, max_spread * 100.0);
+                    "ta_bench: mean %s spread %.0f%% exceeds --max-spread=%.0f%% — "
+                    "treat the ratios above as unresolved. A managed runtime "
+                    "usually needs a larger --iters than the default before its "
+                    "rows settle.\n",
+                    worst_arm_label, worst_arm_mean * 100.0, max_spread * 100.0);
             too_noisy = 1;
         }
     } else if( !LANGUAGES[0].active ) {
