@@ -907,6 +907,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["MEDIAN"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.MEDIAN_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["MEDPRICE"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.MedpriceImpl(

@@ -205,6 +205,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [LINEARREG_ANGLE](/functions/linearreg_angle.md) — Linear Regression Angle
 - [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) — Linear Regression Intercept
 - [LINEARREG_SLOPE](/functions/linearreg_slope.md) — Linear Regression Slope
+- [MEDIAN](/functions/median.md) — Rolling Median
 - [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
 - [PERCENTRANK](/functions/percentrank.md) — Percent Rank
 - [STDDEV](/functions/stddev.md) — Standard Deviation

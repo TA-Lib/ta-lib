@@ -513,6 +513,9 @@ typedef enum
   TA_OPEN_CONTRACT_WROTE             = 1680,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
+  /* (proposal-drafts #73) MEDIAN legs that ran while comparing nothing. */
+  TA_MEDIAN_VACUOUS                  = 1683,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a
