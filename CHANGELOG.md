@@ -10,6 +10,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Added
 - New TA Functions:
   - KURTOSIS: Rolling Excess Kurtosis (proposal-drafts#72)
+
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
 
