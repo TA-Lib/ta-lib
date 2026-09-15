@@ -348,7 +348,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
         } else if( is_cref ) {
             printf(" %10lld", timings[li]);
         } else {
-            double ratio = (ref_ns > 0) ? (double)timings[li] / (double)ref_ns : 0.0;
+            double ratio = (ref_ns > 0) ? (double)timings[li] / (double)ref_ns : 1.0;
             const char *clr = (ratio > 1.10) ? "\033[31m" : (ratio < 0.90) ? "\033[32m" : "";
             const char *rst = (*clr) ? "\033[0m" : "";
             printf(" %s%10lld%s", clr, timings[li], rst);
@@ -531,10 +531,9 @@ int main(int argc, char *argv[]) {
             too_noisy = 1;
         }
     }
-    if( !LANGUAGES[0].active ) {
-        printf("No C-ref column: the ratio colours above are uncalibrated "
-               "(add cref to --language).\n");
-    }
+    if( g_spread_n[0] == 0 )
+        printf("No C-ref timings: nothing above is coloured%s.\n",
+               lang_matches(lang_filter, LANGUAGES[0].name) ? "" : " (add cref to --language)");
 
     /* Cleanup */
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )

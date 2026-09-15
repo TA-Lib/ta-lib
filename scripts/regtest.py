@@ -21,8 +21,8 @@ Filters (applied to generate AND test):
   --function=SMA,RSI         Filter indicators
 
 Perftest options:
-  --points=5000              Data points (default 5000)
-  --iters=20                 Iterations (default 20)
+  --points=5000              Data points (default: each bench's own)
+  --iters=20                 Iterations (default: each bench's own)
   --shape=trend-chop-1p      Benchmark input class (default randwalk;
                              ta_bench --list-shapes prints them)
   --seed=42                  Corpus seed (default 42)
