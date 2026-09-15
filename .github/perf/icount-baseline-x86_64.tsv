@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	c990c2d6763e49f1385a05841dcfe1f6fe8dd793
-#generated	2026-09-11T12:38:54Z
+#commit	c22ced4c3144c2689592961055365de536078270
+#generated	2026-09-15T22:06:23Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -43,16 +43,16 @@ ADR	open	0	200454
 ADR	openfill	0	240407
 ADR	peek	0	40973
 ADR	update	0	70669
-ADX	batch	0	1240396
-ADX	open	0	1240511
-ADX	openfill	0	1240511
-ADX	peek	0	108845
-ADX	update	0	128976
-ADXR	batch	0	1330721
-ADXR	open	0	1321652
-ADXR	openfill	0	1321147
-ADXR	peek	0	155949
-ADXR	update	0	194512
+ADX	batch	0	1519577
+ADX	open	0	1519701
+ADX	openfill	0	1519700
+ADX	peek	0	118797
+ADX	update	0	133133
+ADXR	batch	0	1609902
+ADXR	open	0	1600841
+ADXR	openfill	0	1600336
+ADXR	peek	0	165901
+ADXR	update	0	198669
 AO	batch	0	459767
 AO	open	0	440439
 AO	openfill	0	440427
@@ -433,11 +433,11 @@ CMF	open	0	820315
 CMF	openfill	0	900246
 CMF	peek	0	74764
 CMF	update	0	100416
-CMO	batch	0	469949
-CMO	open	0	470018
-CMO	openfill	0	470051
-CMO	peek	0	59267
-CMO	update	0	75247
+CMO	batch	0	619848
+CMO	open	0	599950
+CMO	openfill	0	599969
+CMO	peek	0	59405
+CMO	update	0	74765
 CMOU	batch	0	620006
 CMOU	open	0	580341
 CMOU	openfill	0	620346
@@ -493,11 +493,11 @@ DPO	open	0	140458
 DPO	openfill	0	220382
 DPO	peek	0	47117
 DPO	update	0	78861
-DX	batch	0	1140546
-DX	open	0	1160630
-DX	openfill	0	1160626
-DX	peek	0	98605
-DX	update	0	121808
+DX	batch	0	1399706
+DX	open	0	1439780
+DX	openfill	0	1439776
+DX	peek	0	112653
+DX	update	0	130061
 EFI	batch	0	200092
 EFI	open	0	400041
 EFI	openfill	0	459998
@@ -718,16 +718,16 @@ MINMAXINDEX	open	0	1194833
 MINMAXINDEX	openfill	0	1276866
 MINMAXINDEX	peek	0	69645
 MINMAXINDEX	update	0	148822
-MINUS_DI	batch	0	727030
-MINUS_DI	open	0	727136
-MINUS_DI	openfill	0	727136
-MINUS_DI	peek	0	83606
-MINUS_DI	update	0	98957
-MINUS_DM	batch	0	327120
-MINUS_DM	open	0	307186
-MINUS_DM	openfill	0	327194
-MINUS_DM	peek	0	53910
-MINUS_DM	update	0	65850
+MINUS_DI	batch	0	879908
+MINUS_DI	open	0	880022
+MINUS_DI	openfill	0	880022
+MINUS_DI	peek	0	82957
+MINUS_DI	update	0	99341
+MINUS_DM	batch	0	480006
+MINUS_DM	open	0	460070
+MINUS_DM	openfill	0	480079
+MINUS_DM	peek	0	53261
+MINUS_DM	update	0	68621
 MOM	batch	0	70077
 MOM	open	0	348
 MOM	openfill	0	70346
@@ -763,16 +763,16 @@ PERCENTRANK	open	0	4935677
 PERCENTRANK	openfill	0	5035346
 PERCENTRANK	peek	0	1340382
 PERCENTRANK	update	0	1264424
-PLUS_DI	batch	0	736813
-PLUS_DI	open	0	736919
-PLUS_DI	openfill	0	736919
-PLUS_DI	peek	0	82149
-PLUS_DI	update	0	100203
-PLUS_DM	batch	0	336903
-PLUS_DM	open	0	316969
-PLUS_DM	openfill	0	336977
-PLUS_DM	peek	0	51429
-PLUS_DM	update	0	66017
+PLUS_DI	batch	0	879908
+PLUS_DI	open	0	880022
+PLUS_DI	openfill	0	880022
+PLUS_DI	peek	0	83981
+PLUS_DI	update	0	101389
+PLUS_DM	batch	0	480007
+PLUS_DM	open	0	460070
+PLUS_DM	openfill	0	480079
+PLUS_DM	peek	0	52237
+PLUS_DM	update	0	68621
 PPO	batch	0	645990
 PPO	open	0	962157
 PPO	openfill	0	960693
