@@ -6,6 +6,8 @@ toc: false
 
 Instructions for installing the shared/static libraries and headers on your system.
 
+<!-- Release numbers on this page are written by scripts/sync.py; do not edit. -->
+
 Latest release is [0.8.1 on Github](https://github.com/ta-lib/ta-lib/releases/latest)
 
 Both CMake and autotools build systems are included, enabling an optimized build from source on most platforms.

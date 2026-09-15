@@ -6,6 +6,7 @@ import os
 
 class TaLibConan(ConanFile):
     name = "ta-lib"
+    # Written by scripts/sync.py from VERSION; do not edit.
     version = "0.8.1"
 
     license = "BSD-3-Clause"

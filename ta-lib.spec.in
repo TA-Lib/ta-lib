@@ -19,6 +19,7 @@
 #                packaging), build from shipped configure, drop Buildroot
 #                and clean sections, keep debuginfo, split -devel subpackage.
 
+# Written by scripts/sync.py from VERSION; do not edit.
 %define ta_ver 0.8.1
 
 Summary: Technical Analysis Library

@@ -1,4 +1,4 @@
-# TA-Lib public C ABI. Written by: scripts/abi.py update
+# Public C ABI of this tree. Written by scripts/sync.py; do not edit.
 # TALIB_LIBRARY_VERSION is derived from this file and ABI.released.
 format 9
 soname libta-lib.so.1

@@ -5,6 +5,7 @@ endif (CMAKE_VERSION VERSION_LESS "3.30" AND WIN32)
 
 project(ta-lib)
 
+# Written by scripts/sync.py from VERSION; do not edit.
 set(TA_LIB_VERSION_MAJOR 0)
 set(TA_LIB_VERSION_MINOR 8)
 set(TA_LIB_VERSION_PATCH 1)

@@ -101,7 +101,7 @@ LT_LIB_M
 AC_SUBST([LIBM])
 
 # libtool current:revision:age of the shared library, not the release version.
-# Written by `scripts/abi.py update`; do not edit.
+# Written by scripts/sync.py; do not edit.
 TALIB_LIBRARY_VERSION=2:0:1
 
 AC_SUBST(TALIB_LIBRARY_VERSION)

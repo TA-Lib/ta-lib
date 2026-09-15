@@ -89,11 +89,11 @@ def main():
 
         # Call sync to verify that dev is up-to-date with main.
         # This is to avoid conflicts when merging dev into main.
-        sync.main()
+        sync.main([])
 
-        # sync.main() rewrites tracked files (versions, digest, the website install
-        # page). Left uncommitted they would never reach main, and the rebase below
-        # would refuse the dirty tree after main had already moved locally.
+        # sync.main() rewrites tracked files. Left uncommitted they would never reach
+        # main, and the rebase below would refuse the dirty tree after main had
+        # already moved locally.
         dirty = run_command(['git', 'status', '--porcelain', '--untracked-files=no'])
         if dirty:
             print("sync.py changed these files on dev:")

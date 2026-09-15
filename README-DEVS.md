@@ -8,7 +8,7 @@ Modifications (or PR) must be made on the 'dev' branch.
 
 Before committing, run ```scripts/sync.py``` to:
  - Ensure your local dev branch is up-to-date with both remote dev and main branches.
- - Do various check and fixes on your code (e.g. update "x.y.z" versioning in various files).
+ - Bring every version in the repo in step: the release version from the VERSION file, the shared library version from the public headers. It fails if public API that shipped was removed or changed: put it back, or re-run with `--accept-break` if that is intended.
 
 Safe to run from anywhere, including a `git worktree`. The two bullets are
 independent halves: the first needs to check out dev and main, which git refuses
@@ -144,7 +144,7 @@ stop advertising an already-released version:
 
 (B) Add a `## [0.7.3] Not Released Yet` entry at the top of CHANGELOG.md.
 
-(C) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published and records that release as the ABI baseline in `ABI.released` (needs gcc and network). Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
+(C) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published and records that release in `ABI.released` (needs gcc and network). Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
 
 ```bash
 ./scripts/sync-website.py --check   # non-zero if the page is behind, or the release could not be looked up

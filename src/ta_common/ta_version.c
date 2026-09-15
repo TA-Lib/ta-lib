@@ -41,11 +41,7 @@
  */
 #include "ta_common.h"
 
-/* Package versioning.
- *
- * Must match the VERSION file in the TA-Lib repos root dir.
- *
- */
+/* Package versioning. Written by scripts/sync.py from VERSION; do not edit. */
 #define MAJOR "0"
 #define MINOR "8"
 #define PATCH "1"

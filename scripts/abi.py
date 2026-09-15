@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """The public C ABI (ABI.manifest) and the shared library version derived from it.
 
-ABI.released is the surface of the last published release, written by
-scripts/sync.py. TALIB_LIBRARY_VERSION follows from the two: additions keep the
-SONAME; removing or changing API that shipped moves it, once per release, and is
-recorded only with `update --accept-break`.
+ABI.released is the surface of the last published release. TALIB_LIBRARY_VERSION
+follows from the two: additions keep the SONAME; removing or changing API that
+shipped moves it, once per release, and is recorded only with
+`scripts/sync.py --accept-break`. scripts/sync.py writes all three; `check` is the
+gate.
 
 Sizes, offsets, enumerator and macro values are measured by compiling a probe
 against the installed headers (CMake's LIB_HEADERS), never parsed. The built ELF
@@ -25,9 +26,11 @@ import tempfile
 MANIFEST = "ABI.manifest"
 RELEASED = "ABI.released"
 CANONICAL_REMOTE = "https://github.com/TA-Lib/ta-lib.git"
-# Bump when the manifest's shape or coverage changes. `update --rebaseline-format`
-# then re-measures ABI.released from the release commit, so the two files are
-# never compared across formats.
+# The data model CI measures on; the ABI files are only ever written on it.
+CI_PLATFORM = "platform pointer=8 long=8 int=4 enum=4"
+# Bump when the manifest's shape or coverage changes; the next scripts/sync.py
+# re-measures both files, so they are never compared across formats. A break
+# already accepted this cycle must then be accepted again.
 FORMAT = 9
 
 
@@ -107,7 +110,9 @@ def abi_triple(root: str) -> tuple:
     m = re.search(r"^TALIB_LIBRARY_VERSION=(\d+):(\d+):(\d+)$",
                   open(os.path.join(root, "configure.ac")).read(), re.M)
     if not m:
-        sys.exit("abi: no TALIB_LIBRARY_VERSION=c:r:a in configure.ac")
+        sys.exit("abi: configure.ac has no TALIB_LIBRARY_VERSION=c:r:a line. Put one back "
+                 "with any value (e.g. TALIB_LIBRARY_VERSION=0:0:0) and run 'scripts/sync.py'; "
+                 "it rewrites the value.")
     c, r, a = (int(x) for x in m.groups())
     return c, r, a, "libta-lib.so.%d" % (c - a)
 
@@ -300,15 +305,15 @@ def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list,
             cc = subprocess.run(["gcc", "-I", os.path.join(root, "include"), "-o", exe, c],
                                 capture_output=True, text=True)
         except FileNotFoundError:
-            sys.exit("abi: needs a C compiler -- sizes and offsets are measured, "
-                     "not parsed, so `gcc` has to be on PATH")
+            sys.exit("abi: needs gcc on PATH, on Linux x86_64 where CI measures: sizes and "
+                     "offsets are measured, not parsed")
         if cc.returncode != 0:
             sys.exit("abi: the probe did not compile -- a public type is no "
                      "longer spellable from the installed headers:\n" + cc.stderr[:2000])
         run = subprocess.run([exe], capture_output=True, text=True)
         lines = run.stdout.splitlines()
         # A probe that died mid-run would otherwise hand back a TRUNCATED
-        # surface, and `--update` would write that as the baseline.
+        # surface, and sync.py would write that as the baseline.
         expected = 1 + len(structs) + len(enums) + sum(len(v) for v in enums.values()) \
                    + len(macros) + len(fmacros) + len(typedefs)
         if run.returncode != 0 or len(lines) != expected:
@@ -365,7 +370,7 @@ def build_manifest(root: str) -> str:
         sys.exit("abi: surface looks wrong (%d functions, %d structs, %d enums) "
                  "-- the header parse moved" % (len(funcs), len(structs), len(enums)))
     lines = [
-        "# TA-Lib public C ABI. Written by: scripts/abi.py update",
+        "# Public C ABI of this tree. Written by scripts/sync.py; do not edit.",
         "# TALIB_LIBRARY_VERSION is derived from this file and %s." % RELEASED,
         "format %d" % FORMAT,
         "soname %s" % soname,
@@ -433,7 +438,7 @@ def compute_triple(released: str, manifest: str) -> tuple:
     last published release, never from the previous commit."""
     if _format(released) != _format(manifest) or _platform(released) != _platform(manifest):
         sys.exit("abi: %s and %s differ in format or platform. Run "
-                 "'scripts/abi.py update --rebaseline-format'." % (RELEASED, MANIFEST))
+                 "'scripts/sync.py'." % (RELEASED, MANIFEST))
     c, r, a = _triple(released)
     base, now = _surface(released), _surface(manifest)
     lost = sorted(base - now)
@@ -488,8 +493,8 @@ def write_triple(root: str, manifest: str, triple: tuple) -> str:
                      "TALIB_LIBRARY_VERSION=%d:%d:%d" % triple, text, flags=re.M)
     if n != 1:
         sys.exit("abi: configure.ac must hold exactly one TALIB_LIBRARY_VERSION=c:r:a "
-                 "line, found %d. After a merge conflict, keep either line and re-run "
-                 "'scripts/abi.py update'; it rewrites the value." % n)
+                 "line, found %d. After a merge conflict, keep either side, commit the merge, "
+                 "then run 'scripts/sync.py'; it rewrites the value." % n)
     if new != text:
         open(path, "w").write(new)
     manifest = re.sub(r"^soname .*$", "soname libta-lib.so.%d" % (triple[0] - triple[2]),
@@ -542,26 +547,10 @@ def advance_released(root: str, published: str, remote: str = CANONICAL_REMOTE) 
             return ("Warning: ABI baseline NOT synced: this branch does not contain %s. "
                     "Merge dev and re-run scripts/sync.py." % tag)
         released = measure_release(root, tag, sha)
-        manifest = _read(root, MANIFEST)
-        if manifest is not None and _platform(manifest) != _platform(released):
-            return ("Warning: ABI baseline NOT synced: this host measures '%s' but %s "
-                    "records '%s'. Run scripts/sync.py on a matching host."
-                    % (_platform(released), MANIFEST, _platform(manifest)))
+        if _platform(released) != CI_PLATFORM:
+            return _foreign_host(_platform(released))
         open(os.path.join(root, RELEASED), "w").write(released)
-        msg = "Recorded %s as the ABI baseline (%s)." % (tag, RELEASED)
-        if manifest is None or _format(manifest) != _format(released):
-            return msg + " Run 'scripts/abi.py update --rebaseline-format'."
-        lost = _needs_accept_break(released, manifest, manifest)
-        if lost:
-            return (msg + " Warning: this tree removes or changes API that shipped in %s:\n%s\n"
-                    "TALIB_LIBRARY_VERSION was NOT updated. Put the header back, or run "
-                    "'scripts/abi.py update --accept-break'." % (tag, _lost_message(lost)))
-        _, want, _ = compute_triple(released, manifest)
-        updated = write_triple(root, manifest, want)
-        if updated != manifest:
-            open(os.path.join(root, MANIFEST), "w").write(updated)
-            msg += " TALIB_LIBRARY_VERSION is now %d:%d:%d." % want
-        return msg
+        return "Recorded %s as the ABI baseline (%s)." % (tag, RELEASED)
     except (Exception, SystemExit) as e:
         return "Warning: ABI baseline NOT synced: %s" % e
 
@@ -582,8 +571,10 @@ def _verify_released(root: str, released: str, required: bool) -> None:
     tag, sha = _release_of(released)
     tagged = _git(root, "rev-parse", "-q", "--verify", tag + "^{commit}").stdout.strip()
     if tagged and tagged != sha:
-        sys.exit("abi: %s records %s at %s, but the tag is %s here. Restore %s from dev "
-                 "(git checkout origin/dev -- %s)." % (RELEASED, tag, sha, tagged, RELEASED, RELEASED))
+        sys.exit("abi: %s records %s at %s, but the tag is %s here. Refresh the tag (git fetch "
+                 "--force %s tag %s); if it still differs, restore %s from dev (git checkout "
+                 "origin/dev -- %s)." % (RELEASED, tag, sha, tagged, CANONICAL_REMOTE, tag,
+                                         RELEASED, RELEASED))
     if _git(root, "cat-file", "-e", sha + "^{commit}").returncode != 0:
         if required:
             sys.exit("abi: %s (%s) is not in this clone. Run: git fetch %s tag %s"
@@ -592,15 +583,21 @@ def _verify_released(root: str, released: str, required: bool) -> None:
     if measure_release(root, tag, sha) != released:
         sys.exit("abi: %s is not a measurement of %s. It is written by scripts/sync.py "
                  "only: restore it from dev (git checkout origin/dev -- %s). If "
-                 "scripts/abi.py now measures differently, bump FORMAT and run "
-                 "'scripts/abi.py update --rebaseline-format'." % (RELEASED, tag, RELEASED))
+                 "scripts/abi.py now measures differently, bump its FORMAT and run "
+                 "'scripts/sync.py'." % (RELEASED, tag, RELEASED))
+
+
+def _foreign_host(here: str) -> str:
+    return ("Warning: shared library version NOT synced: this host measures '%s'; the ABI "
+            "files are measured on Linux x86_64. Run scripts/sync.py there." % here)
 
 
 def _platform_exit(name: str, recorded: str, here: str) -> None:
-    sys.exit("abi: %s was measured on '%s', this host measures '%s'. Both files must be "
-             "measured where CI measures (Linux x86_64): run abi.py there, and if a committed "
-             "file was written elsewhere, re-baseline it there with "
-             "'scripts/abi.py update --rebaseline-format'." % (name, recorded, here))
+    if here == CI_PLATFORM:
+        sys.exit("abi: %s was measured on '%s', not where CI measures. Run 'scripts/sync.py' "
+                 "to re-measure it." % (name, recorded))
+    sys.exit("abi: this host measures '%s'; the ABI files are measured on Linux x86_64. "
+             "Run abi.py and scripts/sync.py there." % here)
 
 
 def check(root: str, require_artifact: bool) -> int:
@@ -610,13 +607,12 @@ def check(root: str, require_artifact: bool) -> int:
                  "published release (needs network, gcc and git)." % RELEASED)
     committed = _read(root, MANIFEST)
     if committed is None:
-        sys.exit("abi: %s is missing. Run 'scripts/abi.py update --rebaseline-format'."
-                 % MANIFEST)
+        sys.exit("abi: %s is missing. Run 'scripts/sync.py'." % MANIFEST)
     fresh = build_manifest(root)
     for name, text in ((MANIFEST, committed), (RELEASED, released)):
         if _format(text) != FORMAT:
             sys.exit("abi: %s records format %s, this script writes format %d. Run "
-                     "'scripts/abi.py update --rebaseline-format'." % (name, _format(text), FORMAT))
+                     "'scripts/sync.py'." % (name, _format(text), FORMAT))
         if _platform(text) != _platform(fresh):
             _platform_exit(name, _platform(text), _platform(fresh))
     _verify_released(root, released, require_artifact and os.environ.get("GITHUB_ACTIONS") == "true")
@@ -631,14 +627,14 @@ def check(root: str, require_artifact: bool) -> int:
             print("... %d more line(s)" % (len(diff) - 120))
         lost = _needs_accept_break(released, committed, fresh)
         if lost:
-            sys.exit("\n" + _break_refusal(tag, lost, "scripts/abi.py update --accept-break"))
-        sys.exit("\nabi: %s is out of date. Run 'scripts/abi.py update' and commit "
-                 "configure.ac and %s." % (MANIFEST, MANIFEST))
+            sys.exit("\n" + _break_refusal(tag, lost, "scripts/sync.py --accept-break"))
+        sys.exit("\nabi: %s is out of date. Run 'scripts/sync.py' and commit what it "
+                 "wrote." % MANIFEST)
 
     what, want, lost = compute_triple(released, committed)
     if _triple(committed) != want:
         unaccepted = _needs_accept_break(released, committed, committed)
-        command = "scripts/abi.py update" + (" --accept-break" if unaccepted else "")
+        command = "scripts/sync.py" + (" --accept-break" if unaccepted else "")
         if unaccepted:
             sys.exit(_break_refusal(tag, unaccepted, command))
         sys.exit("abi: configure.ac says %d:%d:%d, but %s (%s) and %s require %d:%d:%d. "
@@ -660,47 +656,63 @@ def check(root: str, require_artifact: bool) -> int:
     return 0
 
 
-def update(root: str, accept_break: bool, rebaseline: bool) -> int:
+def sync(root: str, accept_break: bool = False) -> tuple:
+    """(ok, message): rewrites ABI.manifest and TALIB_LIBRARY_VERSION from the headers,
+    re-measuring ABI.released after a FORMAT change. Idempotent; writes only what
+    changed. ok is False when shipped API is removed without accept_break, or when
+    the tree itself is inconsistent; an unusable host is only a warning."""
+    import shutil
     released = _read(root, RELEASED)
     if released is None:
-        sys.exit("abi: %s is missing. Run 'scripts/sync.py' first; it records the "
-                 "latest published release (needs network, gcc and git)." % RELEASED)
-    committed = _read(root, MANIFEST)
-    fresh = build_manifest(root)
-    stale = (committed is None or _format(committed) != FORMAT
-             or _platform(committed) != _platform(fresh)
-             or _format(released) != FORMAT or _platform(released) != _platform(fresh))
-    if stale:
-        if not rebaseline:
-            if committed is not None and _format(committed) == FORMAT \
-                    and _platform(committed) != _platform(fresh):
-                _platform_exit(MANIFEST, _platform(committed), _platform(fresh))
-            sys.exit("abi: %s or %s was written in another format or on another platform. "
-                     "Re-run with --rebaseline-format." % (MANIFEST, RELEASED))
-        released = measure_release(root, *_release_of(released))
-
-    lost = _needs_accept_break(released, committed, fresh)
-    if lost and not accept_break:
-        command = "scripts/abi.py update%s --accept-break" % (" --rebaseline-format" if stale else "")
-        sys.exit(_break_refusal(_release_of(released)[0], lost, command) + "\nNothing was written.")
-
-    what, want, _ = compute_triple(released, fresh)
-    soname = "libta-lib.so.%d" % (want[0] - want[2])
-    if stale:
-        open(os.path.join(root, RELEASED), "w").write(released)
-    manifest = write_triple(root, fresh, want)
-    open(os.path.join(root, MANIFEST), "w").write(manifest)
-    written = "%s, configure.ac" % MANIFEST + (", %s" % RELEASED if stale else "")
-    print("abi: wrote %s (%s since %s): TALIB_LIBRARY_VERSION=%d:%d:%d, soname %s"
-          % ((written, what, _release_of(released)[0]) + want + (soname,)))
-    return 0
+        return True, ("Warning: shared library version NOT synced: %s is missing and the "
+                      "latest published release could not be recorded (see the warning "
+                      "above); re-run scripts/sync.py." % RELEASED)
+    if shutil.which("gcc") is None:
+        return True, ("Warning: shared library version NOT synced: gcc is not on PATH; the "
+                      "ABI files are measured with gcc on Linux x86_64. Run scripts/sync.py there.")
+    try:
+        committed = _read(root, MANIFEST)
+        fresh = build_manifest(root)
+        if _platform(fresh) != CI_PLATFORM:
+            return True, _foreign_host(_platform(fresh))
+        stale = _format(released) != FORMAT or _platform(released) != CI_PLATFORM
+        if stale:
+            released = measure_release(root, *_release_of(released))
+        tag = _release_of(released)[0]
+        lost = _needs_accept_break(released, committed, fresh)
+        if lost and not accept_break:
+            return False, (_break_refusal(tag, lost, "scripts/sync.py --accept-break")
+                           + "\nABI.manifest and TALIB_LIBRARY_VERSION were NOT updated.")
+        what, want, _ = compute_triple(released, fresh)
+        written = []
+        before = open(os.path.join(root, "configure.ac")).read()
+        manifest = write_triple(root, fresh, want)
+        if open(os.path.join(root, "configure.ac")).read() != before:
+            written.append("configure.ac")
+        if stale:
+            open(os.path.join(root, RELEASED), "w").write(released)
+            written.append(RELEASED)
+        if manifest != committed:
+            open(os.path.join(root, MANIFEST), "w").write(manifest)
+            written.append(MANIFEST)
+        if not written:
+            return True, None
+        change = {"unchanged": "no API change", "added": "API added",
+                  "break": "API removed or changed"}[what]
+        msg = ("Updated %s: TALIB_LIBRARY_VERSION=%d:%d:%d, soname libta-lib.so.%d (%s since "
+               "%s)." % ((", ".join(written),) + want + (want[0] - want[2], change, tag)))
+        if lost:
+            msg += " Accepted removal or change of:\n" + _lost_message(lost)
+        return True, msg
+    except SystemExit as e:
+        return False, "abi: shared library version NOT synced: %s" % str(e).replace("abi: ", "", 1)
 
 
 def release_gate(root: str, version: str, published: str) -> list:
     """Errors that block releasing `version`; empty when the ABI baseline is sound."""
     if published is None:
         return ["could not look up the latest published release, so the ABI baseline "
-                "cannot be verified."]
+                "cannot be verified. Re-run once GitHub is reachable."]
     released = _read(root, RELEASED)
     if released is None:
         return ["%s is missing. Run scripts/sync.py on dev." % RELEASED]
@@ -714,10 +726,12 @@ def release_gate(root: str, version: str, published: str) -> list:
                     "published, mark it Latest on GitHub; if it never shipped, delete %s and "
                     "run scripts/sync.py on dev." % (RELEASED, tag, published, tag, RELEASED)]
         if _vtuple(tag) >= _vtuple(version):
-            return ["VERSION %s is not above the last published release %s." % (version, tag)]
+            return ["VERSION %s is not above the last published release %s. Bump VERSION and "
+                    "run scripts/sync.py." % (version, tag)]
         actual = _git(root, "rev-parse", tag + "^{commit}").stdout.strip()
         if actual != sha:
-            return ["tag %s is %s here but %s records %s." % (tag, actual or "missing", RELEASED, sha)]
+            return ["tag %s is %s here but %s records %s. Refresh the tag (git fetch --force "
+                    "%s tag %s)." % (tag, actual or "missing", RELEASED, sha, CANONICAL_REMOTE, tag)]
         check(root, False)
     except SystemExit as e:
         return [str(e)]
@@ -860,22 +874,14 @@ def main() -> int:
     import argparse
     parser = argparse.ArgumentParser(
         prog="scripts/abi.py",
-        description="The public C ABI (ABI.manifest) and the shared library version it implies.")
+        description="Verifies the public C ABI and the shared library version. "
+                    "scripts/sync.py is what updates them.")
     sub = parser.add_subparsers(dest="command", required=True)
     chk = sub.add_parser("check", help="verify, writing nothing (what CI runs)")
     chk.add_argument("--require-artifact", action="store_true",
                      help="fail unless a built cmake-build/ shared library is there to read")
-    upd = sub.add_parser("update", help="rewrite ABI.manifest and TALIB_LIBRARY_VERSION")
-    upd.add_argument("--accept-break", action="store_true",
-                     help="allow recording removed or changed public API")
-    upd.add_argument("--rebaseline-format", action="store_true",
-                     help="re-measure ABI.released and rewrite ABI.manifest after a FORMAT "
-                          "bump or on the platform CI measures")
     args = parser.parse_args()
-    root = repo_root()
-    if args.command == "update":
-        return update(root, args.accept_break, args.rebaseline_format)
-    return check(root, args.require_artifact)
+    return check(repo_root(), args.require_artifact)
 
 
 if __name__ == "__main__":

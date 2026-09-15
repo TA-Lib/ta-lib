@@ -572,109 +572,45 @@ def compare_version(version1: str, version2: str) -> int:
 
 def sync_versions(root_dir: str) -> Tuple[bool,str]:
     """
-    Synchronize the version between:
+    Write the VERSION file's version, up or down, into every file that carries it:
           src/ta_common/ta_version.c
-          ta_codegen/output/rust/library/Cargo.toml
+          ta_codegen/output/rust/library/Cargo.toml (and tools/)
           ta_codegen/output/rust/Cargo.lock (refreshed by cargo, not edited)
           ta_codegen/output/java/library/pom.xml
-          CMakeLists.txt (root of repos)
-          VERSION file (root of repos)
-          conanfile.py (root of repos)
+          CMakeLists.txt, ta-lib.spec.in, conanfile.py (root of repos)
 
-    The versions are first read from all. The highest version is selected.
-
-    If the versions are all the same, this function will touch nothing.
-
-    When a file has a lower version, it is updated with the highest version.
-
-    Return true if any file was updated.
+    Touches nothing when they already agree. Return (updated, version).
     """
-    version_file = get_version_string(root_dir)
-    version_c = get_version_string_source_code(root_dir)
-    version_cmake = get_version_string_cmake(root_dir)
-    version_spec_in = get_version_string_spec_in(root_dir)
-    version_cargo = get_version_string_cargo(root_dir)
-    version_pom = get_version_string_pom(root_dir)
-    version_conanfile = get_version_string_conanfile(root_dir)
-
-    # Identify the highest version among all sources.
-    # Put the highest in the variable highest_version
-    highest_version = version_file
-    if compare_version(highest_version, version_cmake) < 0:
-        highest_version = version_cmake
-    if compare_version(highest_version, version_c) < 0:
-        highest_version = version_c
-    if compare_version(highest_version, version_spec_in) < 0:
-        highest_version = version_spec_in
-    if compare_version(highest_version, version_cargo) < 0:
-        highest_version = version_cargo
-    if compare_version(highest_version, version_pom) < 0:
-        highest_version = version_pom
-    if compare_version(highest_version, version_conanfile) < 0:
-        highest_version = version_conanfile
-
-    # Update files with a lower version.
+    version = get_version_string(root_dir)
+    targets = (
+        ("ta_version.c", get_version_string_source_code, set_version_string_source_code),
+        ("CMakeLists.txt", get_version_string_cmake, set_version_string_cmake),
+        ("ta-lib.spec.in", get_version_string_spec_in, set_version_string_spec_in),
+        ("Cargo.toml", get_version_string_cargo, set_version_string_cargo),
+        ("pom.xml", get_version_string_pom, set_version_string_pom),
+        ("conanfile.py", get_version_string_conanfile, set_version_string_conanfile),
+    )
     is_updated = False
-    compare_result: int = compare_version(highest_version, version_file)
-    if compare_result > 0:
-        print(f"Updating VERSION to [{highest_version}]")
-        set_version_string(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_c)
-    if compare_result > 0:
-        print(f"Updating ta_version.c to [{highest_version}]")
-        set_version_string_source_code(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_cmake)
-    if compare_result > 0:
-        print(f"Updating CMakeLists.txt to [{highest_version}]")
-        set_version_string_cmake(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_spec_in)
-    if compare_result > 0:
-        print(f"Updating ta-lib.spec.in to [{highest_version}]")
-        set_version_string_spec_in(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_cargo)
-    if compare_result > 0:
-        print(f"Updating Cargo.toml to [{highest_version}]")
-        set_version_string_cargo(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_pom)
-    if compare_result > 0:
-        print(f"Updating pom.xml to [{highest_version}]")
-        set_version_string_pom(root_dir, highest_version)
-        is_updated = True
-
-    compare_result: int = compare_version(highest_version, version_conanfile)
-    if compare_result > 0:
-        print(f"Updating conanfile.py to [{highest_version}]")
-        set_version_string_conanfile(root_dir, highest_version)
-        is_updated = True
+    for name, get, set_ in targets:
+        if get(root_dir) != version:
+            print(f"Updating {name} to [{version}]")
+            set_(root_dir, version)
+            is_updated = True
 
     # Last, because cargo derives the lock from the manifests set_version_string_cargo()
     # has just written. The lock carries each member's own version, so a bump strands it
     # a release behind, and cargo repairs it silently on the next unrelated cargo call --
     # so nothing surfaces the drift until someone clones the tag and builds --locked.
-    # Not part of the highest_version election above: the lock is derived, never a source.
     version_cargo_lock = get_version_string_cargo_lock(root_dir)
-    if compare_version(highest_version, version_cargo_lock) > 0:
-        print(f"Refreshing Cargo.lock to [{highest_version}]")
+    if version_cargo_lock != version:
+        print(f"Refreshing Cargo.lock to [{version}]")
         refresh_cargo_lock(root_dir)
         is_updated = True
 
     # Never sync the website install page from VERSION here: it must name the latest
     # *published* release, and main deploys the website on every push.
 
-    # highest_version, not version_c: that was read before the updates above, so a
-    # run that DID bump handed its caller the version it had just replaced --
-    # package.py builds the release artifacts from this value.
-    return is_updated, highest_version
+    return is_updated, version
 
 def check_versions(root_dir: str) -> str:
     # Similar to sync_versions() but only checks if the versions are in sync, do not modify anything.

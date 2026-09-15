@@ -24,9 +24,7 @@
 #
 #    (FYI, all this can optionally be done in a Windows VM)
 #
-# How to change the version?
-#   Edit MAJOR, MINOR, PATCH in src/ta_common/ta_version.c
-#   There is no need to modify other files (they will be updated by this script).
+# How to change the version? Edit VERSION and run scripts/sync.py.
 #
 #   See README-DEVS.md for all the release steps.
 

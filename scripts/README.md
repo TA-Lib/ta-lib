@@ -11,7 +11,7 @@ See `README-DEVS.md` at the repo root for the build/test/release walkthroughs.
 | `build.py` | The developer build entry point: C library + C tools (CMake), and `ta_codegen` / `generate` / `servers` (cargo). CMake never invokes cargo. |
 | `regtest.py` | Full pipeline: generate → build → correctness → benchmark. The nightly drives it three ways. |
 | `python-dev.py` | Keeps `~/ta-lib-python` on **dev** in step with this worktree: builds the wrapper from both `_ta_lib.pyx` and the committed `_ta_lib.c`, runs its suite, checks that regenerating changes nothing, and diffs its enum/flag tables against `include/`. `sync` regenerates the drift. Commits nothing. |
-| `abi.py` | The public C ABI and the shared library version. `check` is the PR/nightly gate; `update` records a header change and rewrites `TALIB_LIBRARY_VERSION` (`--accept-break` when API is removed or changed). |
+| `abi.py` | `check`: the PR/nightly gate on the public C ABI and the shared library version. `sync.py` does the updating. |
 | `gen_test_reference.py` | Rebuilds `ta_regtest`'s baked numerical goldens (`src/tools/ta_regtest/ta_test_reference_golden.{h,c}`) from the datasets in `ta_test_reference.c`, in exact rational arithmetic. Run it when a dataset changes; `--check` verifies in place. Deliberately NOT on a gate — `ta_regtest --function=REFERENCE` catches a stale table at runtime, because the oracle stops reproducing it. |
 
 ## Verification gates
@@ -32,7 +32,7 @@ inside `build.py` / `regtest.py`.
 
 | Script | When |
 |---|---|
-| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions, `TA_LIB_SOURCES_DIGEST`, the website install page and the ABI baseline `ABI.released` (both from the latest published release). Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
+| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions, the shared library version (`ABI.manifest`, `ABI.released`, `TALIB_LIBRARY_VERSION`), `TA_LIB_SOURCES_DIGEST` and the website install page. Idempotent; `--accept-break` records removed or changed public API. Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
 | `merge.py` | Merge dev into main (maintainers) |
 | `package.py` | Build this platform's `dist/` assets. Run by both nightlies |
 | `test-dist.py` | Verify those assets as a user would, including a ta-lib-python build. Run by both nightlies |

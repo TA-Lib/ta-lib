@@ -153,12 +153,11 @@ TA_LIB_API void TA_SetRetCodeInfo( TA_RetCode theRetCode, TA_RetCodeInfo *retCod
 TA_LIB_API TA_RetCode TA_Initialize( void );
 TA_LIB_API TA_RetCode TA_Shutdown( void );
 
-/* TA_LIB_SOURCES_DIGEST helps for TA-Lib automated maintenance.
- *
- * This value is updated whenever a make, cmake or any source files
- * modification should trig a repackaging of TA-Lib.
+/* TA_LIB_SOURCES_DIGEST helps for TA-Lib automated maintenance: it changes
+ * whenever a source modification should trigger a repackaging of TA-Lib.
+ * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 427c81df4e8f2f1e6cc0c4c9c7e59ee4
+#define TA_LIB_SOURCES_DIGEST d9635086ce6c5ce8840660901f4fa066
 
 #ifdef __cplusplus
 }

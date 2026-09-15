@@ -255,14 +255,14 @@ Indicators are methods on a `Core` struct, one file per indicator.
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.
 
-## Shared library version (soname)
+## Versions and the shared library soname
 
-Never edit `TALIB_LIBRARY_VERSION` in `configure.ac`; it is derived. When
-`scripts/abi.py check` fails, do what its message says, usually
-`scripts/abi.py update`, then commit the files it says it wrote. If it
-refuses because API that shipped was removed or changed, put the header back, or
-re-run with `--accept-break` when the break is intended: the soname then changes at
-the next release. Additions never change it.
+Edit only `VERSION`. Everything derived from it, plus the shared library version
+(`ABI.manifest`, `ABI.released`, `TALIB_LIBRARY_VERSION`), is written by
+`scripts/sync.py`: run it any time, as often as you like, and commit what it
+changed. It stops if public API that shipped was removed or changed: put it back,
+or run `scripts/sync.py --accept-break` when the break is intended, and the soname
+changes at the next release.
 
 ## Two build flags that must stay in step
 
