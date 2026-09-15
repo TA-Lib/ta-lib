@@ -2,9 +2,9 @@
 # TALIB_LIBRARY_VERSION is derived from this file and ABI.released.
 format 9
 soname libta-lib.so.1
-version-info 2:0:1
+version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2451
+function-count 2463
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1082,6 +1082,16 @@ function TA_RetCode TA_COS_OutRange(const TA_COS_Stream *, int *, int *)
 function TA_RetCode TA_COS_Peek(const TA_COS_Stream *, double, double *)
 function TA_RetCode TA_COS_Update(TA_COS_Stream *, double, double *)
 function TA_RetCode TA_COS_Value(const TA_COS_Stream *, double *)
+function TA_RetCode TA_CTI(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_CTI_Advance(TA_CTI_Stream *)
+function TA_RetCode TA_CTI_Clone(const TA_CTI_Stream *, TA_CTI_Stream **)
+function TA_RetCode TA_CTI_Close(TA_CTI_Stream *)
+function TA_RetCode TA_CTI_Open(TA_CTI_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_CTI_OpenAndFill(TA_CTI_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_CTI_OutRange(const TA_CTI_Stream *, int *, int *)
+function TA_RetCode TA_CTI_Peek(const TA_CTI_Stream *, double, double *)
+function TA_RetCode TA_CTI_Update(TA_CTI_Stream *, double, double *)
+function TA_RetCode TA_CTI_Value(const TA_CTI_Stream *, double *)
 function TA_RetCode TA_CUMSUM(int, int, const double *, int *, int *, double *)
 function TA_RetCode TA_CUMSUM_Advance(TA_CUMSUM_Stream *)
 function TA_RetCode TA_CUMSUM_Clone(const TA_CUMSUM_Stream *, TA_CUMSUM_Stream **)
@@ -2079,6 +2089,7 @@ function TA_RetCode TA_S_COPPOCK(int, int, const float *, int, int, int, int *, 
 function TA_RetCode TA_S_CORREL(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_COS(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_COSH(int, int, const float *, int *, int *, double *)
+function TA_RetCode TA_S_CTI(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_CUMSUM(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_CVI(int, int, const float *, const float *, int, int, int *, int *, double *)
 function TA_RetCode TA_S_DEMA(int, int, const float *, int, int *, int *, double *)
@@ -2510,6 +2521,7 @@ function int TA_COPPOCK_Lookback(int, int, int)
 function int TA_CORREL_Lookback(int)
 function int TA_COSH_Lookback(void)
 function int TA_COS_Lookback(void)
+function int TA_CTI_Lookback(int)
 function int TA_CUMSUM_Lookback(void)
 function int TA_CVI_Lookback(int, int)
 function int TA_DEMA_Lookback(int)
