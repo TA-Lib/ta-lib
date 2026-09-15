@@ -387,8 +387,8 @@ jobs:
         shell: bash
         run: cd cmake-build/bin && ./ta_regtest
 
-      # scripts/check_abi.py measures the export table with `nm -D` over an ELF
-      # `libta-lib.so.N.*.*`, so it reads NOTHING here and says so. Mach-O is the
+      # scripts/abi.py measures the export table with `nm -D` over the ELF
+      # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
       # other half of #400's claim: -fvisibility=hidden is the whole mechanism on
       # this platform (there is no linker map -- target_clones is glibc-only, so
       # no resolver is emitted), and nothing else in CI ever looks at the dylib.
@@ -439,7 +439,7 @@ jobs:
   # loses TA_LIB_API builds green everywhere and is simply missing from the DLL.
   # That is not hypothetical: TA_GetVersionString was absent from 2002 until
   # 0.7.1 (#57, CHANGELOG). On ELF the same omission is caught by
-  # check_abi.py's export gate; this is the Windows half of it.
+  # abi.py's export gate; this is the Windows half of it.
   dll-exports:
     name: "Windows: the DLL exports what the headers declare"
     runs-on: windows-2022

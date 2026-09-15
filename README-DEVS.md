@@ -144,7 +144,7 @@ stop advertising an already-released version:
 
 (B) Add a `## [0.7.3] Not Released Yet` entry at the top of CHANGELOG.md.
 
-(C) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published. Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
+(C) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published and records that release as the ABI baseline in `ABI.released` (needs gcc and network). Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
 
 ```bash
 ./scripts/sync-website.py --check   # non-zero if the page is behind, or the release could not be looked up

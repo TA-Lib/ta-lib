@@ -258,8 +258,11 @@ jobs:
       - name: Public C ABI matches ABI.manifest
         shell: bash
         run: |
-          if ! python3 scripts/build.py check-abi --require-artifact; then
-            echo "::error::The public C ABI changed. If that is intended it is an ABI change: bump TALIB_LIBRARY_VERSION in configure.ac by the rules beside it, run 'scripts/build.py check-abi --update' and commit ABI.manifest. If it is not intended, put the header back."
+          # ABI.released is re-measured from its release commit, which a shallow checkout lacks.
+          T=$(sed -n 's/^release \(v[0-9.]*\) .*/\1/p' ABI.released 2>/dev/null || true)
+          git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
+          if ! python3 scripts/abi.py check --require-artifact; then
+            echo "::error::The public C ABI gate failed; the abi: message above says why and what to do."
             exit 1
           fi
 

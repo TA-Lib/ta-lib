@@ -12,7 +12,8 @@
 #      ta_common.h as needed, and point the website install page at the latest
 #      *published* GitHub release. That last one is the only thing that puts a new
 #      release on the website: it lands with the post-release commit and deploys
-#      when that commit reaches main.
+#      when that commit reaches main. The same post-release run records that
+#      release as the ABI baseline (ABI.released).
 #
 # NOOP if nothing to merge or sync.
 #
@@ -46,6 +47,7 @@ import sys
 from utilities.common import verify_git_repo, run_command
 from utilities.versions import sync_sources_digest, sync_versions
 from utilities.website import latest_release_version, sync_install_page
+import abi
 
 def generate_short_unique_id(length=20) -> str:
     # Generate a "unique enough" short identifier.
@@ -205,6 +207,13 @@ def main():
         if not is_updated:
             print(f"No changes to version [{version}]")
 
+        released = latest_release_version()
+
+        # Before the digest: it can rewrite configure.ac, a digest input.
+        abi_message = abi.advance_released(root_dir, released)
+        if abi_message:
+            print(abi_message)
+
         # Update TA_LIB_SOURCES_DIGEST in ta_common.h (as needed)
         is_updated, digest = sync_sources_digest(root_dir)
         if is_updated:
@@ -212,7 +221,6 @@ def main():
         else:
             print(f"No changes to sources digest (ta_common.h) [{digest}]")
 
-        released = latest_release_version()
         if released is None:
             print("Warning: website install page NOT synced; re-run once GitHub is reachable.")
         elif sync_install_page(root_dir, released):

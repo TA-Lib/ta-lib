@@ -73,7 +73,7 @@ fn no_committed_c_file_casts_away_a_name_its_block_reads() {
 /// The attribute is the whole export mechanism on every platform: on Windows
 /// `TA_LIB_API` is `__declspec(dllexport)`, and on ELF/Mach-O the library builds
 /// `-fvisibility=hidden`, so a prototype without it is simply missing from the
-/// shipped library. `check_abi.py`'s export gate catches the same omission from
+/// shipped library. `abi.py`'s export gate catches the same omission from
 /// the built artifact; this catches it without a build, on the PR gate.
 ///
 /// Over the INSTALL set, read from CMake's `LIB_HEADERS`, not a glob of

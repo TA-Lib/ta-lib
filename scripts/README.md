@@ -11,6 +11,7 @@ See `README-DEVS.md` at the repo root for the build/test/release walkthroughs.
 | `build.py` | The developer build entry point: C library + C tools (CMake), and `ta_codegen` / `generate` / `servers` (cargo). CMake never invokes cargo. |
 | `regtest.py` | Full pipeline: generate → build → correctness → benchmark. The nightly drives it three ways. |
 | `python-dev.py` | Keeps `~/ta-lib-python` on **dev** in step with this worktree: builds the wrapper from both `_ta_lib.pyx` and the committed `_ta_lib.c`, runs its suite, checks that regenerating changes nothing, and diffs its enum/flag tables against `include/`. `sync` regenerates the drift. Commits nothing. |
+| `abi.py` | The public C ABI and the shared library version. `check` is the PR/nightly gate; `update` records a header change and rewrites `TALIB_LIBRARY_VERSION` (`--accept-break` when API is removed or changed). |
 | `gen_test_reference.py` | Rebuilds `ta_regtest`'s baked numerical goldens (`src/tools/ta_regtest/ta_test_reference_golden.{h,c}`) from the datasets in `ta_test_reference.c`, in exact rational arithmetic. Run it when a dataset changes; `--check` verifies in place. Deliberately NOT on a gate — `ta_regtest --function=REFERENCE` catches a stale table at runtime, because the oracle stops reproducing it. |
 
 ## Verification gates
@@ -24,18 +25,18 @@ Pass/fail only — build something, drive it, exit non-zero. Each is one nightly
 | `rust_stream_debug.py` | `cross-language-rust-debug` | The Rust streaming API under debug overflow checks; reuses the request generator from `stream_sanitize.py` |
 | `bench_icount.py` | `dev-nightly` (`icount` job) | Retired instructions for all ~1000 C entry points against `.github/perf/icount-baseline-<arch>.tsv`. Counts, not time: exact on a shared runner, which is what lets a 10% threshold mean anything. The baseline only ever moves down, so a sub-threshold regression is never absorbed; raising a row takes `--accept`, which names the rows and leaves every other row's accumulated best alone. Read its header for what a count cannot see |
 
-Everything else CI gates on lives in `ta_regtest` (C) or is a step inside
-`build.py` / `regtest.py`, not a script here.
+Everything else CI gates on lives in `ta_regtest` (C), `abi.py check`, or a step
+inside `build.py` / `regtest.py`.
 
 ## Release
 
 | Script | When |
 |---|---|
-| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions, `TA_LIB_SOURCES_DIGEST` and the website install page (from the latest published release). Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
+| `sync.py` | Before every commit. Two halves: it merges remote dev/main into local dev, and it refreshes versions, `TA_LIB_SOURCES_DIGEST`, the website install page and the ABI baseline `ABI.released` (both from the latest published release). Safe to run from anywhere — the merge half is **skipped automatically** where it cannot run (a `git worktree`, or a detached HEAD) and the metadata half still runs. See the header of the script |
 | `merge.py` | Merge dev into main (maintainers) |
 | `package.py` | Build this platform's `dist/` assets. Run by both nightlies |
 | `test-dist.py` | Verify those assets as a user would, including a ta-lib-python build. Run by both nightlies |
-| `pre-release-checks.py` | Gate for `release-step-1`/`-2`: version consistency, digest, CHANGELOG entry, assets present |
+| `pre-release-checks.py` | Gate for `release-step-1`/`-2`: version consistency, digest, CHANGELOG entry, assets present, `ABI.released` is the latest published release |
 | `post-release-vcpkg.py` | After a release, update the microsoft/vcpkg port. README-DEVS.md step (11) |
 | `sync-website.py` | The website half of `sync.py` on its own; `--check` exits non-zero if the page is behind or the release could not be looked up |
 

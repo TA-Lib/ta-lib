@@ -85,6 +85,8 @@ jobs:
 
       - name: Pre-release checks
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $PYTHON $GITHUB_WORKSPACE/scripts/pre-release-checks.py
 

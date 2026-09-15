@@ -9,6 +9,8 @@
 #  - Verify that all dist/digests files match the current source digests. This
 #    is to ensure that various packagings and tests were all performed with the
 #    current source code.
+#  - Verify ABI.released is the last published release and that the shared
+#    library version the release ships follows from it.
 #
 # If no problem are found, the script will create a temp/DRAFT_RELEASE_NOTES.md
 # which is intended for the CI when creating the initial draft release.
@@ -24,6 +26,8 @@ from utilities.files import path_join
 from utilities.common import get_release_assets, verify_git_repo
 from utilities.versions import check_sources_digest, check_versions
 from utilities.package_digest import PackageDigest
+from utilities.website import latest_release_version
+import abi
 from datetime import datetime
 
 if __name__ == "__main__":
@@ -200,26 +204,11 @@ if __name__ == "__main__":
 
     print(f"Draft release notes written to {release_notes_path}")
 
-    # The ABI gate measures "does this need a soname bump?" from the last
-    # RELEASED soname, so that two ABI-breaking commits in one cycle cost one
-    # bump rather than two. That only works if the release reconciles the two.
-    # Left undone, the gate silently stops requiring a bump from here on.
-    manifest_path = path_join(root_dir, 'ABI.manifest')
-    if os.path.exists(manifest_path):
-        manifest = open(manifest_path).read()
-        cur = re.search(r"^soname (\S+)$", manifest, re.M)
-        rel = re.search(r"^released-soname (\S+)$", manifest, re.M)
-        if not cur or not rel:
-            print("Error: ABI.manifest is missing its soname lines. "
-                  "Run 'scripts/build.py check-abi --update'.")
-            exit(1)
-        if cur.group(1) != rel.group(1):
-            print(f"Error: ABI.manifest still records released-soname "
-                  f"{rel.group(1)} while this release ships {cur.group(1)}.\n"
-                  f"  This release changes the SONAME. Set 'released-soname' to "
-                  f"{cur.group(1)} in ABI.manifest and commit it, so the ABI gate "
-                  f"measures the next cycle from what actually shipped.")
-            exit(1)
-        print(f"ABI manifest soname reconciled ({cur.group(1)}).")
+    abi_errors = abi.release_gate(root_dir, version, latest_release_version())
+    if abi_errors:
+        for err in abi_errors:
+            print(f"Error: {err}")
+        exit(1)
+    print("ABI baseline verified against the last published release.")
 
     print("pre-release checks completed successfully.")

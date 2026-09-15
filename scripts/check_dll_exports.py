@@ -7,7 +7,7 @@ static-links `ta-lib-static.lib`, so a prototype that loses `TA_LIB_API` builds
 green everywhere and is simply absent from the DLL. That shipped once already:
 `TA_GetVersionString` was missing from 2002 until 0.7.1 (#57).
 
-On ELF the same omission is caught by check_abi.py's export gate, which reads
+On ELF the same omission is caught by abi.py's export gate, which reads
 `nm -D`. This is the Windows half, and it is a LINK test rather than a symbol
 dump because there is no portable `nm` here -- a missing export is an
 unresolved external at link time, which is exactly the failure a consumer sees.
@@ -46,7 +46,7 @@ def one(pattern: str, what: str) -> str:
 
 def main() -> int:
     if sys.platform != "win32":
-        die("Windows only -- on ELF this is check_abi.py's export gate.")
+        die("Windows only -- on ELF this is abi.py's export gate.")
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     os.chdir(root)
     call_vcvarsall(root, ["amd64"])

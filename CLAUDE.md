@@ -255,6 +255,15 @@ Indicators are methods on a `Core` struct, one file per indicator.
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.
 
+## Shared library version (soname)
+
+Never edit `TALIB_LIBRARY_VERSION` in `configure.ac`; it is derived. When
+`scripts/abi.py check` fails, do what its message says, usually
+`scripts/abi.py update`, then commit the files it says it wrote. If it
+refuses because API that shipped was removed or changed, put the header back, or
+re-run with `--accept-break` when the break is intended: the soname then changes at
+the next release. Additions never change it.
+
 ## Two build flags that must stay in step
 
 The generator's flags live in one place (`COMMON_GCC_FLAGS`, `main.rs`); two are
