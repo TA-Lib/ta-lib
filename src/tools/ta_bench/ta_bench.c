@@ -239,10 +239,10 @@ static void thermal_wait(char *respBuf, int respSz) {
     }
 }
 
-/* Spread of the cref arm across BENCH_PASSES, accumulated over all rows. The
- * ratio columns below are only as meaningful as this is small. */
-static double g_spread_sum = 0.0, g_spread_worst = 0.0;
-static int    g_spread_n = 0;
+/* Spread across BENCH_PASSES, per arm. A ratio is no better than the noisier
+ * of its two timings. */
+static double g_spread_sum[NUM_LANGUAGES], g_spread_worst[NUM_LANGUAGES];
+static int    g_spread_n[NUM_LANGUAGES];
 
 /* ---- Per-indicator benchmark callback ---- */
 
@@ -328,20 +328,14 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
         }
     }
 
-    /* Extract ref timing for ratio coloring */
-    double ref_spread = -1.0;
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
-        if( has_timing[li] && strcmp(LANGUAGES[li].name, "cref") == 0 ) {
+        if( !has_timing[li] ) continue;
+        if( strcmp(LANGUAGES[li].name, "cref") == 0 )
             ref_ns = timings[li];
-            if( ref_ns > 0 )
-                ref_spread = (double)(t_max[li] - timings[li]) / (double)ref_ns;
-        }
-    }
-    /* Track the worst row so the footer can say whether the run was quiet. */
-    if( ref_spread >= 0.0 ) {
-        g_spread_sum += ref_spread;
-        g_spread_n++;
-        if( ref_spread > g_spread_worst ) g_spread_worst = ref_spread;
+        double sp = (double)(t_max[li] - timings[li]) / (double)timings[li];
+        g_spread_sum[li] += sp;
+        g_spread_n[li]++;
+        if( sp > g_spread_worst[li] ) g_spread_worst[li] = sp;
     }
 
     /* Print row */
@@ -516,21 +510,28 @@ int main(int argc, char *argv[]) {
            ctx.count, n_points, n_iters, bench_shape_name(shape));
     printf("(red >10%% slower, green >10%% faster than C-ref)\n");
 
-    /* Say how quiet the box was. Without this the ratios above look equally
-       authoritative whether the spread was 2% or 200%. */
+    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
+        if( g_spread_n[li] <= 0 ) continue;
+        printf("%s spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
+               LANGUAGES[li].display, BENCH_PASSES,
+               g_spread_sum[li] / (double)g_spread_n[li] * 100.0,
+               g_spread_worst[li] * 100.0, g_spread_n[li]);
+    }
+
+    /* Only cref gates --max-spread: the Java arm exceeds it at any --iters a
+       local regtest.py perftest can afford. */
     int too_noisy = 0;
-    if( g_spread_n > 0 ) {
-        double mean = g_spread_sum / (double)g_spread_n;
-        printf("C-ref spread over %d passes: mean %.0f%%, worst %.0f%% (%d rows).\n",
-               BENCH_PASSES, mean * 100.0, g_spread_worst * 100.0, g_spread_n);
-        if( max_spread > 0.0 && mean > max_spread ) {
+    if( max_spread > 0.0 && g_spread_n[0] > 0 ) {
+        double ref_mean = g_spread_sum[0] / (double)g_spread_n[0];
+        if( ref_mean > max_spread ) {
             fprintf(stderr,
                     "ta_bench: mean C-ref spread %.0f%% exceeds --max-spread=%.0f%% — "
                     "treat the ratios above as unresolved.\n",
-                    mean * 100.0, max_spread * 100.0);
+                    ref_mean * 100.0, max_spread * 100.0);
             too_noisy = 1;
         }
-    } else if( !LANGUAGES[0].active ) {
+    }
+    if( !LANGUAGES[0].active ) {
         printf("No C-ref column: the ratio colours above are uncalibrated "
                "(add cref to --language).\n");
     }
