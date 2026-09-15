@@ -508,6 +508,7 @@ typedef enum
   TA_KDJ_VACUOUS                     = 1671,
   TA_FRACTAL_VACUOUS                 = 1675,
   TA_HA_VACUOUS                      = 1678,
+  TA_KURTOSIS_VACUOUS                = 1679,
   TA_RVI_VACUOUS                     = 1676,
 
   /* A rejected Open/OpenAndFill and the caller's output buffer (#389). */

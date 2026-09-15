@@ -327,10 +327,11 @@
 //! * [`TYPPRICE`](Core::TYPPRICE) — Typical Price
 //! * [`WCLPRICE`](Core::WCLPRICE) — Weighted Close Price
 //!
-//! ## Statistic Functions (11)
+//! ## Statistic Functions (12)
 //!
 //! * [`BETA`](Core::BETA) — Beta
 //! * [`CORREL`](Core::CORREL) — Pearson's Correlation Coefficient (r)
+//! * [`KURTOSIS`](Core::KURTOSIS) — Rolling Excess Kurtosis
 //! * [`LINEARREG`](Core::LINEARREG) — Linear Regression
 //! * [`LINEARREG_ANGLE`](Core::LINEARREG_ANGLE) — Linear Regression Angle
 //! * [`LINEARREG_INTERCEPT`](Core::LINEARREG_INTERCEPT) — Linear Regression Intercept

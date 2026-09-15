@@ -4871,6 +4871,42 @@ static TA_RetCode TA_KDJ_SFrameClose( void *stream )
    return TA_KDJ_Close( (TA_KDJ_Stream *)stream );
 }
 
+static TA_RetCode TA_KURTOSIS_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KURTOSIS_Open(
+               (TA_KURTOSIS_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_KURTOSIS_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KURTOSIS_OpenAndFill(
+               (TA_KURTOSIS_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_KURTOSIS_SFrameClose( void *stream )
+{
+   return TA_KURTOSIS_Close( (TA_KURTOSIS_Stream *)stream );
+}
+
 static TA_RetCode TA_LINEARREG_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8318,6 +8354,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      3, TA_VIn_KC, 3, TA_VOpt_KC, 3, TA_VOutIsInt_KC },
    { "KDJ", TA_KDJ_SFrameOpen, TA_KDJ_SFrameFill, TA_KDJ_SFrameClose,
      3, TA_VIn_KDJ, 5, TA_VOpt_KDJ, 3, TA_VOutIsInt_KDJ },
+   { "KURTOSIS", TA_KURTOSIS_SFrameOpen, TA_KURTOSIS_SFrameFill, TA_KURTOSIS_SFrameClose,
+     1, TA_VIn_KURTOSIS, 1, TA_VOpt_KURTOSIS, 1, TA_VOutIsInt_KURTOSIS },
    { "LINEARREG", TA_LINEARREG_SFrameOpen, TA_LINEARREG_SFrameFill, TA_LINEARREG_SFrameClose,
      1, TA_VIn_LINEARREG, 1, TA_VOpt_LINEARREG, 1, TA_VOutIsInt_LINEARREG },
    { "LINEARREG_ANGLE", TA_LINEARREG_ANGLE_SFrameOpen, TA_LINEARREG_ANGLE_SFrameFill, TA_LINEARREG_ANGLE_SFrameClose,
@@ -8486,6 +8524,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 201
+#define TA_STREAM_TABLE_SIZE 202
 
 #endif /* TA_STREAM_FRAME_H */

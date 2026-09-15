@@ -1,0 +1,19 @@
+name: KURTOSIS
+group: Statistic Functions
+hint: Rolling Excess Kurtosis
+flags: [stream, nan_inf_output]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period
+    range: [4, 100000]
+    default: 30
+    suggested: [10, 200, 5]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
