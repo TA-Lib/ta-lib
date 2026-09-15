@@ -2,9 +2,9 @@
 # TALIB_LIBRARY_VERSION is derived from this file and ABI.released.
 format 9
 soname libta-lib.so.1
-version-info 2:0:1
+version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2451
+function-count 2463
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1525,6 +1525,16 @@ function TA_RetCode TA_MA_OutRange(const TA_MA_Stream *, int *, int *)
 function TA_RetCode TA_MA_Peek(const TA_MA_Stream *, double, double *)
 function TA_RetCode TA_MA_Update(TA_MA_Stream *, double, double *)
 function TA_RetCode TA_MA_Value(const TA_MA_Stream *, double *)
+function TA_RetCode TA_MEDIAN(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_MEDIAN_Advance(TA_MEDIAN_Stream *)
+function TA_RetCode TA_MEDIAN_Clone(const TA_MEDIAN_Stream *, TA_MEDIAN_Stream **)
+function TA_RetCode TA_MEDIAN_Close(TA_MEDIAN_Stream *)
+function TA_RetCode TA_MEDIAN_Open(TA_MEDIAN_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_MEDIAN_OpenAndFill(TA_MEDIAN_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_MEDIAN_OutRange(const TA_MEDIAN_Stream *, int *, int *)
+function TA_RetCode TA_MEDIAN_Peek(const TA_MEDIAN_Stream *, double, double *)
+function TA_RetCode TA_MEDIAN_Update(TA_MEDIAN_Stream *, double, double *)
+function TA_RetCode TA_MEDIAN_Value(const TA_MEDIAN_Stream *, double *)
 function TA_RetCode TA_MEDPRICE(int, int, const double *, const double *, int *, int *, double *)
 function TA_RetCode TA_MEDPRICE_Advance(TA_MEDPRICE_Stream *)
 function TA_RetCode TA_MEDPRICE_Clone(const TA_MEDPRICE_Stream *, TA_MEDPRICE_Stream **)
@@ -2122,6 +2132,7 @@ function TA_RetCode TA_S_MASSI(int, int, const float *, const float *, int, int,
 function TA_RetCode TA_S_MAVP(int, int, const float *, const float *, int, int, TA_MAType, int *, int *, double *)
 function TA_RetCode TA_S_MAX(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_MAXINDEX(int, int, const float *, int, int *, int *, int *)
+function TA_RetCode TA_S_MEDIAN(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_MEDPRICE(int, int, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_MFI(int, int, const float *, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_MIDPOINT(int, int, const float *, int, int *, int *, double *)
@@ -2553,6 +2564,7 @@ function int TA_MAVP_Lookback(int, int, TA_MAType)
 function int TA_MAXINDEX_Lookback(int)
 function int TA_MAX_Lookback(int)
 function int TA_MA_Lookback(int, TA_MAType)
+function int TA_MEDIAN_Lookback(int)
 function int TA_MEDPRICE_Lookback(void)
 function int TA_MFI_Lookback(int)
 function int TA_MIDPOINT_Lookback(int)
