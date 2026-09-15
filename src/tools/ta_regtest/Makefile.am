@@ -36,6 +36,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_reference.c \
 	ta_test_func/test_bbands.c \
 	ta_test_func/test_ma.c \
+	ta_test_func/test_median.c \
 	ta_test_func/test_po.c \
 	ta_test_func/test_per_hl.c \
 	ta_test_func/test_trange.c \

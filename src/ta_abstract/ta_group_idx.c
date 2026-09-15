@@ -174,6 +174,7 @@ extern const TA_FuncDef TA_DEF_MASSI;
 extern const TA_FuncDef TA_DEF_MAVP;
 extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MAXINDEX;
+extern const TA_FuncDef TA_DEF_MEDIAN;
 extern const TA_FuncDef TA_DEF_MEDPRICE;
 extern const TA_FuncDef TA_DEF_MFI;
 extern const TA_FuncDef TA_DEF_MIDPOINT;
@@ -465,6 +466,7 @@ const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_LINEARREG_ANGLE,
 &TA_DEF_LINEARREG_INTERCEPT,
 &TA_DEF_LINEARREG_SLOPE,
+&TA_DEF_MEDIAN,
 &TA_DEF_PERCENTILE,
 &TA_DEF_PERCENTRANK,
 &TA_DEF_STDDEV,

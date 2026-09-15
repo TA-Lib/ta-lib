@@ -159,6 +159,7 @@
 #include "ta_MAVP.c"
 #include "ta_MAX.c"
 #include "ta_MAXINDEX.c"
+#include "ta_MEDIAN.c"
 #include "ta_MEDPRICE.c"
 #include "ta_MFI.c"
 #include "ta_MIDPOINT.c"
@@ -2495,6 +2496,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outIntBuf0[0];
         }
         printf("MAXINDEX %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "MEDIAN") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_MEDIAN(0, g_nPoints - 1, g_close, 30, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("MEDIAN %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "MEDPRICE") ) {

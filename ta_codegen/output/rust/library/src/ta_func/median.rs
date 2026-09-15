@@ -44,14 +44,13 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  MF       Mario Fortier
- *  CC       Claude Code (AI assistant)
+ *  KL       Kevin Lin
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  090426 MF,CC  First version (issue #368).
+ *  091526 KL     First version (proposal-drafts issue #73).
  */
 
 // Import types from parent module
@@ -64,45 +63,37 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::PERCENTILE`]: the number of leading input values consumed before
-    /// the first output value can be produced.
+    /// Lookback period for [`Core::MEDIAN`]: the number of leading input values consumed before the
+    /// first output value can be produced.
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=100000)
-    /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
-    ///   0..=100)
+    /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
+    ///   2..=100000)
     ///
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
-    /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
-    /// default value.
-    #[doc(alias = "TA_PERCENTILE_Lookback")]
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MEDIAN_Lookback")]
     #[inline]
-    pub fn PERCENTILE_Lookback(&self, mut optInTimePeriod: i32, mut optInPercentile: f64) -> Result<usize, RetCode> {
+    pub fn MEDIAN_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInPercentile == Self::REAL_DEFAULT {
-            optInPercentile = 5e1;
-        } else if !((optInPercentile >= 0e0) && (optInPercentile <= 1e2)) {
-            return Err(RetCode::BadParam);
-        }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::PERCENTILE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::MEDIAN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn PERCENTILE_Impl(
+    pub(crate) fn MEDIAN_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
         mut optInTimePeriod: i32,
-        mut optInPercentile: f64,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outReal: &mut [f64],
@@ -118,12 +109,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if optInPercentile == Self::REAL_DEFAULT {
-            optInPercentile = 5e1;
-        } else if !((optInPercentile >= 0e0) && (optInPercentile <= 1e2)) {
-            return RetCode::BadParam;
-        }
-        let _assertLb = self.PERCENTILE_Lookback(optInTimePeriod, optInPercentile).unwrap_or(usize::MAX);
+        let _assertLb = self.MEDIAN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -131,13 +117,16 @@ impl Core {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
+        let mut lower: f64 = 0.0_f64;
+        let mut upper: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut pos: usize = 0_usize;
         let mut nbSorted: usize = 0_usize;
-        let mut rank: i32 = 0_i32;
+        let mut lowerIdx: usize = 0_usize;
+        let mut upperIdx: usize = 0_usize;
         let mut local_ring: [f64; 30] = [0.0_f64; 30];
         let mut heap_ring: Vec<f64> = Vec::new();
         let mut ring: &mut [f64] = &mut [];
@@ -148,7 +137,9 @@ impl Core {
         let mut sorted: &mut [f64] = &mut [];
         let mut sorted_Idx: usize = 0;
         let mut maxIdx_sorted: usize = 29;
-        // The window is carried twice: "ring" by age, "sorted" by value.
+        // The window is carried twice: "ring" by age, "sorted" by value. Both are
+        // hand-written here as they are in percentile.c, which is the precedent for
+        // this shape -- a generator-derived ring does not carry the by-value copy.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -176,17 +167,12 @@ impl Core {
         }
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
-        // Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
-        // arithmetic; P/100 is inexact in binary64 and lands the product just above
-        // an integer, one order statistic too high, at exactly the round
-        // percentages a caller types.
-        rank = ((((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0).ceil()) as i32;
-        if rank < 1 {
-            rank = 1;
-        }
-        if rank > optInTimePeriod {
-            rank = optInTimePeriod;
-        }
+        // The two central ordinals, zero-based over the full window. At odd
+        // optInTimePeriod they are the same slot and the average below is the value
+        // itself; at even optInTimePeriod they straddle the centre and the mean of
+        // the two is the median. Computed once rather than per bar.
+        lowerIdx = ((optInTimePeriod - 1) / 2) as usize;
+        upperIdx = (optInTimePeriod / 2) as usize;
         nbSorted = 0;
         i = startIdx - lookbackTotal;
         while i < startIdx {
@@ -206,28 +192,64 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose: deriving the
-        // whole answer read-only above it is what lets the streaming peek frame drop
-        // the state update rather than shadow a shift loop, which it cannot do.
+        // Every buffer store sits BELOW the output store on purpose (percentile.c):
+        // deriving the whole answer read-only above it is what lets the streaming
+        // peek frame drop the state update rather than shadow a shift loop.
         outIdx = 0;
         loop {
             newValue = inReal[i];
+            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
+            // where the incoming one belongs, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
+            // without materialising it.
             pos = 0;
             while pos < lookbackTotal && sorted[pos] <= newValue {
                 pos += 1;
             }
-            if rank - 1 < ((pos) as i32) {
-                result = sorted[(rank - 1) as usize];
-            } else if rank - 1 == ((pos) as i32) {
-                result = newValue;
+            if lowerIdx < pos {
+                lower = sorted[lowerIdx];
+            } else if lowerIdx == pos {
+                lower = newValue;
             } else {
-                result = sorted[(rank - 2) as usize];
+                lower = sorted[lowerIdx - 1];
+            }
+            if upperIdx < pos {
+                upper = sorted[upperIdx];
+            } else if upperIdx == pos {
+                upper = newValue;
+            } else {
+                upper = sorted[upperIdx - 1];
+            }
+            // At odd optInTimePeriod the two ordinals are the same slot, and the
+            // branch returns that read untouched. Writing it as (v + v) / 2.0
+            // instead would be exact for every value this library is ever handed --
+            // doubling moves the exponent with the mantissa untouched and halving
+            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
+            // function does not declare nan_inf_output. The branch costs nothing:
+            // the condition is loop-invariant.
+            //
+            // At even optInTimePeriod the mean of the two central values is the
+            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
+            // multiplying by 0.5 give the same double, so that spelling is not a
+            // variant; the sum itself can still overflow on inputs near DBL_MAX,
+            // which is exactly what NumPy does with them too.
+            if lowerIdx == upperIdx {
+                result = lower;
+            } else {
+                result = (lower + upper) / 2.0;
             }
             outReal[outIdx] = result;
             outIdx += 1;
             // Shifting only the strictly greater entries leaves equal values in
             // insertion order, which is age order -- that is what lets the delete
             // below evict the oldest of a run by value alone, with no slot array.
+            //
+            // The order within a run of equal values is NOT observable at the output,
+            // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
+            // inserts at the front of a run instead of the back) leaves every value
+            // bit-identical over 14820 windows on both a 7-distinct-value series and
+            // a random walk. Equal members are interchangeable, which is precisely
+            // why the removal can identify one by value and needs no identity.
             j = lookbackTotal;
             while j > pos {
                 sorted[j] = sorted[j - 1];
@@ -253,28 +275,25 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// Rolling percentile by the nearest-rank method: sort the trailing window ascending and report
-    /// the value whose 1-based ordinal rank is the P-th percentile of the window size. The result
-    /// is always a value that actually occurred in the window, never an interpolation, so it stays
-    /// on the price scale and never invents a level the series never traded at. At P = 50 with an
-    /// odd window it is the rolling median; at the extremes it degenerates to the rolling minimum
-    /// and maximum.
+    /// The middle order statistic of the trailing window: the central value when `optInTimePeriod`
+    /// is odd, the mean of the two central values when it is even. A robust measure of central
+    /// tendency — unlike [`SMA`](https://ta-lib.org/functions/sma) it is unmoved by a single
+    /// spike, which is what makes it useful as a filter rather than as a level. Not to be confused
+    /// with [`MEDPRICE`](https://ta-lib.org/functions/medprice), which is `(High + Low) / 2` of one
+    /// bar and is not an order statistic.
     ///
-    /// Formula and more info at
-    /// [ta-lib.org/functions/percentile](https://ta-lib.org/functions/percentile).
+    /// Formula and more info at [ta-lib.org/functions/median](https://ta-lib.org/functions/median).
     ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Source series to take the percentile of.
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=100000)
-    /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
-    ///   0..=100)
-    /// * `outReal` — The value at the requested rank within the trailing window.
+    /// * `inReal` — The series to take the median of.
+    /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
+    ///   2..=100000)
+    /// * `outReal` — Median of the trailing window.
     ///
-    /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
-    /// [`Core::REAL_DEFAULT`], to select their default value.
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
     ///
     /// # Returns
     ///
@@ -304,7 +323,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.PERCENTILE(0, data.len() - 1, &data, 30, 50.0, &mut out)?;
+    /// let out_range = core.MEDIAN(0, data.len() - 1, &data, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -312,25 +331,19 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::MIN`] · [`Core::MAX`] · [`Core::MEDPRICE`] · [`Core::STDDEV`]
+    /// [`Core::PERCENTILE`] · [`Core::SMA`] · [`Core::MEDPRICE`]
     ///
     /// # References
     ///
-    /// * [Percentile — nearest-rank method](https://en.wikipedia.org/wiki/Percentile), the
-    ///   ordinal rank definition this function implements.
-    /// * Rob J. Hyndman and Yanan Fan, "Sample Quantiles in Statistical Packages", *The American
-    ///   Statistician* 50(4), 1996 — the nearest-rank rule is their type 1.
-    #[doc(alias = "TA_PERCENTILE")]
-    #[doc(alias = "PercentileNearestRank")]
-    #[doc(alias = "RollingPercentile")]
-    #[doc(alias = "RollingQuantile")]
-    pub fn PERCENTILE(
+    /// * NumPy `numpy.median`, R `stats::median`, scipy, Excel `MEDIAN` — four independent
+    ///   implementations of one unambiguous definition.
+    #[doc(alias = "TA_MEDIAN")]
+    pub fn MEDIAN(
         &self,
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
         optInTimePeriod: i32,
-        optInPercentile: f64,
         outReal: &mut [f64],
     ) -> Result<OutRange, RetCode> {
         if startIdx > Self::MAX_INDEX {
@@ -339,7 +352,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PERCENTILE_Lookback(optInTimePeriod, optInPercentile)?;
+        let _guardLb = self.MEDIAN_Lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -350,12 +363,11 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PERCENTILE_Impl(
+        let retCode = self.MEDIAN_Impl(
             startIdx,
             endIdx,
             inReal,
             optInTimePeriod,
-            optInPercentile,
             &mut outBegIdx,
             &mut outNBElement,
             outReal,
@@ -369,27 +381,27 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PERCENTILE stream: one value per closed bar, bit-identical to [`Core::PERCENTILE`]
-/// over the same series. Open with [`Core::percentile_open`]; dropping the handle
+/// Live MEDIAN stream: one value per closed bar, bit-identical to [`Core::MEDIAN`]
+/// over the same series. Open with [`Core::median_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
 /// [`Self::out_range`] reports the bars this handle has an output for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
-#[doc(alias = "TA_PERCENTILE_Stream")]
-pub struct PercentileStream {
-    state: PercentileStreamState,
+#[doc(alias = "TA_MEDIAN_Stream")]
+pub struct MedianStream {
+    state: MedianStreamState,
     /// The bars this handle has an output for — see [`Self::out_range`].
     out: OutRange,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PercentileStreamState {
+struct MedianStreamState {
     optInTimePeriod: i32,
-    optInPercentile: f64,
     lookbackTotal: usize,
-    rank: i32,
+    lowerIdx: usize,
+    upperIdx: usize,
     ring_Idx: usize,
     maxIdx_ring: usize,
     sorted_Idx: usize,
@@ -407,28 +419,66 @@ struct PercentileStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn percentile_step_impl(sp: &mut PercentileStreamState, inReal: f64, outReal: &mut f64) {
+    fn median_step_impl(sp: &mut MedianStreamState, inReal: f64, outReal: &mut f64) {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
+        let mut lower: f64 = 0.0_f64;
+        let mut upper: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         let mut pos: usize = 0_usize;
         newValue = inReal;
+        // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
+        // where the incoming one belongs, so the full window is
+        // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
+        // without materialising it.
         pos = 0;
         while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
             pos += 1;
         }
-        if sp.rank - 1 < ((pos) as i32) {
-            result = sp.cb_sorted[(sp.rank - 1) as usize];
-        } else if sp.rank - 1 == ((pos) as i32) {
-            result = newValue;
+        if sp.lowerIdx < pos {
+            lower = sp.cb_sorted[sp.lowerIdx];
+        } else if sp.lowerIdx == pos {
+            lower = newValue;
         } else {
-            result = sp.cb_sorted[(sp.rank - 2) as usize];
+            lower = sp.cb_sorted[sp.lowerIdx - 1];
+        }
+        if sp.upperIdx < pos {
+            upper = sp.cb_sorted[sp.upperIdx];
+        } else if sp.upperIdx == pos {
+            upper = newValue;
+        } else {
+            upper = sp.cb_sorted[sp.upperIdx - 1];
+        }
+        // At odd optInTimePeriod the two ordinals are the same slot, and the
+        // branch returns that read untouched. Writing it as (v + v) / 2.0
+        // instead would be exact for every value this library is ever handed --
+        // doubling moves the exponent with the mantissa untouched and halving
+        // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
+        // function does not declare nan_inf_output. The branch costs nothing:
+        // the condition is loop-invariant.
+        //
+        // At even optInTimePeriod the mean of the two central values is the
+        // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
+        // multiplying by 0.5 give the same double, so that spelling is not a
+        // variant; the sum itself can still overflow on inputs near DBL_MAX,
+        // which is exactly what NumPy does with them too.
+        if sp.lowerIdx == sp.upperIdx {
+            result = lower;
+        } else {
+            result = (lower + upper) / 2.0;
         }
         (*outReal) = result;
         // Shifting only the strictly greater entries leaves equal values in
         // insertion order, which is age order -- that is what lets the delete
         // below evict the oldest of a run by value alone, with no slot array.
+        //
+        // The order within a run of equal values is NOT observable at the output,
+        // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
+        // inserts at the front of a run instead of the back) leaves every value
+        // bit-identical over 14820 windows on both a 7-distinct-value series and
+        // a random walk. Equal members are interchangeable, which is precisely
+        // why the removal can identify one by value and needs no identity.
         j = sp.lookbackTotal;
         while j > pos {
             sp.cb_sorted[j] = sp.cb_sorted[j - 1];
@@ -452,11 +502,11 @@ impl Core {
         sp.cur_outReal = (*outReal);
     }
 
-    /// The single whole-history transcription behind [`Core::percentile_open_internal`]
-    /// (stride 0, scalar sink) and [`Core::percentile_open_and_fill`] (stride 1, caller slices).
-    pub(crate) fn percentile_open_impl(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInPercentile: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
-    ) -> Result<PercentileStream, RetCode> {
+    /// The single whole-history transcription behind [`Core::median_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::median_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn median_open_impl(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<MedianStream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
@@ -466,11 +516,6 @@ impl Core {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInPercentile == Self::REAL_DEFAULT {
-            optInPercentile = 5e1;
-        } else if !((optInPercentile >= 0e0) && (optInPercentile <= 1e2)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -486,20 +531,25 @@ impl Core {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
+        let mut lower: f64 = 0.0_f64;
+        let mut upper: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut pos: usize = 0_usize;
         let mut nbSorted: usize = 0_usize;
-        let mut rank: i32 = 0_i32;
+        let mut lowerIdx: usize = 0_usize;
+        let mut upperIdx: usize = 0_usize;
         let mut ring: Vec<f64> = Vec::new();
         let mut ring_Idx: usize = 0;
         let mut maxIdx_ring: usize = 29;
         let mut sorted: Vec<f64> = Vec::new();
         let mut sorted_Idx: usize = 0;
         let mut maxIdx_sorted: usize = 29;
-        // The window is carried twice: "ring" by age, "sorted" by value.
+        // The window is carried twice: "ring" by age, "sorted" by value. Both are
+        // hand-written here as they are in percentile.c, which is the precedent for
+        // this shape -- a generator-derived ring does not carry the by-value copy.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -517,17 +567,12 @@ impl Core {
         sorted = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
-        // Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
-        // arithmetic; P/100 is inexact in binary64 and lands the product just above
-        // an integer, one order statistic too high, at exactly the round
-        // percentages a caller types.
-        rank = ((((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0).ceil()) as i32;
-        if rank < 1 {
-            rank = 1;
-        }
-        if rank > optInTimePeriod {
-            rank = optInTimePeriod;
-        }
+        // The two central ordinals, zero-based over the full window. At odd
+        // optInTimePeriod they are the same slot and the average below is the value
+        // itself; at even optInTimePeriod they straddle the centre and the mean of
+        // the two is the median. Computed once rather than per bar.
+        lowerIdx = ((optInTimePeriod - 1) / 2) as usize;
+        upperIdx = (optInTimePeriod / 2) as usize;
         nbSorted = 0;
         i = startIdx - lookbackTotal;
         while i < startIdx {
@@ -547,28 +592,64 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose: deriving the
-        // whole answer read-only above it is what lets the streaming peek frame drop
-        // the state update rather than shadow a shift loop, which it cannot do.
+        // Every buffer store sits BELOW the output store on purpose (percentile.c):
+        // deriving the whole answer read-only above it is what lets the streaming
+        // peek frame drop the state update rather than shadow a shift loop.
         outIdx = 0;
         loop {
             newValue = inReal[i];
+            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
+            // where the incoming one belongs, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
+            // without materialising it.
             pos = 0;
             while pos < lookbackTotal && sorted[pos] <= newValue {
                 pos += 1;
             }
-            if rank - 1 < ((pos) as i32) {
-                result = sorted[(rank - 1) as usize];
-            } else if rank - 1 == ((pos) as i32) {
-                result = newValue;
+            if lowerIdx < pos {
+                lower = sorted[lowerIdx];
+            } else if lowerIdx == pos {
+                lower = newValue;
             } else {
-                result = sorted[(rank - 2) as usize];
+                lower = sorted[lowerIdx - 1];
+            }
+            if upperIdx < pos {
+                upper = sorted[upperIdx];
+            } else if upperIdx == pos {
+                upper = newValue;
+            } else {
+                upper = sorted[upperIdx - 1];
+            }
+            // At odd optInTimePeriod the two ordinals are the same slot, and the
+            // branch returns that read untouched. Writing it as (v + v) / 2.0
+            // instead would be exact for every value this library is ever handed --
+            // doubling moves the exponent with the mantissa untouched and halving
+            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
+            // function does not declare nan_inf_output. The branch costs nothing:
+            // the condition is loop-invariant.
+            //
+            // At even optInTimePeriod the mean of the two central values is the
+            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
+            // multiplying by 0.5 give the same double, so that spelling is not a
+            // variant; the sum itself can still overflow on inputs near DBL_MAX,
+            // which is exactly what NumPy does with them too.
+            if lowerIdx == upperIdx {
+                result = lower;
+            } else {
+                result = (lower + upper) / 2.0;
             }
             outReal[(outIdx * outStride) as usize] = result;
             outIdx += 1;
             // Shifting only the strictly greater entries leaves equal values in
             // insertion order, which is age order -- that is what lets the delete
             // below evict the oldest of a run by value alone, with no slot array.
+            //
+            // The order within a run of equal values is NOT observable at the output,
+            // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
+            // inserts at the front of a run instead of the back) leaves every value
+            // bit-identical over 14820 windows on both a 7-distinct-value series and
+            // a random walk. Equal members are interchangeable, which is precisely
+            // why the removal can identify one by value and needs no identity.
             j = lookbackTotal;
             while j > pos {
                 sorted[j] = sorted[j - 1];
@@ -602,11 +683,11 @@ impl Core {
         if cbSize_sorted > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = PercentileStreamState {
+        let state = MedianStreamState {
             optInTimePeriod,
-            optInPercentile,
             lookbackTotal,
-            rank,
+            lowerIdx,
+            upperIdx,
             ring_Idx,
             maxIdx_ring,
             sorted_Idx,
@@ -617,22 +698,22 @@ impl Core {
             cbSize_sorted: cbSize_sorted,
             cb_sorted: sorted,
         };
-        Ok(PercentileStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        Ok(MedianStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
-    /// Internal startIdx-anchored open behind [`Core::percentile_open`] (composition seam).
-    pub(crate) fn percentile_open_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInPercentile: f64,
-    ) -> Result<(PercentileStream, f64), RetCode> {
+    /// Internal startIdx-anchored open behind [`Core::median_open`] (composition seam).
+    pub(crate) fn median_open_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MedianStream, f64), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.percentile_open_impl(inReal, startIdx, optInTimePeriod, optInPercentile, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.median_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
-    /// Open a live PERCENTILE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::PERCENTILE`] at that bar.
+    /// Open a live MEDIAN stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::MEDIAN`] at that bar.
     ///
     /// # Errors
     ///
@@ -647,7 +728,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.percentile_open(&data, 30, 50.0).expect("enough history");
+    /// let (mut s, _last) = core.median_open(&data, 30).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -656,20 +737,20 @@ impl Core {
     /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
-    #[doc(alias = "TA_PERCENTILE_Open")]
-    pub fn percentile_open(&self, inReal: &[f64], optInTimePeriod: i32, optInPercentile: f64) -> Result<(PercentileStream, f64), RetCode> {
-        self.percentile_open_internal(inReal, 0, optInTimePeriod, optInPercentile)
+    #[doc(alias = "TA_MEDIAN_Open")]
+    pub fn median_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MedianStream, f64), RetCode> {
+        self.median_open_internal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::percentile_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::PERCENTILE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::median_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MEDIAN`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
     /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
-    /// Everything [`Core::percentile_open`] rejects is rejected here too.
+    /// Everything [`Core::median_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -679,10 +760,10 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.PERCENTILE(0, data.len() - 1, &data, 30, 50.0, &mut batch_out)?;
+    /// let batch = core.MEDIAN(0, data.len() - 1, &data, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
-    /// let (_stream, filled) = core.percentile_open_and_fill(&data, 30, 50.0, &mut out)?;
+    /// let (_stream, filled) = core.median_open_and_fill(&data, 30, &mut out)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);
@@ -690,33 +771,33 @@ impl Core {
     ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
-    #[doc(alias = "TA_PERCENTILE_OpenAndFill")]
-    pub fn percentile_open_and_fill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInPercentile: f64, outReal: &mut [f64],
-    ) -> Result<(PercentileStream, OutRange), RetCode> {
+    #[doc(alias = "TA_MEDIAN_OpenAndFill")]
+    pub fn median_open_and_fill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+    ) -> Result<(MedianStream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PERCENTILE_Lookback(optInTimePeriod, optInPercentile)?;
+        let _guardLb = self.MEDIAN_Lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.percentile_open_and_fill_internal(inReal, 0, optInTimePeriod, optInPercentile, &mut outBegIdx, &mut outNBElement, outReal)?;
+        let handle = self.median_open_and_fill_internal(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
-    /// [`Core::percentile_open_and_fill`] anchored at `startIdx` — the composed-open
+    /// [`Core::median_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
-    pub(crate) fn percentile_open_and_fill_internal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInPercentile: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PercentileStream, RetCode> {
-        self.percentile_open_impl(inReal, startIdx, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal, 1)
+    pub(crate) fn median_open_and_fill_internal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MedianStream, RetCode> {
+        self.median_open_impl(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
@@ -726,7 +807,7 @@ impl Core {
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
-impl PercentileStream {
+impl MedianStream {
     /// Commit one closed bar. Never allocates.
     ///
     /// # Errors
@@ -747,7 +828,7 @@ impl PercentileStream {
     /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached
     /// bar [`Core::MAX_INDEX`], which no re-feed clears: the handle has run
     /// out of index domain and only a shorter history can start a new one.
-    #[doc(alias = "TA_PERCENTILE_Update")]
+    #[doc(alias = "TA_MEDIAN_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
         if self.out.beg_idx + self.out.count > Core::MAX_INDEX {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -756,7 +837,7 @@ impl PercentileStream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::percentile_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::median_step_impl(&mut self.state, inReal, &mut outReal);
         self.out.count += 1;
         Ok(outReal)
     }
@@ -774,7 +855,7 @@ impl PercentileStream {
     /// `update` applies, and a rejected peek changes nothing at all. Not
     /// [`RetCode::OutOfRangeEndIndex`]: `peek` counts no bar, so it keeps
     /// answering past the [`Core::MAX_INDEX`] ceiling `update` stops at.
-    #[doc(alias = "TA_PERCENTILE_Peek")]
+    #[doc(alias = "TA_MEDIAN_Peek")]
     pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
@@ -785,18 +866,49 @@ impl PercentileStream {
             let outReal = &mut outReal;
             let mut newValue: f64 = 0.0_f64;
             let mut result: f64 = 0.0_f64;
+            let mut lower: f64 = 0.0_f64;
+            let mut upper: f64 = 0.0_f64;
             let mut pos: usize = 0_usize;
             newValue = inReal;
+            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
+            // where the incoming one belongs, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
+            // without materialising it.
             pos = 0;
             while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
                 pos += 1;
             }
-            if sp.rank - 1 < ((pos) as i32) {
-                result = sp.cb_sorted[(sp.rank - 1) as usize];
-            } else if sp.rank - 1 == ((pos) as i32) {
-                result = newValue;
+            if sp.lowerIdx < pos {
+                lower = sp.cb_sorted[sp.lowerIdx];
+            } else if sp.lowerIdx == pos {
+                lower = newValue;
             } else {
-                result = sp.cb_sorted[(sp.rank - 2) as usize];
+                lower = sp.cb_sorted[sp.lowerIdx - 1];
+            }
+            if sp.upperIdx < pos {
+                upper = sp.cb_sorted[sp.upperIdx];
+            } else if sp.upperIdx == pos {
+                upper = newValue;
+            } else {
+                upper = sp.cb_sorted[sp.upperIdx - 1];
+            }
+            // At odd optInTimePeriod the two ordinals are the same slot, and the
+            // branch returns that read untouched. Writing it as (v + v) / 2.0
+            // instead would be exact for every value this library is ever handed --
+            // doubling moves the exponent with the mantissa untouched and halving
+            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
+            // function does not declare nan_inf_output. The branch costs nothing:
+            // the condition is loop-invariant.
+            //
+            // At even optInTimePeriod the mean of the two central values is the
+            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
+            // multiplying by 0.5 give the same double, so that spelling is not a
+            // variant; the sum itself can still overflow on inputs near DBL_MAX,
+            // which is exactly what NumPy does with them too.
+            if sp.lowerIdx == sp.upperIdx {
+                result = lower;
+            } else {
+                result = (lower + upper) / 2.0;
             }
             (*outReal) = result;
         }
@@ -811,7 +923,7 @@ impl PercentileStream {
     /// A clone carries them verbatim, so a forked handle can be asked its
     /// current value without committing a bar to find out.
     #[must_use]
-    #[doc(alias = "TA_PERCENTILE_Value")]
+    #[doc(alias = "TA_MEDIAN_Value")]
     pub fn value(&self) -> f64 {
         self.state.cur_outReal
     }
@@ -819,7 +931,7 @@ impl PercentileStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::PERCENTILE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::MEDIAN`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
@@ -828,7 +940,7 @@ impl PercentileStream {
     ///
     /// The last bar it can reach is [`Core::MAX_INDEX`]; past that `update`
     /// and `advance` answer [`RetCode::OutOfRangeEndIndex`].
-    #[doc(alias = "TA_PERCENTILE_OutRange")]
+    #[doc(alias = "TA_MEDIAN_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -846,7 +958,7 @@ impl PercentileStream {
     /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached
     /// bar [`Core::MAX_INDEX`] — the last one the batch tier can address, and
     /// the last this handle will count. `update` answers the same there.
-    #[doc(alias = "TA_PERCENTILE_Advance")]
+    #[doc(alias = "TA_MEDIAN_Advance")]
     pub fn advance(&mut self) -> Result<(), RetCode> {
         if self.out.beg_idx + self.out.count > Core::MAX_INDEX {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -858,7 +970,7 @@ impl PercentileStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PercentileStream>();
+    _assert_auto::<MedianStream>();
 };
 
 /***************/
