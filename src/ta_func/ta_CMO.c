@@ -59,6 +59,7 @@
  *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
+ *  091326 MF,CC   #411 Wilder step without a divide or a branch.
  */
 
 TA_LIB_API int TA_CMO_Lookback( int optInTimePeriod )
@@ -84,8 +85,10 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
    int today;
    int lookbackTotal;
    int i;
+   double gainDelta;
    double prevGain;
    double prevLoss;
+   double invPeriod;
    double prevValue;
    double tempValue1;
    double tempValue2;
@@ -141,6 +144,12 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
       }
       return TA_SUCCESS;
    }
+   /* The declaration order above sets invPeriod's place in the stream state,
+    * and that place is load-bearing: a layout that lets Update load it paired
+    * with a field the previous bar stored stalls every call. Re-measure Update
+    * in C and Rust before reordering those declarations.
+    */
+   invPeriod = 1.0 / (double)optInTimePeriod;
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
     * among the initial period.
     */
@@ -154,19 +163,18 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
       tempValue1 = inReal[today++];
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      if( tempValue2 < 0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
    /* Subsequent prevLoss and prevGain are smoothed
-    * using the previous values (Wilder's approach).
-    *  1) Multiply the previous by 'period-1'.
-    *  2) Add today value.
-    *  3) Divide by 'period'.
+    * using the previous values (Wilder's approach):
+    *    prev += (today - prev) / 'period'
+    * gainDelta - tempValue2 is the exact loss delta for every finite
+    * tempValue2, so both accumulators step without a branch. Keep the step a
+    * difference of two products: prev - (prev - today)*k lets the zero arm fold
+    * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+    * becomes a fused multiply-add.
     */
    prevLoss /= optInTimePeriod;
    prevGain /= optInTimePeriod;
@@ -204,17 +212,9 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
          tempValue1 = inReal[today];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          today += 1;
       }
    }
@@ -226,17 +226,9 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
       tempValue1 = inReal[today++];
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      prevLoss *= optInTimePeriod - 1;
-      prevGain *= optInTimePeriod - 1;
-      if( tempValue2 < 0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
-      prevLoss /= optInTimePeriod;
-      prevGain /= optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+      prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 )
       {
@@ -263,8 +255,10 @@ TA_RetCode TA_S_CMO( int    startIdx,
    int today;
    int lookbackTotal;
    int i;
+   double gainDelta;
    double prevGain;
    double prevLoss;
+   double invPeriod;
    double prevValue;
    double tempValue1;
    double tempValue2;
@@ -309,6 +303,7 @@ TA_RetCode TA_S_CMO( int    startIdx,
       }
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
    prevGain = 0.0;
@@ -319,13 +314,9 @@ TA_RetCode TA_S_CMO( int    startIdx,
       tempValue1 = (double)inReal[today++];
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      if( tempValue2 < 0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
    prevLoss /= optInTimePeriod;
    prevGain /= optInTimePeriod;
@@ -346,17 +337,9 @@ TA_RetCode TA_S_CMO( int    startIdx,
          tempValue1 = (double)inReal[today];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          today += 1;
       }
    }
@@ -365,17 +348,9 @@ TA_RetCode TA_S_CMO( int    startIdx,
       tempValue1 = (double)inReal[today++];
       tempValue2 = tempValue1 - prevValue;
       prevValue = tempValue1;
-      prevLoss *= optInTimePeriod - 1;
-      prevGain *= optInTimePeriod - 1;
-      if( tempValue2 < 0 )
-      {
-         prevLoss -= tempValue2;
-      } else 
-      {
-         prevGain += tempValue2;
-      }
-      prevLoss /= optInTimePeriod;
-      prevGain /= optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+      prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
       tempValue1 = prevGain + prevLoss;
       if( tempValue1 > 0.0 )
       {
@@ -401,12 +376,14 @@ struct TA_CMO_Stream {
    int optInTimePeriod;
    double prevGain;
    double prevLoss;
+   double invPeriod;
    double prevValue;
 };
 
 /* Private function, not in public API. */
 static void TA_CMO_StepImpl( struct TA_CMO_Stream *sp, double inReal, double *outReal )
 {
+   double gainDelta;
    double tempValue1;
    double tempValue2;
 
@@ -419,17 +396,9 @@ static void TA_CMO_StepImpl( struct TA_CMO_Stream *sp, double inReal, double *ou
    tempValue1 = inReal;
    tempValue2 = tempValue1 - sp->prevValue;
    sp->prevValue = tempValue1;
-   sp->prevLoss *= sp->optInTimePeriod - 1;
-   sp->prevGain *= sp->optInTimePeriod - 1;
-   if( tempValue2 < 0 )
-   {
-      sp->prevLoss -= tempValue2;
-   } else 
-   {
-      sp->prevGain += tempValue2;
-   }
-   sp->prevLoss /= sp->optInTimePeriod;
-   sp->prevGain /= sp->optInTimePeriod;
+   gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+   sp->prevGain += gainDelta * sp->invPeriod - sp->prevGain * sp->invPeriod;
+   sp->prevLoss += (gainDelta - tempValue2) * sp->invPeriod - sp->prevLoss * sp->invPeriod;
    tempValue1 = sp->prevGain + sp->prevLoss;
    if( tempValue1 > 0.0 )
    {
@@ -506,8 +475,10 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
       int today;
       int lookbackTotal;
       int i;
+      double gainDelta;
       double prevGain = 0.0;
       double prevLoss = 0.0;
+      double invPeriod = 0.0;
       double prevValue = 0.0;
       double tempValue1;
       double tempValue2;
@@ -526,6 +497,12 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
       }
       outIdx = 0;
       /* Index into the output. */
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -539,19 +516,18 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       * using the previous values (Wilder's approach):
+       *    prev += (today - prev) / 'period'
+       * gainDelta - tempValue2 is the exact loss delta for every finite
+       * tempValue2, so both accumulators step without a branch. Keep the step a
+       * difference of two products: prev - (prev - today)*k lets the zero arm fold
+       * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+       * becomes a fused multiply-add.
        */
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -589,17 +565,9 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 )
-            {
-               prevLoss -= tempValue2;
-            } else 
-            {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -611,17 +579,9 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 )
          {
@@ -641,6 +601,7 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevGain = prevGain;
       sp->prevLoss = prevLoss;
+      sp->invPeriod = invPeriod;
       sp->prevValue = prevValue;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
@@ -707,6 +668,7 @@ TA_LIB_API TA_RetCode TA_CMO_Update( TA_CMO_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_CMO_Peek( const TA_CMO_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_CMO_Stream *sp = stream;
+   double gainDelta;
    double tempValue1;
    double tempValue2;
    double prevGain;
@@ -726,17 +688,9 @@ TA_LIB_API TA_RetCode TA_CMO_Peek( const TA_CMO_Stream *stream, double inReal, d
    tempValue1 = inReal;
    tempValue2 = tempValue1 - prevValue;
    prevValue = tempValue1;
-   prevLoss *= sp->optInTimePeriod - 1;
-   prevGain *= sp->optInTimePeriod - 1;
-   if( tempValue2 < 0 )
-   {
-      prevLoss -= tempValue2;
-   } else 
-   {
-      prevGain += tempValue2;
-   }
-   prevLoss /= sp->optInTimePeriod;
-   prevGain /= sp->optInTimePeriod;
+   gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+   prevGain += gainDelta * sp->invPeriod - prevGain * sp->invPeriod;
+   prevLoss += (gainDelta - tempValue2) * sp->invPeriod - prevLoss * sp->invPeriod;
    tempValue1 = prevGain + prevLoss;
    if( tempValue1 > 0.0 )
    {

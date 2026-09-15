@@ -5892,6 +5892,19 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
      * it does grow with is the PERIOD, and this corpus stops at 17: the bound
      * does not cover the long-period end of the 2..100000 range. */
     { "RSI",                 TOL_ABS,     2e-13, 0.0 }, /* #410  measured 5.68e-14 */
+    /* #411 applies RSI's hoisted 1/period to CMO and the DM/DI/DX/ADX family,
+     * named for the same reason. The oscillators are absolute, as RSI is; a DM
+     * is a running sum of price moves, so its bound is output-relative. ADX,
+     * ADXR and CMO also changed the step's form and grow with the period, which
+     * this corpus stops at 17. */
+    { "CMO",                 TOL_ABS,     3e-13, 0.0 }, /* #411  measured 8.44e-14 */
+    { "PLUS_DM",             TOL_REL_OUT, 5e-15, 0.0 }, /* #411  measured 1.40e-15 */
+    { "MINUS_DM",            TOL_REL_OUT, 2e-14, 0.0 }, /* #411  measured 3.53e-15 */
+    { "PLUS_DI",             TOL_ABS,     2e-13, 0.0 }, /* #411  measured 4.26e-14 */
+    { "MINUS_DI",            TOL_ABS,     2e-13, 0.0 }, /* #411  measured 5.68e-14 */
+    { "DX",                  TOL_ABS,     2e-13, 0.0 }, /* #411  measured 5.68e-14 */
+    { "ADX",                 TOL_ABS,     3e-13, 0.0 }, /* #411  measured 8.53e-14 */
+    { "ADXR",                TOL_ABS,     3e-13, 0.0 }, /* #411  measured 7.11e-14 */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 

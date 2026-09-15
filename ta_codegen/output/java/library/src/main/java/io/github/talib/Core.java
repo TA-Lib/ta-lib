@@ -5665,6 +5665,7 @@ public final class Core {
  *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
    /**
@@ -5707,6 +5708,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -5714,6 +5716,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       double sumDX = 0;
@@ -5864,6 +5870,12 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = inHigh[today];
       prevLow = inLow[today];
@@ -5880,13 +5892,16 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+          * directly, or testing the sign first, lets gcc thread the selects back into
+          * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+          */
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.abs(prevHigh - prevClose);
@@ -5916,15 +5931,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
@@ -5938,7 +5952,7 @@ public final class Core {
          }
          _true_range_1 = range_1;
          tempReal = _true_range_1;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book).
           *
@@ -5976,15 +5990,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
@@ -5998,7 +6011,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -6008,7 +6021,7 @@ public final class Core {
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
                /* Calculate the ADX */
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
       }
@@ -6027,15 +6040,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
@@ -6049,7 +6061,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -6059,7 +6071,7 @@ public final class Core {
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
                /* Calculate the ADX */
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
          /* Output the ADX */
@@ -6083,6 +6095,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -6090,6 +6103,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       double sumDX = 0;
@@ -6121,6 +6138,7 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = (double)inHigh[today];
       prevLow = (double)inLow[today];
@@ -6134,11 +6152,12 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.abs(prevHigh - prevClose);
@@ -6164,13 +6183,14 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -6183,7 +6203,7 @@ public final class Core {
          }
          _true_range_1 = range_1;
          tempReal = _true_range_1;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
@@ -6204,13 +6224,14 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -6223,7 +6244,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
@@ -6231,7 +6252,7 @@ public final class Core {
             tempReal = minusDI + plusDI;
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
       }
@@ -6245,13 +6266,14 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.abs(prevHigh - prevClose);
@@ -6264,7 +6286,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
@@ -6272,7 +6294,7 @@ public final class Core {
             tempReal = minusDI + plusDI;
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
          outReal[outIdx++] = prevADX;
@@ -6452,6 +6474,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevHigh;
       private double prevLow;
+      private double invPeriod;
       private double prevClose;
       private double prevMinusDM;
       private double prevPlusDM;
@@ -6502,6 +6525,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
+         this.invPeriod = other.invPeriod;
          this.prevClose = other.prevClose;
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
@@ -6557,6 +6581,10 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double minusSel = 0.0;
+         double plusSel = 0.0;
+         double minusDM1 = 0.0;
+         double plusDM1 = 0.0;
          double minusDI = 0.0;
          double plusDI = 0.0;
          double cur_outReal = 0.0;
@@ -6576,15 +6604,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / sp.optInTimePeriod;
-         prevPlusDM -= prevPlusDM / sp.optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * sp.invPeriod;
+         prevPlusDM -= prevPlusDM * sp.invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
@@ -6598,7 +6625,7 @@ public final class Core {
          }
          _true_range_0 = range_0;
          tempReal = _true_range_0;
-         prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
          prevClose = inClose;
          if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -6608,7 +6635,7 @@ public final class Core {
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
                /* Calculate the ADX */
-               prevADX = ((prevADX * (sp.optInTimePeriod - 1) + tempReal) / sp.optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * sp.invPeriod);
             }
          }
          /* Output the ADX */
@@ -6647,6 +6674,10 @@ public final class Core {
       double tempReal = 0.0;
       double diffP = 0.0;
       double diffM = 0.0;
+      double minusSel = 0.0;
+      double plusSel = 0.0;
+      double minusDM1 = 0.0;
+      double plusDM1 = 0.0;
       double minusDI = 0.0;
       double plusDI = 0.0;
       /* Calculate the prevMinusDM and prevPlusDM */
@@ -6658,15 +6689,14 @@ public final class Core {
       diffM = sp.prevLow - tempReal;
       /* Minus Delta */
       sp.prevLow = tempReal;
-      sp.prevMinusDM -= sp.prevMinusDM / sp.optInTimePeriod;
-      sp.prevPlusDM -= sp.prevPlusDM / sp.optInTimePeriod;
-      if( diffM > 0 && diffP < diffM ) {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp.prevMinusDM += diffM;
-      } else if( diffP > 0 && diffP > diffM ) {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp.prevPlusDM += diffP;
-      }
+      sp.prevMinusDM -= sp.prevMinusDM * sp.invPeriod;
+      sp.prevPlusDM -= sp.prevPlusDM * sp.invPeriod;
+      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      sp.prevMinusDM += minusDM1;
+      sp.prevPlusDM += plusDM1;
       /* Calculate the prevTR */
       double _true_range_1;
       double range_1 = sp.prevHigh - sp.prevLow;
@@ -6680,7 +6710,7 @@ public final class Core {
       }
       _true_range_1 = range_1;
       tempReal = _true_range_1;
-      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
+      sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
       sp.prevClose = inClose;
       if( sp.prevTR > 0.0 ) {
          /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -6690,7 +6720,7 @@ public final class Core {
          if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
             tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
             /* Calculate the ADX */
-            sp.prevADX = ((sp.prevADX * (sp.optInTimePeriod - 1) + tempReal) / sp.optInTimePeriod);
+            sp.prevADX = (sp.prevADX - (sp.prevADX - tempReal) * sp.invPeriod);
          }
       }
       /* Output the ADX */
@@ -6703,6 +6733,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -6710,6 +6741,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       double sumDX = 0;
@@ -6870,6 +6905,12 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = inHigh[today];
       prevLow = inLow[today];
@@ -6886,13 +6927,16 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+          * directly, or testing the sign first, lets gcc thread the selects back into
+          * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+          */
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -6922,15 +6966,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
@@ -6944,7 +6987,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book).
           *
@@ -6982,15 +7025,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_4;
          double range_4 = prevHigh - prevLow;
@@ -7004,7 +7046,7 @@ public final class Core {
          }
          _true_range_4 = range_4;
          tempReal = _true_range_4;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -7014,7 +7056,7 @@ public final class Core {
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
                /* Calculate the ADX */
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
       }
@@ -7033,15 +7075,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_5;
          double range_5 = prevHigh - prevLow;
@@ -7055,7 +7096,7 @@ public final class Core {
          }
          _true_range_5 = range_5;
          tempReal = _true_range_5;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
             /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -7065,7 +7106,7 @@ public final class Core {
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
                /* Calculate the ADX */
-               prevADX = ((prevADX * (optInTimePeriod - 1) + tempReal) / optInTimePeriod);
+               prevADX = (prevADX - (prevADX - tempReal) * invPeriod);
             }
          }
          /* Output the ADX */
@@ -7076,6 +7117,7 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevHigh = prevHigh;
       sp.prevLow = prevLow;
+      sp.invPeriod = invPeriod;
       sp.prevClose = prevClose;
       sp.prevMinusDM = prevMinusDM;
       sp.prevPlusDM = prevPlusDM;
@@ -71187,6 +71229,7 @@ public final class Core {
  *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
+ *  091326 MF,CC   #411 Wilder step without a divide or a branch.
  */
 
    /**
@@ -71227,8 +71270,10 @@ public final class Core {
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -71274,6 +71319,12 @@ public final class Core {
          }
          return RetCode.Success ;
       }
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -71286,17 +71337,18 @@ public final class Core {
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       * using the previous values (Wilder's approach):
+       *    prev += (today - prev) / 'period'
+       * gainDelta - tempValue2 is the exact loss delta for every finite
+       * tempValue2, so both accumulators step without a branch. Keep the step a
+       * difference of two products: prev - (prev - today)*k lets the zero arm fold
+       * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+       * becomes a fused multiply-add.
        */
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -71329,15 +71381,9 @@ public final class Core {
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -71348,15 +71394,9 @@ public final class Core {
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -71380,8 +71420,10 @@ public final class Core {
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -71416,6 +71458,7 @@ public final class Core {
          }
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       prevGain = 0.0;
@@ -71425,11 +71468,9 @@ public final class Core {
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -71445,15 +71486,9 @@ public final class Core {
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -71461,15 +71496,9 @@ public final class Core {
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -71625,6 +71654,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevGain;
       private double prevLoss;
+      private double invPeriod;
       private double prevValue;
       private double cur_outReal;
       private int outRangeBegIdx;
@@ -71671,6 +71701,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
          this.prevLoss = other.prevLoss;
+         this.invPeriod = other.invPeriod;
          this.prevValue = other.prevValue;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -71719,6 +71750,7 @@ public final class Core {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CmoStream sp = this;
+         double gainDelta = 0.0;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
          double cur_outReal = 0.0;
@@ -71732,15 +71764,9 @@ public final class Core {
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= sp.optInTimePeriod - 1;
-         prevGain *= sp.optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= sp.optInTimePeriod;
-         prevGain /= sp.optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * sp.invPeriod - prevGain * sp.invPeriod;
+         prevLoss += (gainDelta - tempValue2) * sp.invPeriod - prevLoss * sp.invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             cur_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -71778,6 +71804,7 @@ public final class Core {
    }
    private void cmoStepImpl( CmoStream sp, double inReal )
    {
+      double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
       if( sp.optInTimePeriod == 1 ) {
@@ -71787,15 +71814,9 @@ public final class Core {
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
-      sp.prevLoss *= sp.optInTimePeriod - 1;
-      sp.prevGain *= sp.optInTimePeriod - 1;
-      if( tempValue2 < 0 ) {
-         sp.prevLoss -= tempValue2;
-      } else {
-         sp.prevGain += tempValue2;
-      }
-      sp.prevLoss /= sp.optInTimePeriod;
-      sp.prevGain /= sp.optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      sp.prevGain += gainDelta * sp.invPeriod - sp.prevGain * sp.invPeriod;
+      sp.prevLoss += (gainDelta - tempValue2) * sp.invPeriod - sp.prevLoss * sp.invPeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
       if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
@@ -71809,8 +71830,10 @@ public final class Core {
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -71841,6 +71864,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
          sp.prevLoss = 0.0;
+         sp.invPeriod = 0.0;
          sp.prevValue = 0.0;
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
@@ -71867,6 +71891,12 @@ public final class Core {
       }
       outIdx = 0;
       /* Index into the output. */
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -71879,17 +71909,18 @@ public final class Core {
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       * using the previous values (Wilder's approach):
+       *    prev += (today - prev) / 'period'
+       * gainDelta - tempValue2 is the exact loss delta for every finite
+       * tempValue2, so both accumulators step without a branch. Keep the step a
+       * difference of two products: prev - (prev - today)*k lets the zero arm fold
+       * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+       * becomes a fused multiply-add.
        */
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -71922,15 +71953,9 @@ public final class Core {
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -71941,15 +71966,9 @@ public final class Core {
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -71963,6 +71982,7 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevGain = prevGain;
       sp.prevLoss = prevLoss;
+      sp.invPeriod = invPeriod;
       sp.prevValue = prevValue;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
@@ -80757,6 +80777,7 @@ public final class Core {
  *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
    /**
@@ -80802,6 +80823,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -80809,6 +80831,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       int i = 0;
@@ -80947,6 +80973,12 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = inHigh[today];
       prevLow = inLow[today];
@@ -80962,13 +80994,16 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+          * directly, or testing the sign first, lets gcc thread the selects back into
+          * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+          */
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.abs(prevHigh - prevClose);
@@ -80999,15 +81034,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
@@ -81021,7 +81055,7 @@ public final class Core {
          }
          _true_range_1 = range_1;
          tempReal = _true_range_1;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
       }
       /* Write the first DX output.
@@ -81059,15 +81093,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
@@ -81081,7 +81114,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
          if( prevTR > 0.0 ) {
@@ -81117,6 +81150,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -81124,6 +81158,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       int i = 0;
@@ -81157,6 +81195,7 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = (double)inHigh[today];
       prevLow = (double)inLow[today];
@@ -81170,11 +81209,12 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.abs(prevHigh - prevClose);
@@ -81199,13 +81239,14 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -81218,7 +81259,7 @@ public final class Core {
          }
          _true_range_1 = range_1;
          tempReal = _true_range_1;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
       }
       if( prevTR > 0.0 ) {
@@ -81242,13 +81283,14 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -81261,7 +81303,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             minusDI = (100.0 * (prevMinusDM / prevTR));
@@ -81450,6 +81492,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevHigh;
       private double prevLow;
+      private double invPeriod;
       private double prevClose;
       private double prevMinusDM;
       private double prevPlusDM;
@@ -81500,6 +81543,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
+         this.invPeriod = other.invPeriod;
          this.prevClose = other.prevClose;
          this.prevMinusDM = other.prevMinusDM;
          this.prevPlusDM = other.prevPlusDM;
@@ -81555,6 +81599,10 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double minusSel = 0.0;
+         double plusSel = 0.0;
+         double minusDM1 = 0.0;
+         double plusDM1 = 0.0;
          double minusDI = 0.0;
          double plusDI = 0.0;
          double cur_outReal = 0.0;
@@ -81573,15 +81621,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / sp.optInTimePeriod;
-         prevPlusDM -= prevPlusDM / sp.optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * sp.invPeriod;
+         prevPlusDM -= prevPlusDM * sp.invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_0;
          double range_0 = prevHigh - prevLow;
@@ -81595,7 +81642,7 @@ public final class Core {
          }
          _true_range_0 = range_0;
          tempReal = _true_range_0;
-         prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
          prevClose = inClose;
          /* Calculate the DX. The value is rounded (see Wilder book). */
          if( prevTR > 0.0 ) {
@@ -81645,6 +81692,10 @@ public final class Core {
       double tempReal = 0.0;
       double diffP = 0.0;
       double diffM = 0.0;
+      double minusSel = 0.0;
+      double plusSel = 0.0;
+      double minusDM1 = 0.0;
+      double plusDM1 = 0.0;
       double minusDI = 0.0;
       double plusDI = 0.0;
       /* Calculate the prevMinusDM and prevPlusDM */
@@ -81656,15 +81707,14 @@ public final class Core {
       diffM = sp.prevLow - tempReal;
       /* Minus Delta */
       sp.prevLow = tempReal;
-      sp.prevMinusDM -= sp.prevMinusDM / sp.optInTimePeriod;
-      sp.prevPlusDM -= sp.prevPlusDM / sp.optInTimePeriod;
-      if( diffM > 0 && diffP < diffM ) {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp.prevMinusDM += diffM;
-      } else if( diffP > 0 && diffP > diffM ) {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp.prevPlusDM += diffP;
-      }
+      sp.prevMinusDM -= sp.prevMinusDM * sp.invPeriod;
+      sp.prevPlusDM -= sp.prevPlusDM * sp.invPeriod;
+      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      sp.prevMinusDM += minusDM1;
+      sp.prevPlusDM += plusDM1;
       /* Calculate the prevTR */
       double _true_range_1;
       double range_1 = sp.prevHigh - sp.prevLow;
@@ -81678,7 +81728,7 @@ public final class Core {
       }
       _true_range_1 = range_1;
       tempReal = _true_range_1;
-      sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
+      sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
       if( sp.prevTR > 0.0 ) {
@@ -81703,6 +81753,7 @@ public final class Core {
       int outIdx = 0;
       double prevHigh = 0;
       double prevLow = 0;
+      double invPeriod = 0;
       double prevClose = 0;
       double prevMinusDM = 0;
       double prevPlusDM = 0;
@@ -81710,6 +81761,10 @@ public final class Core {
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusSel = 0;
+      double plusSel = 0;
+      double minusDM1 = 0;
+      double plusDM1 = 0;
       double minusDI = 0;
       double plusDI = 0;
       int i = 0;
@@ -81858,6 +81913,12 @@ public final class Core {
       prevMinusDM = 0.0;
       prevPlusDM = 0.0;
       prevTR = 0.0;
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevHigh = inHigh[today];
       prevLow = inLow[today];
@@ -81873,13 +81934,16 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+          * directly, or testing the sign first, lets gcc thread the selects back into
+          * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+          */
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -81910,15 +81974,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
@@ -81932,7 +81995,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
       }
       /* Write the first DX output.
@@ -81970,15 +82033,14 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         prevMinusDM -= prevMinusDM / optInTimePeriod;
-         prevPlusDM -= prevPlusDM / optInTimePeriod;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         } else if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         prevMinusDM -= prevMinusDM * invPeriod;
+         prevPlusDM -= prevPlusDM * invPeriod;
+         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
+         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         prevMinusDM += minusDM1;
+         prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_4;
          double range_4 = prevHigh - prevLow;
@@ -81992,7 +82054,7 @@ public final class Core {
          }
          _true_range_4 = range_4;
          tempReal = _true_range_4;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
          if( prevTR > 0.0 ) {
@@ -82015,6 +82077,7 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevHigh = prevHigh;
       sp.prevLow = prevLow;
+      sp.invPeriod = invPeriod;
       sp.prevClose = prevClose;
       sp.prevMinusDM = prevMinusDM;
       sp.prevPlusDM = prevPlusDM;
@@ -129984,6 +130047,7 @@ public final class Core {
  *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
  *               fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
    /**
@@ -130030,11 +130094,13 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double prevClose = 0;
+      double invPeriod = 0;
       double prevMinusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -130208,6 +130274,12 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM and TR */
       today = startIdx;
       outBegIdx.value = today;
@@ -130228,10 +130300,15 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         }
+         /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffM itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM + minusDM1;
+         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -130263,13 +130340,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          /* Calculate the prevTR */
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
@@ -130283,7 +130358,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
       }
       /* Now start to write the output in
@@ -130313,13 +130388,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
@@ -130333,7 +130406,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( prevTR > 0.0 ) {
@@ -130361,11 +130434,13 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double prevClose = 0;
+      double invPeriod = 0;
       double prevMinusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -130432,6 +130507,7 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx;
       outBegIdx.value = today;
       prevMinusDM = 0.0;
@@ -130449,9 +130525,10 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM + minusDM1;
+         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -130476,11 +130553,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -130493,7 +130570,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
       }
       if( prevTR > 0.0 ) {
@@ -130510,11 +130587,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.abs(prevHigh - prevClose);
@@ -130527,7 +130604,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevMinusDM / prevTR));
@@ -130705,6 +130782,7 @@ public final class Core {
       private double prevHigh;
       private double prevLow;
       private double prevClose;
+      private double invPeriod;
       private double prevMinusDM;
       private double prevTR;
       private double cur_outReal;
@@ -130753,6 +130831,7 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
+         this.invPeriod = other.invPeriod;
          this.prevMinusDM = other.prevMinusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -130843,6 +130922,7 @@ public final class Core {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double minusDM1 = 0.0;
             double prevClose = sp.prevClose;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
@@ -130857,13 +130937,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * sp.invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
             /* Calculate the prevTR */
             double _true_range_1;
             double range_1 = prevHigh - prevLow;
@@ -130877,7 +130955,7 @@ public final class Core {
             }
             _true_range_1 = range_1;
             tempReal = _true_range_1;
-            prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
             prevClose = inClose;
             /* Calculate the DI. The value is rounded (see Wilder book). */
             if( prevTR > 0.0 ) {
@@ -130956,6 +131034,7 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double minusDM1 = 0.0;
          /* Calculate the prevMinusDM */
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
@@ -130965,13 +131044,11 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = sp.prevMinusDM - sp.prevMinusDM * sp.invPeriod;
+         sp.prevMinusDM = tempReal + minusDM1;
+         sp.prevMinusDM = (tempReal > sp.prevMinusDM) ? tempReal : sp.prevMinusDM;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = sp.prevHigh - sp.prevLow;
@@ -130985,7 +131062,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
+         sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( sp.prevTR > 0.0 ) {
@@ -131020,11 +131097,13 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double prevClose = 0;
+         double invPeriod = 0;
          double prevMinusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
          double diffP = 0;
          double diffM = 0;
+         double minusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -131189,6 +131268,7 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
+         sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -131200,11 +131280,13 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double prevClose = 0;
+         double invPeriod = 0;
          double prevMinusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
          double diffP = 0;
          double diffM = 0;
+         double minusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -131318,6 +131400,12 @@ public final class Core {
           */
          outIdx = 0;
          /* Trap the case where no smoothing is needed. */
+         /* The declaration order above sets invPeriod's place in the stream state,
+          * and that place is load-bearing: a layout that lets Update load it paired
+          * with a field the previous bar stored stalls every call. Re-measure Update
+          * in C and Rust before reordering those declarations.
+          */
+         invPeriod = 1.0 / (double)optInTimePeriod;
          /* Process the initial DM and TR */
          today = startIdx;
          outBegIdx.value = today;
@@ -131338,10 +131426,15 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM += diffM;
-            }
+            /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+             * first test and the max the second, as a non-positive delta cannot raise
+             * the sum. gcc keeps a branch if the select compares diffM itself or if a
+             * select, not the max, ends the step.
+             */
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM + minusDM1;
+            prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
             double _true_range_5;
             double range_5 = prevHigh - prevLow;
             double tmp_5 = Math.abs(prevHigh - prevClose);
@@ -131373,13 +131466,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
             /* Calculate the prevTR */
             double _true_range_6;
             double range_6 = prevHigh - prevLow;
@@ -131393,7 +131484,7 @@ public final class Core {
             }
             _true_range_6 = range_6;
             tempReal = _true_range_6;
-            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
          }
          /* Now start to write the output in
@@ -131423,13 +131514,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
             /* Calculate the prevTR */
             double _true_range_7;
             double range_7 = prevHigh - prevLow;
@@ -131443,7 +131532,7 @@ public final class Core {
             }
             _true_range_7 = range_7;
             tempReal = _true_range_7;
-            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
             if( prevTR > 0.0 ) {
@@ -131458,6 +131547,7 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
+         sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -131559,14 +131649,15 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  091326 MF,CC #411 Wilder step without a divide or a branch.
  */
 
    /**
@@ -131612,9 +131703,11 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevMinusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -131730,16 +131823,14 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               outReal[outIdx++] = diffM;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            outReal[outIdx++] = minusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
       outBegIdx.value = startIdx;
       prevMinusDM = 0.0;
@@ -131757,10 +131848,15 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         }
+         /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffM itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM + minusDM1;
+         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
@@ -131775,13 +131871,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       }
       /* Now start to write the output in
        * the caller provided outReal.
@@ -131798,13 +131892,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          outReal[outIdx++] = prevMinusDM;
       }
       outNBElement.value = outIdx;
@@ -131825,9 +131917,11 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevMinusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -131867,15 +131961,14 @@ public final class Core {
             tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               outReal[outIdx++] = diffM;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            outReal[outIdx++] = minusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       outBegIdx.value = startIdx;
       prevMinusDM = 0.0;
       today = startIdx - lookbackTotal;
@@ -131890,9 +131983,10 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM += diffM;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM + minusDM1;
+         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
       i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
       while( i-- != 0 ) {
@@ -131903,11 +131997,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       }
       outReal[0] = prevMinusDM;
       outIdx = 1;
@@ -131919,11 +132013,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else {
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          outReal[outIdx++] = prevMinusDM;
       }
       outNBElement.value = outIdx;
@@ -132079,6 +132173,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevHigh;
       private double prevLow;
+      private double invPeriod;
       private double prevMinusDM;
       private double cur_outReal;
       private int outRangeBegIdx;
@@ -132125,6 +132220,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
+         this.invPeriod = other.invPeriod;
          this.prevMinusDM = other.prevMinusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -132178,6 +132274,7 @@ public final class Core {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double minusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             tempReal = inHigh;
@@ -132188,16 +132285,14 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               cur_outReal = diffM;
-            } else {
-               cur_outReal = 0;
-            }
+            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            cur_outReal = minusDM1;
          } else {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double minusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             double prevMinusDM = sp.prevMinusDM;
@@ -132209,13 +132304,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * sp.invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
             cur_outReal = prevMinusDM;
          }
          return cur_outReal;
@@ -132253,6 +132346,7 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double minusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -132261,16 +132355,14 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.cur_outReal = diffM;
-         } else {
-            sp.cur_outReal = 0;
-         }
+         minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+         minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+         sp.cur_outReal = minusDM1;
       } else {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double minusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -132279,13 +132371,11 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM ) {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + diffM;
-         } else {
-            /* Case 1,3,5 and 7 */
-            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = sp.prevMinusDM - sp.prevMinusDM * sp.invPeriod;
+         sp.prevMinusDM = tempReal + minusDM1;
+         sp.prevMinusDM = (tempReal > sp.prevMinusDM) ? tempReal : sp.prevMinusDM;
          sp.cur_outReal = sp.prevMinusDM;
       }
    }
@@ -132314,9 +132404,11 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevMinusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double minusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -132420,18 +132512,16 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               outReal[outIdx++ * outStride] = diffM;
-            } else {
-               outReal[outIdx++ * outStride] = 0;
-            }
+            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            outReal[outIdx++ * outStride] = minusDM1;
          }
          outNBElement.value = outIdx;
          /* Capture the live batch state into the handle. */
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -132442,9 +132532,11 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevMinusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double minusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -132531,6 +132623,7 @@ public final class Core {
           */
          outIdx = 0;
          /* Trap the case where no smoothing is needed. */
+         invPeriod = 1.0 / (double)optInTimePeriod;
          /* Process the initial DM */
          outBegIdx.value = startIdx;
          prevMinusDM = 0.0;
@@ -132548,10 +132641,15 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM += diffM;
-            }
+            /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+             * first test and the max the second, as a non-positive delta cannot raise
+             * the sum. gcc keeps a branch if the select compares diffM itself or if a
+             * select, not the max, ends the step.
+             */
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM + minusDM1;
+            prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
@@ -132566,13 +132664,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          }
          /* Now start to write the output in
           * the caller provided outReal.
@@ -132589,13 +132685,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffM > 0 && diffP < diffM ) {
-               /* Case 2 and 4: +DM=0,-DM=diffM */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-            } else {
-               /* Case 1,3,5 and 7 */
-               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
             outReal[outIdx++ * outStride] = prevMinusDM;
          }
          outNBElement.value = outIdx;
@@ -132603,6 +132697,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -137493,6 +137588,7 @@ public final class Core {
  *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
  *               fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
    /**
@@ -137539,11 +137635,13 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double prevClose = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -137717,6 +137815,12 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM and TR */
       today = startIdx;
       outBegIdx.value = today;
@@ -137737,10 +137841,15 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffP itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -137772,13 +137881,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          /* Calculate the prevTR */
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
@@ -137792,7 +137899,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
       }
       /* Now start to write the output in
@@ -137822,13 +137929,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
@@ -137842,7 +137947,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( prevTR > 0.0 ) {
@@ -137870,11 +137975,13 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double prevClose = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -137941,6 +138048,7 @@ public final class Core {
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx;
       outBegIdx.value = today;
       prevPlusDM = 0.0;
@@ -137958,9 +138066,10 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          double _true_range_1;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.abs(prevHigh - prevClose);
@@ -137985,11 +138094,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          double _true_range_2;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.abs(prevHigh - prevClose);
@@ -138002,7 +138111,7 @@ public final class Core {
          }
          _true_range_2 = range_2;
          tempReal = _true_range_2;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
       }
       if( prevTR > 0.0 ) {
@@ -138019,11 +138128,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          double _true_range_3;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.abs(prevHigh - prevClose);
@@ -138036,7 +138145,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+         prevTR = prevTR - prevTR * invPeriod + tempReal;
          prevClose = (double)inClose[today];
          if( prevTR > 0.0 ) {
             outReal[outIdx++] = (100.0 * (prevPlusDM / prevTR));
@@ -138214,6 +138323,7 @@ public final class Core {
       private double prevHigh;
       private double prevLow;
       private double prevClose;
+      private double invPeriod;
       private double prevPlusDM;
       private double prevTR;
       private double cur_outReal;
@@ -138262,6 +138372,7 @@ public final class Core {
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
          this.prevClose = other.prevClose;
+         this.invPeriod = other.invPeriod;
          this.prevPlusDM = other.prevPlusDM;
          this.prevTR = other.prevTR;
          this.cur_outReal = other.cur_outReal;
@@ -138352,6 +138463,7 @@ public final class Core {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double plusDM1 = 0.0;
             double prevClose = sp.prevClose;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
@@ -138366,13 +138478,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * sp.invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             /* Calculate the prevTR */
             double _true_range_1;
             double range_1 = prevHigh - prevLow;
@@ -138386,7 +138496,7 @@ public final class Core {
             }
             _true_range_1 = range_1;
             tempReal = _true_range_1;
-            prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
             prevClose = inClose;
             /* Calculate the DI. The value is rounded (see Wilder book). */
             if( prevTR > 0.0 ) {
@@ -138465,6 +138575,7 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double plusDM1 = 0.0;
          /* Calculate the prevPlusDM */
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
@@ -138474,13 +138585,11 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = sp.prevPlusDM - sp.prevPlusDM * sp.invPeriod;
+         sp.prevPlusDM = tempReal + plusDM1;
+         sp.prevPlusDM = (tempReal > sp.prevPlusDM) ? tempReal : sp.prevPlusDM;
          /* Calculate the prevTR */
          double _true_range_3;
          double range_3 = sp.prevHigh - sp.prevLow;
@@ -138494,7 +138603,7 @@ public final class Core {
          }
          _true_range_3 = range_3;
          tempReal = _true_range_3;
-         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
+         sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
          if( sp.prevTR > 0.0 ) {
@@ -138529,11 +138638,13 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double prevClose = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -138698,6 +138809,7 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -138709,11 +138821,13 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double prevClose = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -138827,6 +138941,12 @@ public final class Core {
           */
          outIdx = 0;
          /* Trap the case where no smoothing is needed. */
+         /* The declaration order above sets invPeriod's place in the stream state,
+          * and that place is load-bearing: a layout that lets Update load it paired
+          * with a field the previous bar stored stalls every call. Re-measure Update
+          * in C and Rust before reordering those declarations.
+          */
+         invPeriod = 1.0 / (double)optInTimePeriod;
          /* Process the initial DM and TR */
          today = startIdx;
          outBegIdx.value = today;
@@ -138847,10 +138967,15 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM += diffP;
-            }
+            /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+             * first test and the max the second, as a non-positive delta cannot raise
+             * the sum. gcc keeps a branch if the select compares diffP itself or if a
+             * select, not the max, ends the step.
+             */
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM + plusDM1;
+            prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
             double _true_range_5;
             double range_5 = prevHigh - prevLow;
             double tmp_5 = Math.abs(prevHigh - prevClose);
@@ -138882,13 +139007,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             /* Calculate the prevTR */
             double _true_range_6;
             double range_6 = prevHigh - prevLow;
@@ -138902,7 +139025,7 @@ public final class Core {
             }
             _true_range_6 = range_6;
             tempReal = _true_range_6;
-            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
          }
          /* Now start to write the output in
@@ -138932,13 +139055,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             /* Calculate the prevTR */
             double _true_range_7;
             double range_7 = prevHigh - prevLow;
@@ -138952,7 +139073,7 @@ public final class Core {
             }
             _true_range_7 = range_7;
             tempReal = _true_range_7;
-            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
             if( prevTR > 0.0 ) {
@@ -138967,6 +139088,7 @@ public final class Core {
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
          sp.prevClose = prevClose;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -139069,6 +139191,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -139077,6 +139200,7 @@ public final class Core {
  *  010802 MF     Template creation.
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
+ *  091326 MF,CC  #411 Wilder step without a divide or a branch.
  */
 
    /**
@@ -139122,9 +139246,11 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -139240,16 +139366,14 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               outReal[outIdx++] = diffP;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++] = plusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
       outBegIdx.value = startIdx;
       prevPlusDM = 0.0;
@@ -139267,10 +139391,15 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffP itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
@@ -139285,13 +139414,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       }
       /* Now start to write the output in
        * the caller provided outReal.
@@ -139308,13 +139435,11 @@ public final class Core {
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          outReal[outIdx++] = prevPlusDM;
       }
       outNBElement.value = outIdx;
@@ -139335,9 +139460,11 @@ public final class Core {
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -139377,15 +139504,14 @@ public final class Core {
             tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               outReal[outIdx++] = diffP;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++] = plusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       outBegIdx.value = startIdx;
       prevPlusDM = 0.0;
       today = startIdx - lookbackTotal;
@@ -139400,9 +139526,10 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
       i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
       while( i-- != 0 ) {
@@ -139413,11 +139540,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       }
       outReal[0] = prevPlusDM;
       outIdx = 1;
@@ -139429,11 +139556,11 @@ public final class Core {
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          outReal[outIdx++] = prevPlusDM;
       }
       outNBElement.value = outIdx;
@@ -139589,6 +139716,7 @@ public final class Core {
       private int optInTimePeriod;
       private double prevHigh;
       private double prevLow;
+      private double invPeriod;
       private double prevPlusDM;
       private double cur_outReal;
       private int outRangeBegIdx;
@@ -139635,6 +139763,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
+         this.invPeriod = other.invPeriod;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -139688,6 +139817,7 @@ public final class Core {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double plusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             tempReal = inHigh;
@@ -139698,16 +139828,14 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               cur_outReal = diffP;
-            } else {
-               cur_outReal = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            cur_outReal = plusDM1;
          } else {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double plusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             double prevPlusDM = sp.prevPlusDM;
@@ -139719,13 +139847,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * sp.invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             cur_outReal = prevPlusDM;
          }
          return cur_outReal;
@@ -139763,6 +139889,7 @@ public final class Core {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double plusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -139771,16 +139898,14 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.cur_outReal = diffP;
-         } else {
-            sp.cur_outReal = 0;
-         }
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         sp.cur_outReal = plusDM1;
       } else {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double plusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -139789,13 +139914,11 @@ public final class Core {
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = sp.prevPlusDM - sp.prevPlusDM * sp.invPeriod;
+         sp.prevPlusDM = tempReal + plusDM1;
+         sp.prevPlusDM = (tempReal > sp.prevPlusDM) ? tempReal : sp.prevPlusDM;
          sp.cur_outReal = sp.prevPlusDM;
       }
    }
@@ -139824,9 +139947,11 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -139930,18 +140055,16 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               outReal[outIdx++ * outStride] = diffP;
-            } else {
-               outReal[outIdx++ * outStride] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++ * outStride] = plusDM1;
          }
          outNBElement.value = outIdx;
          /* Capture the live batch state into the handle. */
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -139952,9 +140075,11 @@ public final class Core {
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -140041,6 +140166,7 @@ public final class Core {
           */
          outIdx = 0;
          /* Trap the case where no smoothing is needed. */
+         invPeriod = 1.0 / (double)optInTimePeriod;
          /* Process the initial DM */
          outBegIdx.value = startIdx;
          prevPlusDM = 0.0;
@@ -140058,10 +140184,15 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM += diffP;
-            }
+            /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+             * first test and the max the second, as a non-positive delta cannot raise
+             * the sum. gcc keeps a branch if the select compares diffP itself or if a
+             * select, not the max, ends the step.
+             */
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM + plusDM1;
+            prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
@@ -140076,13 +140207,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          }
          /* Now start to write the output in
           * the caller provided outReal.
@@ -140099,13 +140228,11 @@ public final class Core {
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             outReal[outIdx++ * outStride] = prevPlusDM;
          }
          outNBElement.value = outIdx;
@@ -140113,6 +140240,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;

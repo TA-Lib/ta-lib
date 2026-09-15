@@ -62,6 +62,7 @@
  *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
  *               fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
 // Import types from parent module
@@ -139,11 +140,13 @@ impl Core {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevMinusDM: f64 = 0.0_f64;
         let mut prevTR: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
+        let mut minusDM1: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         //
         // The DM1 (one period) is base on the largest part of
@@ -305,6 +308,11 @@ impl Core {
             (*outNBElement) = outIdx;
             return RetCode::Success;
         }
+        // The declaration order above sets invPeriod's place in the stream state,
+        // and that place is load-bearing: a layout that lets Update load it paired
+        // with a field the previous bar stored stalls every call. Re-measure Update
+        // in C and Rust before reordering those declarations.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Process the initial DM and TR
         today = startIdx;
         (*outBegIdx) = today;
@@ -325,10 +333,14 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffM > 0_f64 && diffP < diffM {
-                // Case 2 and 4: +DM=0,-DM=diffM
-                prevMinusDM += diffM;
-            }
+            // -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+            // first test and the max the second, as a non-positive delta cannot raise
+            // the sum. gcc keeps a branch if the select compares diffM itself or if a
+            // select, not the max, ends the step.
+            tempReal = diffM - diffP;
+            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+            tempReal = prevMinusDM + minusDM1;
+            prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
             let mut _true_range_1: f64;
             let mut range_1: f64 = prevHigh - prevLow;
             let mut tmp_1: f64 = (prevHigh - prevClose).abs();
@@ -359,13 +371,11 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffM > 0_f64 && diffP < diffM {
-                // Case 2 and 4: +DM=0,-DM=diffM
-                prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64) + diffM;
-            } else {
-                // Case 1,3,5 and 7
-                prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64);
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
             // Calculate the prevTR
             let mut _true_range_2: f64;
             let mut range_2: f64 = prevHigh - prevLow;
@@ -379,7 +389,7 @@ impl Core {
             }
             _true_range_2 = range_2;
             tempReal = _true_range_2;
-            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
         }
         // Now start to write the output in
@@ -407,13 +417,11 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffM > 0_f64 && diffP < diffM {
-                // Case 2 and 4: +DM=0,-DM=diffM
-                prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64) + diffM;
-            } else {
-                // Case 1,3,5 and 7
-                prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64);
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+            tempReal = prevMinusDM - prevMinusDM * invPeriod;
+            prevMinusDM = tempReal + minusDM1;
+            prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
             // Calculate the prevTR
             let mut _true_range_3: f64;
             let mut range_3: f64 = prevHigh - prevLow;
@@ -427,7 +435,7 @@ impl Core {
             }
             _true_range_3 = range_3;
             tempReal = _true_range_3;
-            prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+            prevTR = prevTR - prevTR * invPeriod + tempReal;
             prevClose = inClose[today];
             // Calculate the DI. The value is rounded (see Wilder book).
             if prevTR > 0.0 {
@@ -586,6 +594,7 @@ struct MinusDiStreamState {
     prevHigh: f64,
     prevLow: f64,
     prevClose: f64,
+    invPeriod: f64,
     prevMinusDM: f64,
     prevTR: f64,
     cur_outReal: f64,
@@ -638,6 +647,7 @@ impl Core {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut minusDM1: f64 = 0.0_f64;
             // Calculate the prevMinusDM
             tempReal = inHigh;
             diffP = tempReal - sp.prevHigh;
@@ -647,13 +657,11 @@ impl Core {
             diffM = sp.prevLow - tempReal;
             // Minus Delta
             sp.prevLow = tempReal;
-            if diffM > 0_f64 && diffP < diffM {
-                // Case 2 and 4: +DM=0,-DM=diffM
-                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((sp.optInTimePeriod) as f64) + diffM;
-            } else {
-                // Case 1,3,5 and 7
-                sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / ((sp.optInTimePeriod) as f64);
-            }
+            tempReal = diffM - diffP;
+            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+            tempReal = sp.prevMinusDM - sp.prevMinusDM * sp.invPeriod;
+            sp.prevMinusDM = tempReal + minusDM1;
+            sp.prevMinusDM = (if tempReal > sp.prevMinusDM { tempReal } else { sp.prevMinusDM });
             // Calculate the prevTR
             let mut _true_range_1: f64;
             let mut range_1: f64 = sp.prevHigh - sp.prevLow;
@@ -667,7 +675,7 @@ impl Core {
             }
             _true_range_1 = range_1;
             tempReal = _true_range_1;
-            sp.prevTR = sp.prevTR - sp.prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+            sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
             sp.prevClose = inClose;
             // Calculate the DI. The value is rounded (see Wilder book).
             if sp.prevTR > 0.0 {
@@ -715,11 +723,13 @@ impl Core {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut prevClose: f64 = 0.0_f64;
+            let mut invPeriod: f64 = 0.0_f64;
             let mut prevMinusDM: f64 = 0.0_f64;
             let mut prevTR: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut minusDM1: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             //
             // The DM1 (one period) is base on the largest part of
@@ -882,6 +892,7 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevClose,
+                invPeriod,
                 prevMinusDM,
                 prevTR,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -894,11 +905,13 @@ impl Core {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut prevClose: f64 = 0.0_f64;
+            let mut invPeriod: f64 = 0.0_f64;
             let mut prevMinusDM: f64 = 0.0_f64;
             let mut prevTR: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut minusDM1: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             //
             // The DM1 (one period) is base on the largest part of
@@ -1009,6 +1022,11 @@ impl Core {
             // in the outReal.
             outIdx = 0;
             // Trap the case where no smoothing is needed.
+            // The declaration order above sets invPeriod's place in the stream state,
+            // and that place is load-bearing: a layout that lets Update load it paired
+            // with a field the previous bar stored stalls every call. Re-measure Update
+            // in C and Rust before reordering those declarations.
+            invPeriod = 1.0 / (optInTimePeriod as f64);
             // Process the initial DM and TR
             today = startIdx;
             (*outBegIdx) = today;
@@ -1029,10 +1047,14 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffM > 0_f64 && diffP < diffM {
-                    // Case 2 and 4: +DM=0,-DM=diffM
-                    prevMinusDM += diffM;
-                }
+                // -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+                // first test and the max the second, as a non-positive delta cannot raise
+                // the sum. gcc keeps a branch if the select compares diffM itself or if a
+                // select, not the max, ends the step.
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM + minusDM1;
+                prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
                 let mut _true_range_3: f64;
                 let mut range_3: f64 = prevHigh - prevLow;
                 let mut tmp_3: f64 = (prevHigh - prevClose).abs();
@@ -1063,13 +1085,11 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffM > 0_f64 && diffP < diffM {
-                    // Case 2 and 4: +DM=0,-DM=diffM
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64) + diffM;
-                } else {
-                    // Case 1,3,5 and 7
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64);
-                }
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM - prevMinusDM * invPeriod;
+                prevMinusDM = tempReal + minusDM1;
+                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
                 // Calculate the prevTR
                 let mut _true_range_4: f64;
                 let mut range_4: f64 = prevHigh - prevLow;
@@ -1083,7 +1103,7 @@ impl Core {
                 }
                 _true_range_4 = range_4;
                 tempReal = _true_range_4;
-                prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+                prevTR = prevTR - prevTR * invPeriod + tempReal;
                 prevClose = inClose[today];
             }
             // Now start to write the output in
@@ -1111,13 +1131,11 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffM > 0_f64 && diffP < diffM {
-                    // Case 2 and 4: +DM=0,-DM=diffM
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64) + diffM;
-                } else {
-                    // Case 1,3,5 and 7
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((optInTimePeriod) as f64);
-                }
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM - prevMinusDM * invPeriod;
+                prevMinusDM = tempReal + minusDM1;
+                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
                 // Calculate the prevTR
                 let mut _true_range_5: f64;
                 let mut range_5: f64 = prevHigh - prevLow;
@@ -1131,7 +1149,7 @@ impl Core {
                 }
                 _true_range_5 = range_5;
                 tempReal = _true_range_5;
-                prevTR = prevTR - prevTR / ((optInTimePeriod) as f64) + tempReal;
+                prevTR = prevTR - prevTR * invPeriod + tempReal;
                 prevClose = inClose[today];
                 // Calculate the DI. The value is rounded (see Wilder book).
                 if prevTR > 0.0 {
@@ -1148,6 +1166,7 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevClose,
+                invPeriod,
                 prevMinusDM,
                 prevTR,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -1370,6 +1389,7 @@ impl MinusDiStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut minusDM1: f64 = 0.0_f64;
                 let mut prevClose = sp.prevClose;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
@@ -1384,13 +1404,11 @@ impl MinusDiStream {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffM > 0_f64 && diffP < diffM {
-                    // Case 2 and 4: +DM=0,-DM=diffM
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64) + diffM;
-                } else {
-                    // Case 1,3,5 and 7
-                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64);
-                }
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM - prevMinusDM * sp.invPeriod;
+                prevMinusDM = tempReal + minusDM1;
+                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
                 // Calculate the prevTR
                 let mut _true_range_7: f64;
                 let mut range_7: f64 = prevHigh - prevLow;
@@ -1404,7 +1422,7 @@ impl MinusDiStream {
                 }
                 _true_range_7 = range_7;
                 tempReal = _true_range_7;
-                prevTR = prevTR - prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+                prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
                 prevClose = inClose;
                 // Calculate the DI. The value is rounded (see Wilder book).
                 if prevTR > 0.0 {

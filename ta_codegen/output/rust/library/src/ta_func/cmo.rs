@@ -57,6 +57,7 @@
  *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
+ *  091326 MF,CC   #411 Wilder step without a divide or a branch.
  */
 
 // Import types from parent module
@@ -126,8 +127,10 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut gainDelta: f64 = 0.0_f64;
         let mut prevGain: f64 = 0.0_f64;
         let mut prevLoss: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
@@ -163,6 +166,11 @@ impl Core {
             }
             return RetCode::Success;
         }
+        // The declaration order above sets invPeriod's place in the stream state,
+        // and that place is load-bearing: a layout that lets Update load it paired
+        // with a field the previous bar stored stalls every call. Re-measure Update
+        // in C and Rust before reordering those declarations.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Accumulate Wilder's "Average Gain" and "Average Loss"
         // among the initial period.
         today = startIdx - lookbackTotal;
@@ -176,18 +184,19 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
             i -= 1;
         }
         // Subsequent prevLoss and prevGain are smoothed
-        // using the previous values (Wilder's approach).
-        //  1) Multiply the previous by 'period-1'.
-        //  2) Add today value.
-        //  3) Divide by 'period'.
+        // using the previous values (Wilder's approach):
+        //    prev += (today - prev) / 'period'
+        // gainDelta - tempValue2 is the exact loss delta for every finite
+        // tempValue2, so both accumulators step without a branch. Keep the step a
+        // difference of two products: prev - (prev - today)*k lets the zero arm fold
+        // to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+        // becomes a fused multiply-add.
         prevLoss /= ((optInTimePeriod) as f64);
         prevGain /= ((optInTimePeriod) as f64);
         // Often documentation present the RSI calculation as follow:
@@ -219,15 +228,9 @@ impl Core {
                 tempValue1 = inReal[today];
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                prevLoss *= ((optInTimePeriod - 1) as f64);
-                prevGain *= ((optInTimePeriod - 1) as f64);
-                if tempValue2 < 0_f64 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                prevLoss /= ((optInTimePeriod) as f64);
-                prevGain /= ((optInTimePeriod) as f64);
+                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+                prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
                 today += 1;
             }
         }
@@ -237,15 +240,9 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= ((optInTimePeriod - 1) as f64);
-            prevGain *= ((optInTimePeriod - 1) as f64);
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= ((optInTimePeriod) as f64);
-            prevGain /= ((optInTimePeriod) as f64);
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 outReal[outIdx] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -382,6 +379,7 @@ struct CmoStreamState {
     optInTimePeriod: i32,
     prevGain: f64,
     prevLoss: f64,
+    invPeriod: f64,
     prevValue: f64,
     cur_outReal: f64,
 }
@@ -393,6 +391,7 @@ struct CmoStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn cmo_step_impl(sp: &mut CmoStreamState, inReal: f64, outReal: &mut f64) {
+        let mut gainDelta: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -403,15 +402,9 @@ impl Core {
         tempValue1 = inReal;
         tempValue2 = tempValue1 - sp.prevValue;
         sp.prevValue = tempValue1;
-        sp.prevLoss *= ((sp.optInTimePeriod - 1) as f64);
-        sp.prevGain *= ((sp.optInTimePeriod - 1) as f64);
-        if tempValue2 < 0_f64 {
-            sp.prevLoss -= tempValue2;
-        } else {
-            sp.prevGain += tempValue2;
-        }
-        sp.prevLoss /= ((sp.optInTimePeriod) as f64);
-        sp.prevGain /= ((sp.optInTimePeriod) as f64);
+        gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+        sp.prevGain += gainDelta * sp.invPeriod - sp.prevGain * sp.invPeriod;
+        sp.prevLoss += (gainDelta - tempValue2) * sp.invPeriod - sp.prevLoss * sp.invPeriod;
         tempValue1 = sp.prevGain + sp.prevLoss;
         if tempValue1 > 0.0 {
             (*outReal) = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
@@ -458,6 +451,7 @@ impl Core {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
+                invPeriod: 0.0_f64,
                 prevValue: 0.0_f64,
             };
             (*outBegIdx) = fillLb;
@@ -477,8 +471,10 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut gainDelta: f64 = 0.0_f64;
         let mut prevGain: f64 = 0.0_f64;
         let mut prevLoss: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevValue: f64 = 0.0_f64;
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
@@ -495,6 +491,11 @@ impl Core {
         }
         outIdx = 0;
         // Index into the output.
+        // The declaration order above sets invPeriod's place in the stream state,
+        // and that place is load-bearing: a layout that lets Update load it paired
+        // with a field the previous bar stored stalls every call. Re-measure Update
+        // in C and Rust before reordering those declarations.
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Accumulate Wilder's "Average Gain" and "Average Loss"
         // among the initial period.
         today = startIdx - lookbackTotal;
@@ -508,18 +509,19 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta;
+            prevLoss += gainDelta - tempValue2;
             i -= 1;
         }
         // Subsequent prevLoss and prevGain are smoothed
-        // using the previous values (Wilder's approach).
-        //  1) Multiply the previous by 'period-1'.
-        //  2) Add today value.
-        //  3) Divide by 'period'.
+        // using the previous values (Wilder's approach):
+        //    prev += (today - prev) / 'period'
+        // gainDelta - tempValue2 is the exact loss delta for every finite
+        // tempValue2, so both accumulators step without a branch. Keep the step a
+        // difference of two products: prev - (prev - today)*k lets the zero arm fold
+        // to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+        // becomes a fused multiply-add.
         prevLoss /= ((optInTimePeriod) as f64);
         prevGain /= ((optInTimePeriod) as f64);
         // Often documentation present the RSI calculation as follow:
@@ -549,15 +551,9 @@ impl Core {
                 tempValue1 = inReal[today];
                 tempValue2 = tempValue1 - prevValue;
                 prevValue = tempValue1;
-                prevLoss *= ((optInTimePeriod - 1) as f64);
-                prevGain *= ((optInTimePeriod - 1) as f64);
-                if tempValue2 < 0_f64 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                prevLoss /= ((optInTimePeriod) as f64);
-                prevGain /= ((optInTimePeriod) as f64);
+                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+                prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
                 today += 1;
             }
         }
@@ -567,15 +563,9 @@ impl Core {
             tempValue1 = inReal[{ let _v = today; today += 1; _v }];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= ((optInTimePeriod - 1) as f64);
-            prevGain *= ((optInTimePeriod - 1) as f64);
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= ((optInTimePeriod) as f64);
-            prevGain /= ((optInTimePeriod) as f64);
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -591,6 +581,7 @@ impl Core {
             optInTimePeriod,
             prevGain,
             prevLoss,
+            invPeriod,
             prevValue,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
@@ -760,6 +751,7 @@ impl CmoStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut gainDelta: f64 = 0.0_f64;
             let mut tempValue1: f64 = 0.0_f64;
             let mut tempValue2: f64 = 0.0_f64;
             let mut prevGain = sp.prevGain;
@@ -772,15 +764,9 @@ impl CmoStream {
             tempValue1 = inReal;
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= ((sp.optInTimePeriod - 1) as f64);
-            prevGain *= ((sp.optInTimePeriod - 1) as f64);
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= ((sp.optInTimePeriod) as f64);
-            prevGain /= ((sp.optInTimePeriod) as f64);
+            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+            prevGain += gainDelta * sp.invPeriod - prevGain * sp.invPeriod;
+            prevLoss += (gainDelta - tempValue2) * sp.invPeriod - prevLoss * sp.invPeriod;
             tempValue1 = prevGain + prevLoss;
             if tempValue1 > 0.0 {
                 (*outReal) = 100.0 * ((prevGain - prevLoss) / tempValue1);

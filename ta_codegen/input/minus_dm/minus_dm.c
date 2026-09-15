@@ -3,14 +3,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  091326 MF,CC #411 Wilder step without a divide or a branch.
  *
  */
 
@@ -31,8 +32,8 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
 {
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, tempReal;
-   double prevMinusDM;
-   double diffP, diffM;
+   double invPeriod, prevMinusDM;
+   double diffP, diffM, minusDM1;
    int i;
 
    /*
@@ -142,18 +143,16 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
          tempReal = inLow[today];
          diffM    = prevLow-tempReal;   /* Minus Delta */
          prevLow  = tempReal;
-         if( (diffM > 0) && (diffP < diffM) )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            outReal[outIdx++] = diffM;
-         }
-         else
-            outReal[outIdx++] = 0;
+         minusDM1 = diffM > 0.0 ? diffM : 0.0;
+         minusDM1 = diffP < diffM ? minusDM1 : 0.0;
+         outReal[outIdx++] = minusDM1;
       }
 
       *outNBElement = outIdx;
       return TA_SUCCESS;
    }
+
+   invPeriod = 1.0 / (double)optInTimePeriod;
 
    /* Process the initial DM */
    *outBegIdx = startIdx;
@@ -173,11 +172,15 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
 
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
+      /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+       * first test and the max the second, as a non-positive delta cannot raise
+       * the sum. gcc keeps a branch if the select compares diffM itself or if a
+       * select, not the max, ends the step.
+       */
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM + minusDM1;
+      prevMinusDM = prevMinusDM > tempReal ? prevMinusDM : tempReal;
    }
 
    /* Process subsequent DM */
@@ -193,16 +196,11 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
-      }
-      else
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM - (prevMinusDM*invPeriod);
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = tempReal > prevMinusDM ? tempReal : prevMinusDM;
    }
 
    /* Now start to write the output in
@@ -221,16 +219,11 @@ TA_RetCode minus_dm(int startIdx, int endIdx,
       diffM    = prevLow-tempReal;  /* Minus Delta */
       prevLow  = tempReal;
 
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
-      }
-      else
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM - (prevMinusDM*invPeriod);
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = tempReal > prevMinusDM ? tempReal : prevMinusDM;
 
       outReal[outIdx++] = prevMinusDM;
    }

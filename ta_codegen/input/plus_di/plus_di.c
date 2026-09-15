@@ -20,6 +20,7 @@
  *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
  *               fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
 int plus_di_lookback(int optInTimePeriod)
@@ -40,8 +41,8 @@ TA_RetCode plus_di(int startIdx, int endIdx,
 {
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, prevClose;
-   double prevPlusDM, prevTR;
-   double tempReal, diffP, diffM;
+   double invPeriod, prevPlusDM, prevTR;
+   double tempReal, diffP, diffM, plusDM1;
 
    int i;
 
@@ -201,6 +202,13 @@ TA_RetCode plus_di(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
+   /* The declaration order above sets invPeriod's place in the stream state,
+    * and that place is load-bearing: a layout that lets Update load it paired
+    * with a field the previous bar stored stalls every call. Re-measure Update
+    * in C and Rust before reordering those declarations.
+    */
+   invPeriod = 1.0 / (double)optInTimePeriod;
+
    /* Process the initial DM and TR */
    *outBegIdx = today = startIdx;
 
@@ -221,11 +229,15 @@ TA_RetCode plus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM += diffP;
-      }
+      /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+       * first test and the max the second, as a non-positive delta cannot raise
+       * the sum. gcc keeps a branch if the select compares diffP itself or if a
+       * select, not the max, ends the step.
+       */
+      tempReal = diffP - diffM;
+      plusDM1 = tempReal > 0.0 ? diffP : 0.0;
+      tempReal = prevPlusDM + plusDM1;
+      prevPlusDM = prevPlusDM > tempReal ? prevPlusDM : tempReal;
 
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
       prevTR += tempReal;
@@ -248,20 +260,15 @@ TA_RetCode plus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
-      }
-      else
-      {
-         /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = tempReal > 0.0 ? diffP : 0.0;
+      tempReal = prevPlusDM - (prevPlusDM*invPeriod);
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = tempReal > prevPlusDM ? tempReal : prevPlusDM;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
    }
 
@@ -291,20 +298,15 @@ TA_RetCode plus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod) + diffP;
-      }
-      else
-      {
-         /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - (prevPlusDM/optInTimePeriod);
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = tempReal > 0.0 ? diffP : 0.0;
+      tempReal = prevPlusDM - (prevPlusDM*invPeriod);
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = tempReal > prevPlusDM ? tempReal : prevPlusDM;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
 
       /* Calculate the DI. The value is rounded (see Wilder book). */

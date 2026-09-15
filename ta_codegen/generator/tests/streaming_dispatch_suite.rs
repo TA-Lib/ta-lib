@@ -1007,7 +1007,8 @@ fn test_c_minus_dm_dual_mode_stream_section() {
     );
     // Wilder smoothing lives in mode B only; the degenerate arm writes raw DM1.
     assert!(
-        c.contains("sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod"),
+        c.contains("tempReal = sp->prevMinusDM - sp->prevMinusDM * sp->invPeriod")
+            && c.contains("sp->prevMinusDM = tempReal + minusDM1"),
         "Wilder recurrence in mode B"
     );
     // OpenInternal selects the arm on the bare predicate (param is a local there).

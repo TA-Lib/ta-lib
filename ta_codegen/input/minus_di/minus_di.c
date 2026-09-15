@@ -20,6 +20,7 @@
  *  082326 MF,CC Fix #253. Test the true range exactly instead of against the
  *               fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 
 int minus_di_lookback(int optInTimePeriod)
@@ -40,8 +41,8 @@ TA_RetCode minus_di(int startIdx, int endIdx,
 {
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, prevClose;
-   double prevMinusDM, prevTR;
-   double tempReal, diffP, diffM;
+   double invPeriod, prevMinusDM, prevTR;
+   double tempReal, diffP, diffM, minusDM1;
 
    int i;
 
@@ -201,6 +202,13 @@ TA_RetCode minus_di(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
+   /* The declaration order above sets invPeriod's place in the stream state,
+    * and that place is load-bearing: a layout that lets Update load it paired
+    * with a field the previous bar stored stalls every call. Re-measure Update
+    * in C and Rust before reordering those declarations.
+    */
+   invPeriod = 1.0 / (double)optInTimePeriod;
+
    /* Process the initial DM and TR */
    *outBegIdx = today = startIdx;
 
@@ -221,11 +229,15 @@ TA_RetCode minus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
+      /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+       * first test and the max the second, as a non-positive delta cannot raise
+       * the sum. gcc keeps a branch if the select compares diffM itself or if a
+       * select, not the max, ends the step.
+       */
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM + minusDM1;
+      prevMinusDM = prevMinusDM > tempReal ? prevMinusDM : tempReal;
 
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
       prevTR += tempReal;
@@ -248,20 +260,15 @@ TA_RetCode minus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
-      }
-      else
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM - (prevMinusDM*invPeriod);
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = tempReal > prevMinusDM ? tempReal : prevMinusDM;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
    }
 
@@ -291,20 +298,15 @@ TA_RetCode minus_di(int startIdx, int endIdx,
       tempReal = inLow[today];
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod) + diffM;
-      }
-      else
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - (prevMinusDM/optInTimePeriod);
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = tempReal > 0.0 ? diffM : 0.0;
+      tempReal = prevMinusDM - (prevMinusDM*invPeriod);
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = tempReal > prevMinusDM ? tempReal : prevMinusDM;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
 
       /* Calculate the DI. The value is rounded (see Wilder book). */

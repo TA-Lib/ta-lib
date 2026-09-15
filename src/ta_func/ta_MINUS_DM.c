@@ -47,14 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  091326 MF,CC #411 Wilder step without a divide or a branch.
  */
 
 TA_LIB_API int TA_MINUS_DM_Lookback( int optInTimePeriod )
@@ -87,9 +88,11 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
    double prevHigh;
    double prevLow;
    double tempReal;
+   double invPeriod;
    double prevMinusDM;
    double diffP;
    double diffM;
+   double minusDM1;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -219,18 +222,14 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            outReal[outIdx++] = diffM;
-         } else 
-         {
-            outReal[outIdx++] = 0;
-         }
+         minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+         minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+         outReal[outIdx++] = minusDM1;
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    /* Process the initial DM */
    *outBegIdx= startIdx;
    prevMinusDM = 0.0;
@@ -249,11 +248,15 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
+      /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+       * first test and the max the second, as a non-positive delta cannot raise
+       * the sum. gcc keeps a branch if the select compares diffM itself or if a
+       * select, not the max, ends the step.
+       */
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM + minusDM1;
+      prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
    }
    /* Process subsequent DM */
    /* Skip the unstable period. */
@@ -269,15 +272,11 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-      } else 
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM - prevMinusDM * invPeriod;
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
    }
    /* Now start to write the output in
     * the caller provided outReal.
@@ -295,15 +294,11 @@ TA_LIB_API TA_RetCode TA_MINUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-      } else 
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM - prevMinusDM * invPeriod;
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       outReal[outIdx++] = prevMinusDM;
    }
    *outNBElement= outIdx;
@@ -325,9 +320,11 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
    double prevHigh;
    double prevLow;
    double tempReal;
+   double invPeriod;
    double prevMinusDM;
    double diffP;
    double diffM;
+   double minusDM1;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -381,17 +378,14 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            outReal[outIdx++] = diffM;
-         } else 
-         {
-            outReal[outIdx++] = 0;
-         }
+         minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+         minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+         outReal[outIdx++] = minusDM1;
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    *outBegIdx= startIdx;
    prevMinusDM = 0.0;
    today = startIdx - lookbackTotal;
@@ -407,10 +401,10 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         prevMinusDM += diffM;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM + minusDM1;
+      prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
    }
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_MINUS_DM,Minus_dm);
    while( i-- != 0 )
@@ -422,13 +416,11 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-      } else 
-      {
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM - prevMinusDM * invPeriod;
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
    }
    outReal[0] = prevMinusDM;
    outIdx = 1;
@@ -441,13 +433,11 @@ TA_RetCode TA_S_MINUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-      } else 
-      {
-         prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM - prevMinusDM * invPeriod;
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       outReal[outIdx++] = prevMinusDM;
    }
    *outNBElement= outIdx;
@@ -465,6 +455,7 @@ struct TA_MINUS_DM_Stream {
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
+   double invPeriod;
    double prevMinusDM;
 };
 
@@ -476,6 +467,7 @@ static void TA_MINUS_DM_StepImpl( struct TA_MINUS_DM_Stream *sp, double inHigh, 
       double tempReal;
       double diffP;
       double diffM;
+      double minusDM1;
 
       tempReal = inHigh;
       diffP = tempReal - sp->prevHigh;
@@ -485,14 +477,9 @@ static void TA_MINUS_DM_StepImpl( struct TA_MINUS_DM_Stream *sp, double inHigh, 
       diffM = sp->prevLow - tempReal;
       /* Minus Delta */
       sp->prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         *outReal= diffM;
-      } else 
-      {
-         *outReal= 0;
-      }
+      minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+      minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+      *outReal= minusDM1;
       sp->cur_outReal = *outReal;
    }
    else
@@ -500,6 +487,7 @@ static void TA_MINUS_DM_StepImpl( struct TA_MINUS_DM_Stream *sp, double inHigh, 
       double tempReal;
       double diffP;
       double diffM;
+      double minusDM1;
 
       tempReal = inHigh;
       diffP = tempReal - sp->prevHigh;
@@ -509,15 +497,11 @@ static void TA_MINUS_DM_StepImpl( struct TA_MINUS_DM_Stream *sp, double inHigh, 
       diffM = sp->prevLow - tempReal;
       /* Minus Delta */
       sp->prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod + diffM;
-      } else 
-      {
-         /* Case 1,3,5 and 7 */
-         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = sp->prevMinusDM - sp->prevMinusDM * sp->invPeriod;
+      sp->prevMinusDM = tempReal + minusDM1;
+      sp->prevMinusDM = (tempReal > sp->prevMinusDM) ? tempReal : sp->prevMinusDM;
       *outReal= sp->prevMinusDM;
       sp->cur_outReal = *outReal;
    }
@@ -558,6 +542,7 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
       double tempReal;
       double diffP;
       double diffM;
+      double minusDM1;
       /*
        * The DM1 (one period) is base on the largest part of
        * today's range that is outside of yesterdays range.
@@ -665,14 +650,9 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            outReal[outIdx++ * outStride] = diffM;
-         } else 
-         {
-            outReal[outIdx++ * outStride] = 0;
-         }
+         minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+         minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+         outReal[outIdx++ * outStride] = minusDM1;
       }
       *outNBElement= outIdx;
 
@@ -700,9 +680,11 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
       double prevHigh = 0.0;
       double prevLow = 0.0;
       double tempReal;
+      double invPeriod = 0.0;
       double prevMinusDM = 0.0;
       double diffP;
       double diffM;
+      double minusDM1;
       int i;
       /*
        * The DM1 (one period) is base on the largest part of
@@ -793,6 +775,7 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
        */
       outIdx = 0;
       /* Trap the case where no smoothing is needed. */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
       *outBegIdx= startIdx;
       prevMinusDM = 0.0;
@@ -811,11 +794,15 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM += diffM;
-         }
+         /* -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffM itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM + minusDM1;
+         prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
@@ -831,15 +818,11 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else 
-         {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       }
       /* Now start to write the output in
        * the caller provided outReal.
@@ -857,15 +840,11 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffM > 0 && diffP < diffM )
-         {
-            /* Case 2 and 4: +DM=0,-DM=diffM */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
-         } else 
-         {
-            /* Case 1,3,5 and 7 */
-            prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
-         }
+         tempReal = diffM - diffP;
+         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         tempReal = prevMinusDM - prevMinusDM * invPeriod;
+         prevMinusDM = tempReal + minusDM1;
+         prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
          outReal[outIdx++ * outStride] = prevMinusDM;
       }
       *outNBElement= outIdx;
@@ -877,6 +856,7 @@ static TA_RetCode TA_MINUS_DM_OpenImpl( struct TA_MINUS_DM_Stream **stream, cons
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevHigh = prevHigh;
       sp->prevLow = prevLow;
+      sp->invPeriod = invPeriod;
       sp->prevMinusDM = prevMinusDM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
@@ -954,6 +934,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double
       double tempReal;
       double diffP;
       double diffM;
+      double minusDM1;
       double prevHigh;
       double prevLow;
 
@@ -967,20 +948,16 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         *outReal= diffM;
-      } else 
-      {
-         *outReal= 0;
-      }
+      minusDM1 = (diffM > 0.0) ? diffM : 0.0;
+      minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+      *outReal= minusDM1;
    }
    else
    {
       double tempReal;
       double diffP;
       double diffM;
+      double minusDM1;
       double prevHigh;
       double prevLow;
       double prevMinusDM;
@@ -996,15 +973,11 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffM > 0 && diffP < diffM )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM = prevMinusDM - prevMinusDM / sp->optInTimePeriod + diffM;
-      } else 
-      {
-         /* Case 1,3,5 and 7 */
-         prevMinusDM = prevMinusDM - prevMinusDM / sp->optInTimePeriod;
-      }
+      tempReal = diffM - diffP;
+      minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+      tempReal = prevMinusDM - prevMinusDM * sp->invPeriod;
+      prevMinusDM = tempReal + minusDM1;
+      prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
       *outReal= prevMinusDM;
    }
    return TA_SUCCESS;

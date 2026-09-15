@@ -18,6 +18,7 @@
  *  082326 MF,CC Fix #253. Test the true-range sum exactly instead of against
  *               the fixed TA_IS_ZERO band, which zeroed the index for any
  *               instrument quoted small enough to fall under it.
+ *  091326 MF,CC #411 Wilder steps without a divide or a branch.
  */
 int dx_lookback(int optInTimePeriod)
 {
@@ -36,9 +37,10 @@ TA_RetCode dx(int startIdx, int endIdx,
    double outReal[])
 {
    int today, lookbackTotal, outIdx;
-   double prevHigh, prevLow, prevClose;
+   double prevHigh, prevLow, invPeriod, prevClose;
    double prevMinusDM, prevPlusDM, prevTR;
    double tempReal, diffP, diffM;
+   double minusSel, plusSel, minusDM1, plusDM1;
    double minusDI, plusDI;
 
    int i;
@@ -171,6 +173,12 @@ TA_RetCode dx(int startIdx, int endIdx,
    prevMinusDM = 0.0;
    prevPlusDM  = 0.0;
    prevTR      = 0.0;
+   /* The declaration order above sets invPeriod's place in the stream state,
+    * and that place is load-bearing: a layout that lets Update load it paired
+    * with a field the previous bar stored stalls every call. Re-measure Update
+    * in C and Rust before reordering those declarations.
+    */
+   invPeriod   = 1.0 / (double)optInTimePeriod;
    today       = startIdx - lookbackTotal;
    prevHigh    = inHigh[today];
    prevLow     = inLow[today];
@@ -187,16 +195,16 @@ TA_RetCode dx(int startIdx, int endIdx,
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
 
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
-      else if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM += diffP;
-      }
+      /* Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+       * directly, or testing the sign first, lets gcc thread the selects back into
+       * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+       */
+      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+      plusSel  = (diffP - diffM > 0.0) ? diffP : 0.0;
+      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+      plusDM1  = (diffP > 0.0) ? plusSel  : 0.0;
+      prevMinusDM += minusDM1;
+      prevPlusDM  += plusDM1;
 
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
       prevTR += tempReal;
@@ -219,23 +227,19 @@ TA_RetCode dx(int startIdx, int endIdx,
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
 
-      prevMinusDM -= prevMinusDM/optInTimePeriod;
-      prevPlusDM  -= prevPlusDM/optInTimePeriod;
+      prevMinusDM -= prevMinusDM*invPeriod;
+      prevPlusDM  -= prevPlusDM*invPeriod;
 
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
-      else if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM += diffP;
-      }
+      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+      plusSel  = (diffP - diffM > 0.0) ? diffP : 0.0;
+      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+      plusDM1  = (diffP > 0.0) ? plusSel  : 0.0;
+      prevMinusDM += minusDM1;
+      prevPlusDM  += plusDM1;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
    }
 
@@ -276,23 +280,19 @@ TA_RetCode dx(int startIdx, int endIdx,
       diffM    = prevLow-tempReal;   /* Minus Delta */
       prevLow  = tempReal;
 
-      prevMinusDM -= prevMinusDM/optInTimePeriod;
-      prevPlusDM  -= prevPlusDM/optInTimePeriod;
+      prevMinusDM -= prevMinusDM*invPeriod;
+      prevPlusDM  -= prevPlusDM*invPeriod;
 
-      if( (diffM > 0) && (diffP < diffM) )
-      {
-         /* Case 2 and 4: +DM=0,-DM=diffM */
-         prevMinusDM += diffM;
-      }
-      else if( (diffP > 0) && (diffP > diffM) )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM += diffP;
-      }
+      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
+      plusSel  = (diffP - diffM > 0.0) ? diffP : 0.0;
+      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
+      plusDM1  = (diffP > 0.0) ? plusSel  : 0.0;
+      prevMinusDM += minusDM1;
+      prevPlusDM  += plusDM1;
 
       /* Calculate the prevTR */
       tempReal = ta_true_range(prevHigh, prevLow, prevClose);
-      prevTR = prevTR - (prevTR/optInTimePeriod) + tempReal;
+      prevTR = prevTR - (prevTR*invPeriod) + tempReal;
       prevClose = inClose[today];
 
       /* Calculate the DX. The value is rounded (see Wilder book). */

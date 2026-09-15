@@ -7,6 +7,16 @@ Just re-install to upgrade. Older versions are automatically removed.
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
 ## [0.8.2] Not Released Yet
+### Faster
+- ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
+
+### Changed
+- (#411) CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR optimization with some
+  floating-point re-ordering. At the default period, values move by at most about 1e-13 on
+  the 0-100 scale (a few 1e-15 relative for the DMs). CMO, ADX and ADXR move more at longer
+  periods. After thousands of identical prices the smoothed sums reach rounding residue, and
+  old and new values can then differ by tens of points (CMO by up to 100).
+
 ### Fixed
 - `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.

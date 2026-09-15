@@ -15,6 +15,7 @@
  *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
+ *  091326 MF,CC   #411 Wilder step without a divide or a branch.
  */
 
    /**
@@ -55,8 +56,10 @@
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -102,6 +105,12 @@
          }
          return RetCode.Success ;
       }
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -114,17 +123,18 @@
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       * using the previous values (Wilder's approach):
+       *    prev += (today - prev) / 'period'
+       * gainDelta - tempValue2 is the exact loss delta for every finite
+       * tempValue2, so both accumulators step without a branch. Keep the step a
+       * difference of two products: prev - (prev - today)*k lets the zero arm fold
+       * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+       * becomes a fused multiply-add.
        */
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -157,15 +167,9 @@
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -176,15 +180,9 @@
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -208,8 +206,10 @@
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -244,6 +244,7 @@
          }
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
       prevGain = 0.0;
@@ -253,11 +254,9 @@
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -273,15 +272,9 @@
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -289,15 +282,9 @@
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -453,6 +440,7 @@
       private int optInTimePeriod;
       private double prevGain;
       private double prevLoss;
+      private double invPeriod;
       private double prevValue;
       private double cur_outReal;
       private int outRangeBegIdx;
@@ -499,6 +487,7 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
          this.prevLoss = other.prevLoss;
+         this.invPeriod = other.invPeriod;
          this.prevValue = other.prevValue;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -547,6 +536,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CmoStream sp = this;
+         double gainDelta = 0.0;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
          double cur_outReal = 0.0;
@@ -560,15 +550,9 @@
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= sp.optInTimePeriod - 1;
-         prevGain *= sp.optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= sp.optInTimePeriod;
-         prevGain /= sp.optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * sp.invPeriod - prevGain * sp.invPeriod;
+         prevLoss += (gainDelta - tempValue2) * sp.invPeriod - prevLoss * sp.invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             cur_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -606,6 +590,7 @@
    }
    private void cmoStepImpl( CmoStream sp, double inReal )
    {
+      double gainDelta = 0.0;
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
       if( sp.optInTimePeriod == 1 ) {
@@ -615,15 +600,9 @@
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
-      sp.prevLoss *= sp.optInTimePeriod - 1;
-      sp.prevGain *= sp.optInTimePeriod - 1;
-      if( tempValue2 < 0 ) {
-         sp.prevLoss -= tempValue2;
-      } else {
-         sp.prevGain += tempValue2;
-      }
-      sp.prevLoss /= sp.optInTimePeriod;
-      sp.prevGain /= sp.optInTimePeriod;
+      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      sp.prevGain += gainDelta * sp.invPeriod - sp.prevGain * sp.invPeriod;
+      sp.prevLoss += (gainDelta - tempValue2) * sp.invPeriod - sp.prevLoss * sp.invPeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
       if( tempValue1 > 0.0 ) {
          sp.cur_outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
@@ -637,8 +616,10 @@
       int today = 0;
       int lookbackTotal = 0;
       int i = 0;
+      double gainDelta = 0;
       double prevGain = 0;
       double prevLoss = 0;
+      double invPeriod = 0;
       double prevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
@@ -669,6 +650,7 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
          sp.prevLoss = 0.0;
+         sp.invPeriod = 0.0;
          sp.prevValue = 0.0;
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
@@ -695,6 +677,12 @@
       }
       outIdx = 0;
       /* Index into the output. */
+      /* The declaration order above sets invPeriod's place in the stream state,
+       * and that place is load-bearing: a layout that lets Update load it paired
+       * with a field the previous bar stored stalls every call. Re-measure Update
+       * in C and Rust before reordering those declarations.
+       */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -707,17 +695,18 @@
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta;
+         prevLoss += gainDelta - tempValue2;
       }
       /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
+       * using the previous values (Wilder's approach):
+       *    prev += (today - prev) / 'period'
+       * gainDelta - tempValue2 is the exact loss delta for every finite
+       * tempValue2, so both accumulators step without a branch. Keep the step a
+       * difference of two products: prev - (prev - today)*k lets the zero arm fold
+       * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+       * becomes a fused multiply-add.
        */
       prevLoss /= optInTimePeriod;
       prevGain /= optInTimePeriod;
@@ -750,15 +739,9 @@
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 ) {
-               prevLoss -= tempValue2;
-            } else {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
+            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+            prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
          }
       }
@@ -769,15 +752,9 @@
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 ) {
-            prevLoss -= tempValue2;
-         } else {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         prevGain += gainDelta * invPeriod - prevGain * invPeriod;
+         prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
          if( tempValue1 > 0.0 ) {
             outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
@@ -791,6 +768,7 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevGain = prevGain;
       sp.prevLoss = prevLoss;
+      sp.invPeriod = invPeriod;
       sp.prevValue = prevValue;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

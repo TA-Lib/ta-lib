@@ -881,6 +881,7 @@ static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_St
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
    if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
@@ -3299,6 +3300,7 @@ static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_St
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
    if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
    return 0;
 }
@@ -3555,6 +3557,7 @@ static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Strea
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
    if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
@@ -4931,6 +4934,7 @@ static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
    if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
    return 0;
@@ -4946,6 +4950,7 @@ static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevMinusDM, b->prevMinusDM, z) ) { *w = "prevMinusDM"; return 1; }
    return 0;
 }
@@ -5073,6 +5078,7 @@ static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct T
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
    if( sv_xtier_ne(a->prevTR, b->prevTR, z) ) { *w = "prevTR"; return 1; }
    return 0;
@@ -5088,6 +5094,7 @@ static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct T
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevPlusDM, b->prevPlusDM, z) ) { *w = "prevPlusDM"; return 1; }
    return 0;
 }

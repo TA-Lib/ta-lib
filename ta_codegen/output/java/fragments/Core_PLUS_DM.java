@@ -4,6 +4,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -12,6 +13,7 @@
  *  010802 MF     Template creation.
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
+ *  091326 MF,CC  #411 Wilder step without a divide or a branch.
  */
 
    /**
@@ -57,9 +59,11 @@
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -175,16 +179,14 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               outReal[outIdx++] = diffP;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++] = plusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
       outBegIdx.value = startIdx;
       prevPlusDM = 0.0;
@@ -202,10 +204,15 @@
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffP itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
@@ -220,13 +227,11 @@
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       }
       /* Now start to write the output in
        * the caller provided outReal.
@@ -243,13 +248,11 @@
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          outReal[outIdx++] = prevPlusDM;
       }
       outNBElement.value = outIdx;
@@ -270,9 +273,11 @@
       double prevHigh = 0;
       double prevLow = 0;
       double tempReal = 0;
+      double invPeriod = 0;
       double prevPlusDM = 0;
       double diffP = 0;
       double diffM = 0;
+      double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -312,15 +317,14 @@
             tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               outReal[outIdx++] = diffP;
-            } else {
-               outReal[outIdx++] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++] = plusDM1;
          }
          outNBElement.value = outIdx;
          return RetCode.Success ;
       }
+      invPeriod = 1.0 / (double)optInTimePeriod;
       outBegIdx.value = startIdx;
       prevPlusDM = 0.0;
       today = startIdx - lookbackTotal;
@@ -335,9 +339,10 @@
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM += diffP;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
       i = this.unstablePeriod[FuncUnstId.PLUS_DM.ordinal()];
       while( i-- != 0 ) {
@@ -348,11 +353,11 @@
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       }
       outReal[0] = prevPlusDM;
       outIdx = 1;
@@ -364,11 +369,11 @@
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else {
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          outReal[outIdx++] = prevPlusDM;
       }
       outNBElement.value = outIdx;
@@ -524,6 +529,7 @@
       private int optInTimePeriod;
       private double prevHigh;
       private double prevLow;
+      private double invPeriod;
       private double prevPlusDM;
       private double cur_outReal;
       private int outRangeBegIdx;
@@ -570,6 +576,7 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
          this.prevLow = other.prevLow;
+         this.invPeriod = other.invPeriod;
          this.prevPlusDM = other.prevPlusDM;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -623,6 +630,7 @@
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double plusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             tempReal = inHigh;
@@ -633,16 +641,14 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               cur_outReal = diffP;
-            } else {
-               cur_outReal = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            cur_outReal = plusDM1;
          } else {
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
+            double plusDM1 = 0.0;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             double prevPlusDM = sp.prevPlusDM;
@@ -654,13 +660,11 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * sp.invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             cur_outReal = prevPlusDM;
          }
          return cur_outReal;
@@ -698,6 +702,7 @@
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double plusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -706,16 +711,14 @@
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.cur_outReal = diffP;
-         } else {
-            sp.cur_outReal = 0;
-         }
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         sp.cur_outReal = plusDM1;
       } else {
          double tempReal = 0.0;
          double diffP = 0.0;
          double diffM = 0.0;
+         double plusDM1 = 0.0;
          tempReal = inHigh;
          diffP = tempReal - sp.prevHigh;
          /* Plus Delta */
@@ -724,13 +727,11 @@
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM ) {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + diffP;
-         } else {
-            /* Case 2,4,5 and 7 */
-            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = sp.prevPlusDM - sp.prevPlusDM * sp.invPeriod;
+         sp.prevPlusDM = tempReal + plusDM1;
+         sp.prevPlusDM = (tempReal > sp.prevPlusDM) ? tempReal : sp.prevPlusDM;
          sp.cur_outReal = sp.prevPlusDM;
       }
    }
@@ -759,9 +760,11 @@
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -865,18 +868,16 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               outReal[outIdx++ * outStride] = diffP;
-            } else {
-               outReal[outIdx++ * outStride] = 0;
-            }
+            plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+            plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+            outReal[outIdx++ * outStride] = plusDM1;
          }
          outNBElement.value = outIdx;
          /* Capture the live batch state into the handle. */
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -887,9 +888,11 @@
          double prevHigh = 0;
          double prevLow = 0;
          double tempReal = 0;
+         double invPeriod = 0;
          double prevPlusDM = 0;
          double diffP = 0;
          double diffM = 0;
+         double plusDM1 = 0;
          int i = 0;
          /*
           * The DM1 (one period) is base on the largest part of
@@ -976,6 +979,7 @@
           */
          outIdx = 0;
          /* Trap the case where no smoothing is needed. */
+         invPeriod = 1.0 / (double)optInTimePeriod;
          /* Process the initial DM */
          outBegIdx.value = startIdx;
          prevPlusDM = 0.0;
@@ -993,10 +997,15 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM += diffP;
-            }
+            /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+             * first test and the max the second, as a non-positive delta cannot raise
+             * the sum. gcc keeps a branch if the select compares diffP itself or if a
+             * select, not the max, ends the step.
+             */
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM + plusDM1;
+            prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
@@ -1011,13 +1020,11 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          }
          /* Now start to write the output in
           * the caller provided outReal.
@@ -1034,13 +1041,11 @@
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            if( diffP > 0 && diffP > diffM ) {
-               /* Case 1 and 3: +DM=diffP,-DM=0 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-            } else {
-               /* Case 2,4,5 and 7 */
-               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
             outReal[outIdx++ * outStride] = prevPlusDM;
          }
          outNBElement.value = outIdx;
@@ -1048,6 +1053,7 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevHigh = prevHigh;
          sp.prevLow = prevLow;
+         sp.invPeriod = invPeriod;
          sp.prevPlusDM = prevPlusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;

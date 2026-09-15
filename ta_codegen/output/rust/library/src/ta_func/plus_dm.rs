@@ -46,6 +46,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -54,6 +55,7 @@
  *  010802 MF     Template creation.
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
+ *  091326 MF,CC  #411 Wilder step without a divide or a branch.
  */
 
 // Import types from parent module
@@ -128,9 +130,11 @@ impl Core {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
+        let mut invPeriod: f64 = 0.0_f64;
         let mut prevPlusDM: f64 = 0.0_f64;
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
+        let mut plusDM1: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         //
         // The DM1 (one period) is base on the largest part of
@@ -232,18 +236,15 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    outReal[outIdx] = diffP;
-                    outIdx += 1;
-                } else {
-                    outReal[outIdx] = 0.0;
-                    outIdx += 1;
-                }
+                plusDM1 = (if diffP > 0.0 { diffP } else { 0.0 });
+                plusDM1 = (if diffP > diffM { plusDM1 } else { 0.0 });
+                outReal[outIdx] = plusDM1;
+                outIdx += 1;
             }
             (*outNBElement) = outIdx;
             return RetCode::Success;
         }
+        invPeriod = 1.0 / (optInTimePeriod as f64);
         // Process the initial DM
         (*outBegIdx) = startIdx;
         prevPlusDM = 0.0;
@@ -261,10 +262,14 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                // Case 1 and 3: +DM=diffP,-DM=0
-                prevPlusDM += diffP;
-            }
+            // +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+            // first test and the max the second, as a non-positive delta cannot raise
+            // the sum. gcc keeps a branch if the select compares diffP itself or if a
+            // select, not the max, ends the step.
+            tempReal = diffP - diffM;
+            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+            tempReal = prevPlusDM + plusDM1;
+            prevPlusDM = (if prevPlusDM > tempReal { prevPlusDM } else { tempReal });
         }
         // Process subsequent DM
         // Skip the unstable period.
@@ -279,13 +284,11 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                // Case 1 and 3: +DM=diffP,-DM=0
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-            } else {
-                // Case 2,4,5 and 7
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
         }
         // Now start to write the output in
         // the caller provided outReal.
@@ -301,13 +304,11 @@ impl Core {
             diffM = prevLow - tempReal;
             // Minus Delta
             prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                // Case 1 and 3: +DM=diffP,-DM=0
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-            } else {
-                // Case 2,4,5 and 7
-                prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+            tempReal = prevPlusDM - prevPlusDM * invPeriod;
+            prevPlusDM = tempReal + plusDM1;
+            prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
             outReal[outIdx] = prevPlusDM;
             outIdx += 1;
         }
@@ -446,6 +447,7 @@ struct PlusDmStreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
+    invPeriod: f64,
     prevPlusDM: f64,
     cur_outReal: f64,
 }
@@ -461,6 +463,7 @@ impl Core {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut plusDM1: f64 = 0.0_f64;
             tempReal = inHigh;
             diffP = tempReal - sp.prevHigh;
             // Plus Delta
@@ -469,17 +472,15 @@ impl Core {
             diffM = sp.prevLow - tempReal;
             // Minus Delta
             sp.prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                // Case 1 and 3: +DM=diffP,-DM=0
-                (*outReal) = diffP;
-            } else {
-                (*outReal) = 0.0;
-            }
+            plusDM1 = (if diffP > 0.0 { diffP } else { 0.0 });
+            plusDM1 = (if diffP > diffM { plusDM1 } else { 0.0 });
+            (*outReal) = plusDM1;
             sp.cur_outReal = (*outReal);
         } else {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut plusDM1: f64 = 0.0_f64;
             tempReal = inHigh;
             diffP = tempReal - sp.prevHigh;
             // Plus Delta
@@ -488,13 +489,11 @@ impl Core {
             diffM = sp.prevLow - tempReal;
             // Minus Delta
             sp.prevLow = tempReal;
-            if diffP > 0_f64 && diffP > diffM {
-                // Case 1 and 3: +DM=diffP,-DM=0
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
-            } else {
-                // Case 2,4,5 and 7
-                sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
-            }
+            tempReal = diffP - diffM;
+            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+            tempReal = sp.prevPlusDM - sp.prevPlusDM * sp.invPeriod;
+            sp.prevPlusDM = tempReal + plusDM1;
+            sp.prevPlusDM = (if tempReal > sp.prevPlusDM { tempReal } else { sp.prevPlusDM });
             (*outReal) = sp.prevPlusDM;
             sp.cur_outReal = (*outReal);
         }
@@ -536,9 +535,11 @@ impl Core {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut invPeriod: f64 = 0.0_f64;
             let mut prevPlusDM: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut plusDM1: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             //
             // The DM1 (one period) is base on the largest part of
@@ -639,12 +640,9 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = diffP;
-                } else {
-                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
-                }
+                plusDM1 = (if diffP > 0.0 { diffP } else { 0.0 });
+                plusDM1 = (if diffP > diffM { plusDM1 } else { 0.0 });
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = plusDM1;
             }
             (*outNBElement) = outIdx;
 
@@ -653,6 +651,7 @@ impl Core {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
+                invPeriod,
                 prevPlusDM,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
@@ -664,9 +663,11 @@ impl Core {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut invPeriod: f64 = 0.0_f64;
             let mut prevPlusDM: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
+            let mut plusDM1: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
             //
             // The DM1 (one period) is base on the largest part of
@@ -751,6 +752,7 @@ impl Core {
             // in the outReal.
             outIdx = 0;
             // Trap the case where no smoothing is needed.
+            invPeriod = 1.0 / (optInTimePeriod as f64);
             // Process the initial DM
             (*outBegIdx) = startIdx;
             prevPlusDM = 0.0;
@@ -768,10 +770,14 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    prevPlusDM += diffP;
-                }
+                // +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+                // first test and the max the second, as a non-positive delta cannot raise
+                // the sum. gcc keeps a branch if the select compares diffP itself or if a
+                // select, not the max, ends the step.
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM + plusDM1;
+                prevPlusDM = (if prevPlusDM > tempReal { prevPlusDM } else { tempReal });
             }
             // Process subsequent DM
             // Skip the unstable period.
@@ -786,13 +792,11 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-                } else {
-                    // Case 2,4,5 and 7
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-                }
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM - prevPlusDM * invPeriod;
+                prevPlusDM = tempReal + plusDM1;
+                prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
             }
             // Now start to write the output in
             // the caller provided outReal.
@@ -808,13 +812,11 @@ impl Core {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64) + diffP;
-                } else {
-                    // Case 2,4,5 and 7
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((optInTimePeriod) as f64);
-                }
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM - prevPlusDM * invPeriod;
+                prevPlusDM = tempReal + plusDM1;
+                prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevPlusDM;
             }
             (*outNBElement) = outIdx;
@@ -824,6 +826,7 @@ impl Core {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
+                invPeriod,
                 prevPlusDM,
                 cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
@@ -1003,6 +1006,7 @@ impl PlusDmStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut plusDM1: f64 = 0.0_f64;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 tempReal = inHigh;
@@ -1013,16 +1017,14 @@ impl PlusDmStream {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    (*outReal) = diffP;
-                } else {
-                    (*outReal) = 0.0;
-                }
+                plusDM1 = (if diffP > 0.0 { diffP } else { 0.0 });
+                plusDM1 = (if diffP > diffM { plusDM1 } else { 0.0 });
+                (*outReal) = plusDM1;
             } else {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut plusDM1: f64 = 0.0_f64;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 let mut prevPlusDM = sp.prevPlusDM;
@@ -1034,13 +1036,11 @@ impl PlusDmStream {
                 diffM = prevLow - tempReal;
                 // Minus Delta
                 prevLow = tempReal;
-                if diffP > 0_f64 && diffP > diffM {
-                    // Case 1 and 3: +DM=diffP,-DM=0
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
-                } else {
-                    // Case 2,4,5 and 7
-                    prevPlusDM = prevPlusDM - prevPlusDM / ((sp.optInTimePeriod) as f64);
-                }
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM - prevPlusDM * sp.invPeriod;
+                prevPlusDM = tempReal + plusDM1;
+                prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
                 (*outReal) = prevPlusDM;
             }
         }

@@ -48,6 +48,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  CF       Christo Fogelberg
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -56,6 +57,7 @@
  *  010802 MF     Template creation.
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
+ *  091326 MF,CC  #411 Wilder step without a divide or a branch.
  */
 
 TA_LIB_API int TA_PLUS_DM_Lookback( int optInTimePeriod )
@@ -88,9 +90,11 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
    double prevHigh;
    double prevLow;
    double tempReal;
+   double invPeriod;
    double prevPlusDM;
    double diffP;
    double diffM;
+   double plusDM1;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -220,18 +224,14 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            outReal[outIdx++] = diffP;
-         } else 
-         {
-            outReal[outIdx++] = 0;
-         }
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         outReal[outIdx++] = plusDM1;
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    /* Process the initial DM */
    *outBegIdx= startIdx;
    prevPlusDM = 0.0;
@@ -250,11 +250,15 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM += diffP;
-      }
+      /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+       * first test and the max the second, as a non-positive delta cannot raise
+       * the sum. gcc keeps a branch if the select compares diffP itself or if a
+       * select, not the max, ends the step.
+       */
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM + plusDM1;
+      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
    }
    /* Process subsequent DM */
    /* Skip the unstable period. */
@@ -270,15 +274,11 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-      } else 
-      {
-         /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM - prevPlusDM * invPeriod;
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
    }
    /* Now start to write the output in
     * the caller provided outReal.
@@ -296,15 +296,11 @@ TA_LIB_API TA_RetCode TA_PLUS_DM( int    startIdx,
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-      } else 
-      {
-         /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM - prevPlusDM * invPeriod;
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       outReal[outIdx++] = prevPlusDM;
    }
    *outNBElement= outIdx;
@@ -326,9 +322,11 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
    double prevHigh;
    double prevLow;
    double tempReal;
+   double invPeriod;
    double prevPlusDM;
    double diffP;
    double diffM;
+   double plusDM1;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -382,17 +380,14 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            outReal[outIdx++] = diffP;
-         } else 
-         {
-            outReal[outIdx++] = 0;
-         }
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         outReal[outIdx++] = plusDM1;
       }
       *outNBElement= outIdx;
       return TA_SUCCESS;
    }
+   invPeriod = 1.0 / (double)optInTimePeriod;
    *outBegIdx= startIdx;
    prevPlusDM = 0.0;
    today = startIdx - lookbackTotal;
@@ -408,10 +403,10 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         prevPlusDM += diffP;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM + plusDM1;
+      prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
    }
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_PLUS_DM,Plus_dm);
    while( i-- != 0 )
@@ -423,13 +418,11 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-      } else 
-      {
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM - prevPlusDM * invPeriod;
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
    }
    outReal[0] = prevPlusDM;
    outIdx = 1;
@@ -442,13 +435,11 @@ TA_RetCode TA_S_PLUS_DM( int    startIdx,
       tempReal = (double)inLow[today];
       diffM = prevLow - tempReal;
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-      } else 
-      {
-         prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM - prevPlusDM * invPeriod;
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       outReal[outIdx++] = prevPlusDM;
    }
    *outNBElement= outIdx;
@@ -466,6 +457,7 @@ struct TA_PLUS_DM_Stream {
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
+   double invPeriod;
    double prevPlusDM;
 };
 
@@ -477,6 +469,7 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       double tempReal;
       double diffP;
       double diffM;
+      double plusDM1;
 
       tempReal = inHigh;
       diffP = tempReal - sp->prevHigh;
@@ -486,14 +479,9 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       diffM = sp->prevLow - tempReal;
       /* Minus Delta */
       sp->prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         *outReal= diffP;
-      } else 
-      {
-         *outReal= 0;
-      }
+      plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+      plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+      *outReal= plusDM1;
       sp->cur_outReal = *outReal;
    }
    else
@@ -501,6 +489,7 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       double tempReal;
       double diffP;
       double diffM;
+      double plusDM1;
 
       tempReal = inHigh;
       diffP = tempReal - sp->prevHigh;
@@ -510,15 +499,11 @@ static void TA_PLUS_DM_StepImpl( struct TA_PLUS_DM_Stream *sp, double inHigh, do
       diffM = sp->prevLow - tempReal;
       /* Minus Delta */
       sp->prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + diffP;
-      } else 
-      {
-         /* Case 2,4,5 and 7 */
-         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = sp->prevPlusDM - sp->prevPlusDM * sp->invPeriod;
+      sp->prevPlusDM = tempReal + plusDM1;
+      sp->prevPlusDM = (tempReal > sp->prevPlusDM) ? tempReal : sp->prevPlusDM;
       *outReal= sp->prevPlusDM;
       sp->cur_outReal = *outReal;
    }
@@ -559,6 +544,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       double tempReal;
       double diffP;
       double diffM;
+      double plusDM1;
       /*
        * The DM1 (one period) is base on the largest part of
        * today's range that is outside of yesterdays range.
@@ -666,14 +652,9 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            outReal[outIdx++ * outStride] = diffP;
-         } else 
-         {
-            outReal[outIdx++ * outStride] = 0;
-         }
+         plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+         plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+         outReal[outIdx++ * outStride] = plusDM1;
       }
       *outNBElement= outIdx;
 
@@ -701,9 +682,11 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       double prevHigh = 0.0;
       double prevLow = 0.0;
       double tempReal;
+      double invPeriod = 0.0;
       double prevPlusDM = 0.0;
       double diffP;
       double diffM;
+      double plusDM1;
       int i;
       /*
        * The DM1 (one period) is base on the largest part of
@@ -794,6 +777,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
        */
       outIdx = 0;
       /* Trap the case where no smoothing is needed. */
+      invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
       *outBegIdx= startIdx;
       prevPlusDM = 0.0;
@@ -812,11 +796,15 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM += diffP;
-         }
+         /* +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+          * first test and the max the second, as a non-positive delta cannot raise
+          * the sum. gcc keeps a branch if the select compares diffP itself or if a
+          * select, not the max, ends the step.
+          */
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM + plusDM1;
+         prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
@@ -832,15 +820,11 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else 
-         {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       }
       /* Now start to write the output in
        * the caller provided outReal.
@@ -858,15 +842,11 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
          diffM = prevLow - tempReal;
          /* Minus Delta */
          prevLow = tempReal;
-         if( diffP > 0 && diffP > diffM )
-         {
-            /* Case 1 and 3: +DM=diffP,-DM=0 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
-         } else 
-         {
-            /* Case 2,4,5 and 7 */
-            prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
-         }
+         tempReal = diffP - diffM;
+         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         tempReal = prevPlusDM - prevPlusDM * invPeriod;
+         prevPlusDM = tempReal + plusDM1;
+         prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          outReal[outIdx++ * outStride] = prevPlusDM;
       }
       *outNBElement= outIdx;
@@ -878,6 +858,7 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevHigh = prevHigh;
       sp->prevLow = prevLow;
+      sp->invPeriod = invPeriod;
       sp->prevPlusDM = prevPlusDM;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
@@ -955,6 +936,7 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       double tempReal;
       double diffP;
       double diffM;
+      double plusDM1;
       double prevHigh;
       double prevLow;
 
@@ -968,20 +950,16 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         *outReal= diffP;
-      } else 
-      {
-         *outReal= 0;
-      }
+      plusDM1 = (diffP > 0.0) ? diffP : 0.0;
+      plusDM1 = (diffP > diffM) ? plusDM1 : 0.0;
+      *outReal= plusDM1;
    }
    else
    {
       double tempReal;
       double diffP;
       double diffM;
+      double plusDM1;
       double prevHigh;
       double prevLow;
       double prevPlusDM;
@@ -997,15 +975,11 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       diffM = prevLow - tempReal;
       /* Minus Delta */
       prevLow = tempReal;
-      if( diffP > 0 && diffP > diffM )
-      {
-         /* Case 1 and 3: +DM=diffP,-DM=0 */
-         prevPlusDM = prevPlusDM - prevPlusDM / sp->optInTimePeriod + diffP;
-      } else 
-      {
-         /* Case 2,4,5 and 7 */
-         prevPlusDM = prevPlusDM - prevPlusDM / sp->optInTimePeriod;
-      }
+      tempReal = diffP - diffM;
+      plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+      tempReal = prevPlusDM - prevPlusDM * sp->invPeriod;
+      prevPlusDM = tempReal + plusDM1;
+      prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
       *outReal= prevPlusDM;
    }
    return TA_SUCCESS;

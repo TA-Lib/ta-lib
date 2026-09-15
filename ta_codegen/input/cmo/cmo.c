@@ -15,6 +15,7 @@
  *  082326 MF,CC   Fix #253. Test the gain+loss total exactly instead of against
  *                 the fixed TA_IS_ZERO band, which zeroed the oscillator for any
  *                 instrument quoted small enough to fall under it.
+ *  091326 MF,CC   #411 Wilder step without a divide or a branch.
  */
 
 int cmo_lookback(int optInTimePeriod)
@@ -35,7 +36,8 @@ TA_RetCode cmo(int startIdx, int endIdx,
    int outIdx;
 
    int today, lookbackTotal, i;
-   double prevGain, prevLoss, prevValue;
+   double gainDelta;
+   double prevGain, prevLoss, invPeriod, prevValue;
    double tempValue1, tempValue2;
 
    *outBegIdx = 0;
@@ -71,6 +73,13 @@ TA_RetCode cmo(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
+   /* The declaration order above sets invPeriod's place in the stream state,
+    * and that place is load-bearing: a layout that lets Update load it paired
+    * with a field the previous bar stored stalls every call. Re-measure Update
+    * in C and Rust before reordering those declarations.
+    */
+   invPeriod = 1.0 / (double)optInTimePeriod;
+
    /* Accumulate Wilder's "Average Gain" and "Average Loss"
     * among the initial period.
     */
@@ -85,17 +94,19 @@ TA_RetCode cmo(int startIdx, int endIdx,
       tempValue1 = inReal[today++];
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
-      if( tempValue2 < 0 )
-         prevLoss -= tempValue2;
-      else
-         prevGain += tempValue2;
+      gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+      prevGain += gainDelta;
+      prevLoss += gainDelta - tempValue2;
    }
 
    /* Subsequent prevLoss and prevGain are smoothed
-    * using the previous values (Wilder's approach).
-    *  1) Multiply the previous by 'period-1'.
-    *  2) Add today value.
-    *  3) Divide by 'period'.
+    * using the previous values (Wilder's approach):
+    *    prev += (today - prev) / 'period'
+    * gainDelta - tempValue2 is the exact loss delta for every finite
+    * tempValue2, so both accumulators step without a branch. Keep the step a
+    * difference of two products: prev - (prev - today)*k lets the zero arm fold
+    * to prev, which gcc compiles back into a branch, and prev + (today - prev)*k
+    * becomes a fused multiply-add.
     */
    prevLoss /= optInTimePeriod;
    prevGain /= optInTimePeriod;
@@ -133,15 +144,9 @@ TA_RetCode cmo(int startIdx, int endIdx,
          tempValue2 = tempValue1 - prevValue;
          prevValue  = tempValue1;
 
-         prevLoss *= (optInTimePeriod-1);
-         prevGain *= (optInTimePeriod-1);
-         if( tempValue2 < 0 )
-            prevLoss -= tempValue2;
-         else
-            prevGain += tempValue2;
-
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
+         gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+         prevGain += gainDelta*invPeriod - prevGain*invPeriod;
+         prevLoss += (gainDelta - tempValue2)*invPeriod - prevLoss*invPeriod;
 
          today++;
       }
@@ -156,15 +161,9 @@ TA_RetCode cmo(int startIdx, int endIdx,
       tempValue2 = tempValue1 - prevValue;
       prevValue  = tempValue1;
 
-      prevLoss *= (optInTimePeriod-1);
-      prevGain *= (optInTimePeriod-1);
-      if( tempValue2 < 0 )
-         prevLoss -= tempValue2;
-      else
-         prevGain += tempValue2;
-
-      prevLoss /= optInTimePeriod;
-      prevGain /= optInTimePeriod;
+      gainDelta = tempValue2 > 0.0 ? tempValue2 : 0.0;
+      prevGain += gainDelta*invPeriod - prevGain*invPeriod;
+      prevLoss += (gainDelta - tempValue2)*invPeriod - prevLoss*invPeriod;
       tempValue1 = prevGain+prevLoss;
       if( tempValue1 > 0.0 )
          outReal[outIdx++] = 100.0*((prevGain-prevLoss)/tempValue1);

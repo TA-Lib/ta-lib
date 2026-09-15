@@ -95,6 +95,9 @@
  *       RSI's Wilder step scales by a hoisted 1/period instead of dividing by
  *       period, which is exactly zero where 1/period is representable -- so a
  *       power-of-two period re-measures this row as unnecessary.
+ *       #411 gives CMO and the DM/DI/DX/ADX family the same hoist; ADX, ADXR
+ *       and CMO also change the step's form, so only DM, DI and DX share RSI's
+ *       power-of-two exactness.
  *
  * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD and
  * MACDEXT are all bit-exact against v0.6.4 on this series, their divergences
@@ -145,11 +148,19 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "STOCH",               3e-13 },  /* #390  measured 8.53e-14             */
    { "STOCHF",              2e-13 },  /* #390  measured 4.26e-14             */
    { "WILLR",               3e-14 },  /* #395  measured 7.11e-15             */
+   { "PLUS_DI",             4e-14 },  /* #411  measured 1.07e-14             */
+   { "MINUS_DI",            2e-14 },  /* #411  measured 5.33e-15             */
+   { "DX",                  5e-14 },  /* #411  measured 1.60e-14             */
    /* Sized at the frozen periods (14 and 19) and only there: unlike the rows
-    * above, these three grow with the period, so a re-freeze that adds a
-    * longer-period case has to re-measure. ATR's and NATR's are also
-    * output-proportional; RSI's is absolute and unmoved by the price scale. */
+    * above, these grow with the period, so a re-freeze that adds a
+    * longer-period case has to re-measure. ATR's, NATR's and the DMs' are also
+    * output-proportional; the rest are absolute and unmoved by the price scale. */
    { "RSI",                 5e-14 },  /* #410  measured 1.42e-14             */
+   { "CMO",                 2e-13 },  /* #411  measured 3.55e-14             */
+   { "ADX",                 3e-14 },  /* #411  measured 7.11e-15             */
+   { "ADXR",                3e-14 },  /* #411  measured 7.11e-15             */
+   { "PLUS_DM",             3e-14 },  /* #411  measured 7.11e-15             */
+   { "MINUS_DM",            2e-14 },  /* #411  measured 3.55e-15             */
    { "ATR",                 3e-15 },  /* #338  measured 8.88e-16             */
    { "NATR",                2e-15 },  /* #338  measured 4.44e-16             */
 
