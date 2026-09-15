@@ -1093,6 +1093,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["RVIR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.RVIR_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["RVOL"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.RVOL_Impl(

@@ -551,6 +551,9 @@ final class Dispatch {
          case "RVI":
             return core.RVI(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
+         case "RVIR":
+            return core.RVIR(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "RVOL":
             return core.RVOL(
                startIdx, endIdx, h.price(0, 4), h.intOpt(0), h.realOutput(0));
@@ -1000,6 +1003,8 @@ final class Dispatch {
             return core.RSI_Lookback(h.intOpt(0));
          case "RVI":
             return core.RVI_Lookback(h.intOpt(0), h.intOpt(1));
+         case "RVIR":
+            return core.RVIR_Lookback(h.intOpt(0), h.intOpt(1));
          case "RVOL":
             return core.RVOL_Lookback(h.intOpt(0));
          case "SAR":

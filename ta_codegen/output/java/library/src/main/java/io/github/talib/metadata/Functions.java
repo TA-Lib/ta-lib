@@ -285,6 +285,7 @@ public final class Functions {
       put(m, f_ROCR100());
       put(m, f_RSI());
       put(m, f_RVI());
+      put(m, f_RVIR());
       put(m, f_RVOL());
       put(m, f_SAR());
       put(m, f_SAREXT());
@@ -2995,6 +2996,29 @@ public final class Functions {
          "RVI", "Volatility Indicators", "Relative Volatility Index", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period of the Wilder smoothing applied to both legs", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInStdDevPeriod", 0x00000000,
+               "StdDev Period", "Time period of the standard deviation", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_RVIR() {
+      return new FunctionInfo(
+         "RVIR", "Volatility Indicators", "Relative Volatility Index, refined high/low form", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),
          List.of(
             new OptInputInfo(
