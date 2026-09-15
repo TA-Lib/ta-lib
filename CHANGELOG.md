@@ -7,6 +7,10 @@ Just re-install to upgrade. Older versions are automatically removed.
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
 ## [0.8.2] Not Released Yet
+### Added
+- New TA Functions:
+  - CTI: Correlation Trend Indicator (proposal-drafts#74)
+
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
 

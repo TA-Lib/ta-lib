@@ -514,6 +514,9 @@ typedef enum
   TA_OPEN_CONTRACT_WROTE             = 1680,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
+  /* (proposal-drafts #74) CTI legs that ran while comparing nothing. */
+  TA_CTI_VACUOUS                     = 1684,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

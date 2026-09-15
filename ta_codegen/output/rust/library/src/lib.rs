@@ -176,7 +176,7 @@
 //! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
 //! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (47)
+//! ## Momentum Indicators (48)
 //!
 //! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::ADX) — Average Directional Movement Index
@@ -190,6 +190,7 @@
 //! * [`CMO`](Core::CMO) — Chande Momentum Oscillator
 //! * [`CMOU`](Core::CMOU) — Chande Momentum Oscillator (Unsmoothed)
 //! * [`COPPOCK`](Core::COPPOCK) — Coppock Curve
+//! * [`CTI`](Core::CTI) — Correlation Trend Indicator
 //! * [`DPO`](Core::DPO) — Detrended Price Oscillator
 //! * [`DX`](Core::DX) — Directional Movement Index
 //! * [`ER`](Core::ER) — Kaufman Efficiency Ratio

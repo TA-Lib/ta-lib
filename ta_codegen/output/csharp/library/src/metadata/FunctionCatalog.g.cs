@@ -204,6 +204,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
+            MakeCti(),
             MakeCumsum(),
             MakeCvi(),
             MakeDema(),
@@ -2275,6 +2276,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.COSH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeCti() => new(
+        name: "CTI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Correlation Trend Indicator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars correlated against the ramp", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 5, 100, 5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CTI_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.CTI(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeCumsum() => new(
         name: "CUMSUM",

@@ -1719,6 +1719,54 @@ DEF_FUNCTION( COSH,
              );
 /* COSH END */
 
+/* CTI BEGIN */
+static const TA_IntegerRange TA_DEF_CTI_TimePeriod =
+{
+   2,
+   100000,
+   5,
+   100,
+   5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CTI_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_CTI_TimePeriod,
+   20,
+   "Number of bars correlated against the ramp",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_CTI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CTI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CTI_OptInputs[] =
+{ &TA_DEF_UI_D_CTI_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( CTI,
+              TA_GroupId_MomentumIndicators,
+              "Correlation Trend Indicator",
+              TA_FUNC_FLG_STREAM
+             );
+/* CTI END */
+
 /* CUMSUM BEGIN */
 static const TA_InputParameterInfo    *TA_CUMSUM_Inputs[]    =
 {
@@ -1881,6 +1929,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CORREL),
    ADD_TO_TABLE(COS),
    ADD_TO_TABLE(COSH),
+   ADD_TO_TABLE(CTI),
    ADD_TO_TABLE(CUMSUM),
    ADD_TO_TABLE(CVI),
    NULL
