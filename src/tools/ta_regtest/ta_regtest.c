@@ -562,6 +562,17 @@ int main( int argc, char **argv )
       if( nbSvPipes > 0 )
       {
          int p;
+         /* The ride-along ran on the hand-written cases' own arrays. A pipe that
+          * offered the check must have compared bars on at least one of them;
+          * per pipe, because a total stays green while one server goes silent. */
+         if( retValue == TA_TEST_PASS && server_verify_ride_cases() > 0 &&
+             server_verify_ride_silent_pipes() > 0 )
+         {
+            printf("RIDE VACUOUS (hand-written cases): %d of %d server(s) offered "
+                   "the batch-vs-stream check but compared no bars\n",
+                   server_verify_ride_silent_pipes(), nbSvPipes);
+            retValue = TA_CODEGEN_RIDE_VACUOUS;
+         }
          server_verify_shutdown();
          for( p = 0; p < nbSvPipes; p++ )
             codegen_pipe_close(&svPipes[p]);

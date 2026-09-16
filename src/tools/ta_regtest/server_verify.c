@@ -47,6 +47,12 @@ static int          g_nbPipes = 0;
 static char        *g_reqBuf  = NULL;
 static char        *g_respBuf = NULL;
 static int          g_curPipe = -1; /* pipe being verified (for diagnostics) */
+/* Ride-along: the server's own batch-vs-stream verdict on the very arrays this
+ * hand-written case supplied. Counted per pipe -- a total would stay green while
+ * one server stopped answering, which is the shape the fill counter's floor
+ * already fails at. */
+static long long    g_svRideBars[SV_MAX_PIPES];
+static int          g_svRideCases[SV_MAX_PIPES];
 
 /* Unstable period lookup table (same as test_codegen.c) */
 typedef struct { const char *name; TA_FuncUnstId id; } UnstableLookup;
@@ -97,6 +103,63 @@ static TA_FuncUnstId sv_func_unst_id(const char *name)
  * The field/array parsers and the hex-bits writer live in test_codegen.c (shared
  * with --xlang-hash); server_verify uses codegen_write_hexbits_array to serialize
  * inputs and codegen_compare_tol to parse+compare the Java-transcendental path. */
+
+/* -1 when the key is absent: ta_ref_serve and any pre-feature build emit no ride
+ * fields, and that must read as "not offered" rather than as a reported zero. */
+static int sv_ride_flag(const char *resp, const char *key)
+{
+    const char *q = strstr(resp, key);
+    if( !q ) return -1;
+    return atoi(q + strlen(key));
+}
+
+static void sv_ride_hex(const char *resp, const char *key, char out[17])
+{
+    const char *q = strstr(resp, key);
+    int i = 0;
+    out[0] = '\0';
+    if( !q ) return;
+    q += strlen(key);
+    if( *q != '"' ) return;
+    q++;
+    while( i < 16 && q[i] && q[i] != '"' ) { out[i] = q[i]; i++; }
+    out[i] = '\0';
+}
+
+/* Returns non-zero on a reported divergence. */
+static int sv_ride_read(const char *funcName, int pipe, const char *lang, const char *resp)
+{
+    int ok = sv_ride_flag(resp, "\"ride_ok\":");
+    if( ok < 0 ) return 0;
+    if( ok == 0 )
+    {
+        char b[17], t[17];
+        sv_ride_hex(resp, "\"ride_batch\":", b);
+        sv_ride_hex(resp, "\"ride_stream\":", t);
+        printf("  SV RIDE MISMATCH [%s] (pipe %d, %s): leg %d (%s) bar %d output %d  "
+               "batch=%s stream=%s  (m=%d lookback=%d)\n",
+               funcName, pipe, lang ? lang : "?",
+               sv_ride_flag(resp, "\"ride_leg\":"),
+               sv_ride_flag(resp, "\"ride_leg\":") == 2 ? "OpenAndFill" : "Open+Update",
+               sv_ride_flag(resp, "\"ride_bar\":"),
+               sv_ride_flag(resp, "\"ride_out\":"),
+               b[0] ? b : "?", t[0] ? t : "?",
+               sv_ride_flag(resp, "\"ride_m\":"),
+               sv_ride_flag(resp, "\"ride_lb\":"));
+        return 1;
+    }
+    if( pipe >= 0 && pipe < SV_MAX_PIPES )
+    {
+        int ob = sv_ride_flag(resp, "\"ride_open_bars\":");
+        int fb = sv_ride_flag(resp, "\"ride_fill_bars\":");
+        if( ob > 0 && fb > 0 )
+        {
+            g_svRideBars[pipe] += (long long)ob + fb;
+            g_svRideCases[pipe]++;
+        }
+    }
+    return 0;
+}
 
 static int sv_json_is_error(const char *json)
 {
@@ -178,6 +241,25 @@ void server_verify_shutdown(void)
         g_candleInitialized[p] = 0;
         g_pipeLang[p] = NULL;
     }
+}
+
+/* Non-vacuity for the ride-along on the hand-written cases: a pipe that answered
+ * the fields at all must have compared bars on at least one case. Per pipe, not a
+ * total -- a total stays green while one server goes silent. Returns the number
+ * of pipes that offered the check but compared nothing. */
+int server_verify_ride_silent_pipes(void)
+{
+    int silent = 0;
+    for( int p = 0; p < g_nbPipes && p < SV_MAX_PIPES; p++ )
+        if( g_svRideCases[p] == 0 ) silent++;
+    return silent;
+}
+
+int server_verify_ride_cases(void)
+{
+    int total = 0;
+    for( int p = 0; p < g_nbPipes && p < SV_MAX_PIPES; p++ ) total += g_svRideCases[p];
+    return total;
 }
 
 int server_verify_candle_syncs(void)
@@ -685,6 +767,9 @@ ErrorNumber server_verify(
                    funcName, p, lang ? lang : "?", g_respBuf);
             return TA_SV_RETCODE_MISMATCH;
         }
+
+        if( sv_ride_read(funcName, p, lang, g_respBuf) )
+            return TA_CODEGEN_RIDE_MISMATCH;
 
         if( bitwise )
         {

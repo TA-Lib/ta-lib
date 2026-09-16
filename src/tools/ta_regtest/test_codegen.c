@@ -2146,7 +2146,90 @@ typedef struct {
     long long         streamValueLegs;      /* Value probes run */
     long long         streamCloneLegs;      /* fork legs run */
     long long         streamBenign;        /* cross-tier +0.0/-0.0 pairs (#147) — never a failure */
+    /* Ride-along counters: the server's own batch-vs-stream check on whatever
+     * data the request carried. Separate from every stream_verify counter
+     * above on purpose -- those are already non-zero corpus-wide, so folding
+     * these into them would let the whole leg die unseen. */
+    int               rideResponses;      /* responses that carried the fields at all */
+    int               rideOpenFunctions;  /* funcs that compared >=1 bar via Open+Update */
+    int               rideFillFunctions;  /* funcs that compared >=1 bar via OpenAndFill */
+    long long         rideOpenBars;
+    long long         rideFillBars;
+    int               rideDedup;
+    int               rideSkipped;
+    long long         rideBenign;
+    int               rideEligible;       /* streaming funcs that reached the read site */
+    int               rideSkipFunctions;  /* funcs the server declined to replay */
+    int               rideFnOpen;         /* per-function scratch, folded by the caller */
+    int               rideFnFill;
+    int               rideFnSkip;
 } ForEachFuncContext;
+
+static int stream_flag(const char *resp, const char *key);
+
+/* Copy the quoted value of `key` (a 16-hex-digit IEEE-754 bit string) out of a
+ * response. The two divergent values travel as bits, not as text: %a is
+ * unspellable in C# and formats differently in Java, so a printable form would
+ * make the repro backend-dependent. */
+static void ride_hex(const char *resp, const char *key, char out[17])
+{
+    const char *p = strstr(resp, key);
+    out[0] = '\0';
+    if( !p ) return;
+    p += strlen(key);
+    if( *p != '"' ) return;
+    p++;
+    int i = 0;
+    while( i < 16 && p[i] && p[i] != '"' ) { out[i] = p[i]; i++; }
+    out[i] = '\0';
+}
+
+/* The ride-along verdict the server computed for the data THIS request carried.
+ *
+ * Absent fields mean the server does not offer the check (ta_ref_serve compiles
+ * it out, and so does any pre-feature build), which is not a failure -- read
+ * with stream_flag, which answers -1 for absent, never json_get_int, which
+ * answers 0 and would report silence as a divergence.
+ *
+ * A dedup hit replays the counts of the identical replay that already passed,
+ * so the per-response counts stay truthful and the floors below stay live; a
+ * failing replay is never cached, so it re-runs and re-reports at every site. */
+static void ride_read(ForEachFuncContext *ctx, const char *funcName, const char *resp)
+{
+    int ok = stream_flag(resp, "\"ride_ok\":");
+    if( ok < 0 ) return;
+    ctx->rideResponses++;
+    if( ok == 0 )
+    {
+        char b[17], t[17];
+        ride_hex(resp, "\"ride_batch\":", b);
+        ride_hex(resp, "\"ride_stream\":", t);
+        printf("  RIDE MISMATCH [TA_%s]: leg %d (%s) bar %d output %d  "
+               "batch=%s stream=%s  (m=%d lookback=%d)\n",
+               funcName,
+               stream_flag(resp, "\"ride_leg\":"),
+               stream_flag(resp, "\"ride_leg\":") == 2 ? "OpenAndFill" : "Open+Update",
+               stream_flag(resp, "\"ride_bar\":"),
+               stream_flag(resp, "\"ride_out\":"),
+               b[0] ? b : "?", t[0] ? t : "?",
+               stream_flag(resp, "\"ride_m\":"),
+               stream_flag(resp, "\"ride_lb\":"));
+        ctx->failed++;
+        ctx->error = TA_CODEGEN_RIDE_MISMATCH;
+        return;
+    }
+    {
+        int ob = stream_flag(resp, "\"ride_open_bars\":");
+        int fb = stream_flag(resp, "\"ride_fill_bars\":");
+        int bn = stream_flag(resp, "\"ride_benign\":");
+        if( ob > 0 ) { ctx->rideOpenBars += ob; ctx->rideFnOpen = 1; }
+        if( fb > 0 ) { ctx->rideFillBars += fb; ctx->rideFnFill = 1; }
+        if( bn > 0 ) ctx->rideBenign += bn;
+        if( stream_flag(resp, "\"ride_dedup\":") > 0 ) ctx->rideDedup++;
+        if( stream_flag(resp, "\"ride_skip\":")  > 0 ) { ctx->rideSkipped++; ctx->rideFnSkip = 1; }
+    }
+}
+
 
 static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 {
@@ -2387,6 +2470,18 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     {
         for( unsigned int outNb = 0; outNb < funcInfo->nbOutput; outNb++ )
             compare_codegen_output_generic(&params, outNb);
+        ctx->rideFnOpen = 0;
+        ctx->rideFnFill = 0;
+        ctx->rideFnSkip = 0;
+        ride_read(ctx, funcInfo->name, params.responseBuf);
+        if( ctx->rideFnOpen ) ctx->rideOpenFunctions++;
+        if( ctx->rideFnFill ) ctx->rideFillFunctions++;
+        if( ctx->rideFnSkip ) ctx->rideSkipFunctions++;
+        /* Denominator taken from the published flag, never from the
+         * ride-along's own reporting: a leg that stopped answering must move
+         * the ratio, not the bar it is measured against. */
+        if( (funcInfo->flags & TA_FUNC_FLG_STREAM) && ctx->rideResponses > 0 )
+            ctx->rideEligible++;
     }
 
     /* Back to the produced count for every leg below: the edge sweep and the
@@ -4922,6 +5017,42 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamValueFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
+            /* Ride-along floors. Two numerators, one per leg: a single
+             * combined floor passes while either leg is dead, which is how the
+             * OpenAndFill compare stayed green across 178 functions.
+             * rideResponses == 0 means the server does not offer the check at
+             * all (a pre-feature build, or ta_ref_serve) -- that is a skip, and
+             * the language table below is what makes a MISSING server loud. */
+            if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 &&
+                ctx.rideOpenFunctions + ctx.rideSkipFunctions != ctx.rideEligible )
+            {
+                printf("RIDE VACUOUS: %d of %d streaming functions compared a bar "
+                       "through Open+Update and %d declined -- the two must "
+                       "account for every eligible function\n",
+                       ctx.rideOpenFunctions, ctx.rideEligible, ctx.rideSkipFunctions);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 &&
+                ctx.rideFillFunctions != ctx.rideOpenFunctions )
+            {
+                printf("RIDE FILL VACUOUS: %d of %d functions that compared bars "
+                       "through Open+Update also compared their OpenAndFill array\n",
+                       ctx.rideFillFunctions, ctx.rideOpenFunctions);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
+            /* A run where every eligible function declined is a gate that ran and
+             * compared nothing; the ratio above is satisfied by it. */
+            if( ctx.error == TA_TEST_PASS && ctx.rideEligible > 0 &&
+                ctx.rideOpenFunctions == 0 )
+            {
+                printf("RIDE VACUOUS: the %s server offers the ride-along but "
+                       "compared 0 bars across %d eligible functions\n",
+                       lang->name, ctx.rideEligible);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
+            if( ctx.rideBenign > 0 )
+                printf("  BENIGN ride-along: %lld cross-tier signed-zero case(s)\n",
+                       ctx.rideBenign);
             /* Without this floor a server that stopped peeking reads exactly
              * like one that peeked and passed. */
             if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
