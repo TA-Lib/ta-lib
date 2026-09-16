@@ -729,6 +729,7 @@ public class TaCodegenServe {
                 return sb.ToString();
             }
             else if (method == "set_unstable_period") {
+                rideGen++;
                 int id = GetInt(p, "id", -1);
                 int period = GetInt(p, "period", 0);
                 if (period < 0 || period > Core.MAX_INDEX) {
@@ -745,6 +746,7 @@ public class TaCodegenServe {
                 return "{\"error\":\"Invalid id\"}";
             }
             else if (method == "set_candle_settings") {
+                rideGen++;
                 int settingType = GetInt(p, "settingType", -1);
                 int rangeType = GetInt(p, "rangeType", -1);
                 int avgPeriod = GetInt(p, "avgPeriod", 0);
@@ -760,6 +762,7 @@ public class TaCodegenServe {
                 return "{\"status\":\"ok\"}";
             }
             else if (method == "restore_candle_default_settings") {
+                rideGen++;
                 int settingType = GetInt(p, "settingType", -1);
                 try {
                     core = core.ToBuilder()
@@ -41414,6 +41417,17 @@ public class TaCodegenServe {
         return acc;
     }
 
+    static ulong RideMixStr(ulong h, string s)
+    {
+        ulong acc = h;
+        for (int i = 0; i < s.Length; i++)
+        {
+            acc ^= (ulong)(s[i] & 0xff);
+            acc *= 1099511628211UL;
+        }
+        return acc;
+    }
+
     static ulong RideMixArr(ulong h, double[] a, int n)
     {
         ulong acc = h;
@@ -41464,7 +41478,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_AC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -41560,7 +41574,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_ACCBANDS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -41663,7 +41677,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ACOS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -41756,7 +41770,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_AD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -41850,7 +41864,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ADD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -41944,7 +41958,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_ADOSC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42040,7 +42054,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ADR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42134,7 +42148,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ADX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42229,7 +42243,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ADXR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42323,7 +42337,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_AO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42416,7 +42430,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_APO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42510,7 +42524,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_AROON");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42608,7 +42622,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_AROONOSC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42700,7 +42714,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ASIN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42790,7 +42804,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ATAN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42882,7 +42896,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ATR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -42975,7 +42989,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_AVGDEV");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43069,7 +43083,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_AVGPRICE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43162,7 +43176,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_BBANDS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43267,7 +43281,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_BETA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43362,7 +43376,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_BOP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43457,7 +43471,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_CCI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43553,7 +43567,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDL2CROWS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43649,7 +43663,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDL3BLACKCROWS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43745,7 +43759,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_CDL3INSIDE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43841,7 +43855,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDL3LINESTRIKE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -43937,7 +43951,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDL3OUTSIDE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44033,7 +44047,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 126704UL);
+        key = RideMixStr(key, "TA_CDL3STARSINSOUTH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44129,7 +44143,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDL3WHITESOLDIERS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44225,7 +44239,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 126704UL);
+        key = RideMixStr(key, "TA_CDLABANDONEDBABY");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44322,7 +44336,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_CDLADVANCEBLOCK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44418,7 +44432,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLBELTHOLD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44514,7 +44528,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_CDLBREAKAWAY");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44610,7 +44624,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLCLOSINGMARUBOZU");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44706,7 +44720,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 150461UL);
+        key = RideMixStr(key, "TA_CDLCONCEALBABYSWALL");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44802,7 +44816,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 126704UL);
+        key = RideMixStr(key, "TA_CDLCOUNTERATTACK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44898,7 +44912,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDLDARKCLOUDCOVER");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -44995,7 +45009,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_CDLDOJI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45091,7 +45105,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLDOJISTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45187,7 +45201,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 126704UL);
+        key = RideMixStr(key, "TA_CDLDRAGONFLYDOJI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45283,7 +45297,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_CDLENGULFING");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45379,7 +45393,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLEVENINGDOJISTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45476,7 +45490,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLEVENINGSTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45573,7 +45587,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 150461UL);
+        key = RideMixStr(key, "TA_CDLGAPSIDESIDEWHITE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45669,7 +45683,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDLGRAVESTONEDOJI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45765,7 +45779,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDLHAMMER");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45861,7 +45875,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 102947UL);
+        key = RideMixStr(key, "TA_CDLHANGINGMAN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -45957,7 +45971,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDLHARAMI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46053,7 +46067,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLHARAMICROSS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46149,7 +46163,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLHIGHWAVE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46245,7 +46259,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_CDLHIKKAKE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46341,7 +46355,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 102947UL);
+        key = RideMixStr(key, "TA_CDLHIKKAKEMOD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46437,7 +46451,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_CDLHOMINGPIGEON");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46533,7 +46547,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLIDENTICAL3CROWS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46629,7 +46643,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDLINNECK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46725,7 +46739,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDLINVERTEDHAMMER");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46821,7 +46835,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_CDLKICKING");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -46917,7 +46931,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLKICKINGBYLENGTH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47013,7 +47027,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_CDLLADDERBOTTOM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47109,7 +47123,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDLLONGLEGGEDDOJI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47205,7 +47219,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLLONGLINE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47301,7 +47315,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLMARUBOZU");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47397,7 +47411,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLMATCHINGLOW");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47493,7 +47507,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_CDLMATHOLD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47590,7 +47604,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLMORNINGDOJISTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47687,7 +47701,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLMORNINGSTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47784,7 +47798,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDLONNECK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47880,7 +47894,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_CDLPIERCING");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -47976,7 +47990,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLRICKSHAWMAN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48072,7 +48086,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 150461UL);
+        key = RideMixStr(key, "TA_CDLRISEFALL3METHODS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48168,7 +48182,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLSEPARATINGLINES");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48264,7 +48278,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_CDLSHOOTINGSTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48360,7 +48374,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_CDLSHORTLINE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48456,7 +48470,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 110866UL);
+        key = RideMixStr(key, "TA_CDLSPINNINGTOP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48552,7 +48566,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 134623UL);
+        key = RideMixStr(key, "TA_CDLSTALLEDPATTERN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48648,7 +48662,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 126704UL);
+        key = RideMixStr(key, "TA_CDLSTICKSANDWICH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48744,7 +48758,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_CDLTAKURI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48840,7 +48854,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_CDLTASUKIGAP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -48936,7 +48950,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_CDLTHRUSTING");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49032,7 +49046,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_CDLTRISTAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49128,7 +49142,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_CDLUNIQUE3RIVER");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49224,7 +49238,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 142542UL);
+        key = RideMixStr(key, "TA_CDLUPSIDEGAP2CROWS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49320,7 +49334,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 150461UL);
+        key = RideMixStr(key, "TA_CDLXSIDEGAP3METHODS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49413,7 +49427,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_CEIL");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49506,7 +49520,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_CMF");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49600,7 +49614,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_CMO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49691,7 +49705,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_CMOU");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49782,7 +49796,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_COPPOCK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49876,7 +49890,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_CORREL");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -49968,7 +49982,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_COS");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50058,7 +50072,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_COSH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50148,7 +50162,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_CUMSUM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50239,7 +50253,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_CVI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50332,7 +50346,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_DEMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50424,7 +50438,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_DIV");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50516,7 +50530,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_DONCHIAN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50618,7 +50632,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_DPO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50711,7 +50725,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_DX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50805,7 +50819,7 @@ public class TaCodegenServe {
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_EFI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50897,7 +50911,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_EMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -50988,7 +51002,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_ER");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51081,7 +51095,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ERI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51179,7 +51193,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_EXP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51269,7 +51283,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_FLOOR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51359,7 +51373,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_FOSC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51451,7 +51465,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_FRACTAL");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51552,7 +51566,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_HA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51660,7 +51674,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_HMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51751,7 +51765,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_HT_DCPERIOD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51841,7 +51855,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_HT_DCPHASE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -51931,7 +51945,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_HT_PHASOR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52026,7 +52040,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_HT_SINE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52121,7 +52135,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_HT_TRENDLINE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52211,7 +52225,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 95028UL);
+        key = RideMixStr(key, "TA_HT_TRENDMODE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52302,7 +52316,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_IMI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52394,7 +52408,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_KAMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52487,7 +52501,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_KC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52594,7 +52608,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_KDJ");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52701,7 +52715,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 71271UL);
+        key = RideMixStr(key, "TA_LINEARREG");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52792,7 +52806,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_LINEARREG_ANGLE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52883,7 +52897,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 150461UL);
+        key = RideMixStr(key, "TA_LINEARREG_INTERCEPT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -52974,7 +52988,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 118785UL);
+        key = RideMixStr(key, "TA_LINEARREG_SLOPE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53065,7 +53079,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_LN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53155,7 +53169,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_LOG10");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53245,7 +53259,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_MA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53337,7 +53351,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_MACD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53440,7 +53454,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_MACDEXT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53546,7 +53560,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_MACDFIX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53647,7 +53661,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_MAMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53746,7 +53760,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MARKETFI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53839,7 +53853,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_MASSI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -53933,7 +53947,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_MAVP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54027,7 +54041,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_MAX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54118,7 +54132,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MAXINDEX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54210,7 +54224,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MEDPRICE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54304,7 +54318,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_MFI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54398,7 +54412,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MIDPOINT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54490,7 +54504,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MIDPRICE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54582,7 +54596,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_MIN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54673,7 +54687,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MININDEX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54764,7 +54778,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_MINMAX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54860,7 +54874,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_MINMAXINDEX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -54958,7 +54972,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MINUS_DI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55052,7 +55066,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_MINUS_DM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55144,7 +55158,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_MOM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55236,7 +55250,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_MULT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55329,7 +55343,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_NATR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55423,7 +55437,7 @@ public class TaCodegenServe {
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_NVI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55515,7 +55529,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_OBV");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55606,7 +55620,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_PERCENTILE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55698,7 +55712,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 87109UL);
+        key = RideMixStr(key, "TA_PERCENTRANK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55791,7 +55805,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_PLUS_DI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55885,7 +55899,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_PLUS_DM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -55977,7 +55991,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_PPO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56071,7 +56085,7 @@ public class TaCodegenServe {
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_PVI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56162,7 +56176,7 @@ public class TaCodegenServe {
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_PVO");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56256,7 +56270,7 @@ public class TaCodegenServe {
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_PVT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56348,7 +56362,7 @@ public class TaCodegenServe {
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_QSTICK");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56440,7 +56454,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_RMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56531,7 +56545,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_ROC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56622,7 +56636,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ROCP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56713,7 +56727,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_ROCR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56804,7 +56818,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 55433UL);
+        key = RideMixStr(key, "TA_ROCR100");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56895,7 +56909,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_RSI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -56986,7 +57000,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_RVI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57078,7 +57092,7 @@ public class TaCodegenServe {
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_RVOL");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57170,7 +57184,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57264,7 +57278,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_SAREXT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57363,7 +57377,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SIN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57453,7 +57467,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_SINH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57543,7 +57557,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57636,7 +57650,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SMI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57737,7 +57751,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_SQRT");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57827,7 +57841,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_STDDEV");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -57921,7 +57935,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_STOCH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58025,7 +58039,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_STOCHF");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58125,7 +58139,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_STOCHRSI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58225,7 +58239,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SUB");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58316,7 +58330,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_SUM");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58409,7 +58423,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 79190UL);
+        key = RideMixStr(key, "TA_SUPERTREND");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58508,7 +58522,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 15838UL);
+        key = RideMixStr(key, "TA_T3");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58600,7 +58614,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_TAN");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58690,7 +58704,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_TANH");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58780,7 +58794,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_TEMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58873,7 +58887,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_TRANGE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -58965,7 +58979,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_TRIMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59056,7 +59070,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_TRIX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59147,7 +59161,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_TSF");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59238,7 +59252,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_TSI");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59332,7 +59346,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_TYPPRICE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59426,7 +59440,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_ULTOSC");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59521,7 +59535,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_VAR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59613,7 +59627,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_VHF");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59706,7 +59720,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 47514UL);
+        key = RideMixStr(key, "TA_VORTEX");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59807,7 +59821,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_VWAP");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59901,7 +59915,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 31676UL);
+        key = RideMixStr(key, "TA_VWMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -59995,7 +60009,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_WAD");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -60089,7 +60103,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 63352UL);
+        key = RideMixStr(key, "TA_WCLPRICE");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -60183,7 +60197,7 @@ public class TaCodegenServe {
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_WILLR");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -60276,7 +60290,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 23757UL);
+        key = RideMixStr(key, "TA_WMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
@@ -60367,7 +60381,7 @@ public class TaCodegenServe {
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
-        key = RideMix(key, 39595UL);
+        key = RideMixStr(key, "TA_ZLEMA");
         key = RideMix(key, (ulong) m);
         key = RideMix(key, rideGen);
         key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));

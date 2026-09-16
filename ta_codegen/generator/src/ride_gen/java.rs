@@ -54,6 +54,15 @@ const RIDE_JAVA_SUPPORT: &str = r#"
         return acc;
     }
 
+    static long rideMixStr(long h, String s) {
+        long acc = h;
+        for (int i = 0; i < s.length(); i++) {
+            acc ^= s.charAt(i) & 0xffL;
+            acc *= 1099511628211L;
+        }
+        return acc;
+    }
+
     static long rideMixArr(long h, double[] a, int n) {
         long acc = h;
         for (int i = 0; i < n; i++) acc = rideMix(acc, Double.doubleToRawLongBits(a[i]));
@@ -217,7 +226,7 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("false) { r.skip = 4; return; }\n\n");
 
     s.push_str("        long key = 0xcbf29ce484222325L;\n");
-    let _ = writeln!(s, "        key = rideMix(key, {}L);", n.len() * 7919);
+    let _ = writeln!(s, "        key = rideMixStr(key, \"TA_{}\");", n.to_uppercase());
     s.push_str("        key = rideMix(key, m);\n");
     s.push_str("        key = rideMix(key, rideGen);\n");
     s.push_str("        key = rideMix(key, jsonInt(json, \"unstablePeriod\"));\n");

@@ -2197,23 +2197,13 @@ static void ride_hex(const char *resp, const char *key, char out[17])
 static void ride_read(ForEachFuncContext *ctx, const char *funcName, const char *resp)
 {
     int ok = stream_flag(resp, "\"ride_ok\":");
+    (void)funcName;
     if( ok < 0 ) return;
     ctx->rideResponses++;
+    /* A divergence is detected and reported by codegen_pipe_call, which sees
+     * EVERY response rather than this one site; here it only stops the run. */
     if( ok == 0 )
     {
-        char b[17], t[17];
-        ride_hex(resp, "\"ride_batch\":", b);
-        ride_hex(resp, "\"ride_stream\":", t);
-        printf("  RIDE MISMATCH [TA_%s]: leg %d (%s) bar %d output %d  "
-               "batch=%s stream=%s  (m=%d lookback=%d)\n",
-               funcName,
-               stream_flag(resp, "\"ride_leg\":"),
-               stream_flag(resp, "\"ride_leg\":") == 2 ? "OpenAndFill" : "Open+Update",
-               stream_flag(resp, "\"ride_bar\":"),
-               stream_flag(resp, "\"ride_out\":"),
-               b[0] ? b : "?", t[0] ? t : "?",
-               stream_flag(resp, "\"ride_m\":"),
-               stream_flag(resp, "\"ride_lb\":"));
         ctx->failed++;
         ctx->error = TA_CODEGEN_RIDE_MISMATCH;
         return;
@@ -4754,6 +4744,7 @@ static ErrorNumber test_codegen_for_language(
     /* Use TA_ForEachFunc to iterate all functions */
     ForEachFuncContext ctx;
     memset(&ctx, 0, sizeof(ctx));
+    codegen_ride_reset();
     ctx.history        = history;
     ctx.functionFilter = functionFilter;
     ctx.cp             = &cp;
@@ -5050,6 +5041,35 @@ static ErrorNumber test_codegen_for_language(
                        lang->name, ctx.rideEligible);
                 ctx.error = TA_CODEGEN_RIDE_VACUOUS;
             }
+            /* The verdict is now read by the transport, so a divergence found by
+             * the parameter sweep or the large-period pass fails the run instead
+             * of being overwritten by the next request. */
+            if( ctx.error == TA_TEST_PASS && codegen_ride_mismatches() > 0 )
+            {
+                printf("RIDE MISMATCH: %d diverging replay(s) on the %s server\n",
+                       codegen_ride_mismatches(), lang->name);
+                ctx.error = TA_CODEGEN_RIDE_MISMATCH;
+            }
+            /* Own counter for the coverage the transport read adds: the driver
+             * reads one response per function, so a transport count that never
+             * exceeds it means every other call site went dark. */
+            if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 &&
+                codegen_ride_verdicts() <= (long)ctx.rideResponses )
+            {
+                printf("RIDE VACUOUS: the transport saw %ld ride verdict(s) against "
+                       "%d read per function -- every call site beyond the per-function "
+                       "one is dark\n", codegen_ride_verdicts(), ctx.rideResponses);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
+            /* The one number that says how much streaming the batch corpus now
+             * exercises. Printed on success too: the floors above only speak when
+             * something is wrong, and a silent gate is how this feature shipped
+             * three backends that rode almost nothing. */
+            if( ctx.rideResponses > 0 )
+                printf("  ride-along: %ld verdict(s) over %d function(s), "
+                       "%lld bar(s) bit-compared through Open+Update and OpenAndFill\n",
+                       codegen_ride_verdicts(), ctx.rideOpenFunctions,
+                       codegen_ride_bars());
             if( ctx.rideBenign > 0 )
                 printf("  BENIGN ride-along: %lld cross-tier signed-zero case(s)\n",
                        ctx.rideBenign);

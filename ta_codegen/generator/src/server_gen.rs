@@ -3829,6 +3829,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // set_unstable_period method — {"method":"set_unstable_period","params":{"id":21,"period":10}}
     s.push_str("        else if (json.contains(\"\\\"set_unstable_period\\\"\")) {\n");
+    s.push_str("            rideGen++;\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
     // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
@@ -3856,6 +3857,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // non-NaN value. Every check precedes the write, so a rejected call leaves
     // all eleven settings as they were (#186).
     s.push_str("        else if (json.contains(\"\\\"set_candle_settings\\\"\")) {\n");
+    s.push_str("            rideGen++;\n");
     s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
     s.push_str("            int rangeType = jsonInt(json, \"rangeType\");\n");
     s.push_str("            int avgPeriod = jsonInt(json, \"avgPeriod\");\n");
@@ -3880,6 +3882,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // restore_candle_default_settings (#215). AllCandleSettings IS a legal
     // argument here — it is the wildcard that set_candle_settings rejects.
     s.push_str("        else if (json.contains(\"\\\"restore_candle_default_settings\\\"\")) {\n");
+    s.push_str("            rideGen++;\n");
     s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
     s.push_str("            if (settingType < 0 || settingType > CandleSettingType.AllCandleSettings.ordinal()) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
@@ -4718,6 +4721,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // set_unstable_period — FuncUnstId.ALL is the "set all" sentinel (matches
     // C's TA_SetUnstablePeriod and the Java server).
     s.push_str("            else if (method == \"set_unstable_period\") {\n");
+    s.push_str("                rideGen++;\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
     // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
@@ -4743,6 +4747,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // rebuild; the assignment happens only if the builder accepted every
     // argument, which is what keeps a rejected call from writing anything.
     s.push_str("            else if (method == \"set_candle_settings\") {\n");
+    s.push_str("                rideGen++;\n");
     s.push_str("                int settingType = GetInt(p, \"settingType\", -1);\n");
     s.push_str("                int rangeType = GetInt(p, \"rangeType\", -1);\n");
     s.push_str("                int avgPeriod = GetInt(p, \"avgPeriod\", 0);\n");
@@ -4761,6 +4766,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // restore_candle_default_settings (#215). AllCandleSettings IS a legal
     // argument here — it is the wildcard that set_candle_settings rejects.
     s.push_str("            else if (method == \"restore_candle_default_settings\") {\n");
+    s.push_str("                rideGen++;\n");
     s.push_str("                int settingType = GetInt(p, \"settingType\", -1);\n");
     s.push_str("                try {\n");
     s.push_str("                    core = core.ToBuilder()\n");

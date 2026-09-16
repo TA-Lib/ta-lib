@@ -54,6 +54,17 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
         return acc;
     }
 
+    static ulong RideMixStr(ulong h, string s)
+    {
+        ulong acc = h;
+        for (int i = 0; i < s.Length; i++)
+        {
+            acc ^= (ulong)(s[i] & 0xff);
+            acc *= 1099511628211UL;
+        }
+        return acc;
+    }
+
     static ulong RideMixArr(ulong h, double[] a, int n)
     {
         ulong acc = h;
@@ -210,7 +221,7 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("false) { r.Skip = 4; return; }\n\n");
 
     s.push_str("        ulong key = 0xcbf29ce484222325UL;\n");
-    let _ = writeln!(s, "        key = RideMix(key, {}UL);", n.len() * 7919);
+    let _ = writeln!(s, "        key = RideMixStr(key, \"TA_{}\");", n.to_uppercase());
     s.push_str("        key = RideMix(key, (ulong) m);\n");
     s.push_str("        key = RideMix(key, rideGen);\n");
     s.push_str("        key = RideMix(key, (ulong)(long) GetInt(p, \"unstablePeriod\", 0));\n");

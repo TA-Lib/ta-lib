@@ -136,6 +136,95 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     return TA_TEST_PASS;
 }
 
+/* The ride-along verdict rides on EVERY response, but the codegen driver reads it
+ * at one of its ~31 call sites, so a divergence found by the parameter sweep or
+ * the large-period pass was computed by the server and then overwritten by the
+ * next request. This is the one point every response passes through, which is
+ * what makes those sites count. */
+static int       g_rideMismatches;
+static long      g_rideVerdicts;
+static long long g_rideBars;
+
+int       codegen_ride_mismatches(void) { return g_rideMismatches; }
+long      codegen_ride_verdicts(void)   { return g_rideVerdicts; }
+long long codegen_ride_bars(void)       { return g_rideBars; }
+void codegen_ride_reset(void)
+{
+    g_rideMismatches = 0;
+    g_rideVerdicts = 0;
+    g_rideBars = 0;
+}
+
+static int ride_int_field(const char *s, const char *key)
+{
+    const char *p = strstr(s, key);
+    if( !p ) return -1;
+    return atoi(p + strlen(key));
+}
+
+/* "ride_batch":"3ff0000000000000" -> the 16 hex characters, "?" when absent. */
+static void ride_hex_field(const char *s, const char *key, char out[17])
+{
+    const char *p = strstr(s, key);
+    out[0] = '\0';
+    if( !p ) return;
+    p += strlen(key);
+    while( *p == ' ' ) p++;
+    if( *p != '"' ) return;
+    p++;
+    {
+        int i = 0;
+        while( i < 16 && p[i] && p[i] != '"' ) { out[i] = p[i]; i++; }
+        out[i] = '\0';
+    }
+}
+
+static void ride_scan(const char *request, const char *response)
+{
+    int ok = ride_int_field(response, "\"ride_ok\":");
+    if( ok < 0 ) return;             /* ta_ref_serve and pre-feature builds */
+    g_rideVerdicts++;
+    /* A dedup hit re-reports the cached counts, so counting it would credit bars
+     * nobody compared on this call. Only a replay that actually ran counts. */
+    if( ok != 0 )
+    {
+        if( ride_int_field(response, "\"ride_dedup\":") <= 0 )
+        {
+            int ob = ride_int_field(response, "\"ride_open_bars\":");
+            int fb = ride_int_field(response, "\"ride_fill_bars\":");
+            if( ob > 0 ) g_rideBars += ob;
+            if( fb > 0 ) g_rideBars += fb;
+        }
+        return;
+    }
+
+    g_rideMismatches++;
+    {
+        char b[17], st[17], fn[64];
+        const char *m = strstr(request, "\"method\":\"");
+        int i = 0;
+        fn[0] = '\0';
+        if( m )
+        {
+            m += 10;
+            while( i < (int)sizeof(fn) - 1 && m[i] && m[i] != '"' ) { fn[i] = m[i]; i++; }
+            fn[i] = '\0';
+        }
+        ride_hex_field(response, "\"ride_batch\":", b);
+        ride_hex_field(response, "\"ride_stream\":", st);
+        printf("  RIDE MISMATCH [%s]: leg %d (%s) bar %d output %d  "
+               "batch=%s stream=%s  (m=%d lookback=%d)\n",
+               fn[0] ? fn : "?",
+               ride_int_field(response, "\"ride_leg\":"),
+               ride_int_field(response, "\"ride_leg\":") == 2 ? "OpenAndFill" : "Open+Update",
+               ride_int_field(response, "\"ride_bar\":"),
+               ride_int_field(response, "\"ride_out\":"),
+               b[0] ? b : "?", st[0] ? st : "?",
+               ride_int_field(response, "\"ride_m\":"),
+               ride_int_field(response, "\"ride_lb\":"));
+    }
+}
+
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,
                               char *response,
@@ -199,6 +288,7 @@ ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                     continue;
                 }
                 response[idx] = '\0';
+                ride_scan(request, response);
                 return TA_TEST_PASS;
             }
         }

@@ -54,6 +54,15 @@ fn ride_mix_u64(h: u64, v: u64) -> u64 {
     acc
 }
 
+fn ride_mix_str(h: u64, s: &str) -> u64 {
+    let mut acc = h;
+    for b in s.as_bytes() {
+        acc ^= u64::from(*b);
+        acc = acc.wrapping_mul(1_099_511_628_211);
+    }
+    acc
+}
+
 fn ride_mix_f64s(h: u64, a: &[f64]) -> u64 {
     let mut acc = h;
     for v in a {
@@ -215,7 +224,7 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("false { r.skip = 4; r.emit(resp); return; }\n\n");
 
     s.push_str("    let mut key = fuzz_hash_init();\n");
-    let _ = writeln!(s, "    key = ride_mix_u64(key, {});", n.len());
+    let _ = writeln!(s, "    key = ride_mix_str(key, \"TA_{}\");", n.to_uppercase());
     s.push_str("    key = ride_mix_u64(key, m as u64);\n");
     s.push_str("    key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));\n");
     s.push_str("    key = ride_mix_u64(key, params[\"unstablePeriod\"].as_i64().unwrap_or(0) as u64);\n");

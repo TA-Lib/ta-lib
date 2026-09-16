@@ -54483,6 +54483,15 @@ fn ride_mix_u64(h: u64, v: u64) -> u64 {
     acc
 }
 
+fn ride_mix_str(h: u64, s: &str) -> u64 {
+    let mut acc = h;
+    for b in s.as_bytes() {
+        acc ^= u64::from(*b);
+        acc = acc.wrapping_mul(1_099_511_628_211);
+    }
+    acc
+}
+
 fn ride_mix_f64s(h: u64, a: &[f64]) -> u64 {
     let mut acc = h;
     for v in a {
@@ -54542,7 +54551,7 @@ fn ride_ac(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_AC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -54626,7 +54635,7 @@ fn ride_accbands(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_ACCBANDS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -54717,7 +54726,7 @@ fn ride_acos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ACOS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -54798,7 +54807,7 @@ fn ride_ad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_AD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -54880,7 +54889,7 @@ fn ride_add(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ADD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -54962,7 +54971,7 @@ fn ride_adosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_ADOSC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55046,7 +55055,7 @@ fn ride_adr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ADR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55128,7 +55137,7 @@ fn ride_adx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ADX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55211,7 +55220,7 @@ fn ride_adxr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ADXR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55293,7 +55302,7 @@ fn ride_ao(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_AO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55374,7 +55383,7 @@ fn ride_apo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_APO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55456,7 +55465,7 @@ fn ride_aroon(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_AROON");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55542,7 +55551,7 @@ fn ride_aroonosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_AROONOSC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55622,7 +55631,7 @@ fn ride_asin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ASIN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55700,7 +55709,7 @@ fn ride_atan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ATAN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55780,7 +55789,7 @@ fn ride_atr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ATR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55861,7 +55870,7 @@ fn ride_avgdev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_AVGDEV");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -55943,7 +55952,7 @@ fn ride_avgprice(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inH
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_AVGPRICE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56024,7 +56033,7 @@ fn ride_bbands(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_BBANDS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56117,7 +56126,7 @@ fn ride_beta(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_BETA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56200,7 +56209,7 @@ fn ride_bop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_BOP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56283,7 +56292,7 @@ fn ride_cci(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_CCI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56367,7 +56376,7 @@ fn ride_cdl2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDL2CROWS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56451,7 +56460,7 @@ fn ride_cdl3blackcrows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDL3BLACKCROWS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56535,7 +56544,7 @@ fn ride_cdl3inside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_CDL3INSIDE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56619,7 +56628,7 @@ fn ride_cdl3linestrike(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDL3LINESTRIKE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56703,7 +56712,7 @@ fn ride_cdl3outside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDL3OUTSIDE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56787,7 +56796,7 @@ fn ride_cdl3starsinsouth(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 16);
+    key = ride_mix_str(key, "TA_CDL3STARSINSOUTH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56871,7 +56880,7 @@ fn ride_cdl3whitesoldiers(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDL3WHITESOLDIERS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -56955,7 +56964,7 @@ fn ride_cdlabandonedbaby(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 16);
+    key = ride_mix_str(key, "TA_CDLABANDONEDBABY");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57040,7 +57049,7 @@ fn ride_cdladvanceblock(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_CDLADVANCEBLOCK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57124,7 +57133,7 @@ fn ride_cdlbelthold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLBELTHOLD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57208,7 +57217,7 @@ fn ride_cdlbreakaway(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_CDLBREAKAWAY");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57292,7 +57301,7 @@ fn ride_cdlclosingmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLCLOSINGMARUBOZU");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57376,7 +57385,7 @@ fn ride_cdlconcealbabyswall(core: &Core, params: &Value, endIdx: usize, inOpen: 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 19);
+    key = ride_mix_str(key, "TA_CDLCONCEALBABYSWALL");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57460,7 +57469,7 @@ fn ride_cdlcounterattack(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 16);
+    key = ride_mix_str(key, "TA_CDLCOUNTERATTACK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57544,7 +57553,7 @@ fn ride_cdldarkcloudcover(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDLDARKCLOUDCOVER");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57629,7 +57638,7 @@ fn ride_cdldoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHi
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_CDLDOJI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57713,7 +57722,7 @@ fn ride_cdldojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLDOJISTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57797,7 +57806,7 @@ fn ride_cdldragonflydoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 16);
+    key = ride_mix_str(key, "TA_CDLDRAGONFLYDOJI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57881,7 +57890,7 @@ fn ride_cdlengulfing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_CDLENGULFING");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -57965,7 +57974,7 @@ fn ride_cdleveningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLEVENINGDOJISTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58050,7 +58059,7 @@ fn ride_cdleveningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLEVENINGSTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58135,7 +58144,7 @@ fn ride_cdlgapsidesidewhite(core: &Core, params: &Value, endIdx: usize, inOpen: 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 19);
+    key = ride_mix_str(key, "TA_CDLGAPSIDESIDEWHITE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58219,7 +58228,7 @@ fn ride_cdlgravestonedoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDLGRAVESTONEDOJI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58303,7 +58312,7 @@ fn ride_cdlhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDLHAMMER");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58387,7 +58396,7 @@ fn ride_cdlhangingman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 13);
+    key = ride_mix_str(key, "TA_CDLHANGINGMAN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58471,7 +58480,7 @@ fn ride_cdlharami(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDLHARAMI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58555,7 +58564,7 @@ fn ride_cdlharamicross(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLHARAMICROSS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58639,7 +58648,7 @@ fn ride_cdlhighwave(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLHIGHWAVE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58723,7 +58732,7 @@ fn ride_cdlhikkake(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_CDLHIKKAKE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58807,7 +58816,7 @@ fn ride_cdlhikkakemod(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 13);
+    key = ride_mix_str(key, "TA_CDLHIKKAKEMOD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58891,7 +58900,7 @@ fn ride_cdlhomingpigeon(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_CDLHOMINGPIGEON");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -58975,7 +58984,7 @@ fn ride_cdlidentical3crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLIDENTICAL3CROWS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59059,7 +59068,7 @@ fn ride_cdlinneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDLINNECK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59143,7 +59152,7 @@ fn ride_cdlinvertedhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDLINVERTEDHAMMER");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59227,7 +59236,7 @@ fn ride_cdlkicking(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_CDLKICKING");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59311,7 +59320,7 @@ fn ride_cdlkickingbylength(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLKICKINGBYLENGTH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59395,7 +59404,7 @@ fn ride_cdlladderbottom(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_CDLLADDERBOTTOM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59479,7 +59488,7 @@ fn ride_cdllongleggeddoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDLLONGLEGGEDDOJI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59563,7 +59572,7 @@ fn ride_cdllongline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLLONGLINE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59647,7 +59656,7 @@ fn ride_cdlmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLMARUBOZU");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59731,7 +59740,7 @@ fn ride_cdlmatchinglow(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLMATCHINGLOW");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59815,7 +59824,7 @@ fn ride_cdlmathold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_CDLMATHOLD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59900,7 +59909,7 @@ fn ride_cdlmorningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLMORNINGDOJISTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -59985,7 +59994,7 @@ fn ride_cdlmorningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLMORNINGSTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60070,7 +60079,7 @@ fn ride_cdlonneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDLONNECK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60154,7 +60163,7 @@ fn ride_cdlpiercing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_CDLPIERCING");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60238,7 +60247,7 @@ fn ride_cdlrickshawman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLRICKSHAWMAN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60322,7 +60331,7 @@ fn ride_cdlrisefall3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 19);
+    key = ride_mix_str(key, "TA_CDLRISEFALL3METHODS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60406,7 +60415,7 @@ fn ride_cdlseparatinglines(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLSEPARATINGLINES");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60490,7 +60499,7 @@ fn ride_cdlshootingstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_CDLSHOOTINGSTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60574,7 +60583,7 @@ fn ride_cdlshortline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_CDLSHORTLINE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60658,7 +60667,7 @@ fn ride_cdlspinningtop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 14);
+    key = ride_mix_str(key, "TA_CDLSPINNINGTOP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60742,7 +60751,7 @@ fn ride_cdlstalledpattern(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 17);
+    key = ride_mix_str(key, "TA_CDLSTALLEDPATTERN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60826,7 +60835,7 @@ fn ride_cdlsticksandwich(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 16);
+    key = ride_mix_str(key, "TA_CDLSTICKSANDWICH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60910,7 +60919,7 @@ fn ride_cdltakuri(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_CDLTAKURI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -60994,7 +61003,7 @@ fn ride_cdltasukigap(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_CDLTASUKIGAP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61078,7 +61087,7 @@ fn ride_cdlthrusting(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_CDLTHRUSTING");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61162,7 +61171,7 @@ fn ride_cdltristar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_CDLTRISTAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61246,7 +61255,7 @@ fn ride_cdlunique3river(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_CDLUNIQUE3RIVER");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61330,7 +61339,7 @@ fn ride_cdlupsidegap2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 18);
+    key = ride_mix_str(key, "TA_CDLUPSIDEGAP2CROWS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61414,7 +61423,7 @@ fn ride_cdlxsidegap3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 19);
+    key = ride_mix_str(key, "TA_CDLXSIDEGAP3METHODS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61495,7 +61504,7 @@ fn ride_ceil(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_CEIL");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61576,7 +61585,7 @@ fn ride_cmf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_CMF");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61658,7 +61667,7 @@ fn ride_cmo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_CMO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61737,7 +61746,7 @@ fn ride_cmou(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_CMOU");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61816,7 +61825,7 @@ fn ride_coppock(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_COPPOCK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61898,7 +61907,7 @@ fn ride_correl(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inRe
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_CORREL");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -61978,7 +61987,7 @@ fn ride_cos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_COS");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62056,7 +62065,7 @@ fn ride_cosh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_COSH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62134,7 +62143,7 @@ fn ride_cumsum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp:
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_CUMSUM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62213,7 +62222,7 @@ fn ride_cvi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_CVI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62294,7 +62303,7 @@ fn ride_dema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_DEMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62374,7 +62383,7 @@ fn ride_div(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_DIV");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62454,7 +62463,7 @@ fn ride_donchian(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_DONCHIAN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62544,7 +62553,7 @@ fn ride_dpo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_DPO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62625,7 +62634,7 @@ fn ride_dx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_DX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62707,7 +62716,7 @@ fn ride_efi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_EFI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62787,7 +62796,7 @@ fn ride_ema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_EMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62866,7 +62875,7 @@ fn ride_er(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_ER");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -62947,7 +62956,7 @@ fn ride_eri(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ERI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63033,7 +63042,7 @@ fn ride_exp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_EXP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63111,7 +63120,7 @@ fn ride_floor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_FLOOR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63189,7 +63198,7 @@ fn ride_fosc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_FOSC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63269,7 +63278,7 @@ fn ride_fractal(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_FRACTAL");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63358,7 +63367,7 @@ fn ride_ha(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_HA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63454,7 +63463,7 @@ fn ride_hma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_HMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63533,7 +63542,7 @@ fn ride_ht_dcperiod(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_HT_DCPERIOD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63611,7 +63620,7 @@ fn ride_ht_dcphase(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], r
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_HT_DCPHASE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63689,7 +63698,7 @@ fn ride_ht_phasor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], re
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_HT_PHASOR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63772,7 +63781,7 @@ fn ride_ht_sine(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_HT_SINE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63855,7 +63864,7 @@ fn ride_ht_trendline(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_HT_TRENDLINE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -63933,7 +63942,7 @@ fn ride_ht_trendmode(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 12);
+    key = ride_mix_str(key, "TA_HT_TRENDMODE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64012,7 +64021,7 @@ fn ride_imi(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClose:
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_IMI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64092,7 +64101,7 @@ fn ride_kama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_KAMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64173,7 +64182,7 @@ fn ride_kc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_KC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64268,7 +64277,7 @@ fn ride_kdj(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_KDJ");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64363,7 +64372,7 @@ fn ride_linearreg(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], op
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 9);
+    key = ride_mix_str(key, "TA_LINEARREG");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64442,7 +64451,7 @@ fn ride_linearreg_angle(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_LINEARREG_ANGLE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64521,7 +64530,7 @@ fn ride_linearreg_intercept(core: &Core, params: &Value, endIdx: usize, inReal: 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 19);
+    key = ride_mix_str(key, "TA_LINEARREG_INTERCEPT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64600,7 +64609,7 @@ fn ride_linearreg_slope(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 15);
+    key = ride_mix_str(key, "TA_LINEARREG_SLOPE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64679,7 +64688,7 @@ fn ride_ln(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mu
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_LN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64757,7 +64766,7 @@ fn ride_log10(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_LOG10");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64835,7 +64844,7 @@ fn ride_ma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_MA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -64915,7 +64924,7 @@ fn ride_macd(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_MACD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65006,7 +65015,7 @@ fn ride_macdext(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_MACDEXT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65100,7 +65109,7 @@ fn ride_macdfix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_MACDFIX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65189,7 +65198,7 @@ fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_MAMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65276,7 +65285,7 @@ fn ride_marketfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MARKETFI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65357,7 +65366,7 @@ fn ride_massi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_MASSI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65439,7 +65448,7 @@ fn ride_mavp(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_MAVP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65521,7 +65530,7 @@ fn ride_max(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_MAX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65600,7 +65609,7 @@ fn ride_maxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MAXINDEX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65680,7 +65689,7 @@ fn ride_medprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MEDPRICE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65762,7 +65771,7 @@ fn ride_mfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_MFI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65844,7 +65853,7 @@ fn ride_midpoint(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MIDPOINT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -65924,7 +65933,7 @@ fn ride_midprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MIDPRICE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66004,7 +66013,7 @@ fn ride_min(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_MIN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66083,7 +66092,7 @@ fn ride_minindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MININDEX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66162,7 +66171,7 @@ fn ride_minmax(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_MINMAX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66246,7 +66255,7 @@ fn ride_minmaxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_MINMAXINDEX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66332,7 +66341,7 @@ fn ride_minus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MINUS_DI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66414,7 +66423,7 @@ fn ride_minus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_MINUS_DM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66494,7 +66503,7 @@ fn ride_mom(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_MOM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66574,7 +66583,7 @@ fn ride_mult(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_MULT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66655,7 +66664,7 @@ fn ride_natr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_NATR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66737,7 +66746,7 @@ fn ride_nvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_NVI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66817,7 +66826,7 @@ fn ride_obv(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolume
     if !ride_finite(&inReal[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_OBV");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66896,7 +66905,7 @@ fn ride_percentile(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], o
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_PERCENTILE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -66976,7 +66985,7 @@ fn ride_percentrank(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 11);
+    key = ride_mix_str(key, "TA_PERCENTRANK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67057,7 +67066,7 @@ fn ride_plus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_PLUS_DI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67139,7 +67148,7 @@ fn ride_plus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_PLUS_DM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67219,7 +67228,7 @@ fn ride_ppo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_PPO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67301,7 +67310,7 @@ fn ride_pvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_PVI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67380,7 +67389,7 @@ fn ride_pvo(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optInF
     if !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_PVO");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67462,7 +67471,7 @@ fn ride_pvt(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_PVT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67542,7 +67551,7 @@ fn ride_qstick(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClo
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_QSTICK");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67622,7 +67631,7 @@ fn ride_rma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_RMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67701,7 +67710,7 @@ fn ride_roc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_ROC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67780,7 +67789,7 @@ fn ride_rocp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ROCP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67859,7 +67868,7 @@ fn ride_rocr(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_ROCR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -67938,7 +67947,7 @@ fn ride_rocr100(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 7);
+    key = ride_mix_str(key, "TA_ROCR100");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68017,7 +68026,7 @@ fn ride_rsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_RSI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68096,7 +68105,7 @@ fn ride_rvi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_RVI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68176,7 +68185,7 @@ fn ride_rvol(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optIn
     if !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_RVOL");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68256,7 +68265,7 @@ fn ride_sar(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68338,7 +68347,7 @@ fn ride_sarext(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_SAREXT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68425,7 +68434,7 @@ fn ride_sin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SIN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68503,7 +68512,7 @@ fn ride_sinh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_SINH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68581,7 +68590,7 @@ fn ride_sma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68662,7 +68671,7 @@ fn ride_smi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SMI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68751,7 +68760,7 @@ fn ride_sqrt(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_SQRT");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68829,7 +68838,7 @@ fn ride_stddev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_STDDEV");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -68911,7 +68920,7 @@ fn ride_stoch(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_STOCH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69003,7 +69012,7 @@ fn ride_stochf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_STOCHF");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69091,7 +69100,7 @@ fn ride_stochrsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_STOCHRSI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69179,7 +69188,7 @@ fn ride_sub(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SUB");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69258,7 +69267,7 @@ fn ride_sum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_SUM");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69339,7 +69348,7 @@ fn ride_supertrend(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], i
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 10);
+    key = ride_mix_str(key, "TA_SUPERTREND");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69426,7 +69435,7 @@ fn ride_t3(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 2);
+    key = ride_mix_str(key, "TA_T3");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69506,7 +69515,7 @@ fn ride_tan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_TAN");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69584,7 +69593,7 @@ fn ride_tanh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_TANH");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69662,7 +69671,7 @@ fn ride_tema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_TEMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69743,7 +69752,7 @@ fn ride_trange(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_TRANGE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69823,7 +69832,7 @@ fn ride_trima(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInT
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_TRIMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69902,7 +69911,7 @@ fn ride_trix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_TRIX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -69981,7 +69990,7 @@ fn ride_tsf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_TSF");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70060,7 +70069,7 @@ fn ride_tsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFir
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_TSI");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70142,7 +70151,7 @@ fn ride_typprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_TYPPRICE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70224,7 +70233,7 @@ fn ride_ultosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_ULTOSC");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70307,7 +70316,7 @@ fn ride_var(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_VAR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70387,7 +70396,7 @@ fn ride_vhf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_VHF");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70468,7 +70477,7 @@ fn ride_vortex(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 6);
+    key = ride_mix_str(key, "TA_VORTEX");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70557,7 +70566,7 @@ fn ride_vwap(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_VWAP");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70639,7 +70648,7 @@ fn ride_vwma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolum
     if !ride_finite(&inReal[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 4);
+    key = ride_mix_str(key, "TA_VWMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70721,7 +70730,7 @@ fn ride_wad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_WAD");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70803,7 +70812,7 @@ fn ride_wclprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 8);
+    key = ride_mix_str(key, "TA_WCLPRICE");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70885,7 +70894,7 @@ fn ride_willr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_WILLR");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -70966,7 +70975,7 @@ fn ride_wma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 3);
+    key = ride_mix_str(key, "TA_WMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
@@ -71045,7 +71054,7 @@ fn ride_zlema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInT
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
-    key = ride_mix_u64(key, 5);
+    key = ride_mix_str(key, "TA_ZLEMA");
     key = ride_mix_u64(key, m as u64);
     key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
     key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);

@@ -43,6 +43,13 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[]);
  * response_size: size of response buffer
  * Returns TA_TEST_PASS on success, error code on failure.
  */
+/* Ride-along verdicts seen by the transport, i.e. at EVERY call site rather than
+ * the single one the codegen driver reads. Reset per language. */
+int  codegen_ride_mismatches(void);
+long codegen_ride_verdicts(void);
+long long codegen_ride_bars(void);
+void codegen_ride_reset(void);
+
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,
                               char *response,

@@ -182812,6 +182812,7 @@ public class TaCodegenServe {
             return sb.toString();
         }
         else if (json.contains("\"set_unstable_period\"")) {
+            rideGen++;
             int id = jsonInt(json, "id");
             int period = jsonInt(json, "period");
             if (period < 0 || period > Core.MAX_INDEX) {
@@ -182828,6 +182829,7 @@ public class TaCodegenServe {
             return "{\"error\":\"Invalid id\"}"; 
         }
         else if (json.contains("\"set_candle_settings\"")) {
+            rideGen++;
             int settingType = jsonInt(json, "settingType");
             int rangeType = jsonInt(json, "rangeType");
             int avgPeriod = jsonInt(json, "avgPeriod");
@@ -182849,6 +182851,7 @@ public class TaCodegenServe {
             return "{\"status\":\"ok\"}";
         }
         else if (json.contains("\"restore_candle_default_settings\"")) {
+            rideGen++;
             int settingType = jsonInt(json, "settingType");
             if (settingType < 0 || settingType > CandleSettingType.AllCandleSettings.ordinal()) {
                 return "{\"error\":\"Invalid candle setting type\"}";
@@ -245714,6 +245717,15 @@ public class TaCodegenServe {
         return acc;
     }
 
+    static long rideMixStr(long h, String s) {
+        long acc = h;
+        for (int i = 0; i < s.length(); i++) {
+            acc ^= s.charAt(i) & 0xffL;
+            acc *= 1099511628211L;
+        }
+        return acc;
+    }
+
     static long rideMixArr(long h, double[] a, int n) {
         long acc = h;
         for (int i = 0; i < n; i++) acc = rideMix(acc, Double.doubleToRawLongBits(a[i]));
@@ -245768,7 +245780,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_AC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -245854,7 +245866,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_ACCBANDS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -245946,7 +245958,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ACOS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246029,7 +246041,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_AD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246113,7 +246125,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ADD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246197,7 +246209,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_ADOSC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246283,7 +246295,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ADR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246367,7 +246379,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ADX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246452,7 +246464,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ADXR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246536,7 +246548,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_AO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246619,7 +246631,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_APO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246703,7 +246715,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_AROON");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246790,7 +246802,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_AROONOSC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246872,7 +246884,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ASIN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -246952,7 +246964,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ATAN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247034,7 +247046,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ATR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247117,7 +247129,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_AVGDEV");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247201,7 +247213,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_AVGPRICE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247284,7 +247296,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_BBANDS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247378,7 +247390,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_BETA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247463,7 +247475,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_BOP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247548,7 +247560,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_CCI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247634,7 +247646,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDL2CROWS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247720,7 +247732,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDL3BLACKCROWS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247806,7 +247818,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_CDL3INSIDE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247892,7 +247904,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDL3LINESTRIKE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -247978,7 +247990,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDL3OUTSIDE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248064,7 +248076,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 126704L);
+        key = rideMixStr(key, "TA_CDL3STARSINSOUTH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248150,7 +248162,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDL3WHITESOLDIERS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248236,7 +248248,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 126704L);
+        key = rideMixStr(key, "TA_CDLABANDONEDBABY");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248323,7 +248335,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_CDLADVANCEBLOCK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248409,7 +248421,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLBELTHOLD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248495,7 +248507,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_CDLBREAKAWAY");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248581,7 +248593,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLCLOSINGMARUBOZU");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248667,7 +248679,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 150461L);
+        key = rideMixStr(key, "TA_CDLCONCEALBABYSWALL");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248753,7 +248765,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 126704L);
+        key = rideMixStr(key, "TA_CDLCOUNTERATTACK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248839,7 +248851,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDLDARKCLOUDCOVER");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -248926,7 +248938,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_CDLDOJI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249012,7 +249024,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLDOJISTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249098,7 +249110,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 126704L);
+        key = rideMixStr(key, "TA_CDLDRAGONFLYDOJI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249184,7 +249196,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_CDLENGULFING");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249270,7 +249282,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLEVENINGDOJISTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249357,7 +249369,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLEVENINGSTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249444,7 +249456,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 150461L);
+        key = rideMixStr(key, "TA_CDLGAPSIDESIDEWHITE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249530,7 +249542,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDLGRAVESTONEDOJI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249616,7 +249628,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDLHAMMER");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249702,7 +249714,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 102947L);
+        key = rideMixStr(key, "TA_CDLHANGINGMAN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249788,7 +249800,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDLHARAMI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249874,7 +249886,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLHARAMICROSS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -249960,7 +249972,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLHIGHWAVE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250046,7 +250058,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_CDLHIKKAKE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250132,7 +250144,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 102947L);
+        key = rideMixStr(key, "TA_CDLHIKKAKEMOD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250218,7 +250230,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_CDLHOMINGPIGEON");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250304,7 +250316,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLIDENTICAL3CROWS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250390,7 +250402,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDLINNECK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250476,7 +250488,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDLINVERTEDHAMMER");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250562,7 +250574,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_CDLKICKING");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250648,7 +250660,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLKICKINGBYLENGTH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250734,7 +250746,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_CDLLADDERBOTTOM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250820,7 +250832,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDLLONGLEGGEDDOJI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250906,7 +250918,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLLONGLINE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -250992,7 +251004,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLMARUBOZU");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251078,7 +251090,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLMATCHINGLOW");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251164,7 +251176,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_CDLMATHOLD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251251,7 +251263,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLMORNINGDOJISTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251338,7 +251350,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLMORNINGSTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251425,7 +251437,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDLONNECK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251511,7 +251523,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_CDLPIERCING");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251597,7 +251609,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLRICKSHAWMAN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251683,7 +251695,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 150461L);
+        key = rideMixStr(key, "TA_CDLRISEFALL3METHODS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251769,7 +251781,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLSEPARATINGLINES");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251855,7 +251867,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_CDLSHOOTINGSTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -251941,7 +251953,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_CDLSHORTLINE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252027,7 +252039,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 110866L);
+        key = rideMixStr(key, "TA_CDLSPINNINGTOP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252113,7 +252125,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 134623L);
+        key = rideMixStr(key, "TA_CDLSTALLEDPATTERN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252199,7 +252211,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 126704L);
+        key = rideMixStr(key, "TA_CDLSTICKSANDWICH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252285,7 +252297,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_CDLTAKURI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252371,7 +252383,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_CDLTASUKIGAP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252457,7 +252469,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_CDLTHRUSTING");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252543,7 +252555,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_CDLTRISTAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252629,7 +252641,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_CDLUNIQUE3RIVER");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252715,7 +252727,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 142542L);
+        key = rideMixStr(key, "TA_CDLUPSIDEGAP2CROWS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252801,7 +252813,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 150461L);
+        key = rideMixStr(key, "TA_CDLXSIDEGAP3METHODS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252884,7 +252896,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_CEIL");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -252967,7 +252979,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_CMF");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253051,7 +253063,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_CMO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253132,7 +253144,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_CMOU");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253213,7 +253225,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_COPPOCK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253297,7 +253309,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_CORREL");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253379,7 +253391,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_COS");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253459,7 +253471,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_COSH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253539,7 +253551,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_CUMSUM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253620,7 +253632,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_CVI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253703,7 +253715,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_DEMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253785,7 +253797,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_DIV");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253867,7 +253879,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_DONCHIAN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -253958,7 +253970,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_DPO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254041,7 +254053,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_DX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254125,7 +254137,7 @@ public class TaCodegenServe {
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_EFI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254207,7 +254219,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_EMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254288,7 +254300,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_ER");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254371,7 +254383,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ERI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254458,7 +254470,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_EXP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254538,7 +254550,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_FLOOR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254618,7 +254630,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_FOSC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254700,7 +254712,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_FRACTAL");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254790,7 +254802,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_HA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254887,7 +254899,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_HMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -254968,7 +254980,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_HT_DCPERIOD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255048,7 +255060,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_HT_DCPHASE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255128,7 +255140,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_HT_PHASOR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255212,7 +255224,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_HT_SINE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255296,7 +255308,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_HT_TRENDLINE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255376,7 +255388,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 95028L);
+        key = rideMixStr(key, "TA_HT_TRENDMODE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255457,7 +255469,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_IMI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255539,7 +255551,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_KAMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255622,7 +255634,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_KC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255718,7 +255730,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_KDJ");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255814,7 +255826,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 71271L);
+        key = rideMixStr(key, "TA_LINEARREG");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255895,7 +255907,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_LINEARREG_ANGLE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -255976,7 +255988,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 150461L);
+        key = rideMixStr(key, "TA_LINEARREG_INTERCEPT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256057,7 +256069,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 118785L);
+        key = rideMixStr(key, "TA_LINEARREG_SLOPE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256138,7 +256150,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_LN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256218,7 +256230,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_LOG10");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256298,7 +256310,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_MA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256380,7 +256392,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_MACD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256472,7 +256484,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_MACDEXT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256567,7 +256579,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_MACDFIX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256657,7 +256669,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_MAMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256745,7 +256757,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MARKETFI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256828,7 +256840,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_MASSI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256912,7 +256924,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_MAVP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -256996,7 +257008,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_MAX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257077,7 +257089,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MAXINDEX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257159,7 +257171,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MEDPRICE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257243,7 +257255,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_MFI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257327,7 +257339,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MIDPOINT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257409,7 +257421,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MIDPRICE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257491,7 +257503,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_MIN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257572,7 +257584,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MININDEX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257653,7 +257665,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_MINMAX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257738,7 +257750,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_MINMAXINDEX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257825,7 +257837,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MINUS_DI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257909,7 +257921,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_MINUS_DM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -257991,7 +258003,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_MOM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258073,7 +258085,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_MULT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258156,7 +258168,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_NATR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258240,7 +258252,7 @@ public class TaCodegenServe {
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_NVI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258322,7 +258334,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_OBV");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258403,7 +258415,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_PERCENTILE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258485,7 +258497,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 87109L);
+        key = rideMixStr(key, "TA_PERCENTRANK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258568,7 +258580,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_PLUS_DI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258652,7 +258664,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_PLUS_DM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258734,7 +258746,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_PPO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258818,7 +258830,7 @@ public class TaCodegenServe {
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_PVI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258899,7 +258911,7 @@ public class TaCodegenServe {
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_PVO");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -258983,7 +258995,7 @@ public class TaCodegenServe {
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_PVT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259065,7 +259077,7 @@ public class TaCodegenServe {
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_QSTICK");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259147,7 +259159,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_RMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259228,7 +259240,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_ROC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259309,7 +259321,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ROCP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259390,7 +259402,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_ROCR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259471,7 +259483,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 55433L);
+        key = rideMixStr(key, "TA_ROCR100");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259552,7 +259564,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_RSI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259633,7 +259645,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_RVI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259715,7 +259727,7 @@ public class TaCodegenServe {
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_RVOL");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259797,7 +259809,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259881,7 +259893,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_SAREXT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -259970,7 +259982,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SIN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260050,7 +260062,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_SINH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260130,7 +260142,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260213,7 +260225,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SMI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260303,7 +260315,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_SQRT");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260383,7 +260395,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_STDDEV");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260467,7 +260479,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_STOCH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260560,7 +260572,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_STOCHF");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260649,7 +260661,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_STOCHRSI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260738,7 +260750,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SUB");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260819,7 +260831,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_SUM");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260902,7 +260914,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 79190L);
+        key = rideMixStr(key, "TA_SUPERTREND");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -260990,7 +261002,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 15838L);
+        key = rideMixStr(key, "TA_T3");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261072,7 +261084,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_TAN");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261152,7 +261164,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_TANH");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261232,7 +261244,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_TEMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261315,7 +261327,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_TRANGE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261397,7 +261409,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_TRIMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261478,7 +261490,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_TRIX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261559,7 +261571,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_TSF");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261640,7 +261652,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_TSI");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261724,7 +261736,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_TYPPRICE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261808,7 +261820,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_ULTOSC");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261893,7 +261905,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_VAR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -261975,7 +261987,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_VHF");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262058,7 +262070,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 47514L);
+        key = rideMixStr(key, "TA_VORTEX");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262148,7 +262160,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_VWAP");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262232,7 +262244,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 31676L);
+        key = rideMixStr(key, "TA_VWMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262316,7 +262328,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_WAD");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262400,7 +262412,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 63352L);
+        key = rideMixStr(key, "TA_WCLPRICE");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262484,7 +262496,7 @@ public class TaCodegenServe {
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_WILLR");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262567,7 +262579,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 23757L);
+        key = rideMixStr(key, "TA_WMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
@@ -262648,7 +262660,7 @@ public class TaCodegenServe {
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
-        key = rideMix(key, 39595L);
+        key = rideMixStr(key, "TA_ZLEMA");
         key = rideMix(key, m);
         key = rideMix(key, rideGen);
         key = rideMix(key, jsonInt(json, "unstablePeriod"));
