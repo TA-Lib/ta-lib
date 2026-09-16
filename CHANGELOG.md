@@ -7,6 +7,10 @@ Just re-install to upgrade. Older versions are automatically removed.
 See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list of changes
 
 ## [0.8.2] Not Released Yet
+### Added
+- `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
+  target. An autotools install still provides `ta-lib.pc` only. (#422)
+
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
 

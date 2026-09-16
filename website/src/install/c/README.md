@@ -27,6 +27,8 @@ Both CMake and autotools build systems are included, enabling an optimized build
 
 - [vcpkg](#vcpkg)
 
+- [Use it from CMake](#use-it-from-cmake)
+
 - [GitHub Actions](#github-actions)
 
 
@@ -182,6 +184,26 @@ vcpkg add port talib
 ```
 
 See the [vcpkg documentation](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started) for one-time setup and CMake/MSBuild integration.
+
+
+## Use it from CMake
+
+An install done with CMake provides a package config, so a consumer needs only:
+
+```cmake
+find_package(ta-lib CONFIG REQUIRED)
+target_link_libraries(myapp PRIVATE ta-lib::ta-lib)
+```
+
+`ta-lib::ta-lib` is the portable name. It is the shared library when one was built and
+the static library otherwise, so the same two lines work against any install. Where both
+linkages were installed, `ta-lib::ta-lib-static` picks the static one explicitly.
+
+Linking the target is all that is needed. Both `#include <ta_libc.h>` and
+`#include <ta-lib/ta_libc.h>` resolve, and a static link pulls in the math library.
+
+An install done with autotools (`./configure && make install`, which is what Homebrew
+uses) provides `ta-lib.pc` for pkg-config instead.
 
 
 ## GitHub Actions

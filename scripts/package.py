@@ -368,6 +368,7 @@ def verify_deb_payload(root_dir: str, deb_file: str) -> str:
 
         for required in (f'{prefix}/lib/libta-lib.so -> ',   # the dev symlink
                          f'{prefix}/lib/pkgconfig/ta-lib.pc',
+                         f'{prefix}/lib/cmake/ta-lib/ta-lib-config.cmake',
                          f'{prefix}/include/ta-lib/ta_libc.h'):
             if required not in listing:
                 return f"payload is missing {required}"

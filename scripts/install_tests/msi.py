@@ -70,6 +70,8 @@ def test_msi_windows(msi_file_path: str, temp_dir: str, version: str):
         os.path.join(install_dir, "lib", "ta-lib-static.lib"),
         os.path.join(install_dir, "lib", "ta-lib.lib"),
         os.path.join(install_dir, "bin", "ta-lib.dll"),
+        os.path.join(install_dir, "lib", "cmake", "ta-lib", "ta-lib-config.cmake"),
+        os.path.join(install_dir, "lib", "cmake", "ta-lib", "ta-lib-config-version.cmake"),
     ]
     missing = [p for p in expected if not os.path.isfile(p)]
     if missing:

@@ -19,6 +19,10 @@ EXPECTED_INSTALLED = (
     "include/ta-lib/ta_libc.h",
     "lib/libta-lib.a",
     "lib/libta-lib.so",
+    # Not the per-config ta-lib-config-<cfg>.cmake: its name follows
+    # CMAKE_BUILD_TYPE.
+    "lib/cmake/ta-lib/ta-lib-config.cmake",
+    "lib/cmake/ta-lib/ta-lib-config-version.cmake",
 )
 
 CONSUMER_C = r'''
@@ -52,6 +56,48 @@ int main( int argc, char **argv )
    return 0;
 }
 '''
+
+
+# CONSUMER_C above uses <ta-lib/ta_libc.h>; this is the other supported
+# spelling, so the two together compile one include directory each.
+CONSUMER_FLAT_C = r"""
+#include <ta_libc.h>
+void ta_lib_flat_spelling_compiles( void ) {}
+"""
+
+# Asserted in CMake, not by a successful compile: a dropped include entry still
+# compiles on any host that already has a TA-Lib under /usr or /usr/local,
+# resolving against THAT one, so the compile reads green while the target is wrong.
+CONSUMER_CMAKE = """
+cmake_minimum_required(VERSION 3.18)
+project(ta_lib_find_package_consumer C)
+
+find_package(ta-lib {version_req} REQUIRED CONFIG)
+
+string(FIND "${{ta-lib_DIR}}" "{prefix}" _at)
+if(NOT _at EQUAL 0)
+    message(FATAL_ERROR "resolved ta-lib_DIR=${{ta-lib_DIR}}, outside the staged prefix {prefix}")
+endif()
+
+get_target_property(_type ta-lib::ta-lib TYPE)
+if(NOT _type STREQUAL "{expected_type}")
+    message(FATAL_ERROR "ta-lib::ta-lib is ${{_type}}, expected {expected_type}")
+endif()
+
+get_target_property(_inc ta-lib::ta-lib INTERFACE_INCLUDE_DIRECTORIES)
+list(LENGTH _inc _n)
+if(NOT _n EQUAL 2)
+    message(FATAL_ERROR "ta-lib::ta-lib carries ${{_n}} include entries, expected 2: ${{_inc}}")
+endif()
+list(GET _inc 0 _inc0)
+list(GET _inc 1 _inc1)
+if(NOT _inc0 MATCHES "/include/ta-lib$" OR NOT _inc1 MATCHES "/include$")
+    message(FATAL_ERROR "include interface ${{_inc}}, expected <prefix>/include/ta-lib then <prefix>/include")
+endif()
+
+add_executable(consumer consumer.c consumer_flat.c)
+target_link_libraries(consumer PRIVATE ta-lib::ta-lib)
+"""
 
 
 def _run_consumer(exe: str, version: str, step: str):
@@ -90,12 +136,7 @@ def test_cmake_src_linux(package_file_path: str, temp_dir: str, version: str):
 
     # -DBUILD_DEV_TOOLS=OFF is the port's own option. The dev tools are covered
     # by the autotools leg, which builds and runs ta_regtest from this tarball.
-    run_or_die(["cmake", "-S", source_dir, "-B", build_dir,
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DBUILD_DEV_TOOLS=OFF",
-                f"-DCMAKE_INSTALL_PREFIX={prefix_dir}"], "cmake configure")
-    run_or_die(["cmake", "--build", build_dir, "-j", str(os.cpu_count() or 2)], "cmake build")
-    run_or_die(["cmake", "--install", build_dir], "cmake install")
+    _configure_build_install(source_dir, build_dir, prefix_dir, [], "both")
 
     missing = [p for p in EXPECTED_INSTALLED
                if not os.path.exists(os.path.join(prefix_dir, p))]
@@ -122,4 +163,50 @@ def test_cmake_src_linux(package_file_path: str, temp_dir: str, version: str):
                 os.path.join(lib_dir, "libta-lib.a"), "-lm", "-o", static_exe],
                "compile consumer (static)")
     _run_consumer(static_exe, version, "run consumer (static)")
+
+    # Nothing above reaches the installed package config.
+    _find_package_consumer(temp_dir, prefix_dir, version, "SHARED_LIBRARY", "both")
+
+    # The only mode in which the EXPORT_NAME assignment does anything, and what
+    # every vcpkg static triplet configures.
+    static_build = os.path.join(temp_dir, "cmake_build_static")
+    static_prefix = os.path.join(temp_dir, "cmake_prefix_static")
+    _configure_build_install(source_dir, static_build, static_prefix,
+                             ["-DBUILD_SHARED_LIBS=OFF"], "static-only")
+    _find_package_consumer(temp_dir, static_prefix, version, "STATIC_LIBRARY",
+                           "static-only")
     return
+
+
+def _configure_build_install(source_dir: str, build_dir: str, prefix_dir: str,
+                             extra: list, tag: str):
+    run_or_die(["cmake", "-S", source_dir, "-B", build_dir,
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DBUILD_DEV_TOOLS=OFF",
+                f"-DCMAKE_INSTALL_PREFIX={prefix_dir}"] + extra,
+               f"cmake configure ({tag})")
+    run_or_die(["cmake", "--build", build_dir, "-j", str(os.cpu_count() or 2)],
+               f"cmake build ({tag})")
+    run_or_die(["cmake", "--install", build_dir], f"cmake install ({tag})")
+
+
+def _find_package_consumer(temp_dir: str, prefix_dir: str, version: str,
+                           expected_type: str, tag: str):
+    print(f"  [find_package consumer: {tag}] {prefix_dir}")
+    src = os.path.join(temp_dir, f"find_package_{tag}")
+    os.makedirs(src, exist_ok=True)
+    with open(os.path.join(src, "CMakeLists.txt"), "w") as f:
+        f.write(CONSUMER_CMAKE.format(version_req=version, prefix=prefix_dir,
+                                      expected_type=expected_type))
+    with open(os.path.join(src, "consumer.c"), "w") as f:
+        f.write(CONSUMER_C)
+    with open(os.path.join(src, "consumer_flat.c"), "w") as f:
+        f.write(CONSUMER_FLAT_C)
+
+    build = os.path.join(temp_dir, f"find_package_{tag}_build")
+    run_or_die(["cmake", "-S", src, "-B", build,
+                f"-DCMAKE_PREFIX_PATH={prefix_dir}"],
+               f"find_package configure ({tag})")
+    run_or_die(["cmake", "--build", build], f"find_package build ({tag})")
+    _run_consumer(os.path.join(build, "consumer"), version,
+                  f"run find_package consumer ({tag})")

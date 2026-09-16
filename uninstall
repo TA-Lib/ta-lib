@@ -26,7 +26,7 @@ uninstall() {
 
     # TA-Lib does not keep track of everywhere it was installed... so clean-up with best-effort.
     #
-    # Delete recursively directories $PREFIX/ta-lib, $PREFIX/include/ta-lib, $PREFIX/lib/ta-lib
+    # Delete recursively directories $PREFIX/ta-lib, $PREFIX/include/ta-lib, $PREFIX/lib/ta-lib, $PREFIX/lib/cmake/ta-lib
     #
     # Glob and delete all deprecated files $PREFIX/*ta_lib*, $PREFIX/lib/*ta_lib*, $PREFIX/*ta-lib*, $PREFIX/lib/*ta-lib*
 
@@ -45,6 +45,13 @@ uninstall() {
     if [[ -d "$PREFIX/lib/ta-lib" ]]; then
         echo "Deleting $PREFIX/lib/ta-lib"
         rm -rf "$PREFIX/lib/ta-lib"
+        UNINSTALLED=true
+    fi
+
+    if [[ -d "$PREFIX/lib/cmake/ta-lib" ]]; then
+        echo "Deleting $PREFIX/lib/cmake/ta-lib"
+        rm -rf "$PREFIX/lib/cmake/ta-lib"
+        rmdir "$PREFIX/lib/cmake" 2>/dev/null || true
         UNINSTALLED=true
     fi
 
