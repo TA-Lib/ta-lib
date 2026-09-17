@@ -50,6 +50,8 @@
 /* Description:
  *     Self-check for the shared numerical-reference battery.
  *
+ *     SERVER_VERIFY: none. This file calls no TA function at all.
+ *
  *     Nothing here tests a TA function. It tests the referee -- and every other
  *     numerical suite in ta_regtest now leans on it, so a silent change to it
  *     would move bounds in five files at once without any of them going red.

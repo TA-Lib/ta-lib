@@ -78,6 +78,10 @@
  *       alternating +x/-x series whose total returns to exactly 0.0; and a
  *       series driven until total + x == total, asserting the plain
  *       uncompensated answer.
+ *
+ *   SERVER_VERIFY: every distinct fixed-vector call. These 40-bar counts are
+ *   not in the sweep's corpus, and CUMSUM is post-cutover, so its values reach
+ *   no server any other way. A repeat or an overwritten input is skipped.
  */
 
 /**** Headers ****/
@@ -88,6 +92,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 #define CUMSUM_C40 40
 
@@ -132,6 +137,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
       printf( "CUMSUM Fail: TA_SUB retCode %d range (%d,%d)\n", (int)rc, (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "SUB", 0, CUMSUM_C40 - 1, CUMSUM_C40, rc, beg, nb,
+                         (const TA_Real*[]){ c40_A, c40_D, NULL }, NULL, 0,
+                         (const TA_Real*[]){ net, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail SUB leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
 
    /* (1) C40 golden: full range, bit-exact against a sequential +=. */
    rc = TA_CUMSUM( 0, CUMSUM_C40 - 1, net, &beg, &nb, out );
@@ -140,6 +159,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
       printf( "CUMSUM Fail: retCode %d range (%d,%d), expected (0,%d)\n",
               (int)rc, (int)beg, (int)nb, CUMSUM_C40 );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "CUMSUM", 0, CUMSUM_C40 - 1, CUMSUM_C40, rc, beg, nb,
+                         (const TA_Real*[]){ net, NULL }, NULL, 0,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail C40 golden leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    total = 0.0;
    for( i = 0; i < CUMSUM_C40; i++ )
@@ -179,6 +212,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
               (int)rc, (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "CUMSUM", 3, 7, CUMSUM_C40, rc, beg, nb,
+                         (const TA_Real*[]){ net, NULL }, NULL, 0,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail slice leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    for( i = 0; i < 5; i++ )
    {
       if( out[i] != c40_slice37[i] )
@@ -196,6 +243,21 @@ ErrorNumber test_func_cumsum( TA_History *history )
          printf( "CUMSUM Fail anchor: (%d,%d) out %.17g, expected x[%d] = %.17g\n",
                  k, k, out[0], k, net[k] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( server_verify_active() )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+         e = server_verify( "CUMSUM", k, k, CUMSUM_C40, rc, beg, nb,
+                            (const TA_Real*[]){ net, NULL }, NULL, 0,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "CUMSUM Fail anchor leg (%d,%d): compared no server despite "
+                    "live pipes\n", k, k );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
    }
 
@@ -229,6 +291,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
       printf( "CUMSUM Fail: sub-range is not a re-anchor (nb %d vs %d)\n",
               (int)nb, (int)nb2 );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "CUMSUM", 0, 4, 5, rc, beg2, nb2,
+                         (const TA_Real*[]){ net + 3, NULL }, NULL, 0,
+                         (const TA_Real*[]){ buf, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail re-anchor leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
 
    /* (4) Edges. */
@@ -264,6 +340,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
               out[CUMSUM_C40-1] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "CUMSUM", 0, CUMSUM_C40 - 1, CUMSUM_C40, rc, beg, nb,
+                         (const TA_Real*[]){ buf, NULL }, NULL, 0,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail alternating leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    /* Absorption: once total is large enough, total + x == total, and the
     * PLAIN uncompensated answer is the contract (a Kahan variant would
     * diverge from both external oracles and from ad.c's convention). */
@@ -276,6 +366,20 @@ ErrorNumber test_func_cumsum( TA_History *history )
       printf( "CUMSUM Fail: absorption series ends at %.17g, expected the plain\n"
               "       uncompensated 1e18\n", out[CUMSUM_C40-1] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "CUMSUM", 0, CUMSUM_C40 - 1, CUMSUM_C40, rc, beg, nb,
+                         (const TA_Real*[]){ buf, NULL }, NULL, 0,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CUMSUM Fail absorption leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
 
    return TA_TEST_PASS;

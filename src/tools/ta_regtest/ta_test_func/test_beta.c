@@ -68,6 +68,9 @@
  *     treatment TA_VAR and TA_CORREL need buys nothing here, and these probes
  *     target the defect BETA actually has -- an ABSOLUTE epsilon on a quantity
  *     that scales with the square of the return volatility.
+ *
+ *   SERVER_VERIFY: B1, B2, B3, B6 and one B7 rung per axis; the corpus reaches
+ *   none of those inputs. The LCG sweeps add calls, not input classes.
  */
 
 /**** Headers ****/
@@ -78,6 +81,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 #include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
@@ -217,6 +221,25 @@ static ErrorNumber test_beta_wilkinson_self( void )
          printf( "BETA #242 W.IV.B[%s]: rc=%d nb=%d\n", cases[c].name, (int)rc, (int)nbElement );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+      if( server_verify_active() )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+
+         e = server_verify( "BETA", 0, 8, TA_TEST_REF_WILKINSON_N,
+                            rc, begIdx, nbElement,
+                            (const TA_Real*[]){ cases[c].p, cases[c].p, NULL },
+                            (double[]){ 8.0 }, 1,
+                            (const TA_Real*[]){ bt_out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "BETA W.IV.B[%s]: compared no server despite live pipes\n",
+                    cases[c].name );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
       for( k = 0; k < (int)nbElement; k++ )
          if( fabs( bt_out[k] - 1.0 ) > 1.0e-12 )
          {
@@ -242,6 +265,24 @@ static ErrorNumber test_beta_wilkinson_zero( void )
    {
       printf( "BETA #242 W.IV.D: rc=%d\n", (int)rc );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      e = server_verify( "BETA", 0, 8, TA_TEST_REF_WILKINSON_N,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ W_ZERO, W_X, NULL },
+                         (double[]){ 8.0 }, 1,
+                         (const TA_Real*[]){ bt_out, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "BETA W.IV.D: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    for( k = 0; k < (int)nbElement; k++ )
       if( bt_out[k] != 0.0 )
@@ -285,6 +326,24 @@ static ErrorNumber test_beta_nist_norris( void )
    {
       printf( "BETA #242 NIST Norris: rc=%d nb=%d\n", (int)rc, (int)nbElement );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      e = server_verify( "BETA", 0, 36, 37,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ px, py, NULL },
+                         (double[]){ 36.0 }, 1,
+                         (const TA_Real*[]){ bt_out, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "BETA NIST Norris: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    d = fabs( bt_out[nbElement-1] - certified ) / fabs( certified );
    if( d > 1.0e-12 )
@@ -445,6 +504,25 @@ static ErrorNumber test_beta_degenerate( void )
          printf( "BETA #242 degenerate[%s]: rc=%d\n", c ? "flat/varying" : "flat/flat", (int)rc );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+      if( server_verify_active() )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+
+         e = server_verify( "BETA", 0, 59, 60,
+                            rc, begIdx, nbElement,
+                            (const TA_Real*[]){ px, py, NULL },
+                            (double[]){ 30.0 }, 1,
+                            (const TA_Real*[]){ bt_out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "BETA degenerate[%s]: compared no server despite live pipes\n",
+                    c ? "flat/varying" : "flat/flat" );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
       for( k = 0; k < (int)nbElement; k++ )
          if( bt_out[k] != 0.0 )
          {
@@ -551,6 +629,27 @@ static ErrorNumber test_beta_outlier_transit( void )
          printf( "BETA #242 outlier transit: rc=%d axis=%s spike=%g period=%d\n",
                  (int)rc, axis ? "y" : "x", spikes[si], period );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      /* One rung per axis, from the band that still carries a residue after the
+       * trigger fires; a quiet rung replays a shape the corpus already routes. */
+      if( server_verify_active() && period == 5 && spikes[si] == 1.0e8 )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+
+         e = server_verify( "BETA", 0, N-1, N,
+                            rc, b, nb,
+                            (const TA_Real*[]){ px, py, NULL },
+                            (double[]){ (double)period }, 1,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "BETA outlier transit[axis=%s]: compared no server despite "
+                    "live pipes\n", axis ? "y" : "x" );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
       for( k = 0; k < (int)nb; k++ )
       {

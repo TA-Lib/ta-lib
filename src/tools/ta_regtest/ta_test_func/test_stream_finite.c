@@ -64,6 +64,9 @@
  * that bar; a handle carries recursive accumulators, and one non-finite bar
  * poisons every value it will ever produce, long after the feed recovers.
  *
+ * SERVER_VERIFY: none. Every call is a streaming tier one, and what is pinned
+ * is a rejection code or handle state, never an output value.
+ *
  * What this pins, per function:
  *
  *   (a) Update and Peek reject a non-finite bar value in ANY input slot with

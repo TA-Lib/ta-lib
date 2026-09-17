@@ -73,6 +73,10 @@
  *   corpus while probing none of it. Every function must also reach a producing
  *   history inside OC_MAX_BARS, or the run fails rather than skipping it.
  *
+ *   SERVER_VERIFY: none. Every call here is a streaming Open or OpenAndFill,
+ *   and what is asserted is which output slots moved, never what they hold;
+ *   there is no batch retCode/outBegIdx/outNBElement triple to ship.
+ *
  *   TA_ALLOC_ERR IS OUT OF SCOPE rather than a hole: nothing past it is defined
  *   (docs/error-handling-spec.md, rule B7), and nothing here could provoke one
  *   anyway. Every rejection this sweep drives is a defined one.

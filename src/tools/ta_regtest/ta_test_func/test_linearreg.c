@@ -102,6 +102,10 @@
  *     loose enough to be worthless at small k. All three constants are ~3x their
  *     worst measured ratio, calibrated on disjoint window sets (k <= 4 for the
  *     cancellation terms, k >= 16 for drift) so neither absorbs the other.
+ *
+ *   SERVER_VERIFY: L1 and L3 route all five functions; the conditioning is what
+ *   they buy, since the sweep only ever sends the 252-bar corpus. The per-bar and
+ *   8000-bar legs would cost a streaming replay per call.
  */
 
 /**** Headers ****/
@@ -113,6 +117,7 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "ta_test_reference.h"
+#include "server_verify.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -291,6 +296,44 @@ static int lr_run( const char *label, const double *y, int n, int period )
    return 0;
 }
 
+/* The five outputs of the call lr_run just made, replayed through every
+ * generated language server. */
+static ErrorNumber lr_server_verify( const char *label, const double *y,
+                                     int n, int period )
+{
+   static const char *const names[5] = {
+      "LINEARREG_SLOPE", "LINEARREG_INTERCEPT", "LINEARREG", "TSF",
+      "LINEARREG_ANGLE" };
+   const TA_Real *const outs[5] = { lr_out.slope, lr_out.intercept, lr_out.fit,
+                                    lr_out.tsf, lr_out.angle };
+   double optIn[1];
+   int i;
+
+   optIn[0] = (double)period;
+
+   for( i = 0; i < 5; i++ )
+   {
+      const int cmpBefore = server_verify_comparisons();
+      ErrorNumber e = server_verify( names[i], 0, n-1, n,
+                                     TA_SUCCESS, lr_out.begIdx, lr_out.nbElement,
+                                     (const TA_Real*[]){ y, NULL },
+                                     optIn, 1,
+                                     (const TA_Real*[]){ outs[i], NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+
+      /* Per call, not per leg: server_verify answers TA_TEST_PASS when it
+       * cannot build the request, so any coarser floor lets the other four
+       * cover for the one that reached nobody. */
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "LINEARREG #251 [%s]: %s routed, but compared no server despite "
+                 "live pipes\n", label, names[i] );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 /* The scale a window's answers live on: how big the values are, plus how much
  * they vary. Adding sigma is what keeps the bound from collapsing to zero on a
  * window whose mean happens to cross zero -- there the level cancellation this
@@ -395,6 +438,12 @@ static ErrorNumber test_linearreg_wilkinson( void )
       {
          printf( "LINEARREG #251 [%s]: nb=%d, expected 1\n", label, lr_out.nbElement );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( server_verify_active() )
+      {
+         e = lr_server_verify( label, w, TA_TEST_REF_WILKINSON_N,
+                               TA_TEST_REF_WILKINSON_N );
+         if( e != TA_TEST_PASS ) return e;
       }
       e = lr_compare( label, w, TA_TEST_REF_WILKINSON_N, 0,
                       ta_test_ref_golden_wilkinson_slope[i],
@@ -513,6 +562,12 @@ static ErrorNumber test_linearreg_ladder_golden( void )
                  "scripts/gen_test_reference.py disagree about the corpus\n",
                  label, lr_out.nbElement, ta_test_ref_golden_ladder_counts[t] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( server_verify_active() )
+      {
+         ErrorNumber e = lr_server_verify( label, ta_test_ref_ladder,
+                                           TA_TEST_REF_LADDER_N, period );
+         if( e != TA_TEST_PASS ) return e;
       }
       for( k = 0; k < lr_out.nbElement; k++ )
       {

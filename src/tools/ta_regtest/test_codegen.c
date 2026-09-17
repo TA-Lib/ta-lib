@@ -2120,6 +2120,12 @@ typedef struct {
      * as "verified" overstates the ratchet below -- and the inert set grows
      * with every new post-cutover path-dependent indicator. */
     int               postCutRangeValueCompared;
+    /* Ride-along over the post-cutover set, counted APART from the corpus-wide
+     * ride numbers below: those bump numerator and denominator at one site, so
+     * a post-cutover function that stops riding is invisible in them. */
+    int               postCutStream;        /* post-cutover funcs the flag says stream */
+    int               postCutRideOpen;      /* of those, compared >=1 bar via Open+Update */
+    int               postCutRideSkip;      /* of those, the server declined to replay */
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
     /* Ref differential sweep counters */
@@ -2317,13 +2323,56 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      *   post-cutover function with no startIdx-stability coverage, which is how
      *   PVO's missing UNSTABLE_MAP row survived from #119.
      *
-     * Run both, then skip the reference-dependent remainder. */
+     *   RIDE-ALONG: the server replays the arrays THIS request carried through
+     *   its own streaming tiers and diffs them against its own batch answer, so
+     *   it never touches refCp either. Skipping it left the post-cutover set
+     *   with no ride CENSUS and no floor anywhere, and on rust, which skips the
+     *   float leg, with no request at all (#427).
+     *
+     * Run all three, then skip the reference-dependent remainder. */
     if( ctx->refFuncList )
     {
         char needle[80];
         snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
         if( !strstr(ctx->refFuncList, needle) )
         {
+            /* First, before doRangeTestMulti below leaves the unstable periods
+             * at high values: the corpus-wide leg rides its batch call at the
+             * defaults, and this one must ride the same shape. */
+            if( funcInfo->flags & TA_FUNC_FLG_STREAM )
+            {
+                ctx->postCutStream++;
+                params.outPad = 0;
+                build_json_request(&params, 0, params.nbBars - 1);
+                if( codegen_pipe_call(params.cp, params.requestBuf,
+                                      params.responseBuf, JSON_BUF_SIZE) == TA_TEST_PASS
+                    && !json_is_error(params.responseBuf) )
+                {
+                    ctx->rideFnOpen = 0;
+                    ctx->rideFnFill = 0;
+                    ctx->rideFnSkip = 0;
+                    ride_read(ctx, funcInfo->name, params.responseBuf);
+                    if( ctx->rideFnOpen )
+                    { ctx->rideOpenFunctions++; ctx->postCutRideOpen++; }
+                    if( ctx->rideFnFill ) ctx->rideFillFunctions++;
+                    if( ctx->rideFnSkip )
+                    { ctx->rideSkipFunctions++; ctx->postCutRideSkip++; }
+                    if( ctx->rideResponses > 0 ) ctx->rideEligible++;
+                }
+                else
+                {
+                    /* Name the function that went dark, rather than leaving it
+                     * to the floor's arithmetic at the end of this pass. */
+                    printf("FAILED (TA_%s: the %s server answered no batch call "
+                           "for the post-cutover ride)\n",
+                           funcInfo->name, ctx->lang->name);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_RIDE_VACUOUS;
+                    free_outputs(&params);
+                    TA_ParamHolderFree(paramHolder);
+                    return;
+                }
+            }
             if( strcmp(ctx->lang->name, "rust") != 0 )
                 run_float_leg(&params, 1);
             if( params.codegenError != TA_TEST_PASS )
@@ -2333,6 +2382,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                        params.codegenError, funcInfo->name);
                 ctx->failed++;
                 ctx->error = params.codegenError;
+                free_outputs(&params);
+                TA_ParamHolderFree(paramHolder);
                 return;
             }
             /* The RANGE-STABILITY leg must not be skipped here either, for the
@@ -2364,6 +2415,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                "post-reference)\n", rangeErr, funcInfo->name);
                         ctx->failed++;
                         ctx->error = rangeErr;
+                        free_outputs(&params);
+                        TA_ParamHolderFree(paramHolder);
                         return;
                     }
                     ctx->postCutRangeChecked++;
@@ -2379,6 +2432,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
                         sizeof(ctx->skipNames[0]) - 1);
             ctx->skipped++;
+            free_outputs(&params);
+            TA_ParamHolderFree(paramHolder);
             return;
         }
     }
@@ -4750,6 +4805,9 @@ static ErrorNumber test_codegen_for_language(
     ctx.sweepSkipped   = 0;
     ctx.postCutRangeChecked = 0;
     ctx.postCutRangeValueCompared = 0;
+    ctx.postCutStream  = 0;
+    ctx.postCutRideOpen = 0;
+    ctx.postCutRideSkip = 0;
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
 
@@ -4999,6 +5057,21 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamValueFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
+            /* EXACT, not a ratio: the corpus equality below cannot see a
+             * decline here AT ALL, bumping its numerator and its denominator at
+             * the same site, and all 40 replay today. Deliberately not guarded
+             * by rideResponses: a server emitting no ride fields at all is a
+             * stale binary, the one case the siblings below let pass. */
+            if( ctx.error == TA_TEST_PASS && ctx.postCutStream > 0 &&
+                ctx.postCutRideOpen != ctx.postCutStream )
+            {
+                printf("RIDE VACUOUS: %d of %d post-cutover streaming functions "
+                       "replayed on the %s server (%d declined); a function with "
+                       "no frozen reference is still one the ride must reach\n",
+                       ctx.postCutRideOpen, ctx.postCutStream, lang->name,
+                       ctx.postCutRideSkip);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
             /* Ride-along floors. Two numerators, one per leg: a single
              * combined floor passes while either leg is dead, which is how the
              * OpenAndFill compare stayed green across 178 functions.
@@ -5091,6 +5164,9 @@ static ErrorNumber test_codegen_for_language(
                 for( i = 1; i < CODEGEN_RIDE_SKIP_N; i++ )
                     printf(" %s=%ld", g_rideSkipName[i], codegen_ride_skips(i));
                 printf("; rejection legs compared: %ld\n", codegen_ride_rejects());
+                printf("  ride-along post-cutover: %d of %d streaming function(s) "
+                       "with no frozen reference, %d declined\n",
+                       ctx.postCutRideOpen, ctx.postCutStream, ctx.postCutRideSkip);
             }
             if( ctx.rideBenign > 0 )
                 printf("  BENIGN ride-along: %lld cross-tier signed-zero case(s)\n",

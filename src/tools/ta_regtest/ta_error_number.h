@@ -325,13 +325,6 @@ typedef enum
   TA_TSTMERGE_ASCII_BAD_PATTERN_CLOSE = 1018,
   TA_TSTMERGE_ASCII_BAD_PATTERN_TS    = 1019,  
 
-  /* Error code related to bug fix documentented on SourceForge. */
-  TA_TEST_FAIL_BUG1359452_1  = 2000,
-  TA_TEST_FAIL_BUG1359452_2  = 2001,
-  TA_TEST_FAIL_BUG1359452_3  = 2003,
-  TA_TEST_FAIL_BUG1359452_4  = 2004,
-  TA_TEST_FAIL_BUG1359452_5  = 2005,
-
   /* Error code related to codegen verification tests. */
   TA_CODEGEN_PIPE_OPEN_FAILED        = 1100,
   TA_CODEGEN_PIPE_FORK_FAILED        = 1101,
@@ -446,6 +439,10 @@ typedef enum
   TA_STREAM_SHORT_HISTORY_CONTROL    = 1598,
   TA_STREAM_SHORT_HISTORY_VACUOUS    = 1599,
 
+  /* --function= named something no test group covers, on a run that had
+   * nothing else to do. Reported rather than passed silently. */
+  TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
+
   /* Streaming empty-history rejection (rule S1 / TA_OUT_OF_RANGE_START_INDEX). */
   TA_STREAM_EMPTY_HISTORY_WRONG_CODE = 1607,
   TA_STREAM_EMPTY_HISTORY_VACUOUS    = 1608,
@@ -489,36 +486,45 @@ typedef enum
   /* Coverage counters no other check pins. These groups report nothing on
    * success, so a count that reached zero is the only remaining way they can
    * run without comparing anything. */
-  TA_MFI_VACUOUS                     = 1650,
-  TA_CMOU_VACUOUS                    = 1651,
-  TA_MAVP_VACUOUS                    = 1652,
-  TA_UNSTABLE_MAP_INCOMPLETE         = 1653,
-  TA_DONCHIAN_ORACLE_VACUOUS         = 1654,
-  TA_RMA_ORACLE_VACUOUS              = 1655,
-  TA_ZLEMA_VACUOUS                   = 1656,
-  TA_VHF_VACUOUS                     = 1657,
-  TA_FOSC_VACUOUS                    = 1658,
-  TA_DPO_VACUOUS                     = 1664,
-  TA_PERCENTRANK_VACUOUS             = 1665,
-  TA_PERCENTILE_VACUOUS              = 1666,
-  TA_CVI_VACUOUS                     = 1662,
-  TA_MASSI_VACUOUS                   = 1663,
-  TA_ADR_VACUOUS                     = 1659,
-  TA_PVT_VACUOUS                     = 1660,
-  TA_RVOL_VACUOUS                    = 1661,
-  TA_TSI_VACUOUS                     = 1670,
-  TA_KDJ_VACUOUS                     = 1671,
-  TA_FRACTAL_VACUOUS                 = 1675,
-  TA_HA_VACUOUS                      = 1678,
-  TA_RVI_VACUOUS                     = 1676,
+  TA_MFI_VACUOUS             = 1650,
+  TA_CMOU_VACUOUS            = 1651,
+  TA_MAVP_VACUOUS            = 1652,
+  TA_UNSTABLE_MAP_INCOMPLETE = 1653,
+  TA_DONCHIAN_ORACLE_VACUOUS = 1654,
+  TA_RMA_ORACLE_VACUOUS      = 1655,
+  TA_ZLEMA_VACUOUS           = 1656,
+  TA_VHF_VACUOUS             = 1657,
+  TA_FOSC_VACUOUS            = 1658,
+  TA_ADR_VACUOUS             = 1659,
+  TA_PVT_VACUOUS             = 1660,
+  TA_RVOL_VACUOUS            = 1661,
+  TA_CVI_VACUOUS             = 1662,
+  TA_MASSI_VACUOUS           = 1663,
+  TA_DPO_VACUOUS             = 1664,
+  TA_PERCENTRANK_VACUOUS     = 1665,
+  TA_PERCENTILE_VACUOUS      = 1666,
+  TA_TSI_VACUOUS             = 1670,
+  TA_KDJ_VACUOUS             = 1671,
+  TA_FRACTAL_VACUOUS         = 1675,
+  TA_RVI_VACUOUS             = 1676,
+  TA_HA_VACUOUS              = 1678,
 
   /* A rejected Open/OpenAndFill and the caller's output buffer (#389). */
   TA_OPEN_CONTRACT_WROTE             = 1680,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
-  /* --function= named something no test group covers, on a run that had
-   * nothing else to do. Reported rather than passed silently. */
-  TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
+  /* One code for every suite that routes a fixed vector through server_verify
+   * (#427), because it reports one failure and the message names the leg.
+   * server_verify answers TA_TEST_PASS when it cannot build the request, so a
+   * comparison count that did not advance is the only witness. */
+  TA_SV_ROUTED_VACUOUS               = 1700,
+
+  /* Error code related to bug fix documentented on SourceForge. */
+  TA_TEST_FAIL_BUG1359452_1  = 2000,
+  TA_TEST_FAIL_BUG1359452_2  = 2001,
+  TA_TEST_FAIL_BUG1359452_3  = 2003,
+  TA_TEST_FAIL_BUG1359452_4  = 2004,
+  TA_TEST_FAIL_BUG1359452_5  = 2005,
 
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;

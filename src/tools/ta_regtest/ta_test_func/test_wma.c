@@ -79,6 +79,9 @@
  *     THE WEIGHTS ARE OLDEST=1, NEWEST=period. Taken from the shipped body, not
  *     from the literature, where the reverse convention is equally common and
  *     would produce a plausible wrong answer rather than an obviously wrong one.
+ *
+ *     SERVER_VERIFY: W1 only. Its two committed series are conditioning the
+ *     sweep's corpus does not carry. W2/W3 are 8000 bars and ~95,000 calls a run.
  */
 
 /**** Headers ****/
@@ -89,6 +92,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 #include "ta_test_reference.h"
 
 /**** Local declarations. ****/
@@ -201,6 +205,23 @@ static ErrorNumber test_wma_goldens( void )
                  ta_test_ref_wilkinson_names[i], (int)rc, (int)nb );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+      if( server_verify_active() )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+         e = server_verify( "WMA", 0, TA_TEST_REF_WILKINSON_N-1,
+                            TA_TEST_REF_WILKINSON_N, rc, b, nb,
+                            (const TA_Real*[]){ y, NULL },
+                            (double[]){ 9.0 }, 1,
+                            (const TA_Real*[]){ wma_out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "WMA #255 [wilkinson %s]: compared no server despite live pipes\n",
+                    ta_test_ref_wilkinson_names[i] );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
       tol = WMA_GOLDEN_C * WMA_EPS * wma_scale( y, 0, 9 );
       if( fabs( wma_out[0] - gWilk[i][0] ) > tol )
       {
@@ -224,6 +245,23 @@ static ErrorNumber test_wma_goldens( void )
          printf( "WMA #255 [ladder p=%d]: rc=%d nb=%d (wanted SUCCESS,%d)\n",
                  period, (int)rc, (int)nb, ta_test_ref_golden_ladder_counts[t] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( server_verify_active() )
+      {
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+         e = server_verify( "WMA", 0, TA_TEST_REF_LADDER_N-1,
+                            TA_TEST_REF_LADDER_N, rc, b, nb,
+                            (const TA_Real*[]){ ta_test_ref_ladder, NULL },
+                            (double[]){ (double)period }, 1,
+                            (const TA_Real*[]){ wma_out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "WMA #255 [ladder p=%d]: compared no server despite live pipes\n",
+                    period );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
       for( k = 0; k < (int)nb; k++ )
       {

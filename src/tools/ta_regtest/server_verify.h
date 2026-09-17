@@ -34,6 +34,11 @@ int server_verify_candle_syncs(void);
  * every request produced a byte-identical green run. */
 int server_verify_comparisons(void);
 
+/* The subset of those that compared output VALUES. Read this, not the total,
+ * in a floor asking whether a test group verified anything: `comparisons` also
+ * counts server_verify_lookback_parity, which compares no number. */
+int server_verify_value_comparisons(void);
+
 /* Verify a C function call against all active servers.
  *
  * Uses ta_abstract metadata to build JSON-RPC requests internally.

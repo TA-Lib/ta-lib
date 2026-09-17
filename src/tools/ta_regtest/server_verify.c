@@ -201,6 +201,12 @@ static int              g_candleSyncs;   /* non-vacuity: settings pushed, all pi
  * indistinguishable, which is exactly how an erroring server read as green. */
 static int              g_comparisons;
 
+/* The subset of those that compared OUTPUT VALUES. g_comparisons also counts
+ * server_verify_lookback_parity, which compares no number, so a floor asking
+ * "did this group verify anything" has to read this one or a lookback-parity
+ * call satisfies it (#427). */
+static int              g_valueComparisons;
+
 /* ---- Init / shutdown ---- */
 
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
@@ -227,6 +233,7 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         }
         g_candleSyncs = 0;
         g_comparisons = 0;
+        g_valueComparisons = 0;
     }
 }
 
@@ -270,6 +277,11 @@ int server_verify_candle_syncs(void)
 int server_verify_comparisons(void)
 {
     return g_comparisons;
+}
+
+int server_verify_value_comparisons(void)
+{
+    return g_valueComparisons;
 }
 
 int server_verify_active(void)
@@ -532,8 +544,11 @@ static int build_request(const char *funcName,
         }
         else
         {
+            /* %.17g, not %.15g: a Real parameter is a double the caller
+             * already computed with, and 15 digits does not round-trip one.
+             * The bitwise comparison then diffs two different functions. */
             pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos,
-                            ",\"%s\":%.15g", optInfo->paramName, val);
+                            ",\"%s\":%.17g", optInfo->paramName, val);
         }
     }
 
@@ -796,6 +811,7 @@ ErrorNumber server_verify(
                                             : TA_SV_OUTPUT_MISMATCH;
             }
             g_comparisons++;
+            g_valueComparisons++;
         }
         else
         {
@@ -806,6 +822,7 @@ ErrorNumber server_verify(
             if( err != TA_TEST_PASS )
                 return err;
             g_comparisons++;
+            g_valueComparisons++;
         }
     }
 
@@ -831,7 +848,7 @@ static void build_lookback_request(const TA_FuncHandle *handle,
         TA_GetOptInputParameterInfo(handle, i, &oi);
         double v = (optParams && (int)i < nbOptParams) ? optParams[i] : oi->defaultValue;
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, v);
+            pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, v);
         else
             pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)v);
     }

@@ -78,6 +78,9 @@
  *
  *   (5) EDGES: startIdx == endIdx, startIdx < lookback clamping, and n=1
  *       (single-bar window; the ratio is still well-defined).
+ *
+ *   SERVER_VERIFY: the five single-shot calls; nothing else feeds a server a
+ *   zero-denominator window or period 1. Aliased calls have no inputs left.
  */
 
 /**** Headers ****/
@@ -88,6 +91,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 #define VORTEX_CAP 300
 
@@ -294,6 +298,24 @@ ErrorNumber test_func_vortex( TA_History *history )
               (int)rc, (int)beg, (int)nb, nbBars - 14 );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+
+   if( server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "VORTEX", 0, nbBars - 1, nbBars, rc, beg, nb,
+                         (const TA_Real*[]){ history->high, history->low,
+                                             history->close, NULL },
+                         (double[]){ 14.0 }, 1,
+                         (const TA_Real*[]){ outP, outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "VORTEX pins: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    for( pin = 0; pin < NB_VORTEX_PINS; pin++ )
    {
       int idx = vortexPins[pin].bar - (int)beg;
@@ -329,6 +351,23 @@ ErrorNumber test_func_vortex( TA_History *history )
       printf( "VORTEX flat Fail: retCode %d nb %d\n", (int)rc, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+
+   if( server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "VORTEX", 0, 63, 64, rc, beg, nb,
+                         (const TA_Real*[]){ aH, aL, aC, NULL },
+                         (double[]){ 14.0 }, 1,
+                         (const TA_Real*[]){ outP, outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "VORTEX flat: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    for( i = 0; i < (int)nb; i++ )
    {
       if( outP[i] != 0.0 || outM[i] != 0.0 )
@@ -361,6 +400,23 @@ ErrorNumber test_func_vortex( TA_History *history )
       printf( "VORTEX absorption Fail: retCode %d nb %d\n", (int)rc, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+
+   if( server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "VORTEX", 0, 39, 40, rc, beg, nb,
+                         (const TA_Real*[]){ aH, aL, aC, NULL },
+                         (double[]){ 14.0 }, 1,
+                         (const TA_Real*[]){ outP, outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "VORTEX absorption: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    for( i = 0; i < (int)nb; i++ )
    {
       if( !(outP[i] > -1e300 && outP[i] < 1e300) ||
@@ -419,6 +475,23 @@ ErrorNumber test_func_vortex( TA_History *history )
       printf( "VORTEX halt-resume Fail: retCode %d nb %d\n", (int)rc, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
+
+   if( server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "VORTEX", 0, 39, 40, rc, beg, nb,
+                         (const TA_Real*[]){ aH, aL, aC, NULL },
+                         (double[]){ 14.0 }, 1,
+                         (const TA_Real*[]){ outP, outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "VORTEX halt-resume: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    for( i = 0; i < (int)nb; i++ )
    {
       int bar = (int)beg + i;
@@ -509,6 +582,23 @@ ErrorNumber test_func_vortex( TA_History *history )
       printf( "VORTEX edge Fail: n=1 gave retCode %d range (%d,%d)\n",
               (int)rc, (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   if( server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      e = server_verify( "VORTEX", 0, nbBars - 1, nbBars, rc, beg, nb,
+                         (const TA_Real*[]){ history->high, history->low,
+                                             history->close, NULL },
+                         (double[]){ 1.0 }, 1,
+                         (const TA_Real*[]){ outP, outM, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "VORTEX n=1: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
 
    return TA_TEST_PASS;

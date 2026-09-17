@@ -65,6 +65,9 @@
  *     sumX2-(sumX*sumX)/n form, so it is co-wrong on exactly the windows these
  *     probes target. An external certified value and a fresh two-pass are the
  *     only referees that can see this class.
+ *
+ *     SERVER_VERIFY: every call routed, and a new one must be; CORREL is
+ *     ref-value-exempt (#242), so no sweep compares its values.
  */
 
 /**** Headers ****/
@@ -75,6 +78,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 #include "ta_test_reference.h"
 
 /**** External functions declarations. ****/
@@ -156,6 +160,26 @@ static ErrorNumber cr_check_vs_twopass( const char *label, const double *x, cons
       printf( "CORREL #242 oracle[%s]: rc=%d\n", label, (int)rc );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      optIn[0] = (double)period;
+      e = server_verify( "CORREL", 0, n-1, n,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ x, y, NULL },
+                         optIn, 1,
+                         (const TA_Real*[]){ cr_out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CORREL #427 two-pass leg[%s]: compared no server despite live pipes\n",
+                 label );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    for( k = 0; k < (int)nbElement; k++ )
    {
       int s = (int)begIdx + k - ( period - 1 );
@@ -217,6 +241,26 @@ static ErrorNumber cr_check_vs_golden( const char *label, const double *x, const
       printf( "CORREL #251 golden[%s]: rc=%d nb=%d (expected SUCCESS,%d)\n",
               label, (int)rc, (int)nbElement, nbGolden );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      optIn[0] = (double)period;
+      e = server_verify( "CORREL", 0, n-1, n,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ x, y, NULL },
+                         optIn, 1,
+                         (const TA_Real*[]){ cr_out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CORREL #427 golden leg[%s]: compared no server despite live pipes\n",
+                 label );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    for( k = 0; k < nbGolden; k++ )
    {
@@ -359,6 +403,25 @@ static ErrorNumber test_correl_nist_norris( void )
       printf( "CORREL #242 NIST Norris: rc=%d nb=%d\n", (int)rc, (int)nbElement );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      optIn[0] = 36.0;
+      e = server_verify( "CORREL", 0, TA_TEST_REF_NORRIS_N-1, TA_TEST_REF_NORRIS_N,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ nx, ny, NULL },
+                         optIn, 1,
+                         (const TA_Real*[]){ cr_out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CORREL #427 NIST Norris leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    d = fabs( cr_out[0] - certified );
    if( d > 1.0e-13 )
    {
@@ -395,6 +458,26 @@ static ErrorNumber cr_identity( const char *label, const double *x, int n, int p
    {
       printf( "CORREL #242 identity[%s]: rc=%d\n", label, (int)rc );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      optIn[0] = (double)period;
+      e = server_verify( "CORREL", 0, n-1, n,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ x, y, NULL },
+                         optIn, 1,
+                         (const TA_Real*[]){ cr_out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CORREL #427 identity leg[%s]: compared no server despite live pipes\n",
+                 label );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    for( k = 0; k < (int)nbElement; k++ )
    {
@@ -514,6 +597,26 @@ static ErrorNumber test_correl_range_invariant( void )
             printf( "CORREL #242 range: rc=%d\n", (int)rc );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
+         if( server_verify_active() )
+         {
+            double optIn[1];
+            ErrorNumber e;
+            int cmpBefore = server_verify_comparisons();
+
+            optIn[0] = 30.0;
+            e = server_verify( "CORREL", 0, 59, 60,
+                               rc, begIdx, nbElement,
+                               (const TA_Real*[]){ x, y, NULL },
+                               optIn, 1,
+                               (const TA_Real*[]){ cr_out, NULL }, NULL );
+            if( e != TA_TEST_PASS ) return e;
+            if( server_verify_comparisons() == cmpBefore )
+            {
+               printf( "CORREL #427 range leg: level=%g tick=%.0e compared no server "
+                       "despite live pipes\n", levels[L], ticks[k] );
+               return TA_SV_ROUTED_VACUOUS;
+            }
+         }
          for( i = 0; i < (int)nbElement; i++ )
             if( !( cr_out[i] >= -1.0 && cr_out[i] <= 1.0 ) )
             {
@@ -548,6 +651,26 @@ static ErrorNumber test_correl_degenerate( void )
       {
          printf( "CORREL #242 degenerate[%s]: rc=%d\n", k ? "const/varying" : "const/const", (int)rc );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( server_verify_active() )
+      {
+         double optIn[1];
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+
+         optIn[0] = 30.0;
+         e = server_verify( "CORREL", 0, 59, 60,
+                            rc, begIdx, nbElement,
+                            (const TA_Real*[]){ x, y, NULL },
+                            optIn, 1,
+                            (const TA_Real*[]){ cr_out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "CORREL #427 degenerate leg[%s]: compared no server despite live pipes\n",
+                    k ? "const/varying" : "const/const" );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
       for( i = 0; i < (int)nbElement; i++ )
          if( cr_out[i] != 0.0 )
@@ -596,6 +719,25 @@ static ErrorNumber test_correl_small_scale( void )
       printf( "CORREL #395 small-scale: rc=%d nbElement=%d\n",
               (int)rc, (int)nbElement );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      optIn[0] = 4.0;
+      e = server_verify( "CORREL", 0, 5, 6,
+                         rc, begIdx, nbElement,
+                         (const TA_Real*[]){ x, y, NULL },
+                         optIn, 1,
+                         (const TA_Real*[]){ cr_out, NULL }, NULL );
+      if( e != TA_TEST_PASS ) return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "CORREL #427 small-scale leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
    for( i = 0; i < (int)nbElement; i++ )
    {

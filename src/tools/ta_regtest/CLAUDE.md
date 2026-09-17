@@ -702,3 +702,28 @@ server == expected".
   `codegen_call_is_transcendental`, `codegen_write_hexbits_array` and
   `codegen_compare_tol` live in `test_codegen.c` and are shared verbatim with
   `--xlang-hash`.
+
+### `--codegen` is its home, and a bare run drives nothing (#427)
+
+A bare `ta_regtest` opens no server, so there is nothing to be transitive
+about, and opening one would put cargo, a JDK and the .NET SDK on the path of a
+C-only run, which the build separation exists to prevent. That is the decision;
+do not re-open it. The consequence is that the three mechanisms cover three
+sets: the `--codegen` sweep and its ride reach every function, `stream_verify`
+reaches every streaming function, and `server_verify` reaches only what a suite
+hands it.
+
+**Route a call when its inputs, its parameter vector or its unstable period is
+something the sweep cannot reach.** The sweep already sends the 252-bar corpus
+at each parameter moved off its default one at a time, so a routed call on that
+same shape buys a duplicate. Wilkinson's `nasty.dat`, a zero-denominator
+window, a `2^-60` quote unit, operands past `TA_REAL_MAX`, and a warm unstable
+period on a function carrying no `TA_FUNC_FLG_UNST_PER` are not in it at all.
+Bound the count: a call is four pipe round trips plus a streaming replay, so a
+site firing thousands of times a run stays in-process.
+
+`DO_TEST` fails a group that ran under `--codegen` and compared no server
+value; it reads `server_verify_value_comparisons()`, since the total also
+counts `server_verify_lookback_parity`, which compares no number.
+`DO_TEST_NOSV` is the opt-out, and the reason belongs on a `SERVER_VERIFY:`
+line in that file's header, where a reader meets it.

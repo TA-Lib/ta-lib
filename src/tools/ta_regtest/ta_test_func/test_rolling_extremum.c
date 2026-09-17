@@ -93,6 +93,10 @@
  * without copying the implementation. The comparison here is bit-exact except
  * that two zeros of either sign are accepted for each other; the sign is
  * checked by the dedicated cross-tier arm in stream_verify, not here.
+ *
+ *   SERVER_VERIFY: all six at periods 2, 31 and 199, shape 0, both placements.
+ *   The large-period pass reaches 64 to 81; only 199 and the block boundary are
+ *   this file's to witness. Aliased calls cannot route.
  */
 
 /**** Headers ****/
@@ -102,6 +106,7 @@
 
 #include "ta_test_priv.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -399,6 +404,47 @@ ErrorNumber test_func_rolling_extremum( TA_History *history )
                                 "naive window says %.17g\n",
                                 reName[f], shape, period, startIdx, endIdx, k, reOut1[k], exp1 );
                         return TA_REGTEST_ROLLING_EXTREMUM_VALUE;
+                     }
+                  }
+
+                  /* The routed slice. Deliberately thin: every extra call is a
+                   * round trip to four servers, and the axis the rest of the
+                   * suite misses is the period, not the shape or the length. */
+                  if( shape == 0 && len == 2*period + 1
+                      && (period == 2 || period == 31 || period == 199)
+                      && server_verify_active() )
+                  {
+                     const TA_Real *svIn[4];
+                     const TA_Real *svOut[3];
+                     int cmpBefore = server_verify_comparisons();
+                     ErrorNumber svErr;
+                     int n = 0;
+
+                     if( f == RE_MIDPRICE || f == RE_WILLR )
+                     {
+                        svIn[n++] = reHigh;
+                        svIn[n++] = reLow;
+                     }
+                     if( f != RE_MIDPRICE )
+                        svIn[n++] = reClose;
+                     svIn[n] = NULL;
+
+                     svOut[0] = reOut0;
+                     svOut[1] = (nbOut == 2) ? reOut1 : NULL;
+                     svOut[2] = NULL;
+
+                     svErr = server_verify( reName[f], startIdx, endIdx, RE_NB_BARS,
+                                            retCode, outBegIdx, outNBElement,
+                                            svIn, (double[]){ (double)period }, 1,
+                                            svOut, NULL );
+                     if( svErr != TA_TEST_PASS )
+                        return svErr;
+                     if( server_verify_comparisons() == cmpBefore )
+                     {
+                        printf( "Fail: rolling extremum %s(shape=%d,period=%d,[%d,%d]) "
+                                "routed but compared no server\n",
+                                reName[f], shape, period, startIdx, endIdx );
+                        return TA_SV_ROUTED_VACUOUS;
                      }
                   }
 

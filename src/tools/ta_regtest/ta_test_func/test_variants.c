@@ -78,6 +78,10 @@
  *      every output pointer non-NULL and pairwise distinct.
  * startIdx < lookback is deliberately allowed: the clamp and the empty-range
  * early return are part of the shared body.
+ *
+ *   SERVER_VERIFY: the zero-volume regimes at the defaults and the full range, on
+ *   volume-reading functions only, plus the candle-precision vector under its own
+ *   custom settings; the TA_S_ half has no float path to route to.
  */
 
 #include <stdio.h>
@@ -89,6 +93,7 @@
 #include "ta_utility.h"
 #include "ta_variant_frame.h"
 #include "fuzz_data.h"
+#include "server_verify.h"
 
 /**** Local definitions. ****/
 
@@ -185,8 +190,10 @@ static void build_regime( VariantCtx *ctx, int regime, const TA_History *history
 static int  build_candidates( const TA_VOptSpec *spec, double *out );
 static void set_canaries( VariantCtx *ctx, const TA_VariantEntry *e );
 static int  canaries_intact( VariantCtx *ctx, const TA_VariantEntry *e );
+static int  sv_routed_vector( const VariantCtx *ctx, const TA_VariantEntry *e );
 static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
-                                   const double *optIn, int startIdx, int endIdx );
+                                   const double *optIn, int startIdx, int endIdx,
+                                   int routeSV );
 static ErrorNumber run_one_function( VariantCtx *ctx, const TA_VariantEntry *e );
 
 /**** Global functions definitions.  ****/
@@ -390,6 +397,31 @@ ErrorNumber test_candle_precision( TA_History *history )
    rcD = TA_CDLDOJI  ( 10, 10, dO, dH, dL, dC, &begD, &nbD, outD );
    rcS = TA_S_CDLDOJI( 10, 10, fO, fH, fL, fC, &begS, &nbS, outS );
 
+   /* Routed HERE, before the restore below: the vector only means anything
+    * under the settings pinned above, and server_verify pushes the live
+    * settings with every call. */
+   if( rcD == TA_SUCCESS && server_verify_active() )
+   {
+      int cmpBefore = server_verify_comparisons();
+      ErrorNumber svErr = server_verify( "CDLDOJI", 10, 10, NB,
+                                         rcD, begD, nbD,
+                                         (const TA_Real*[]){ dO, dH, dL, dC, NULL },
+                                         NULL, 0,
+                                         NULL, (const TA_Integer*[]){ outD, NULL } );
+      if( svErr != TA_TEST_PASS )
+      {
+         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+         return svErr;
+      }
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "\nCandle precision [CDLDOJI]: routed but compared no server "
+                 "despite live pipes\n" );
+         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    /* Restore before any early return so a failure here cannot leak custom candle
     * globals into the tests that follow. */
    rcRestore = TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
@@ -585,10 +617,28 @@ static int canaries_intact( VariantCtx *ctx, const TA_VariantEntry *e )
    return 1;
 }
 
+/* No generator in the tree emits a zero-volume window, so these regimes are the
+ * only way most of the volume-reading functions reach their sumVol guard on a
+ * server. On a function that never reads volume the regime is a price shape
+ * --codegen already ships, and routing it would buy four round trips and a
+ * streaming replay for nothing. */
+static int sv_routed_vector( const VariantCtx *ctx, const TA_VariantEntry *e )
+{
+   int i;
+
+   if( ctx->regime != V_REG_ZERO_VOLUME && ctx->regime != V_REG_FLAT_ZERO_VOLUME )
+      return 0;
+   for( i = 0; i < e->nbInput; i++ )
+      if( e->inputKind[i] == TA_VIN_VOLUME )
+         return 1;
+   return 0;
+}
+
 /* Drive both variants at one (parameter vector, range) point and assert they
  * agree exactly. */
 static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
-                                   const double *optIn, int startIdx, int endIdx )
+                                   const double *optIn, int startIdx, int endIdx,
+                                   int routeSV )
 {
    const double *dPtr[V_MAX_INPUT];
    const float  *fPtr[V_MAX_INPUT];
@@ -654,6 +704,53 @@ static ErrorNumber run_one_vector( VariantCtx *ctx, const TA_VariantEntry *e,
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
 
+   /* Cross-language, on the DOUBLE leg only: server_verify's inputs are
+    * const TA_Real*[] and it never sends use_float, so the TA_S_ leg above
+    * cannot be routed at all. */
+   if( routeSV && server_verify_active() )
+   {
+      const TA_Real    *svIn  [V_MAX_INPUT  + 1];
+      const TA_Real    *svReal[V_MAX_OUTPUT + 1];
+      const TA_Integer *svInt [V_MAX_OUTPUT + 1];
+      int nbReal = 0, nbInt = 0;
+      int cmpBefore = server_verify_comparisons();
+      ErrorNumber sv;
+
+      for( i = 0; i < e->nbInput; i++ )
+         svIn[i] = ctx->dIn[i];
+      svIn[e->nbInput] = NULL;
+
+      /* Dense per kind, in declaration order: server_verify subscripts the two
+       * arrays with separate counters, so a mixed-output function must not
+       * carry this file's per-position hole into them. */
+      for( i = 0; i < e->nbOutput; i++ )
+      {
+         if( e->outIsInt[i] )
+            svInt[nbInt++] = ctx->outDi[i];
+         else
+            svReal[nbReal++] = ctx->outD[i];
+      }
+      svReal[nbReal] = NULL;
+      svInt [nbInt]  = NULL;
+
+      sv = server_verify( e->name, startIdx, endIdx, ctx->nb,
+                          rcD, begD, nbD,
+                          svIn,
+                          ( e->nbOptInput > 0 ) ? optIn : NULL, e->nbOptInput,
+                          ( nbReal > 0 ) ? svReal : NULL,
+                          ( nbInt  > 0 ) ? svInt  : NULL );
+      if( sv != TA_TEST_PASS )
+         return sv;
+      /* "No failure reported" and "nothing was compared" are the same
+       * observation without this. */
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "\nVariant gate Fail [TA_%s %s]: the zero-volume leg compared no "
+                 "server despite live pipes\n", e->name, regime_name(ctx->regime) );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
+
    ctx->nbValueCmp++;
 
    for( i = 0; i < e->nbOutput; i++ )
@@ -707,7 +804,8 @@ static ErrorNumber run_one_function( VariantCtx *ctx, const TA_VariantEntry *e )
       if( startIdx > endIdx || endIdx > nb - 1 )
          continue;
       ctx->nbVector++;
-      rc = run_one_vector( ctx, e, optIn, startIdx, endIdx );
+      rc = run_one_vector( ctx, e, optIn, startIdx, endIdx,
+                           r == 0 && sv_routed_vector( ctx, e ) );
       if( rc != TA_TEST_PASS )
          return rc;
    }
@@ -728,7 +826,7 @@ static ErrorNumber run_one_function( VariantCtx *ctx, const TA_VariantEntry *e )
             if( startIdx > endIdx || endIdx > nb - 1 )
                continue;
             ctx->nbVector++;
-            rc = run_one_vector( ctx, e, optIn, startIdx, endIdx );
+            rc = run_one_vector( ctx, e, optIn, startIdx, endIdx, 0 );
             if( rc != TA_TEST_PASS )
             {
                printf( "   (while sweeping %s = %.17g)\n",

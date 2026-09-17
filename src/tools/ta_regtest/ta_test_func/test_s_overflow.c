@@ -68,6 +68,9 @@
  * operation carried out in double. It also confirms the double-input
  * variant (TA_ADD/TA_SUB/TA_MULT/TA_DIV) yields the same value, i.e. the
  * single-precision variant now matches the double one on this input.
+ *
+ *   SERVER_VERIFY: the double-input leg, on operands whose exact result exceeds
+ *   FLT_MAX; not the TA_S_ leg, since server_verify has no float input path.
  */
 
 #include <stdio.h>
@@ -76,6 +79,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_libc.h"
+#include "server_verify.h"
 
 typedef TA_RetCode (*SFloatFunc)( int, int, const float [], const float [],
                                   int *, int *, double [] );
@@ -161,6 +165,24 @@ static ErrorNumber runCase( const SOvfCase *c )
       printf( "  %s: single-precision %.17g != double-precision %.17g\n",
               c->name, outS[0], outD[0] );
       return TA_S_OVERFLOW_WRONG_VALUE;
+   }
+
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      e = server_verify( c->name, 0, 0, 1, rc, begIdx, nbElement,
+                         (const TA_Real*[]){ inD0, inD1, NULL }, NULL, 0,
+                         (const TA_Real*[]){ outD, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "  TA_%s overflow leg: compared no server despite live pipes\n",
+                 c->name );
+         return TA_SV_ROUTED_VACUOUS;
+      }
    }
 
    return TA_TEST_PASS;

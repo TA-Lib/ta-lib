@@ -420,8 +420,22 @@ def check_regtest_source_lists(root_dir: str) -> bool:
         print("Add the missing entries so all build systems compile the same files.")
         return False
 
+    # A file in NEITHER list compiles nowhere and runs nowhere, so every
+    # runtime floor in ta_regtest is blind to it by construction -- including
+    # the one that requires each test group to reach server_verify. The two
+    # lists agreeing is not enough; they have to cover the directory.
+    func_dir = os.path.join(root_dir, 'src', 'tools', 'ta_regtest', 'ta_test_func')
+    on_disk = {f'ta_test_func/{name}'
+               for name in os.listdir(func_dir) if name.endswith('.c')}
+    orphans = sorted(on_disk - union)
+    if orphans:
+        for entry in orphans:
+            print(f"Error: {entry} exists but is in no ta_regtest source list, "
+                  f"so nothing compiles or runs it")
+        return False
+
     print(f"ta_regtest source lists agree across CMake and autotools "
-          f"({len(cmake_set)} files). OK.")
+          f"({len(cmake_set)} files) and cover every ta_test_func/*.c. OK.")
     return True
 
 

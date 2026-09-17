@@ -93,6 +93,9 @@
  *   PPO and PVO are a THIRD thing -- not exempt, and not passing: a known open
  *   defect, listed and asserted to still fail. See quKnownOpen below for why the
  *   fix is not the one the other functions took.
+ *
+ *   SERVER_VERIFY: leg 3's oracle rows only. No other call site hands a server
+ *   2^-60, where a mis-transcribed absolute constant becomes bit-visible.
  */
 
 #include <stdio.h>
@@ -104,6 +107,7 @@
 #include "ta_test_func.h"
 #include "ta_test_reference.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** Local declarations. ****/
 
@@ -797,10 +801,42 @@ static ErrorNumber quOracleOne( const char *label, TA_RetCode retCode,
    return TA_QUOTE_UNIT_VACUOUS;
 }
 
-#define QU_ORACLE(label,call,div)                                              \
+/* Replay one row's call through every live language server, on the bits the C
+ * call just read. */
+static ErrorNumber quOracleServe( const char *funcName, TA_RetCode retCode,
+                                  int begIdx, int nbElement,
+                                  const TA_Real *inputs[],
+                                  const double optParams[], int nbOptParams,
+                                  const TA_Real *outReal[] )
+{
+   ErrorNumber e;
+   int cmpBefore;
+
+   if( !server_verify_active() )
+      return TA_TEST_PASS;
+
+   cmpBefore = server_verify_comparisons();
+   e = server_verify( funcName, 0, QU_NB_BARS-1, QU_NB_BARS,
+                      retCode, begIdx, nbElement,
+                      inputs, optParams, nbOptParams, outReal, NULL );
+   if( e != TA_TEST_PASS )
+      return e;
+   if( server_verify_comparisons() == cmpBefore )
+   {
+      printf( "\nFail: quote-unit oracle leg sent %s to no server despite live"
+              " pipes.\n", funcName );
+      return TA_SV_ROUTED_VACUOUS;
+   }
+   return TA_TEST_PASS;
+}
+
+#define QU_ORACLE(label,call,div,ins,opts,nopt)                                \
    do {                                                                        \
       TA_RetCode rc_ = (call);                                                  \
       ErrorNumber e_ = quOracleOne( label, rc_, b, n, qoOut1, div, &checks );    \
+      if( e_ != TA_TEST_PASS ) return e_;                                       \
+      e_ = quOracleServe( label, rc_, b, n, ins, opts, nopt,                     \
+                          (const TA_Real*[]){ qoOut1, NULL } );                  \
       if( e_ != TA_TEST_PASS ) return e_;                                       \
    } while(0)
 
@@ -809,6 +845,10 @@ static ErrorNumber quOracleLeg( const TA_History *history )
    double tick = ldexp( 1.0, QU_ORACLE_EXP );
    int b = 0, n = 0, i, checks = 0;
    TA_RetCode rc;
+   const TA_Real *inClose[]  = { quClose, NULL };
+   const TA_Real *inHLC[]    = { quHigh, quLow, quClose, NULL };
+   const TA_Real *inOHLC[]   = { quOpen, quHigh, quLow, quClose, NULL };
+   const TA_Real *inCloseVol[] = { quClose, quVolume, NULL };
 
    for( i = 0; i < (int)history->nbBars && i < QU_NB_BARS; i++ )
    {
@@ -819,29 +859,51 @@ static ErrorNumber quOracleLeg( const TA_History *history )
       quVolume[i] = history->volume[i];          /* a count, not a quote unit */
    }
 
-   QU_ORACLE( "RSI",      TA_RSI( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "CMO",      TA_CMO( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "CMOU",     TA_CMOU( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "CCI",      TA_CCI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "ULTOSC",   TA_ULTOSC( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 7, 14, 28, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "KAMA",     TA_KAMA( 0, QU_NB_BARS-1, quClose, 30, &b, &n, qoOut1 ), tick );
-   QU_ORACLE( "NATR",     TA_NATR( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "BOP",      TA_BOP( 0, QU_NB_BARS-1, quOpen, quHigh, quLow, quClose, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "ADX",      TA_ADX( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "ADXR",     TA_ADXR( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "DX",       TA_DX( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "PLUS_DI",  TA_PLUS_DI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "MINUS_DI", TA_MINUS_DI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0 );
-   QU_ORACLE( "BETA",     TA_BETA( 0, QU_NB_BARS-1, quClose, quVolume, 5, &b, &n, qoOut1 ), 1.0 );
+   QU_ORACLE( "RSI",      TA_RSI( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inClose, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "CMO",      TA_CMO( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inClose, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "CMOU",     TA_CMOU( 0, QU_NB_BARS-1, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inClose, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "CCI",      TA_CCI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "ULTOSC",   TA_ULTOSC( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 7, 14, 28, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 7, 14, 28 }), 3 );
+   QU_ORACLE( "KAMA",     TA_KAMA( 0, QU_NB_BARS-1, quClose, 30, &b, &n, qoOut1 ), tick,
+              inClose, ((double[]){ 30 }), 1 );
+   QU_ORACLE( "NATR",     TA_NATR( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "BOP",      TA_BOP( 0, QU_NB_BARS-1, quOpen, quHigh, quLow, quClose, &b, &n, qoOut1 ), 1.0,
+              inOHLC, NULL, 0 );
+   QU_ORACLE( "ADX",      TA_ADX( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "ADXR",     TA_ADXR( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "DX",       TA_DX( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "PLUS_DI",  TA_PLUS_DI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "MINUS_DI", TA_MINUS_DI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 14, &b, &n, qoOut1 ), 1.0,
+              inHLC, ((double[]){ 14 }), 1 );
+   QU_ORACLE( "BETA",     TA_BETA( 0, QU_NB_BARS-1, quClose, quVolume, 5, &b, &n, qoOut1 ), 1.0,
+              inCloseVol, ((double[]){ 5 }), 1 );
 
    rc = TA_STOCH( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 5, 3, TA_MAType_SMA,
                   3, TA_MAType_SMA, &b, &n, qoOut1, qoOut2 );
    { ErrorNumber e_ = quOracleOne( "STOCH_K", rc, b, n, qoOut1, 1.0, &checks );
+     if( e_ != TA_TEST_PASS ) return e_;
+     e_ = quOracleServe( "STOCH", rc, b, n, inHLC,
+                         ((double[]){ 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA }), 5,
+                         (const TA_Real*[]){ qoOut1, qoOut2, NULL } );
      if( e_ != TA_TEST_PASS ) return e_; }
 
    rc = TA_STOCHF( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 5, 3, TA_MAType_SMA,
                    &b, &n, qoOut1, qoOut2 );
    { ErrorNumber e_ = quOracleOne( "STOCHF_K", rc, b, n, qoOut1, 1.0, &checks );
+     if( e_ != TA_TEST_PASS ) return e_;
+     e_ = quOracleServe( "STOCHF", rc, b, n, inHLC,
+                         ((double[]){ 5, 3, TA_MAType_SMA }), 3,
+                         (const TA_Real*[]){ qoOut1, qoOut2, NULL } );
      if( e_ != TA_TEST_PASS ) return e_; }
 
    rc = TA_ACCBANDS( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 20, &b, &n,
@@ -849,11 +911,17 @@ static ErrorNumber quOracleLeg( const TA_History *history )
    { ErrorNumber e_ = quOracleOne( "ACCB_U", rc, b, n, qoOut1, tick, &checks );
      if( e_ != TA_TEST_PASS ) return e_;
      e_ = quOracleOne( "ACCB_L", rc, b, n, qoOut3, tick, &checks );
+     if( e_ != TA_TEST_PASS ) return e_;
+     e_ = quOracleServe( "ACCBANDS", rc, b, n, inHLC, ((double[]){ 20 }), 1,
+                         (const TA_Real*[]){ qoOut1, qoOut2, qoOut3, NULL } );
      if( e_ != TA_TEST_PASS ) return e_; }
 
    rc = TA_SMI( 0, QU_NB_BARS-1, quHigh, quLow, quClose, 10, 3, 3, 3, &b, &n,
                 qoOut1, qoOut2 );
    { ErrorNumber e_ = quOracleOne( "SMI", rc, b, n, qoOut1, 1.0, &checks );
+     if( e_ != TA_TEST_PASS ) return e_;
+     e_ = quOracleServe( "SMI", rc, b, n, inHLC, ((double[]){ 10, 3, 3, 3 }), 4,
+                         (const TA_Real*[]){ qoOut1, qoOut2, NULL } );
      if( e_ != TA_TEST_PASS ) return e_; }
 
    for( i = 0; i < QU_NB_ORACLE; i++ )

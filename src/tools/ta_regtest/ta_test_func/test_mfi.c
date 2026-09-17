@@ -77,6 +77,9 @@
  *     5. The empty-window ruling (0/0 -> 0.0), which NEITHER oracle covers:
  *        both divide unguarded and produce NaN there. It is ours by
  *        convention, so it is pinned here rather than borrowed.
+ *
+ *   SERVER_VERIFY: the scaled-volume sweep and the empty window; MFI's guard
+ *   is scale-sensitive and neither class is in the history test_per_hlcv.c routes.
  */
 
 /**** Headers ****/
@@ -87,6 +90,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 #define MFI_FLOOR_ORACLE 96
 #define MFI_FLOOR_SCALE  5680
@@ -350,6 +354,29 @@ static ErrorNumber test_mfi_scale( const TA_History *history )
             return TA_TESTUTIL_TFRR_BAD_BEGIDX;
          }
 
+         if( server_verify_active() )
+         {
+            double optIn[1];
+            ErrorNumber e;
+            int cmpBefore = server_verify_comparisons();
+
+            optIn[0] = (double)period;
+            e = server_verify( "MFI", 0, (int)history->nbBars - 1, (int)history->nbBars,
+                               retCode, begIdx, nbElement,
+                               (const TA_Real*[]){ history->high, history->low,
+                                                   history->close, vol, NULL },
+                               optIn, 1,
+                               (const TA_Real*[]){ out, NULL }, NULL );
+            if( e != TA_TEST_PASS )
+               return e;
+            if( server_verify_comparisons() == cmpBefore )
+            {
+               printf( "MFI scale leg (period %d, volume x 2^-%d): compared no "
+                       "server despite live pipes\n", period, mfiScaleExp[s] );
+               return TA_SV_ROUTED_VACUOUS;
+            }
+         }
+
          /* BIT-identical, not "close": scaling volume by a power of two is
           * exact, so every money flow, both sums and their ratio scale
           * exactly and the ratio's scale factor cancels. Any difference at
@@ -478,6 +505,30 @@ static ErrorNumber test_mfi_empty( void )
       {
          printf( "MFI empty-window Fail (shape %d, phase %d): retCode = %d\n", shape, ph, (int)retCode );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      /* One phase per shape: the phases differ only in the residue's sign,
+       * which is a C-side property rather than a cross-language one. */
+      if( ph == 0 && server_verify_active() )
+      {
+         double optIn[1];
+         ErrorNumber e;
+         int cmpBefore = server_verify_comparisons();
+
+         optIn[0] = (double)period;
+         e = server_verify( "MFI", 0, MFI_NB_BARS - 1, MFI_NB_BARS,
+                            retCode, begIdx, nbElement,
+                            (const TA_Real*[]){ h, l, c, v, NULL },
+                            optIn, 1,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "MFI empty-window leg (shape %d): compared no server "
+                    "despite live pipes\n", shape );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
 
       /* The last bar's window is entirely inside the dead stretch. */

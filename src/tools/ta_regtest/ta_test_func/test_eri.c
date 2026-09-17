@@ -77,6 +77,9 @@
  *       well as n=13: the lookback at n=13 holds every store 12 slots behind
  *       its load, so the combinations only bite at the minimum period. #108
  *       already rejects outBullPower == outBearPower.
+ *
+ *   SERVER_VERIFY: the fixed vectors, plus one grid cell per eriUnstGrid value;
+ *   ERI has no unstable-period flag, so --codegen never reaches a warm EMA.
  */
 
 /**** Headers ****/
@@ -87,6 +90,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 #define ERI_CAP 300
 
@@ -121,6 +125,40 @@ static const struct { int bar; double bull; double bear; } eriPins[] =
 #define NB_ERI_PINS (sizeof(eriPins)/sizeof(eriPins[0]))
 #define ERI_PIN_ABS 1e-12
 
+/* One routed leg: the cross-language replay of a call already made above, with
+ * its non-vacuity floor. server_verify answers TA_TEST_PASS when it cannot even
+ * build the request, so the comparison count is the only witness. */
+static ErrorNumber eriServerVerify( const char *leg,
+                                    const TA_Real *high,
+                                    const TA_Real *low,
+                                    const TA_Real *close,
+                                    int nbBars,
+                                    TA_Integer startIdx, TA_Integer endIdx,
+                                    int n,
+                                    TA_RetCode rc, TA_Integer beg, TA_Integer nb,
+                                    const TA_Real *bull, const TA_Real *bear )
+{
+   double optIn[1];
+   ErrorNumber e;
+   int cmpBefore = server_verify_comparisons();
+
+   optIn[0] = (double)n;
+   e = server_verify( "ERI", startIdx, endIdx, nbBars, rc, beg, nb,
+                      (const TA_Real*[]){ high, low, close, NULL },
+                      optIn, 1,
+                      (const TA_Real*[]){ bull, bear, NULL }, NULL );
+   if( e != TA_TEST_PASS )
+      return e;
+   /* "No failure reported" and "nothing was compared" are the same
+    * observation without this. */
+   if( server_verify_comparisons() == cmpBefore )
+   {
+      printf( "ERI %s [n %d]: compared no server despite live pipes\n", leg, n );
+      return TA_SV_ROUTED_VACUOUS;
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_eri( TA_History *history )
 {
    static TA_Real outBull[ERI_CAP], outBear[ERI_CAP];
@@ -152,6 +190,21 @@ ErrorNumber test_func_eri( TA_History *history )
                        eriUnstGrid[u], startIdx, n, (int)rc );
                TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
                return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            /* One cell per unstable value, at the first startIdx and the
+             * default period: the other cells only repeat the same axis. */
+            if( server_verify_active() && s == 0 && p == 2 )
+            {
+               ErrorNumber e;
+               e = eriServerVerify( "differential", history->high, history->low,
+                                    history->close, nbBars, startIdx,
+                                    nbBars - 1, n, rc, beg, nb,
+                                    outBull, outBear );
+               if( e != TA_TEST_PASS )
+               {
+                  TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+                  return e;
+               }
             }
             rc = TA_EMA( startIdx, nbBars - 1, history->close, n,
                          &begE, &nbE, ema );
@@ -211,6 +264,15 @@ ErrorNumber test_func_eri( TA_History *history )
               (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      e = eriServerVerify( "pins", history->high, history->low, history->close,
+                           nbBars, 0, nbBars - 1, 13, rc, beg, nb,
+                           outBull, outBear );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
    for( pin = 0; pin < NB_ERI_PINS; pin++ )
    {
       int idx = eriPins[pin].bar - (int)beg;
@@ -234,6 +296,14 @@ ErrorNumber test_func_eri( TA_History *history )
    rc = TA_ERI( 0, 63, aH, aL, aC, 13, &beg, &nb, outBull, outBear );
    if( rc != TA_SUCCESS || nb <= 0 )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      e = eriServerVerify( "flat", aH, aL, aC, 64, 0, 63, 13, rc, beg, nb,
+                           outBull, outBear );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
    for( i = 0; i < (int)nb; i++ )
    {
       if( outBull[i] != 0.0 || outBear[i] != 0.0 )
@@ -257,12 +327,29 @@ ErrorNumber test_func_eri( TA_History *history )
       printf( "ERI high==low Fail: the two lines are not bitwise identical\n" );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      e = eriServerVerify( "high==low", aH, aL, aC, 64, 0, 63, 13, rc, beg, nb,
+                           outBull, outBear );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
    /* n=1: the EMA is the identity on close, so bull == high - close and
     * bear == low - close, bit for bit. */
    rc = TA_ERI( 0, nbBars - 1, history->high, history->low, history->close,
                 1, &beg, &nb, outBull, outBear );
    if( rc != TA_SUCCESS )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      e = eriServerVerify( "n=1", history->high, history->low, history->close,
+                           nbBars, 0, nbBars - 1, 1, rc, beg, nb,
+                           outBull, outBear );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
    for( i = 0; i < (int)nb; i++ )
    {
       double eb = history->high[(int)beg + i] - history->close[(int)beg + i];
@@ -292,6 +379,14 @@ ErrorNumber test_func_eri( TA_History *history )
       printf( "ERI n=1 non-Sterbenz Fail: range (%d,%d), expected (0,64)\n",
               (int)beg, (int)nb );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      e = eriServerVerify( "n=1 non-Sterbenz", aH, aL, aC, 64, 0, 63, 1,
+                           rc, beg, nb, outBull, outBear );
+      if( e != TA_TEST_PASS )
+         return e;
    }
    for( i = 0; i < (int)nb; i++ )
    {

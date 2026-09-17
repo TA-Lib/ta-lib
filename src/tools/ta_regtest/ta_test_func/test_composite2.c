@@ -94,6 +94,9 @@
  *       weights, and survives in floating point. Checked over the whole grid.
  *
  *   (6) IN-PLACE ALIASING. outSMI aliased onto each of the three inputs.
+ *
+ *   SERVER_VERIFY: the SMI grid at startIdx 0, where nothing else can compare it
+ *   off unstable 0 (no TA_FUNC_FLG_UNST_PER), and ER's two unfuzzable series.
  */
 
 /**** Headers ****/
@@ -104,6 +107,7 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** Local declarations. ****/
 #define SMI_CAP 300   /* > MAX_NB_TEST_ELEMENT and > nbBars */
@@ -432,6 +436,33 @@ static ErrorNumber test_smi_differential( const TA_History *history )
                        smiUnstGrid[u], startIdx, q, fast, slow, sig, (int)rc );
                TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
                return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+
+            if( s == 0 && server_verify_active() )
+            {
+               double optIn[4];
+               int cmpBefore = server_verify_comparisons();
+
+               optIn[0] = (double)q;    optIn[1] = (double)fast;
+               optIn[2] = (double)slow; optIn[3] = (double)sig;
+               e = server_verify( "SMI", startIdx, nbBars - 1, nbBars,
+                                  rc, beg, nb,
+                                  (const TA_Real*[]){ history->high, history->low,
+                                                      history->close, NULL },
+                                  optIn, 4,
+                                  (const TA_Real*[]){ outSMI, outSig, NULL }, NULL );
+               if( e == TA_TEST_PASS && server_verify_comparisons() == cmpBefore )
+               {
+                  printf( "SMI differential leg [unst %d q %d f %d s %d sig %d]: compared "
+                          "no server despite live pipes\n",
+                          smiUnstGrid[u], q, fast, slow, sig );
+                  e = TA_SV_ROUTED_VACUOUS;
+               }
+               if( e != TA_TEST_PASS )
+               {
+                  TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+                  return e;
+               }
             }
 
             lookback = TA_SMI_Lookback( q, fast, slow, sig );
@@ -1364,6 +1395,23 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
    rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
    if( rc != TA_SUCCESS || nb <= 0 )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      e = server_verify( "ER", 0, 63, 64, rc, beg, nb,
+                         (const TA_Real*[]){ buf, NULL },
+                         (double[]){ 10.0 }, 1,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "ER purge leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    for( i = 0; i < (int)nb; i++ )
    {
       if( (int)beg + i >= 20 && out[i] != 1.0 )
@@ -1503,6 +1551,23 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
    rc = TA_ER( 0, 63, buf, 5, &beg, &nb, out );
    if( rc != TA_SUCCESS || nb <= 0 )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   if( server_verify_active() )
+   {
+      ErrorNumber e;
+      int cmpBefore = server_verify_comparisons();
+
+      e = server_verify( "ER", 0, 63, 64, rc, beg, nb,
+                         (const TA_Real*[]){ buf, NULL },
+                         (double[]){ 5.0 }, 1,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf( "ER zero-denominator leg: compared no server despite live pipes\n" );
+         return TA_SV_ROUTED_VACUOUS;
+      }
+   }
    for( i = 0; i < (int)nb; i++ )
    {
       if( out[i] != 1.0 )
