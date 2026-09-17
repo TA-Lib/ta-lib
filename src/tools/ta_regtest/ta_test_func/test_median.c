@@ -105,7 +105,7 @@
    do {                                                                          \
       if( server_verify_active() )                                               \
       {                                                                          \
-         int svCmp_ = server_verify_comparisons();                               \
+         int svCmp_ = server_verify_value_comparisons();                         \
          ErrorNumber svErr_ = server_verify(                                     \
             "MEDIAN", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),               \
             (const TA_Real*[]){ (inArr), NULL },                                 \
@@ -115,7 +115,7 @@
             return svErr_;                                                       \
          /* "Returned PASS" and "compared nothing" are otherwise the same        \
           * observation. Every site below is a success case.  */                 \
-         if( server_verify_comparisons() == svCmp_ )                             \
+         if( server_verify_value_comparisons() == svCmp_ )                       \
          {                                                                       \
             printf( "MEDIAN oracle [period %d]: server_verify compared no "      \
                     "server despite live pipes\n", (int)(period) );              \
