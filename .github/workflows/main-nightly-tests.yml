@@ -341,19 +341,17 @@ jobs:
 
   # Java on the release branch (#172 C5), the mirror of the `rust` job above.
   # `build --backend=java` builds the three publishable jars with the committed
-  # Maven wrapper and then tests THAT artifact. Until now it was reached only
-  # through dev-nightly's cross-language job, so on the branch a release is cut
-  # from, nothing had ever built the jar. `xlang-hash` looks like it covers this
-  # and does not: it builds the Java SERVER, which embeds its own Core copy, not
-  # the Maven artifact.
+  # Maven wrapper and then tests THAT artifact.
   #
-  # `cross-language` above now builds the same jar as a side effect of --codegen,
-  # which does NOT make this job redundant: that one needs a C build and is
-  # gated on 'test', this one is gated on nothing. A dist-pool failure must not
-  # skip the release branch's only unconditional Java coverage, the same reason
-  # the Rust job is not gated. `unzip` is preinstalled on ubuntu-latest and the
-  # wrapper downloads and SHA-256-verifies Maven itself, so the JDK is the only
-  # thing to install.
+  # It is not the only job here that does: `--servers-only` is read at exactly
+  # two places in the generator (the two C benchmark binaries), so every backend
+  # build reaches build_java_library, and `xlang-hash` and `cross-language` both
+  # build the jar too. What is this job's alone is the GATING -- both of those
+  # carry `needs: test`, and this one is gated on nothing. A dist-pool failure
+  # must not skip the release branch's only unconditional Java coverage, the
+  # same reason the Rust job is not gated. `unzip` is preinstalled on
+  # ubuntu-latest and the wrapper downloads and SHA-256-verifies Maven itself,
+  # so the JDK is the only thing to install.
   java:
     name: Java jars built and tested (release branch)
     runs-on: ubuntu-latest
