@@ -101,7 +101,7 @@
    do {                                                                          \
       if( server_verify_active() )                                               \
       {                                                                          \
-         int svCmp_ = server_verify_comparisons();                               \
+         int svCmp_ = server_verify_value_comparisons();                               \
          ErrorNumber svErr_ = server_verify(                                     \
             "CTI", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),                  \
             (const TA_Real*[]){ (inArr), NULL },                                 \
@@ -112,8 +112,14 @@
          /* "No failure reported" and "nothing was compared" are the same        \
           * observation without this floor. Every leg here is a success case,    \
           * so the skip-on-reject path server_verify() takes for rejected        \
-          * parameters is unreachable and the count must advance.  */            \
-         if( server_verify_comparisons() == svCmp_ )                             \
+          * parameters is unreachable and the count must advance.                \
+          *                                                                      \
+          * The VALUE count, not the total: the total also counts                \
+          * server_verify_lookback_parity(), which compares no number, so a      \
+          * leg that only ran that one would satisfy a floor on the total        \
+          * while having compared nothing. Same reason DO_TEST's own floor       \
+          * reads it.  */                                                        \
+         if( server_verify_value_comparisons() == svCmp_ )                             \
          {                                                                       \
             printf( "CTI oracle [period %d]: server_verify compared no server "  \
                     "despite live pipes\n", (int)(period) );                     \
