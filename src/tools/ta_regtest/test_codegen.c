@@ -3357,7 +3357,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * and compares BITWISE per bar. The driver only reads the match flags, so
  * bit-exactness never rides the lossy JSON float path. Non-streamable
  * functions (and servers without the method) answer with an error and are
- * counted as skips. See docs/streaming-api-proposal.md, Verification. */
+ * counted as skips. See docs/streaming-api-design.md, Verification. */
 
 /* Headroom over the widest shipped function (SAREXT, 8) so a normal-sized new
  * function cannot reach the cap. Overflow is a hard failure, never a skip. */

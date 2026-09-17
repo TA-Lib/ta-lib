@@ -33,7 +33,7 @@ pub struct FuncDef {
     /// and are injected at render time.
     pub doc: Option<DocDef>,
     /// True when the YAML `flags:` list contains `stream`: generate the
-    /// streaming API for this function (docs/streaming-api-proposal.md; the
+    /// streaming API for this function (docs/streaming-api-design.md; the
     /// flag maps to TA_FUNC_FLG_STREAM in ta_abstract). Derived convenience
     /// mirror of `flags` — no flag = no stream code. The generator fails
     /// `generate` if a flagged function is no longer analyzable (the

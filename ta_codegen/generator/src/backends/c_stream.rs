@@ -1,4 +1,4 @@
-//! C emitter for the streaming (incremental) API — docs/streaming-api-proposal.md.
+//! C emitter for the streaming (incremental) API — docs/streaming-api-design.md.
 //!
 //! For every function whose YAML declares a `streaming:` tier, the generated
 //! `src/ta_func/ta_<NAME>.c` gains a stream section after the batch variants:

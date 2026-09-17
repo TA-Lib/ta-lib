@@ -358,7 +358,7 @@ pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) ->
     s.push_str(&generate_c_abstract_handlers());
 
     // stream_verify: in-process bitwise batch-vs-stream comparison
-    // (docs/streaming-api-proposal.md, Verification). fuzz_data.h is included
+    // (docs/streaming-api-design.md, Verification). fuzz_data.h is included
     // HERE — after the indicator code — because its file-scope
     // `#pragma STDC FP_CONTRACT OFF` must not alter indicator contraction.
     // Absent entirely under TA_REF_SERVE (frozen libs have no stream symbols).

@@ -1,4 +1,4 @@
-//! Streaming (incremental) API analysis — docs/streaming-api-proposal.md.
+//! Streaming (incremental) API analysis — docs/streaming-api-design.md.
 //!
 //! This module derives, from a [`FuncDef`]'s batch IR, everything the stream
 //! emitters need: the steady-state loop (the per-bar transition), the state

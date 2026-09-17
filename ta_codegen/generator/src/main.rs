@@ -255,7 +255,7 @@ fn format(func_filter: Option<&str>, check_only: bool) -> i32 {
 
 /// `stream-census`: print each function's IR-derived streamability (tier,
 /// state size — all derived, never authored) and audit the `streaming: true`
-/// declarations. This is the stage-0 tool from docs/streaming-api-proposal.md
+/// declarations. This is the stage-0 tool from docs/streaming-api-design.md
 /// and the audit trail when a batch rewrite changes a function's shape.
 ///
 /// `--seed-yaml` inserts `streaming: true` (before the `inputs:` key) into
@@ -537,7 +537,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         let parsed = parser::c_source::parse_c_source(&c_path);
         wire_parsed_source(&mut func_def, &parsed);
 
-        // Streaming maintenance-coupling gate (docs/streaming-api-proposal.md):
+        // Streaming maintenance-coupling gate (docs/streaming-api-design.md):
         // a YAML-declared tier must match the IR-derived shape, so a batch
         // rewrite that breaks stream analyzability fails HERE, not at release.
         // Run it once per language: a `PRAGMA TA_ALT={STREAM,<lang>}` claim can

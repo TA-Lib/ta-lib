@@ -1,9 +1,10 @@
 //! C `stream_verify`: `handle_stream_verify` runs batch (startIdx=0) and the
 //! stream trajectory in-process on identical seeded inputs, compares BITWISE
 //! per bar (memcmp on doubles), spot-asserts peek == update, and answers flat
-//! JSON (`ok`, per-leg match flags, first divergence as %a on mismatch). The
-//! whole handler is compiled out under TA_REF_SERVE, frozen reference
-//! libraries having no stream symbols.
+//! JSON (`ok`, per-leg match flags, first divergence as %a on mismatch). See
+//! docs/streaming-api-design.md, Verification. The whole handler is compiled
+//! out under TA_REF_SERVE, frozen reference libraries having no stream
+//! symbols.
 
 use super::{
     collect_pin_ids, sv_input_suffix, sv_range_bit, sv_reject_condition, SvRangeSite,
