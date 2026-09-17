@@ -70,9 +70,49 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** Local declarations. ****/
 #define KURT_CAP 1100
+
+/* The legs below diff their own corpora against the language servers
+ * bit-for-bit (issue #427). Without it every vector in this file is checked
+ * against in-process C alone -- the arithmetic-progression identity, the
+ * 60-digit goldens and the near-degenerate set are written specifically to
+ * break this function, and a port that used the integer coefficient forms
+ * (which overflow) or a different reseed period would satisfy every assertion
+ * here while disagreeing with C.
+ *
+ * MEASURED that this compares rather than merely runs -- see the commit that
+ * added it: handing the servers a different period than C used fails with
+ * "SV FAIL [KURTOSIS] ... BITWISE mismatch vs in-process C".
+ *
+ * The period<4 leg is deliberately NOT wrapped: it asserts TA_BAD_PARAM, and
+ * server_verify() skips reject cases by design, so the floor below would fire
+ * on a leg that is working exactly as intended.
+ */
+#define KURT_SERVER_VERIFY(sIdx, eIdx, nbBars, rc, beg, nb, inArr, period, outArr) \
+   do {                                                                          \
+      if( server_verify_active() )                                               \
+      {                                                                          \
+         int svCmp_ = server_verify_comparisons();                               \
+         ErrorNumber svErr_ = server_verify(                                     \
+            "KURTOSIS", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),             \
+            (const TA_Real*[]){ (inArr), NULL },                                 \
+            (double[]){ (double)(period) }, 1,                                   \
+            (const TA_Real*[]){ (outArr), NULL }, NULL );                        \
+         if( svErr_ != TA_TEST_PASS )                                            \
+            return svErr_;                                                       \
+         /* "Returned PASS" and "compared nothing" are otherwise the same        \
+          * observation. Every site below is a success case.  */                 \
+         if( server_verify_comparisons() == svCmp_ )                             \
+         {                                                                       \
+            printf( "KURTOSIS oracle [period %d]: server_verify compared no "    \
+                    "server despite live pipes\n", (int)(period) );              \
+            return TA_KURTOSIS_VACUOUS;                                          \
+         }                                                                       \
+      }                                                                          \
+   } while(0)
 
 /* The exact-arithmetic identity leg 1 rests on.
  *
@@ -274,6 +314,7 @@ static ErrorNumber test_kurt_progression( void )
                  begIdx, nbElement );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
+      KURT_SERVER_VERIFY( 0, 599, 600, retCode, begIdx, nbElement, in, n, out );
 
       for( i = 0; i < nbElement; i++ )
       {
@@ -330,6 +371,8 @@ static ErrorNumber test_kurt_scale_invariance( const TA_History *history )
          printf( "KURTOSIS scale Fail [N=%d]: rc=%d\n", n, (int)retCode );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          history->close, n, base );
 
       for( e = -40; e <= 40; e += 20 )
       {
@@ -386,6 +429,9 @@ static ErrorNumber kurt_vs_golden( const char *tag, const double *x, int nbBars,
               tag, (int)retCode, begIdx, nbElement, period-1, nbGolden );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
+
+   KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                       x, period, out );
 
    for( i = 0; i < nbGolden; i++ )
    {
@@ -454,6 +500,8 @@ static ErrorNumber test_kurt_degenerate( void )
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
 
+   KURT_SERVER_VERIFY( 0, 599, 600, retCode, begIdx, nbElement, in, 30, out );
+
    for( i = 0; i < nbElement; i++ )
    {
       g_kurtNanCmp++;
@@ -494,6 +542,10 @@ static ErrorNumber test_kurt_aliasing( const TA_History *history )
          printf( "KURTOSIS alias Fail [N=%d]: rc=%d\n", n, (int)retCode );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      /* The non-aliased call only: in-place behaviour is a C-side memory
+       * property, not something the servers are asked to reproduce. */
+      KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          history->close, n, clean );
 
       for( i = 0; i < nbBars; i++ )
          alias[i] = history->close[i];
@@ -567,6 +619,8 @@ static ErrorNumber test_kurt_contract( const TA_History *history )
                  n-1, nbBars-(n-1) );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
+      KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          history->close, n, out );
    }
 
    return TA_TEST_PASS;
