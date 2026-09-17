@@ -769,7 +769,12 @@ def check_built_soname(root: str, want: str, required: bool = False) -> str:
         return "ARTIFACT UNCHECKED: no objdump"
     m = re.search(r"SONAME\s+(\S+)", got)
     if not m:
-        return "ARTIFACT UNCHECKED: built library has no SONAME"
+        # Measured and absent, not unmeasurable: reporting this as UNCHECKED passed
+        # green on the one defect the artifact is read for.
+        sys.exit("abi: %s carries no DT_SONAME, so nothing tells a loader which builds "
+                 "may stand in for it. CMakeLists.txt stamps it from "
+                 "TALIB_LIBRARY_VERSION via the SOVERSION target property; restore it."
+                 % os.path.basename(lib))
     if m.group(1) != want:
         sys.exit("abi: %s has DT_SONAME %s but the manifest says %s -- rebuild "
                  "(scripts/build.py); if it persists, the build no longer stamps what "
