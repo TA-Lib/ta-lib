@@ -396,7 +396,7 @@ def main():
             if lang_filter:
                 print(f"  --language={lang_filter} narrowed every step above; "
                       "CI runs all four backends.")
-            print("  Full nightly job list: .github/workflows/dev-nightly-tests.yml")
+            print("  Full nightly job list: .github/workflows/nightly-jobs.yml")
 
     sys.exit(rc)
 

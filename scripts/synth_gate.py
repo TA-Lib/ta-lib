@@ -37,7 +37,7 @@ rather than passing an empty run.
 
 No flags, no modes. Local runs snapshot your dirty tree (git stash create),
 CI runs test HEAD — same script, byte-for-byte. Runs nightly from
-.github/workflows/dev-nightly-tests.yml (job: synth-gate).
+.github/workflows/nightly-jobs.yml (job: synth-gate).
 
 On failure the worktree is kept for inspection (path printed); remove it with
 `git worktree remove --force <path>`.

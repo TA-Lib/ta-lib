@@ -379,8 +379,8 @@ vForce.
   copy pattern in `main.rs`.
 - Bit-exact oracle: `src/tools/ta_regtest/test_codegen.c` — `memcmp` at ~`:3182`; `FUZZ_064_TOL[]`
   manifest ~`:3101-3110`; `CODEGEN_EPSILON = 1e-6` ~`:92`.
-- CI: `.github/workflows/dev-nightly-tests.yml` — `test-macos` job ~`:170` (scalar-only, macos-latest);
-  `fuzz-vs-064` ~`:316` (ubuntu). `main-nightly-tests.yml` has no macOS leg.
+- CI: `.github/workflows/nightly-jobs.yml` — `test-macos` (scalar-only, macos-latest) and
+  `fuzz-vs-064` (ubuntu). Both branches run it.
 - Brew: homebrew-core autobumps the formula from the release tarball; the source
   asset it consumes comes from `scripts/package.py` (`package_src_tar_gz`).
 - Clean input examples: `ta_codegen/input/sin/sin.c`, `input/add/add.c`, `input/sub/sub.c`.

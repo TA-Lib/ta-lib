@@ -1,0 +1,1684 @@
+# Every nightly job, for BOTH branches. dev-nightly-tests.yml and
+# main-nightly-tests.yml hold the crons and pin this file at their own branch,
+# and every checkout below takes `job.workflow_sha`, so the definition and the
+# tree it tests are always the same commit.
+#
+# No workflow-level `permissions:`. `test` and `icount` must INHERIT the
+# caller's grant (dev writes, main reads): declaring contents: write on a job
+# here is a hard validation failure under main's read-only caller, and
+# declaring contents: read here would cap them and kill the push. Every other
+# job asks for contents: read itself, so a job added without that block
+# inherits write on dev.
+#
+# secrets.GITHUB_TOKEN arrives on its own. Any other secret needs
+# `secrets: inherit` on BOTH callers.
+
+name: nightly jobs
+
+on:
+  workflow_call:
+
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Force rebuild + tests even when dist digests match"
+        type: boolean
+        default: false
+      perf_mode:
+        description: "Instruction counts. gate: fail above 10% and lower any row today beat. accept: additionally RAISE the rows named below. measure: report only, commit nothing."
+        type: choice
+        options: [gate, accept, measure]
+        default: gate
+      perf_accept:
+        description: "perf_mode=accept only. Entry points to raise: SMA for every tier, SMA/batch for one, comma-separated. ALL discards what every other row accumulated, so name what you mean."
+        default: ""
+      perf_force_measure:
+        description: "Measure even when this exact tree was already measured. Untick to exercise the skip path on demand."
+        type: boolean
+        default: true
+      perf_threshold:
+        description: "Fractional growth that fails one entry point (default 0.10)."
+        default: "0.10"
+
+jobs:
+  test:
+    name: Test ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    env:
+      # Scheduled runs leave this '0'; a manual dispatch can force package.py
+      # to rebuild and re-test everything despite matching dist digests.
+      PACKAGE_FORCE_BUILD: ${{ inputs.force_build && '1' || '0' }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # Which branch this run is for, read off the definition's own ref. Both
+      # nightlies are SCHEDULED, so github.ref is refs/heads/main for BOTH and
+      # cannot tell them apart; job.workflow_ref names this file at the ref its
+      # caller pinned. An unrecognised shape is refused rather than defaulted,
+      # because a silent miss would skip the write steps below and read green.
+      - name: Which branch is this run for
+        shell: bash
+        env:
+          WF_REF: ${{ job.workflow_ref }}
+          WF_SHA: ${{ job.workflow_sha }}
+        run: |
+          case "$WF_REF" in
+            */nightly-jobs.yml@refs/heads/*) ;;
+            *) echo "::error::defined by '$WF_REF', which is not a branch pin of"\
+                    " nightly-jobs.yml. A caller's 'uses:' must name it as @<branch>."
+               exit 1 ;;
+          esac
+          BRANCH=${WF_REF##*@refs/heads/}
+          echo "NIGHTLY_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          if [ "$BRANCH" = main ]; then
+            echo "IS_MAIN=1" >> "$GITHUB_ENV"
+          else
+            echo "IS_MAIN=0" >> "$GITHUB_ENV"
+          fi
+          # Catches an EMPTY workflow_sha only: the checkout above would then
+          # have silently fallen back to the default branch. It cannot say
+          # whether the sha is this branch's tip -- read that off the log once.
+          [ -n "$WF_SHA" ] && [ "$(git rev-parse HEAD)" = "$WF_SHA" ] || {
+            echo "::error::checked out $(git rev-parse HEAD), but this job is defined by '$WF_SHA'."
+            exit 1; }
+          echo "definition: $WF_REF"
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Prepare shell envs (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "PYTHON=python3" >> $GITHUB_ENV
+
+      # Restore the packages referenced by dist/digests/ BEFORE package.py runs.
+      # The packages are no longer committed, so a fresh checkout has none of them,
+      # and package.py needs them on disk for two separate reasons:
+      #   1. is_build_skipping_allowed() hashes the local file. With no file there is
+      #      no skip, so main would REBUILD instead of reusing the artifact dev built
+      #      and tested -- silently breaking the property this whole design protects.
+      #   2. the compare_*_files helpers diff against the previous package to decide
+      #      whether anything actually changed. With no baseline every asset looks new
+      #      and churns on every run.
+      # --allow-missing: a pool miss here is self-healing (package.py rebuilds and the
+      # push step re-uploads), so it must not turn a recoverable state into a red build.
+      - name: Fetch dist packages from the asset pool (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py pull --allow-missing
+
+      - name: Install dist build tooling (Linux)
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/apt-install
+        with:
+          # One install per line, matching the grouping this job has always
+          # used; merging them breaks gcc-13-*-linux-gnu resolution.
+          packages: |
+            automake libtool autogen
+            openjdk-21-jdk
+            gcc-multilib
+            gcc-i686-linux-gnu
+            gcc-aarch64-linux-gnu
+
+      - name: Build dist assets (Linux)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/package.py
+          $PYTHON $GITHUB_WORKSPACE/scripts/test-dist.py
+
+      - name: Prepare shell envs (Windows x64)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          :: call "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe > msbuild_path.txt
+          :: set /p MSBUILD_PATH=<msbuild_path.txt
+          :: set VCVARSALL=%MSBUILD_PATH%\..\..\..\..\VC\Auxiliary\Build\vcvarsall.bat
+          :: echo VCVARSALL=%VCVARSALL% >> %GITHUB_ENV%
+          echo PYTHON=python >> %GITHUB_ENV%
+
+      # NOTE: one command per step (or && chains). A multi-line `shell: cmd`
+      # script propagates only the LAST command's exit code, which masked
+      # every failure in this job for months (wix EULA errors, full MSVC
+      # build failures, dead MSI packaging) while the job stayed green.
+      # WiX is version-pinned for determinism (an unpinned install is what
+      # silently jumped to v7 in April and broke packaging).
+      - name: Install WiX (Windows x64)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: dotnet tool install --global wix --version 7.0.0 && echo %USERPROFILE%\.dotnet\tools>>%GITHUB_PATH%
+
+      # TA-Lib generates no revenue, so the Open Source Maintenance Fee does
+      # not apply (the OSMF exempts organizations under USD 10k/year), but
+      # WiX v7 still requires explicit EULA acceptance (WIX7015 otherwise).
+      # Accepted per project-maintainer decision, 2026-07-03.
+      - name: Accept WiX OSMF EULA (Windows x64)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: wix eula accept wix7
+
+      - name: Add WiX UI extension (Windows x64)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: wix extension add --global WixToolset.UI.wixext/7.0.0 && wix extension list --global
+
+      # See the Linux fetch step above for why this must precede package.py.
+      - name: Fetch dist packages from the asset pool (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py pull --allow-missing'
+
+      - name: Build dist assets (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\package.py'
+
+      - name: Test dist assets (Windows x64)
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\test-dist.py'
+
+      # Upload the freshly built packages into the content-addressed asset pool.
+      #
+      # ORDER IS LOAD-BEARING: this runs BEFORE the digests that reference the
+      # packages are committed. The reverse order can commit a digest naming a
+      # package that was never uploaded, and that state is not recoverable by
+      # retry -- the only way out is a full rebuild + re-test. For the same
+      # reason this step must never be continue-on-error: a failed upload has to
+      # stop the run before anything is committed.
+      #
+      # Idempotent: assets are named by content hash, so re-running uploads
+      # nothing new, and a race with the other matrix leg resolves to success.
+      #
+      # Write steps test IS_MAIN, which the step after the checkout sets from
+      # this file's own ref. main's caller grants contents: read, so even a
+      # wrong answer here cannot write: the token has nothing to give.
+      - name: Push dist packages to the asset pool (Linux)
+        if: runner.os == 'Linux' && env.IS_MAIN != '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py push
+
+      - name: Push dist packages to the asset pool (Windows x64)
+        if: runner.os == 'Windows' && env.IS_MAIN != '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: cmd
+        run: '%PYTHON% %GITHUB_WORKSPACE%\scripts\dist-pool.py push'
+
+      - name: Check for changes and commit if any
+        if: env.IS_MAIN != '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          dist_changes=$(git status --porcelain dist/)
+          ta_common_changes=$(git status --porcelain include/ta_common.h)
+          if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            echo "Changes detected by git status:"
+            if [ -n "$dist_changes" ]; then
+              echo "$dist_changes"
+              git add dist/
+            fi
+            if [ -n "$ta_common_changes" ]; then
+              echo "$ta_common_changes"
+              git add include/ta_common.h
+            fi
+
+            git commit -m "Update dist package (from ${{ matrix.os }})"
+
+            # Check for unstaged changes and log them.
+            # (this help debugging because it should not happen)
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "Unstaged changes detected:"
+              git status --porcelain
+            fi
+
+            # `|| sleep 10` makes the loop body succeed, so a for-loop ending on
+            # it exits 0 and this step reads GREEN with nothing pushed. The
+            # checkout is detached at the definition's commit, so the refspec
+            # has to name the destination.
+            pushed=""
+            for i in $(seq 1 5); do
+              if git pull --rebase --strategy-option=ours origin "$NIGHTLY_BRANCH" \
+                 && git push origin "HEAD:$NIGHTLY_BRANCH"; then
+                pushed=yes
+                break
+              fi
+              git rebase --abort 2>/dev/null || true
+              sleep 10
+            done
+            if [ -z "$pushed" ]; then
+              echo "::error::could not push the refreshed dist package after 5 attempts;"\
+                   " dist/ and include/ta_common.h still describe the previous sources,"\
+                   " and merge.py will refuse the next dev->main merge."
+              exit 1
+            fi
+          else
+            echo "No changes detected in dist directory"
+          fi
+
+      # The read half of the fork above: on dev a dist/ or ta_common.h change is
+      # the expected outcome and was just committed, so this can only be an
+      # assertion where nothing is allowed to have moved.
+      - name: Verify dist assets are up-to-date
+        if: env.IS_MAIN == '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          # Still meaningful with the packages gitignored: dist/digests/ remains
+          # TRACKED, and package.py rewrites a digest whenever the rebuilt package
+          # differs materially from the recorded one. So a real divergence between
+          # main's sources and main's committed digests still shows up here.
+          dist_changes=$(git status --porcelain dist/)
+          ta_common_changes=$(git status --porcelain include/ta_common.h)
+          if [ -n "$dist_changes" ] || [ -n "$ta_common_changes" ]; then
+            echo "Error: Unexpected changes in dist/ assets."
+            echo "The nightly on dev should have updated these assets."
+            exit 1
+          fi
+
+      # The check above proves main's digests match main's sources. This proves the
+      # packages those digests NAME are actually retrievable -- the half that stopped
+      # being self-evident once the binaries left git. Strict (no --allow-missing):
+      # on main, a digest pointing at content the pool cannot produce means the next
+      # release would have nothing to attach, and that must be loud. On dev the push
+      # above already fails on a missing or mismatched digest, so this would restate it.
+      - name: Verify every referenced package exists in the asset pool
+        if: runner.os == 'Linux' && env.IS_MAIN == '1'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: $PYTHON $GITHUB_WORKSPACE/scripts/dist-pool.py verify
+
+      # Soft: the install page lags a release until the post-release sync.py commit
+      # reaches main. Both branches, because it can never fail and the fix it names
+      # is made on dev.
+      - name: Warn if website is out of date (soft)
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          $PYTHON $GITHUB_WORKSPACE/scripts/sync-website.py --check --warn-only
+
+  # First-ever clang + ARM64 + macOS coverage of the generated C: build with
+  # the default Apple toolchain and run the full C reference suite. Kept
+  # separate from the dist 'test' job (macOS produces no dist assets); the
+  # C hero philosophy applies — this needs no Rust/Java/.NET toolchain.
+  test-macos:
+    name: Test macos-latest (clang, ARM64)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Build (CMake, AppleClang)
+        shell: bash
+        run: |
+          mkdir -p cmake-build && cd cmake-build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_DEV_TOOLS=ON
+          cmake --build . -j 3
+
+      - name: Run C regression suite
+        shell: bash
+        run: cd cmake-build/bin && ./ta_regtest
+
+      # scripts/abi.py measures the export table with `nm -D` over the ELF
+      # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
+      # other half of #400's claim: -fvisibility=hidden is the whole mechanism on
+      # this platform (there is no linker map -- target_clones is glibc-only, so
+      # no resolver is emitted), and nothing else in CI ever looks at the dylib.
+      - name: Public surface is narrowed on Mach-O too
+        shell: bash
+        run: |
+          set -euo pipefail
+          dylib=$(ls cmake-build/libta-lib.*.dylib 2>/dev/null | head -1)
+          if [ -z "$dylib" ]; then
+            echo "::error::No dylib under cmake-build/ -- this gate measured nothing."
+            exit 1
+          fi
+          # Mach-O prefixes every C symbol with an underscore; strip it once.
+          nm -gU "$dylib" | awk '{print $NF}' | sed 's/^_//' | sort -u > exported.txt
+          sed -n 's/^function .*[ *]\([A-Za-z_][A-Za-z0-9_]*\)(.*/\1/p' ABI.manifest \
+            | sort -u > declared.txt
+          # TA_Globals is exported although no installed header declares it --
+          # src/ta_common/ta_global.h says why. Nothing else may be.
+          echo TA_Globals >> declared.txt
+          sort -u declared.txt -o declared.txt
+          n_exp=$(wc -l < exported.txt); n_dec=$(wc -l < declared.txt)
+          echo "dylib exports $n_exp; headers declare $n_dec (incl. TA_Globals)"
+          if [ "$n_exp" -lt 100 ] || [ "$n_dec" -lt 100 ]; then
+            echo "::error::One of the two lists is implausibly short ($n_exp/$n_dec) -- the parse moved, and comparing against an empty set would read green."
+            exit 1
+          fi
+          extra=$(comm -23 exported.txt declared.txt)
+          missing=$(comm -13 exported.txt declared.txt)
+          rc=0
+          if [ -n "$extra" ]; then
+            echo "::error::The dylib exports $(echo "$extra" | wc -l) symbol(s) no header declares -- -fvisibility=hidden did not apply on AppleClang."
+            echo "$extra" | head -20
+            rc=1
+          fi
+          if [ -n "$missing" ]; then
+            echo "::error::$(echo "$missing" | wc -l) declared symbol(s) are NOT in the dylib -- a consumer linking them gets an undefined reference."
+            echo "$missing" | head -20
+            rc=1
+          fi
+          if [ "$rc" -eq 0 ]; then
+            echo "Mach-O export table is exactly the declared surface ($n_exp symbols)."
+          fi
+          exit $rc
+
+  # The only thing anywhere that LINKS the Windows DLL. The dist tests check
+  # that ta-lib.dll and ta-lib.lib exist as files (scripts/install_tests/msi.py),
+  # and the Python wrapper static-links ta-lib-static.lib, so a prototype that
+  # loses TA_LIB_API builds green everywhere and is simply missing from the DLL.
+  # That is not hypothetical: TA_GetVersionString was absent from 2002 until
+  # 0.7.1 (#57, CHANGELOG). On ELF the same omission is caught by
+  # abi.py's export gate; this is the Windows half of it.
+  dll-exports:
+    name: "Windows: the DLL exports what the headers declare"
+    runs-on: windows-2022
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # scripts/check_dll_exports.py, not inline cmake: CMakeLists.txt:127 hard-
+      # errors unless the MSVC environment is set, and the project already has
+      # the vswhere-based vcvarsall helper that scripts/package.py uses. Doing it
+      # any other way means hardcoding a Visual Studio edition path.
+      - name: Link a probe against the DLL's import library and run it
+        shell: bash
+        run: python scripts/check_dll_exports.py
+
+  # Cross-language codegen verification — runs AFTER the C tests (needs: test).
+  # C is the hero: the 'test' job above validates the C library with a C-only
+  # toolchain (CMake/autotools never invoke cargo, so ta_regtest needs no Rust
+  # toolchain). Only this job adds the Rust/Java/.NET toolchains, builds the
+  # JSON-RPC language servers plus the frozen reference server (ta_ref_serve,
+  # from the pinned reference tag), and runs ta_regtest --codegen:
+  # 161 functions x 4 languages diffed against the reference, including the
+  # non-default-parameter ref differential sweep. POSIX-only (the server
+  # harness uses fork/exec), hence no Windows leg.
+  #
+  # --codegen runs the C reference tests in the same process as the codegen
+  # sweep, which is what lets server_verify verify the HAND-WRITTEN tests
+  # against all four servers bitwise (it rides them). Re-running the suite the
+  # hero 'test' job already ran costs ~6s; that is what buys the hand-written
+  # tier a cross-language check.
+  cross-language:
+    name: "xlang: all langs vs pre-cutover C"
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build servers and run cross-language verification
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest.
+          # Benchmarks are skipped: CI timing is noise.
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
+
+      # The benchmark CORPUS, not the benchmark. --verify-corpus checks every
+      # shape is reproducible and produces valid OHLC — deterministic, so unlike
+      # the timings it belongs in CI. It rides this job because regtest.py's
+      # build step already put ta_bench in bin/. A shape that stops generating
+      # valid data silently changes what every bench measures (#147).
+      - name: Verify the benchmark input corpus
+        shell: bash
+        run: cd bin && ./ta_bench --verify-corpus --points=100000
+
+  # Synthetic-function gate. The cross-language job above verifies the SHIPPED
+  # functions; this one verifies generator surface no shipped function uses
+  # (bitwise operators, integer truthiness, do-while, switch-on-expression, ...).
+  # scripts/synth_gate.py copies the committed template functions from
+  # ta_codegen/generator/input_synth/ into ta_codegen/input/ inside a throwaway git
+  # worktree, regenerates ALL backends there, and runs the usual gates scoped
+  # to the SYNTH family: --codegen (stream_verify / OpenAndFill,
+  # batch-vs-stream bitwise in all four servers) and --xlang-hash (batch
+  # parity, Rust/Java/C# vs the in-process C golden, bitwise). The script
+  # asserts the SYNTH functions were actually swept in every leg, so a
+  # refactor that silently stops enumerating them fails instead of passing an
+  # empty run. Nothing synthetic ever lands in the shipped tree.
+  synth-gate:
+    name: "synth-gate: unshipped generator surface, all langs"
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Run the synthetic cross-language gate
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest.
+          python3 scripts/synth_gate.py
+
+  # The publishable Java jars, built with the committed Maven wrapper and tested
+  # AS THE ARTIFACT (#428). No `needs:`, so a dist-pool failure cannot take it
+  # down with it.
+  java:
+    name: Java jars built and tested
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Build the publishable jars and run every suite against them
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py libraries --language=java; then
+            echo "::error::The publishable Java jars do not build, or do not pass their own suites; see the log above."
+            exit 1
+          fi
+
+  # The mirror for C#: the shipped library with its csproj doc gate (CS1591),
+  # and the hand-written suites RUN once per declared TargetFramework -- the PR
+  # gate compiles the managed tree and stops there.
+  csharp:
+    name: C# library built and tested
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build the shipped library and run every suite against it
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py libraries --language=csharp; then
+            echo "::error::The shipped C# library does not build, or does not pass its own suites; see the log above."
+            exit 1
+          fi
+
+  # Debug-profile Rust codegen gate. The release cross-language job above wraps a
+  # usize overflow silently (the wrapped value is dead), so it cannot see the
+  # IMI/APO/PPO-class arithmetic-overflow bugs: those only manifest as a debug
+  # panic. This job rebuilds the Rust server with the debug profile (overflow
+  # checks on) and runs the codegen edge-range sweep (test_codegen.c
+  # run_edge_range_sweep) against it, so any such overflow becomes a hard
+  # failure. Rust-only (no JDK/.NET), gated on the C hero job.
+  #
+  # The BATCH tier is what the sweep covers; the second step extends the same
+  # debug binary to the STREAM tier (Open/Update/Peek/Close, rings, sub-handles),
+  # which the sweep never calls. Same cargo invocation, so the build is already
+  # warm — it costs one extra pipe, not a second job.
+  cross-language-rust-debug:
+    name: Rust tests (debug profile — overflow gate)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install PyYAML
+        shell: bash
+        run: pip install pyyaml
+
+      - name: Build debug Rust server and run codegen overflow gate
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest; no JDK/.NET
+          # (Rust-only). --rust-debug builds the server with overflow checks on so the
+          # edge-range sweep traps arithmetic overflow instead of wrapping it away.
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=rust --rust-debug
+
+      - name: Drive the streaming API against the same debug server
+        shell: bash
+        run: python3 scripts/rust_stream_debug.py
+
+  # Clippy lint gate for the Rust code: the generator tool and the generated crate.
+  # The tool enforces #![deny(clippy::pedantic)] on itself, but nothing in CI ever
+  # ran clippy, so that gate silently drifted (pedantic errors landed on dev
+  # unnoticed). This makes clippy a hard gate. `-D warnings` promotes the remaining
+  # warn-level lints (and rustc warnings) to errors too; the generated crate stays
+  # green because its scaffolding emits a crate-level #![allow(clippy::all,
+  # clippy::pedantic)] — its machine output is verified bit-exact against the C
+  # reference, not linted (rewriting emitted comparisons would change NaN semantics).
+  # That "(and rustc warnings)" is load-bearing for one lint on purpose: the crate
+  # sets #![warn(missing_docs)] (#179 D7), and `-D warnings` here is the only thing
+  # that turns an undocumented public item into a failure rather than a warning
+  # nobody reads.
+  # Rust-only and self-contained: no C build, no JDK/.NET, and intentionally NOT
+  # gated on the C hero 'test' job, so an unrelated dist failure can't skip it.
+  #
+  # This job also RUNS the generator's own unit tests (`cargo test`). Clippy with
+  # --all-targets only *compiles* the test target; it never executes it, so
+  # runtime assertions in the generator's tests/*_suite.rs (e.g. the STOCH temp-buffer copy
+  # shape) went unchecked and a stale one drifted onto dev unnoticed. Running them
+  # here closes that gap at nightly cadence (not per-commit).
+  clippy:
+    name: Rust clippy + docs + tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # Rust is preinstalled on ubuntu-latest; add the component defensively
+      # (idempotent — a no-op when clippy is already present).
+      - name: Ensure clippy component
+        shell: bash
+        run: rustup component add clippy
+
+      - name: Clippy the generator tool
+        shell: bash
+        run: cargo clippy --all-targets --manifest-path ta_codegen/generator/Cargo.toml -- -D warnings
+
+      - name: Clippy the generated crate
+        shell: bash
+        run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
+
+      # Rustdoc's own lints are a separate set that clippy never reaches: an
+      # unresolved intra-doc link is `rustdoc::broken_intra_doc_links`, and only
+      # rustdoc raises it. docs.rs is the first place rustdoc runs on a release,
+      # and a broken link renders there as literal text (#179 E4). The registry
+      # alone carries 176 generated `[Core::<F>]` links, so this is the step that
+      # keeps them resolving.
+      - name: Rustdoc the generated crate
+        shell: bash
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      # --no-fail-fast: cargo runs the test binaries in sequence and stops at
+      # the first that fails, so one red suite hid the other eleven -- a real
+      # second failure went unseen that way while landing #238.
+      - name: Test the generator tool
+        shell: bash
+        run: cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml
+
+      # The generated per-function rustdoc examples are runnable doctests, but
+      # nothing executed them: clippy --all-targets does not build doctests. They
+      # are the crate's public-facing documentation — run them (issue #136).
+      - name: Run the generated crate's doctests
+        shell: bash
+        run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      # This step is the ONLY thing anywhere that EXECUTES the crate's
+      # hand-written test modules (templates/rust/, copied in by `generate`):
+      # types.rs's Core/CoreBuilder API tests (#144), and the four #[cfg(test)]
+      # ones -- scratch_election (#146), stream_finite, stream_out_range (#241)
+      # and div_zero (#249). clippy --all-targets only COMPILES the test target
+      # and --doc skips it, so narrowing this step silently retires all five.
+      #
+      # `--tests`, not `--lib`: the latter excludes tests/, which is where
+      # nullable_outputs.rs (#262) lives. The generated phantom-I/O sweep was
+      # there too until #265 moved it in-crate to probe `<N>_Impl`; `--tests`
+      # still covers it, because it selects the lib's own unittest binary as
+      # well.
+      - name: Run the generated crate's unit and integration tests
+        shell: bash
+        run: cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      # Every step above compiles the crate IN the workspace, where each file on
+      # disk is reachable whether or not it would ship. The `.crate` tarball is a
+      # different artifact -- cargo builds its file list from git, filtered by the
+      # manifest's include/exclude and by every .gitignore above it -- and nothing
+      # here had ever built one (#179 E1). So a file could be present, compiled,
+      # linted, documented and tested and still be absent from what crates.io
+      # receives, with a published release that does not build as the first sign.
+      #
+      # The script packages the pair (the library pins an =0.1.2 dispatch that is
+      # not on crates.io yet, so it cannot resolve alone), which makes cargo
+      # verification-BUILD each crate from its own unpacked tarball, and then
+      # checks the tarball contents against `git ls-files` -- derived, so adding a
+      # function needs no edit here, and exact, so losing one fails. Measured
+      # against the four steps above by excluding LICENSE from the manifest: all
+      # four stay green (clippy, rustdoc, 534 doctests, the --tests suites) and
+      # only this step goes red. See scripts/rust_package_check.py.
+      #
+      # No --allow-dirty on purpose: this runs on a fresh checkout, so an
+      # unexpectedly dirty tree is itself something to hear about. No
+      # setup-python either -- the script is stdlib-only and ubuntu-latest ships
+      # python3, so this job stays the self-contained Rust-only one it is.
+      - name: Package the publishable crates and check what ships
+        shell: bash
+        run: python3 scripts/rust_package_check.py
+
+  # Every Rust step elsewhere in this workflow runs on ubuntu, so the crate
+  # has never compiled on Windows or macOS (#179 E6). `--lib --doc` together
+  # is rejected by cargo, hence two `cargo test` invocations.
+  rust-other-os:
+    name: Rust on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Refuse a matrix that adds no operating system
+        shell: bash
+        run: |
+          os='${{ matrix.os }}'
+          if [ -z "$os" ]; then
+            echo "::error::This job ran with an empty 'os', so it compiled nothing. The point of the job is to compile the crate somewhere the other Rust jobs do not — restore the matrix in .github/workflows/nightly-jobs.yml."
+            exit 1
+          fi
+          case "$os" in
+            ubuntu*)
+              echo "::error::'$os' is the operating system every other Rust job in this workflow already uses, so this leg would duplicate them instead of covering anything (#179 E6). Name a non-Linux runner, or delete the job rather than leaving it green and vacuous."
+              exit 1
+              ;;
+          esac
+          echo "Covering $os"
+
+      - name: Compile the publishable crates
+        shell: bash
+        run: cargo check -p ta-lib -p ta-lib-dispatch --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's unit tests
+        shell: bash
+        run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's doctests
+        shell: bash
+        run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+  # The two publishable crates declare `rust-version = "1.86"`, and nothing
+  # else here compiles them at it -- every other Rust step runs on the pinned
+  # toolchain from rust-toolchain.toml (1.97.0), so a post-1.86 API reaching
+  # the generated crate is green everywhere and breaks only for a consumer on
+  # an older toolchain, after publish, in a version that cannot be edited.
+  #
+  # Nightly, not the PR gate: pr-codegen-gate.yml stays fast and lightweight
+  # by design (#298 discussion), and an extra toolchain install of unmeasured
+  # download time does not belong in every contributor's merge-blocking path.
+  # Nightly is also strictly more coverage, not less -- dev takes direct
+  # pushes that `on: pull_request` never sees, so this is the only copy that
+  # ever runs against those, the same reasoning regen-check and clippy above
+  # already rely on.
+  #
+  # The floor is READ from the manifests, not written here: bumping it in
+  # ta_codegen/generator/src/main.rs moves this gate with it, and the two
+  # reads are also the job's non-vacuity guard -- a missing or disagreeing
+  # rust-version fails before any toolchain is installed.
+  #
+  # Rust-only and self-contained, so like clippy above it is deliberately NOT
+  # gated on the C hero 'test' job.
+  msrv:
+    name: Rust MSRV floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Read the declared floor from the two publishable manifests
+        id: floor
+        shell: bash
+        run: |
+          read_msrv() { sed -n 's/^rust-version *= *"\([^"]*\)".*/\1/p' "$1" | head -n 1; }
+          lib=$(read_msrv ta_codegen/output/rust/library/Cargo.toml)
+          dispatch=$(read_msrv ta_codegen/output/rust/dispatch/Cargo.toml)
+          if [ -z "$lib" ] || [ -z "$dispatch" ]; then
+            echo "::error::A publishable crate declares no rust-version (ta-lib='$lib', ta-lib-dispatch='$dispatch'), so this job has no floor to compile against. Both manifests are generated — restore the literal in ta_codegen/generator/src/main.rs and re-run 'scripts/build.py generate'."
+            exit 1
+          fi
+          if [ "$lib" != "$dispatch" ]; then
+            echo "::error::The publishable crates declare different floors (ta-lib='$lib', ta-lib-dispatch='$dispatch'). ta-lib pins ta-lib-dispatch with '=', so the two ship as a pair and only one floor is meaningful. Both literals live in ta_codegen/generator/src/main.rs."
+            exit 1
+          fi
+          echo "Declared MSRV: $lib"
+          echo "msrv=$lib" >> "$GITHUB_OUTPUT"
+
+      # rustup is preinstalled on ubuntu-latest. `+<version>` overrides
+      # rust-toolchain.toml for this one invocation, so the pin stays the
+      # default for every other step and job.
+      - name: Install the declared floor toolchain
+        shell: bash
+        run: rustup toolchain install "${{ steps.floor.outputs.msrv }}" --profile minimal --no-self-update
+
+      - name: Compile the publishable crates on the declared floor
+        shell: bash
+        run: |
+          if ! cargo "+${{ steps.floor.outputs.msrv }}" check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml; then
+            echo "::error::The publishable crates do not compile on their own declared MSRV (${{ steps.floor.outputs.msrv }}). Either the code reached for something newer -- a 'use of unstable library feature' or 'stable since 1.NN' note names it -- in which case fix the generator that emits it, or the floor genuinely has to rise, in which case raise rust-version in ta_codegen/generator/src/main.rs (both crates) and say why in the commit. Reproduce locally: rustup toolchain install ${{ steps.floor.outputs.msrv }} && cargo +${{ steps.floor.outputs.msrv }} check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml"
+            exit 1
+          fi
+
+  # Every Rust step in this tree compiles for the runner's own host triple,
+  # x86_64-unknown-linux-gnu, and that is the only machine shape the crate has
+  # ever been compiled in (#179 E3). Two assumptions rustc can see are invisible
+  # from there: a pointer width of 64 -- the crate indexes with `usize` end to
+  # end -- and an x86 ISA. Neither has a symptom here; the first sign is a
+  # compile error in a consumer's build, on a platform nobody in this repo
+  # builds for, in a published version that cannot be edited.
+  #
+  # Measured on this tree, by injecting each defect into the generated crate and
+  # re-running all three legs:
+  #
+  #   injected into library/src/lib.rs                  host   i686   aarch64
+  #   const _: () = assert!(size_of::<usize>() == 8)    green   RED    green
+  #   use core::arch::x86_64::_mm_pause;                green   RED    RED
+  #
+  # So i686 is the leg that does the work: it is the only one of the three that
+  # sees a pointer-width assumption. aarch64 earns its place on a different
+  # argument -- it is a platform consumers actually run on (Apple Silicon,
+  # Graviton), not a defect class i686 misses. No defect was found that aarch64
+  # catches and i686 does not.
+  #
+  # `check`, not `test`: running the crate on either target needs an emulator and
+  # a cross linker, and this job deliberately buys neither. A 32-bit arithmetic
+  # overflow that only appears at run time is therefore NOT covered here -- this
+  # gate is about what the compiler can see.
+  #
+  # Nightly, not the PR gate, for the same reason as msrv above: two rust-std
+  # downloads of unmeasured time do not belong in every contributor's
+  # merge-blocking path. Rust-only and self-contained, so also not gated on the
+  # C hero 'test' job.
+  cross-target:
+    name: Rust cross-target check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # The list is the job's non-vacuity guard. An empty list, or one that named
+      # the host again, would leave every step below green while compiling
+      # nothing the other Rust jobs do not already compile -- so both are a hard
+      # failure here rather than a silently weaker gate.
+      - name: Install the cross targets
+        id: targets
+        shell: bash
+        run: |
+          host=$(rustc -vV | sed -n 's/^host: //p')
+          targets="i686-unknown-linux-gnu aarch64-unknown-linux-gnu"
+          if [ -z "${targets// /}" ]; then
+            echo "::error::No cross targets are listed, so this job would pass without compiling anything the host jobs do not. Restore the list in .github/workflows/nightly-jobs.yml or delete the job."
+            exit 1
+          fi
+          for t in $targets; do
+            if [ "$t" = "$host" ]; then
+              echo "::error::Cross target '$t' is the runner's own host triple, so that leg re-checks what every other Rust job here already checks. Name a target that differs from the host, or drop it from the list."
+              exit 1
+            fi
+          done
+          echo "Host: $host"
+          echo "Cross targets: $targets"
+          rustup target add $targets
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+      - name: Compile the publishable crates for each cross target
+        shell: bash
+        run: |
+          for t in ${{ steps.targets.outputs.targets }}; do
+            echo "--- $t ---"
+            if ! cargo check -p ta-lib -p ta-lib-dispatch --all-targets --target "$t" --manifest-path ta_codegen/output/rust/Cargo.toml; then
+              echo "::error::The publishable crates do not compile for $t. The crate is pure Rust with no platform-specific code, so this is a portability assumption that reached the generated output -- a pointer width (anything that assumes usize is 64 bits), an x86-only intrinsic, or a type too large for a 32-bit address space. Fix the generator that emits it in ta_codegen/generator/ and re-run 'scripts/build.py generate'; do not edit ta_codegen/output/. Reproduce locally: rustup target add $t && cargo check -p ta-lib -p ta-lib-dispatch --all-targets --target $t --manifest-path ta_codegen/output/rust/Cargo.toml"
+              exit 1
+            fi
+          done
+
+  # Bit-exact regression gate vs the last release (v0.6.4): diff every function
+  # at period>=2, fail on any real divergence. C-only, gated on 'test'.
+  # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
+  fuzz-vs-064:
+    name: C Latest vs released v0.6.4
+    needs: test
+    # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
+    # silently skip this release gate — it has its own checkout+build.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # ta_064_serve builds from the released v0.6.4 tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Fuzz current library vs frozen v0.6.4
+        shell: bash
+        run: python3 scripts/build.py fuzz-064
+
+  # Native arm64 Linux — the ONE platform where both halves of issue #150 are live
+  # at once, and the only reason that issue reached a user instead of CI.
+  #
+  #  (1) Baseline FMA. aarch64 always has it, so any differential oracle built
+  #      without -ffp-contract=off fuses a*b+c inside the REFERENCE, and the suite
+  #      then measures a compiler difference rather than a code difference (549
+  #      false failures across 9 functions, reported on an M5 Max). On x86-64 the
+  #      flag is inert — no baseline FMA — which is why every job above is blind to
+  #      this class. macos-latest is arm64, but it runs only the plain C suite; no
+  #      FMA-baseline runner has ever executed an oracle suite.
+  #  (2) GCC. fuzz_data.h — the seeded INPUT generator both sides of --fuzz-064
+  #      compile — defends itself with `#pragma STDC FP_CONTRACT OFF`, which clang
+  #      honours and GCC ignores outright (GCC also contracts ACROSS statements, so
+  #      its second defence, splitting multiply from add, goes with it). Only GCC on
+  #      an FMA-baseline target can therefore make the two sides generate DIFFERENT
+  #      inputs from the same (shape, seed, n). The reporter could not test this
+  #      half: macOS /usr/bin/gcc is an Apple clang shim.
+  #
+  # Not gated on 'test': that job is x86-64 + Windows, so an unrelated dist failure
+  # there must never skip this platform's only coverage.
+  arm64-linux:
+    name: arm64 Linux (GCC, baseline FMA — oracle contraction gate)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # both oracles build from pinned tags (v0.6.4, reference-pre-cutover)
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # The arm64 images carry a smaller toolset than their x86-64 counterparts,
+      # so nothing here is assumed preinstalled the way ubuntu-latest allows.
+      - name: Install build tooling
+        uses: ./.github/actions/apt-install
+        with:
+          packages: build-essential cmake
+
+      - name: Install Rust
+        shell: bash
+        run: |
+          # rust-toolchain.toml pins the version; --default-toolchain none lets
+          # rustup honour the pin on first use instead of fetching stable twice.
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      # First execution of the C suite on arm64 Linux + real GCC anywhere in CI.
+      - name: Run the C regression suite
+        shell: bash
+        run: |
+          python3 scripts/build.py ta_regtest
+          cd bin && ./ta_regtest
+
+      # Half (1) and half (2): --fuzz-064 builds the frozen v0.6.4 oracle AND the
+      # 064 transport that compiles fuzz_data.h, so it exercises both the cmake
+      # sites and the raw-cc site in one run.
+      - name: Fuzz current library vs frozen v0.6.4
+        shell: bash
+        run: python3 scripts/build.py fuzz-064
+
+      # build.py grew the same per-language prerequisite narrowing regtest.py has
+      # had since #150, so it needs the same live regression test: on this runner
+      # (no JDK, no .NET) the target must build the C and Rust servers without
+      # demanding a toolchain it will never invoke. It fails loudly if the
+      # prerequisite set ever goes back to being derived from the raw filter.
+      - name: build.py honours --language on a runner with no JDK and no .NET
+        shell: bash
+        run: python3 scripts/build.py servers --language=c,rust
+
+      # The ref differential sweep — the suite that silently truncated on arm64
+      # (131 variants/21 functions when it aborted, 613/74 once the oracle stopped
+      # fusing). --language=c,rust is also the invocation that was unreachable
+      # through the CLI until the prerequisite check became per-language, so this
+      # is its live regression test on a runner with no JDK and no .NET.
+      - name: Ref differential sweep (C + Rust)
+        shell: bash
+        run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=c,rust
+
+  # C# on arm64 — the one place the managed FMA contract can diverge and nothing
+  # would notice. Math.FusedMultiplyAdd is a JIT intrinsic: on x86-64 it becomes
+  # vfmadd only when the CPU has FMA3, while on aarch64 FMADD is baseline, so the
+  # two platforms reach fused arithmetic by different routes. Every other C# job
+  # runs on x86-64, so without this the aarch64 route is never executed at all.
+  #
+  # Deliberately a SEPARATE job from arm64-linux rather than adding .NET there:
+  # that job's value depends on being a runner with no JDK and no .NET, which is
+  # what makes its --language=c,rust steps a live regression test.
+  #
+  # Scoped to the C# row of --xlang-hash (not the full four-language sweep) to
+  # keep the nightly's arm64 cost down — it is the row that answers the FMA
+  # question, and it is bitwise against the in-process C library on the same
+  # machine, so any aarch64-specific fusion difference fails it.
+  arm64-csharp:
+    name: arm64 Linux (C# bitwise parity + the suites, under the ARM JIT)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # The arm64 images carry a smaller toolset than their x86-64 counterparts,
+      # so nothing is assumed preinstalled the way ubuntu-latest allows.
+      - name: Install build tooling
+        uses: ./.github/actions/apt-install
+        with:
+          packages: build-essential cmake
+
+      - name: Install Rust
+        shell: bash
+        run: |
+          # rust-toolchain.toml pins the version; --default-toolchain none lets
+          # rustup honour the pin on first use instead of fetching stable twice.
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      # --language=csharp reaches this at all only because build.py's prerequisite
+      # check and backend filter became per-language; before that the target
+      # hard-required a JDK this runner does not have.
+      - name: Bitwise parity, C# vs the in-process C library (aarch64)
+        shell: bash
+        run: python3 scripts/build.py xlang-hash --language=csharp
+
+      # The step above answers the FMA question; this one runs the suites under
+      # the ARM JIT, which nothing else does -- every other execution of them is
+      # x86-64.
+      - name: Run the C# suites on aarch64
+        shell: bash
+        run: python3 scripts/build.py libraries --language=csharp
+
+  # Cross-language BITWISE parity gate (issue #113): the generated language
+  # servers must compute BIT-IDENTICAL outputs to the shipped in-process C library
+  # (no tolerance — the seed/hex + hash design routes around the JSON-RPC
+  # float-serialization limit that forces --codegen's 1e-6). Rust crosses the
+  # boundary with a seed (gen_present); Java and C# with lossless hex inputs
+  # (#114). Java AND C# relax their transcendental-using calls to a 1e-9
+  # tolerance, for different reasons: Java's fdlibm is not the C libm, and .NET
+  # does not guarantee Math.* reaches the platform libm (run 30776189041 hit 25
+  # TA_LN mismatches here from a commit clean on aarch64 and on a dev box).
+  # Everything else in both, and every Rust call, stays bitwise.
+  # cmake+gcc+cargo are preinstalled on ubuntu-latest; the Java server needs the
+  # JDK and the managed C# server needs the .NET SDK (both set up below).
+  xlang-hash:
+    name: xlang matching (C vs Rust + Java + C#, seed/hex+hash)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Bitwise-diff each language server vs the in-process C library
+        shell: bash
+        run: python3 scripts/build.py xlang-hash
+
+  # musllinux build gate (PR #96): regression guard that the library still BUILDS
+  # on musl with FMA dispatch excluded. target_clones/ifunc is glibc-only (musl has
+  # no ifunc; a guard wrongly widened to __linux__ would fail the compile here), so
+  # a musl build must emit ZERO ifunc and still compute correctly. Checkout on the
+  # ubuntu host (Alpine lacks Node for actions/checkout); build + test in an Alpine
+  # container. For a pre-merge local run, paste the `docker run`
+  # block below — it needs only Docker and the repo root as $PWD.
+  musl-build:
+    name: musllinux build (FMA dispatch correctly excluded)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # Pull before running, with retries. Docker Hub times out on the runners often
+      # enough to fail a whole nightly on infrastructure rather than on the library:
+      # `docker run` exits 125 having built nothing, which reads exactly like a real
+      # musl regression until you open the log. Only the pull is retried — the build
+      # and the reference suite below are deterministic and must fail on the first try.
+      - name: Pull the musl image (retried; Docker Hub is flaky from Actions)
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if docker pull --quiet alpine:3.20; then
+              echo "pulled alpine:3.20 on attempt $attempt"
+              exit 0
+            fi
+            delay=$((attempt * 15))
+            echo "docker pull failed (attempt $attempt/5); retrying in ${delay}s"
+            sleep "$delay"
+          done
+          echo "::error::could not pull alpine:3.20 after 5 attempts — Docker Hub unreachable"
+          exit 1
+
+      - name: Build under musl — must compile, emit no ifunc, and compute correctly
+        shell: bash
+        run: |
+          docker run --rm -v "$PWD":/src -w /src alpine:3.20 sh -c '
+            set -e
+            apk add --no-cache build-base cmake >/dev/null
+            echo "== musl target: alpine $(cat /etc/alpine-release) =="
+            # (1) Must COMPILE. A guard wrongly widened to include musl would
+            #     hard-error here on the target_clones attribute in the fused .c.
+            cmake -S . -B /tmp/bm -DCMAKE_BUILD_TYPE=Release >/dev/null
+            cmake --build /tmp/bm -j"$(nproc)" >/dev/null
+            SO=$(find /tmp/bm -name "libta-lib.so*" -type f | head -1)
+            echo "DSO: $SO"
+            # (2) Guard must have EXCLUDED musl: ZERO ifunc dispatch symbols.
+            n=$(readelf -sW "$SO" | grep -c IFUNC || true); echo "IFUNC symbols in DSO (must be 0 on musl): $n"; test "$n" -eq 0
+            # (3) The plain software-fma library must still be correct on musl.
+            REG=$(find /tmp/bm -name ta_regtest -type f | head -1)
+            echo "== running C reference suite (software fma on musl) =="
+            LD_LIBRARY_PATH="$(dirname "$SO")" "$REG"'
+
+  # Memory-safety gate (#94): build the library + ta_regtest with
+  # AddressSanitizer + UBSan and run the full C reference suite, including the
+  # parameter-boundary sweep (every optional parameter at min/min+1/default+-1/
+  # large across every function). Turns an out-of-bounds / uninitialized read in
+  # indicator code (the MACD/TRIX/MAVP/STOCH boundary class) into a hard failure
+  # instead of plausible garbage. C-only, GCC, gated on 'test'.
+  sanitizers:
+    name: ASan/UBSan (C reference suite + boundary sweep)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build ta_regtest with ASan+UBSan
+        shell: bash
+        run: python3 scripts/build.py ta_regtest --sanitize
+
+      - name: Run C reference suite + boundary sweep under sanitizers
+        shell: bash
+        working-directory: cmake-build-asan/bin
+        env:
+          ASAN_OPTIONS: halt_on_error=1:abort_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ./ta_regtest
+
+  # Memory-safety gate for the STREAMING tier. The `sanitizers` job above runs
+  # only the batch C-reference suite; it never calls the generated stream
+  # functions (Open/Update/Peek/Close, rings, sub-handles). This builds the C
+  # JSON-RPC stream server single-TU with -fsanitize=address,undefined (address
+  # bundles LeakSanitizer) and drives stream_verify for every stream-flagged
+  # function, closing stdin so the server exits CLEANLY and LeakSanitizer runs at
+  # exit (driving it through ta_regtest kills the server, so LSan would stay
+  # silent). A leak / OOB / UB on any exercised path fails the job. Only needs
+  # gcc + Python (the server compiles from the committed generated sources — no
+  # cargo). Allocation-failure branches are guarded by generate-time generator
+  # tests instead (they require malloc to fail, which no run exercises). C-only,
+  # GCC, gated on 'test'.
+  stream-sanitizers:
+    name: ASan/UBSan/LSan (streaming API)
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install PyYAML
+        shell: bash
+        run: pip install pyyaml
+
+      - name: Build sanitized stream server + drive stream_verify (ASan/UBSan/LSan)
+        shell: bash
+        run: python3 scripts/stream_sanitize.py
+
+  # Conan packaging (#86) was never exercised by CI: build the package
+  # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
+  # recipe). Gated on the C hero job like the other non-hero jobs.
+  conan:
+    name: Conan package build
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Build conan package
+        shell: bash
+        run: |
+          pip install conan
+          conan profile detect --force
+          conan create . --build=missing
+
+  # Runs LAST (needs: test) so every other job tested the committed,
+  # already-generated sources. This regenerates from ta_codegen/input/ and fails
+  # if anything differs — i.e. an input edit whose generated output was never
+  # re-generated and committed.
+  regen-check:
+    name: ta_codegen output up-to-date
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # One command, the same one every PR runs (pr-codegen-gate.yml) and the
+      # same one a developer runs locally: the ta_regtest source lists agree,
+      # ta_codegen/input is formatted, and regenerating every backend changes
+      # nothing that is committed. It probes one file per generated tier first,
+      # so "the tree stayed clean" cannot pass for a file the generator no
+      # longer writes at all (#211).
+      #
+      # This job still earns its place next to the PR gate: dev also takes
+      # direct pushes, which no pull_request trigger ever sees.
+      - name: Regenerate all backends and verify committed output matches
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py regen-check; then
+            echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the result — see the log above for which files drifted."
+            exit 1
+          fi
+
+      # The PR gate runs this too, in the job that has the C toolchain. It is
+      # repeated here for the same reason regen-check is: most commits reach dev
+      # as direct pushes, which `on: pull_request` never sees, so a header edit
+      # pushed straight to dev would otherwise meet no ABI gate at all.
+      - name: Public C ABI matches ABI.manifest
+        shell: bash
+        run: |
+          # Built first, and --require-artifact: half this gate reads DT_SONAME off
+          # the library, and that is the half that catches a SOVERSION reverted to
+          # the release version -- a change touching no header, which the manifest
+          # comparison alone would pass green.
+          python3 scripts/build.py
+          # ABI.released is re-measured from its release commit, which a shallow checkout lacks.
+          T=$(sed -n 's/^release \(v[0-9.]*\) .*/\1/p' ABI.released 2>/dev/null || true)
+          git fetch --no-tags --depth=1 https://github.com/TA-Lib/ta-lib.git "+refs/tags/$T:refs/tags/$T" || true
+          if ! python3 scripts/abi.py check --require-artifact; then
+            echo "::error::The public C ABI gate failed; the abi: message above says why and what to do."
+            exit 1
+          fi
+
+      # Static: it reads the generated `src/ta_func/ta_CDL*.c` as TEXT, so it
+      # builds and runs nothing. It sits here rather than on the PR because the
+      # PR gate is deliberately a fast, lightweight one; systematic checks live
+      # in this run. Sub-second, so it is free next to the regenerate above.
+      #
+      # Nothing else in the tree can see what it checks: a candlestick's only
+      # observable is a 3-valued integer, so a trailing total accumulated over
+      # the wrong bars changes the output only where a comparison happens to
+      # straddle a threshold — on #229's fold, a one-bar rotation moved 3 of 14
+      # functions and left 11 green in every language (#240).
+      - name: Candle trailing-total wiring (read AND write side)
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py check-candle-windows; then
+            echo "::error::A candlestick's trailing total is wired to the wrong bar — see the log above."
+            exit 1
+          fi
+
+  # Instruction-count regression detection for every C entry point (issue #412).
+  #
+  # A job here rather than its own workflow because it COMMITS to dev: keeping it
+  # inside the nightly's single writer window is what keeps "green dev-nightly
+  # means mergeable dev" true. Do not give it `needs:` and do not feed it another
+  # job's build artifact (which would require one): the critical path is the
+  # arm64 job at ~21 min and this is ~1, so in parallel it costs zero wall clock,
+  # while serialising it charges the nightly for every minute it takes.
+  #
+  # It counts retired instructions under callgrind rather than timing anything:
+  # exact, byte-identical across runs on a loaded box, which is what lets a 10%
+  # threshold mean anything on a shared vCPU. It is blind to out-of-order
+  # execution and over-charges branches, so a percentage from it is never a
+  # quoted performance figure.
+  icount:
+    name: Instruction counts (x86_64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODE: ${{ inputs.perf_mode || 'gate' }}
+      THRESHOLD: ${{ inputs.perf_threshold || '0.10' }}
+      ACCEPT: ${{ inputs.perf_accept || '' }}
+      # Empty on a schedule, so the skip is armed there; true on a dispatch,
+      # because someone who asked for a run gets one. `inputs` is empty when a
+      # caller reaches this file, so the event name is what carries a dispatch
+      # made on dev-nightly-tests.yml: without the second arm the runbook's
+      # pre-release dispatch would silently arm the skip.
+      FORCE: ${{ inputs.perf_force_measure || (github.event_name != 'schedule') }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # Which branch this run is for, read off the definition's own ref. Both
+      # nightlies are SCHEDULED, so github.ref is refs/heads/main for BOTH and
+      # cannot tell them apart; job.workflow_ref names this file at the ref its
+      # caller pinned. An unrecognised shape is refused rather than defaulted,
+      # because a silent miss would skip the write steps below and read green.
+      - name: Which branch is this run for
+        shell: bash
+        env:
+          WF_REF: ${{ job.workflow_ref }}
+          WF_SHA: ${{ job.workflow_sha }}
+        run: |
+          case "$WF_REF" in
+            */nightly-jobs.yml@refs/heads/*) ;;
+            *) echo "::error::defined by '$WF_REF', which is not a branch pin of"\
+                    " nightly-jobs.yml. A caller's 'uses:' must name it as @<branch>."
+               exit 1 ;;
+          esac
+          BRANCH=${WF_REF##*@refs/heads/}
+          echo "NIGHTLY_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          if [ "$BRANCH" = main ]; then
+            echo "IS_MAIN=1" >> "$GITHUB_ENV"
+          else
+            echo "IS_MAIN=0" >> "$GITHUB_ENV"
+          fi
+          # Catches an EMPTY workflow_sha only: the checkout above would then
+          # have silently fallen back to the default branch. It cannot say
+          # whether the sha is this branch's tip -- read that off the log once.
+          [ -n "$WF_SHA" ] && [ "$(git rev-parse HEAD)" = "$WF_SHA" ] || {
+            echo "::error::checked out $(git rev-parse HEAD), but this job is defined by '$WF_SHA'."
+            exit 1; }
+          echo "definition: $WF_REF"
+
+      # An instruction count can only move if the library, the headers, the
+      # CMake build or the generated bench moved, so a day of docs-only commits
+      # should not spend a runner. The fingerprint is git's own tree hashes, so
+      # it needs no state in the repo and costs no commit to maintain, and the
+      # cache key IS the fingerprint: a hit means this exact tree was already
+      # measured. Anything unexpected (no fingerprint, cache miss, cache
+      # evicted) falls through to measuring, so the failure mode is a wasted
+      # run and never a silent skip.
+      #
+      # Scheduled runs only. A human who dispatched this asked for a
+      # measurement and gets one.
+      - name: Fingerprint the sources a count can depend on
+        id: fp
+        run: |
+          set -o pipefail
+          # The measurement harness counts as much as the library: a change to
+          # bench_icount.py's threshold or valgrind flags, or to build.py's
+          # cmake knobs, moves the number without touching a single indicator.
+          if ! fp=$(git rev-parse HEAD:src HEAD:include HEAD:CMakeLists.txt \
+                                  HEAD:ta_codegen/output/c \
+                                  HEAD:scripts/bench_icount.py \
+                                  HEAD:scripts/build.py | tr '\n' '-'); then
+            echo "could not fingerprint the tree; measuring."
+            fp="unfingerprinted-$GITHUB_RUN_ID"
+          fi
+          echo "fp=$fp" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/perf"
+          echo "$fp" > "$RUNNER_TEMP/perf/fingerprint"
+
+      # Not on main: caches are scoped per ref and BOTH nightlies are scheduled,
+      # so both see the default branch's scope while the key is a pure tree
+      # fingerprint. A shared key would let whichever ran first skip the other's
+      # measurement. main measures every night, ~1 min beside a 22 min job.
+      - name: Has this exact tree already been measured?
+        id: seen
+        if: env.FORCE != 'true' && env.IS_MAIN != '1'
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+          lookup-only: true
+
+      - name: Decide whether to measure
+        id: decide
+        env:
+          SEEN: ${{ steps.seen.outputs.cache-hit }}
+        run: |
+          if [ "$SEEN" = "true" ]; then
+            echo "measure=false" >> "$GITHUB_OUTPUT"
+            msg="Skipped: nothing that can move an instruction count changed since the last measured run."
+            echo "$msg"
+            echo "## Instruction-count suite" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "measure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Python
+        if: steps.decide.outputs.measure == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # Supplies both the tool and <valgrind/callgrind.h>. The header is needed
+      # at COMPILE time, so this has to precede the build step, not the run.
+      - name: Install valgrind
+        if: steps.decide.outputs.measure == 'true'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: |
+            valgrind
+
+      - name: Build ta_bench_icount
+        if: steps.decide.outputs.measure == 'true'
+        run: python3 scripts/build.py ta_bench_icount
+
+      - name: Measure and compare
+        if: steps.decide.outputs.measure == 'true'
+        run: |
+          # An array, not a string: `SMA, RSI` word-splits and `SMA*` globs
+          # against the repo root if this is expanded unquoted.
+          case "$MODE" in
+            gate)    flags=(--update-baseline) ;;
+            accept)
+              # No silent wholesale re-baseline: accepting a regression has to
+              # name the rows it is accepting.
+              if [ -z "$ACCEPT" ]; then
+                echo "perf_mode=accept needs the 'perf_accept' input (e.g. SMA, or SMA/batch)."
+                exit 2
+              fi
+              flags=(--accept="${ACCEPT// /}") ;;
+            measure) flags=() ;;
+            *) echo "unknown perf_mode '$MODE'"; exit 2 ;;
+          esac
+          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" "${flags[@]}"
+
+      # Reached only when the step above exited 0, and in `gate` mode
+      # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
+      # here one green night at a time; raising a row needs mode=accept naming
+      # that row, which is a person deciding to.
+      - name: Commit the lowered baseline
+        if: success() && steps.decide.outputs.measure == 'true' && env.IS_MAIN != '1'
+        run: |
+          changes=$(git status --porcelain .github/perf/)
+          if [ -z "$changes" ]; then
+            echo "Baseline unchanged."
+            exit 0
+          fi
+          echo "$changes"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/perf/
+          git commit -m "perf: lower the instruction-count baseline"
+          # The `test` job commits dist/ and include/ta_common.h while this runs,
+          # so dev moves underneath. Disjoint paths, so the rebase has nothing to
+          # resolve.
+          #
+          # NO --strategy-option=ours, which the `test` job's push carries:
+          # during a rebase "ours" is the UPSTREAM side, so a conflict would
+          # discard the baseline this run just measured.
+          #
+          # `|| sleep 10` makes the loop body succeed, so a for-loop that ends
+          # on it exits 0 and the step reads GREEN with nothing pushed. Keep the
+          # explicit failure after the loop, and abort the half-finished rebase
+          # each round or attempts 2-5 die on "a rebase-merge directory already
+          # exists" rather than retrying anything.
+          pushed=""
+          for i in $(seq 1 5); do
+            if git pull --rebase origin "$NIGHTLY_BRANCH" \
+               && git push origin "HEAD:$NIGHTLY_BRANCH"; then
+              pushed=yes
+              break
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          if [ -z "$pushed" ]; then
+            echo "::error::could not push the measured baseline after 5 attempts;"\
+                 " it is NOT recorded and the next run will re-measure from a stale one."
+            exit 1
+          fi
+
+      # Not in measure mode. That run writes no baseline, so arming the skip
+      # would let the next scheduled run pass over a tree whose improvement the
+      # ratchet never recorded, leaving a later regression measured against the
+      # stale higher count.
+      #
+      # Same reason excludes main, which can never commit one: it would arm the
+      # skip for a fingerprint dev later presents.
+      #
+      # Caches are scoped per ref, and a scheduled run's ref is the DEFAULT
+      # branch however the job checks out dev. So this arms the skip for the
+      # next run on the same ref: schedule to schedule, or a dispatch to a
+      # dispatch on that same ref. It does not carry a `--ref dev` dispatch over
+      # to the 5AM schedule.
+      - name: Remember this tree as measured
+        if: steps.decide.outputs.measure == 'true' && env.MODE != 'measure' && env.IS_MAIN != '1'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/perf
+          key: perf-icount-fp-${{ steps.fp.outputs.fp }}
+
+      # always(), not the implicit success(): the per-function dump is worth most
+      # on the run that failed the gate, which is exactly when a bare condition
+      # would skip it.
+      - name: Upload the raw callgrind output
+        if: always() && steps.decide.outputs.measure == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: callgrind-icount
+          path: temp/callgrind.icount.out
+          if-no-files-found: warn
+          retention-days: 14
