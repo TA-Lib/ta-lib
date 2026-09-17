@@ -67,7 +67,16 @@ _CHUNK = 1024 * 1024
 
 
 class PoolError(RuntimeError):
-    """Any pool operation that must stop the build."""
+    """Any pool operation that must stop the build.
+
+    `transient` marks the ones a retry can clear: the endpoint dropping the
+    connection, or answering 429/5xx. Anything else is a refusal that a retry
+    would only repeat.
+    """
+
+    def __init__(self, message: str, transient: bool = False):
+        super().__init__(message)
+        self.transient = transient
 
 
 def _token() -> str:
@@ -112,9 +121,15 @@ def _api(path: str, method: str = "GET", body: bytes | None = None,
             parsed = {"raw": raw[:500].decode("utf-8", "replace")}
         if e.code in (404, 422) or e.code in expect:
             return e.code, parsed
-        raise PoolError(f"{method} {url} -> HTTP {e.code}: {parsed}") from e
+        raise PoolError(f"{method} {url} -> HTTP {e.code}: {parsed}",
+                        transient=e.code == 429 or 500 <= e.code < 600) from e
     except urllib.error.URLError as e:
-        raise PoolError(f"{method} {url} -> {e}") from e
+        raise PoolError(f"{method} {url} -> {e}", transient=True) from e
+    except OSError as e:
+        # A reset while the request body is still going out surfaces raw, not as
+        # URLError, so without this arm it escapes untyped and no caller can see
+        # that it was worth retrying.
+        raise PoolError(f"{method} {url} -> {e}", transient=True) from e
 
 
 def sha256_of(filepath: str) -> str:
@@ -199,6 +214,14 @@ def list_pool_assets(release: dict | None = None) -> dict[str, dict]:
             raise PoolError("Pool asset listing exceeded 200 pages; aborting")
 
 
+# This is the one call that moves megabytes, and the upload endpoint drops the
+# connection or answers 500 often enough to lose a 17-minute dist job to a single
+# failure. The whole operation is retried, never just the POST: each attempt
+# re-reads the asset list, so bytes that half-landed are found in 'starter' state
+# and cleared rather than mistaken for a completed upload.
+UPLOAD_ATTEMPTS = 4
+
+
 def upload_if_absent(local_path: str, asset_file_name: str,
                      sha256: str | None = None, release: dict | None = None) -> str:
     """Upload local_path into the pool unless its content is already there.
@@ -212,6 +235,20 @@ def upload_if_absent(local_path: str, asset_file_name: str,
     digest = sha256 or sha256_of(local_path)
     name = pool_asset_name(digest, asset_file_name)
     rel = release or get_or_create_pool_release()
+
+    for attempt in range(1, UPLOAD_ATTEMPTS + 1):
+        try:
+            return _upload_once(local_path, name, rel)
+        except PoolError as e:
+            if not e.transient or attempt == UPLOAD_ATTEMPTS:
+                raise
+            delay = 5 * attempt
+            print(f"Warning: {name} attempt {attempt}/{UPLOAD_ATTEMPTS} failed "
+                  f"({e}); retrying in {delay}s")
+            time.sleep(delay)
+
+
+def _upload_once(local_path: str, name: str, rel: dict) -> str:
     existing = list_pool_assets(rel)
 
     prior = existing.get(name)
