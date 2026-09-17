@@ -196,7 +196,7 @@ static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(fi->handle, i, &optInfo);
         if( optInfo->type == TA_OptInput_RealRange ) {
-            pos = codegen_appendf(buf, sz, pos, ",\"%s\":%.15g",
+            pos = codegen_appendf(buf, sz, pos, ",\"%s\":%.17g",
                             optInfo->paramName, optInfo->defaultValue);
         } else {
             int val = (int)optInfo->defaultValue;

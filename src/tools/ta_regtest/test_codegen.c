@@ -1220,7 +1220,7 @@ static int build_json_request(CodegenRangeTestParam *p,
         {
         case TA_OptInput_RealRange:
         case TA_OptInput_RealList:
-            pos = codegen_appendf(buf, bufSize, pos, "%.15g",
+            pos = codegen_appendf(buf, bufSize, pos, "%.17g",
                 p->optOverrideActive ? p->optOverride[i] : optInfo->defaultValue);
             break;
         case TA_OptInput_IntegerRange:
@@ -2779,9 +2779,7 @@ static TA_Real    sweepGuardedReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 static TA_Integer sweepGuardedInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
 
 /* Compare the in-process GUARDED call against the ta_ref_serve baseline for one
- * sweep variant. This is the one sweep check that does not cross the JSON-RPC
- * boundary, so it cannot be blurred by %.15g. C only — the in-process library IS
- * the C backend. */
+ * sweep variant. C only — the in-process library IS the C backend. */
 static void sweep_compare_guarded(CodegenRangeTestParam *p)
 {
     unsigned int i;
@@ -3456,7 +3454,7 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, optVals[i]);
         else
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
@@ -5692,13 +5690,6 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
 #define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
 typedef char fuzz_maxn_fits_output_bufs[FUZZ_MAXN <= MAX_NB_TEST_ELEMENT ? 1 : -1];
 
-static double fuzz_canon15(double x)
-{
-    char b[40];
-    snprintf(b, sizeof(b), "%.15g", x);
-    return strtod(b, NULL);
-}
-
 /* Static scratch (one function at a time; TA_ForEachFunc is serial). */
 static double     g_fzBuf[6][FUZZ_MAXN];              /* O,H,L,C,V,OI          */
 static TA_Real    g_fz064Real[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
@@ -5795,7 +5786,7 @@ static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, optVals[i]);
         else
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
@@ -5911,7 +5902,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         def[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
-                 ? fuzz_canon15(oi->defaultValue) : (double)(int)oi->defaultValue;
+                 ? oi->defaultValue : (double)(int)oi->defaultValue;
     }
 
     int nvec = 0;
@@ -5972,7 +5963,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
             double s2[2]; s2[0] = r ? r->suggested_start : 0; s2[1] = r ? r->suggested_end : 0;
             for( int b = 0; b < 2; b++ )
             {
-                double v = fuzz_canon15(s2[b]);
+                double v = s2[b];
                 if( fabs(v) > 1e30 ) continue;
                 if( r && (v < r->min || v > r->max) ) continue;
                 if( v == def[i] ) continue;
@@ -7676,7 +7667,7 @@ static void xlang_build_hex_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, optVals[i]);
         else
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
@@ -7738,7 +7729,7 @@ static void xlang_build_lookback_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, optVals[i]);
         else
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
@@ -7879,7 +7870,7 @@ static void xlang_build_tier_request(char *buf, const TA_FuncInfo *fi,
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         if( oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList )
-            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.15g", oi->paramName, optVals[i]);
+            pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%.17g", oi->paramName, optVals[i]);
         else
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
@@ -8672,7 +8663,7 @@ static void xlang_array_transport_one(const TA_FuncInfo *fi, void *opaqueData)
         const TA_OptInputParameterInfo *oi;
         TA_GetOptInputParameterInfo(fi->handle, i, &oi);
         optVals[i] = (oi->type == TA_OptInput_RealRange || oi->type == TA_OptInput_RealList)
-                     ? fuzz_canon15(oi->defaultValue) : (double)(int)oi->defaultValue;
+                     ? oi->defaultValue : (double)(int)oi->defaultValue;
     }
 
     for( int s = 0; s < ctx->nsv; s++ )
