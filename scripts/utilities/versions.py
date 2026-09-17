@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import re
 import subprocess
@@ -830,6 +831,40 @@ def check_sources_digest(root_dir: str) -> str:
     calculated_digest = calculate_sources_digest(root_dir, silent=True)
     if current_digest != calculated_digest:
         print(f"Error: TA_LIB_SOURCES_DIGEST [{current_digest}] does not match calculated digest [{calculated_digest}]")
+        return None
+
+    # Every recorded asset must have been built from these same sources, which the
+    # header alone cannot say: the dist matrix commits one leg per OS, so a leg
+    # that fails after the other has already committed leaves the header refreshed
+    # and its own digests still naming the previous sources. That state used to
+    # pass here, and the assets it describes do not exist.
+    digests_dir = path_join(root_dir, "dist", "digests")
+    recorded = sorted(f for f in os.listdir(digests_dir)
+                      if f.endswith(".digest")) if os.path.isdir(digests_dir) else []
+    if not recorded:
+        print(f"Error: no dist/digests/*.digest under {digests_dir}, so nothing records "
+              f"which sources the release assets were built from")
+        return None
+
+    stale = []
+    for name in recorded:
+        path = path_join(digests_dir, name)
+        try:
+            with open(path) as f:
+                asset_digest = json.load(f).get("sources_digest")
+        except (OSError, ValueError) as e:
+            print(f"Error: cannot read {path}: {e}")
+            return None
+        if asset_digest != calculated_digest:
+            stale.append(f"{name} records [{asset_digest}]")
+
+    if stale:
+        print(f"Error: {len(stale)} of {len(recorded)} dist digest(s) were built from "
+              f"other sources than [{calculated_digest}]:")
+        for entry in stale:
+            print(f"  {entry}")
+        print("A dist matrix leg did not commit. Re-run the failed nightly leg, or run "
+              "scripts/package.py, and commit the result.")
         return None
 
     return calculated_digest
