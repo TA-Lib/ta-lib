@@ -41400,6 +41400,12 @@ public class TaCodegenServe {
         return GetInt(p, "iters", 1) <= 1;
     }
 
+    /* 0 means the call returned. Anything else is the code C would have
+     * returned for the same condition, so the three entry points are comparable
+     * without narrowing the catch types; -1 is an exception the library does
+     * not own, which is itself a divergence. */
+    static int RideCode(Exception e) => e is ITaLibFailure f ? (int) f.RetCode : -1;
+
     static bool RideFinite(double[] a, int n)
     {
         for (int i = 0; i < n; i++) if (!double.IsFinite(a[i])) return false;
@@ -41439,6 +41445,7 @@ public class TaCodegenServe {
     {
         public bool Ok = true;
         public int Skip, Dedup, OpenBars, FillBars, Leg, Bar = -1, Out = -1, M, Lb = -1;
+        public int Rej, RcBatch, RcOpen, RcFill;
         public long Batch, Stream;
         public long[] Benign = new long[1];
         public void Emit(System.Text.StringBuilder sb)
@@ -41446,6 +41453,8 @@ public class TaCodegenServe {
             sb.Append($",\"ride_ok\":{(Ok ? 1 : 0)},\"ride_skip\":{Skip},\"ride_dedup\":{Dedup}");
             sb.Append($",\"ride_open_bars\":{OpenBars},\"ride_fill_bars\":{FillBars}");
             sb.Append($",\"ride_benign\":{Benign[0]},\"ride_m\":{M},\"ride_lb\":{Lb}");
+            sb.Append($",\"ride_rej\":{Rej},\"ride_rc_batch\":{RcBatch}");
+            sb.Append($",\"ride_rc_open\":{RcOpen},\"ride_rc_fill\":{RcFill}");
             if (!Ok)
             {
                 sb.Append($",\"ride_leg\":{Leg},\"ride_bar\":{Bar},\"ride_out\":{Out}");
@@ -41464,17 +41473,17 @@ public class TaCodegenServe {
 
     static void RideBodyAC(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r)
     {
-        try { r.Lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41494,10 +41503,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AC(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AcOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AcOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -41559,18 +41585,18 @@ public class TaCodegenServe {
 
     static void RideBodyACCBANDS(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ACCBANDS_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ACCBANDS_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41591,10 +41617,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ACCBANDS(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AccbandsOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.AccbandsOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -41664,16 +41709,16 @@ public class TaCodegenServe {
 
     static void RideBodyACOS(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.ACOS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ACOS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41689,10 +41734,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ACOS(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AcosOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AcosOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -41754,19 +41816,19 @@ public class TaCodegenServe {
 
     static void RideBodyAD(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.AD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41785,10 +41847,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AD(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AdOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AdOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -41850,17 +41929,17 @@ public class TaCodegenServe {
 
     static void RideBodyADD(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, RideResult r)
     {
-        try { r.Lb = core.ADD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ADD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41877,10 +41956,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ADD(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AddOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AddOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -41942,19 +42038,19 @@ public class TaCodegenServe {
 
     static void RideBodyADOSC(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, RideResult r)
     {
-        try { r.Lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -41975,10 +42071,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ADOSC(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AdoscOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AdoscOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42040,17 +42153,17 @@ public class TaCodegenServe {
 
     static void RideBodyADR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ADR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ADR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42068,10 +42181,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ADR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AdrOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AdrOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42133,18 +42263,18 @@ public class TaCodegenServe {
 
     static void RideBodyADX(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ADX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ADX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42163,10 +42293,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ADX(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AdxOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AdxOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42228,18 +42375,18 @@ public class TaCodegenServe {
 
     static void RideBodyADXR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ADXR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ADXR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42258,10 +42405,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ADXR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AdxrOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AdxrOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42323,17 +42487,17 @@ public class TaCodegenServe {
 
     static void RideBodyAO(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r)
     {
-        try { r.Lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42352,10 +42516,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AO(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AoOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AoOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42417,16 +42598,16 @@ public class TaCodegenServe {
 
     static void RideBodyAPO(Core core, JsonElement p, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42445,10 +42626,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.APO(0, m - 1, inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ApoOpen(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ApoOpenAndFill(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42510,17 +42708,17 @@ public class TaCodegenServe {
 
     static void RideBodyAROON(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.AROON_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AROON_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42539,10 +42737,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AROON(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AroonOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.AroonOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42608,17 +42824,17 @@ public class TaCodegenServe {
 
     static void RideBodyAROONOSC(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.AROONOSC_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AROONOSC_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42636,10 +42852,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AROONOSC(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AroonoscOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AroonoscOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42701,16 +42934,16 @@ public class TaCodegenServe {
 
     static void RideBodyASIN(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.ASIN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ASIN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42726,10 +42959,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ASIN(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AsinOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AsinOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42791,16 +43041,16 @@ public class TaCodegenServe {
 
     static void RideBodyATAN(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.ATAN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ATAN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42816,10 +43066,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ATAN(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AtanOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AtanOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42881,18 +43148,18 @@ public class TaCodegenServe {
 
     static void RideBodyATR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ATR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ATR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -42911,10 +43178,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ATR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AtrOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AtrOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -42976,16 +43260,16 @@ public class TaCodegenServe {
 
     static void RideBodyAVGDEV(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.AVGDEV_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AVGDEV_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43002,10 +43286,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AVGDEV(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AvgdevOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AvgdevOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43067,19 +43368,19 @@ public class TaCodegenServe {
 
     static void RideBodyAVGPRICE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.AVGPRICE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.AVGPRICE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43098,10 +43399,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.AVGPRICE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.AvgpriceOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.AvgpriceOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43163,16 +43481,16 @@ public class TaCodegenServe {
 
     static void RideBodyBBANDS(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43194,10 +43512,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.BBANDS(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.BbandsOpen(inReal.AsSpan(0, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.BbandsOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43267,17 +43604,17 @@ public class TaCodegenServe {
 
     static void RideBodyBETA(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.BETA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.BETA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43295,10 +43632,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.BETA(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.BetaOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.BetaOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43360,19 +43714,19 @@ public class TaCodegenServe {
 
     static void RideBodyBOP(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.BOP_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.BOP_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43391,10 +43745,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.BOP(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.BopOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.BopOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43456,18 +43827,18 @@ public class TaCodegenServe {
 
     static void RideBodyCCI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.CCI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CCI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43486,10 +43857,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CCI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CciOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CciOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43551,19 +43939,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL2CROWS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL2CROWS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL2CROWS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43582,10 +43970,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL2CROWS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl2crowsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl2crowsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43647,19 +44052,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3BLACKCROWS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3BLACKCROWS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3BLACKCROWS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43678,10 +44083,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3BLACKCROWS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3blackcrowsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3blackcrowsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43743,19 +44165,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3INSIDE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3INSIDE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3INSIDE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43774,10 +44196,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3INSIDE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3insideOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3insideOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43839,19 +44278,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3LINESTRIKE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3LINESTRIKE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3LINESTRIKE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43870,10 +44309,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3LINESTRIKE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3linestrikeOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3linestrikeOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -43935,19 +44391,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3OUTSIDE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3OUTSIDE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3OUTSIDE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -43966,10 +44422,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3OUTSIDE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3outsideOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3outsideOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44031,19 +44504,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3STARSINSOUTH(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3STARSINSOUTH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3STARSINSOUTH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44062,10 +44535,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3STARSINSOUTH(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3starsinsouthOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3starsinsouthOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44127,19 +44617,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDL3WHITESOLDIERS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDL3WHITESOLDIERS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDL3WHITESOLDIERS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44158,10 +44648,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDL3WHITESOLDIERS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdl3whitesoldiersOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdl3whitesoldiersOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44223,19 +44730,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLABANDONEDBABY(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLABANDONEDBABY_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLABANDONEDBABY_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44255,10 +44762,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLABANDONEDBABY(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlabandonedbabyOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlabandonedbabyOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44320,19 +44844,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLADVANCEBLOCK(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLADVANCEBLOCK_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLADVANCEBLOCK_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44351,10 +44875,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLADVANCEBLOCK(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdladvanceblockOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdladvanceblockOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44416,19 +44957,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLBELTHOLD(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLBELTHOLD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLBELTHOLD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44447,10 +44988,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLBELTHOLD(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlbeltholdOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlbeltholdOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44512,19 +45070,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLBREAKAWAY(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLBREAKAWAY_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLBREAKAWAY_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44543,10 +45101,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLBREAKAWAY(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlbreakawayOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlbreakawayOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44608,19 +45183,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLCLOSINGMARUBOZU(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLCLOSINGMARUBOZU_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLCLOSINGMARUBOZU_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44639,10 +45214,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLCLOSINGMARUBOZU(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlclosingmarubozuOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlclosingmarubozuOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44704,19 +45296,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLCONCEALBABYSWALL(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLCONCEALBABYSWALL_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLCONCEALBABYSWALL_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44735,10 +45327,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLCONCEALBABYSWALL(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlconcealbabyswallOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlconcealbabyswallOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44800,19 +45409,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLCOUNTERATTACK(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLCOUNTERATTACK_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLCOUNTERATTACK_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44831,10 +45440,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLCOUNTERATTACK(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlcounterattackOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlcounterattackOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44896,19 +45522,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLDARKCLOUDCOVER(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -44928,10 +45554,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLDARKCLOUDCOVER(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdldarkcloudcoverOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdldarkcloudcoverOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -44993,19 +45636,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLDOJI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLDOJI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLDOJI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45024,10 +45667,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLDOJI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdldojiOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdldojiOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45089,19 +45749,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLDOJISTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLDOJISTAR_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLDOJISTAR_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45120,10 +45780,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLDOJISTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdldojistarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdldojistarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45185,19 +45862,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLDRAGONFLYDOJI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLDRAGONFLYDOJI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLDRAGONFLYDOJI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45216,10 +45893,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLDRAGONFLYDOJI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdldragonflydojiOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdldragonflydojiOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45281,19 +45975,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLENGULFING(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLENGULFING_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLENGULFING_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45312,10 +46006,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLENGULFING(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlengulfingOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlengulfingOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45377,19 +46088,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLEVENINGDOJISTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45409,10 +46120,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLEVENINGDOJISTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdleveningdojistarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdleveningdojistarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45474,19 +46202,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLEVENINGSTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLEVENINGSTAR_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLEVENINGSTAR_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45506,10 +46234,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLEVENINGSTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdleveningstarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdleveningstarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45571,19 +46316,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLGAPSIDESIDEWHITE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLGAPSIDESIDEWHITE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLGAPSIDESIDEWHITE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45602,10 +46347,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLGAPSIDESIDEWHITE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlgapsidesidewhiteOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlgapsidesidewhiteOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45667,19 +46429,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLGRAVESTONEDOJI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLGRAVESTONEDOJI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLGRAVESTONEDOJI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45698,10 +46460,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLGRAVESTONEDOJI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlgravestonedojiOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlgravestonedojiOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45763,19 +46542,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHAMMER(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHAMMER_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHAMMER_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45794,10 +46573,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHAMMER(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhammerOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhammerOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45859,19 +46655,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHANGINGMAN(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHANGINGMAN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHANGINGMAN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45890,10 +46686,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHANGINGMAN(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhangingmanOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhangingmanOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -45955,19 +46768,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHARAMI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHARAMI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHARAMI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -45986,10 +46799,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHARAMI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlharamiOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlharamiOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46051,19 +46881,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHARAMICROSS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHARAMICROSS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHARAMICROSS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46082,10 +46912,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHARAMICROSS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlharamicrossOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlharamicrossOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46147,19 +46994,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHIGHWAVE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHIGHWAVE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHIGHWAVE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46178,10 +47025,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHIGHWAVE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhighwaveOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhighwaveOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46243,19 +47107,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHIKKAKE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHIKKAKE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHIKKAKE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46274,10 +47138,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHIKKAKE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhikkakeOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhikkakeOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46339,19 +47220,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHIKKAKEMOD(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHIKKAKEMOD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHIKKAKEMOD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46370,10 +47251,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHIKKAKEMOD(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhikkakemodOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhikkakemodOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46435,19 +47333,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLHOMINGPIGEON(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLHOMINGPIGEON_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLHOMINGPIGEON_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46466,10 +47364,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLHOMINGPIGEON(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlhomingpigeonOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlhomingpigeonOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46531,19 +47446,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLIDENTICAL3CROWS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLIDENTICAL3CROWS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLIDENTICAL3CROWS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46562,10 +47477,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLIDENTICAL3CROWS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdlidentical3crowsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdlidentical3crowsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46627,19 +47559,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLINNECK(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLINNECK_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLINNECK_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46658,10 +47590,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLINNECK(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlinneckOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlinneckOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46723,19 +47672,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLINVERTEDHAMMER(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLINVERTEDHAMMER_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLINVERTEDHAMMER_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46754,10 +47703,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLINVERTEDHAMMER(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlinvertedhammerOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlinvertedhammerOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46819,19 +47785,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLKICKING(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLKICKING_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLKICKING_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46850,10 +47816,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLKICKING(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlkickingOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlkickingOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -46915,19 +47898,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLKICKINGBYLENGTH(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLKICKINGBYLENGTH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLKICKINGBYLENGTH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -46946,10 +47929,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLKICKINGBYLENGTH(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlkickingbylengthOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlkickingbylengthOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47011,19 +48011,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLLADDERBOTTOM(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLLADDERBOTTOM_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLLADDERBOTTOM_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47042,10 +48042,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLLADDERBOTTOM(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlladderbottomOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlladderbottomOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47107,19 +48124,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLLONGLEGGEDDOJI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLLONGLEGGEDDOJI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLLONGLEGGEDDOJI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47138,10 +48155,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLLONGLEGGEDDOJI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdllongleggeddojiOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdllongleggeddojiOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47203,19 +48237,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLLONGLINE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLLONGLINE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLLONGLINE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47234,10 +48268,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLLONGLINE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdllonglineOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdllonglineOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47299,19 +48350,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLMARUBOZU(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLMARUBOZU_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLMARUBOZU_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47330,10 +48381,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLMARUBOZU(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlmarubozuOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlmarubozuOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47395,19 +48463,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLMATCHINGLOW(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLMATCHINGLOW_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLMATCHINGLOW_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47426,10 +48494,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLMATCHINGLOW(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlmatchinglowOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlmatchinglowOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47491,19 +48576,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLMATHOLD(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLMATHOLD_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLMATHOLD_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47523,10 +48608,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLMATHOLD(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlmatholdOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlmatholdOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47588,19 +48690,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLMORNINGDOJISTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47620,10 +48722,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLMORNINGDOJISTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlmorningdojistarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlmorningdojistarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47685,19 +48804,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLMORNINGSTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r)
     {
-        try { r.Lb = core.CDLMORNINGSTAR_Lookback(optInPenetration); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLMORNINGSTAR_Lookback(optInPenetration); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47717,10 +48836,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLMORNINGSTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlmorningstarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlmorningstarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInPenetration, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47782,19 +48918,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLONNECK(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLONNECK_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLONNECK_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47813,10 +48949,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLONNECK(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlonneckOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlonneckOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47878,19 +49031,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLPIERCING(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLPIERCING_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLPIERCING_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -47909,10 +49062,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLPIERCING(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlpiercingOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlpiercingOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -47974,19 +49144,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLRICKSHAWMAN(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLRICKSHAWMAN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLRICKSHAWMAN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48005,10 +49175,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLRICKSHAWMAN(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlrickshawmanOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlrickshawmanOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48070,19 +49257,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLRISEFALL3METHODS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLRISEFALL3METHODS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLRISEFALL3METHODS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48101,10 +49288,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLRISEFALL3METHODS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdlrisefall3methodsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdlrisefall3methodsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48166,19 +49370,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSEPARATINGLINES(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSEPARATINGLINES_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSEPARATINGLINES_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48197,10 +49401,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSEPARATINGLINES(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlseparatinglinesOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlseparatinglinesOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48262,19 +49483,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSHOOTINGSTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSHOOTINGSTAR_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSHOOTINGSTAR_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48293,10 +49514,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSHOOTINGSTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlshootingstarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlshootingstarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48358,19 +49596,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSHORTLINE(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSHORTLINE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSHORTLINE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48389,10 +49627,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSHORTLINE(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlshortlineOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlshortlineOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48454,19 +49709,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSPINNINGTOP(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSPINNINGTOP_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSPINNINGTOP_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48485,10 +49740,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSPINNINGTOP(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlspinningtopOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlspinningtopOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48550,19 +49822,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSTALLEDPATTERN(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSTALLEDPATTERN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSTALLEDPATTERN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48581,10 +49853,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSTALLEDPATTERN(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlstalledpatternOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlstalledpatternOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48646,19 +49935,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLSTICKSANDWICH(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLSTICKSANDWICH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLSTICKSANDWICH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48677,10 +49966,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLSTICKSANDWICH(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlsticksandwichOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlsticksandwichOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48742,19 +50048,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLTAKURI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLTAKURI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLTAKURI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48773,10 +50079,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLTAKURI(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdltakuriOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdltakuriOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48838,19 +50161,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLTASUKIGAP(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLTASUKIGAP_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLTASUKIGAP_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48869,10 +50192,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLTASUKIGAP(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdltasukigapOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdltasukigapOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -48934,19 +50274,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLTHRUSTING(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLTHRUSTING_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLTHRUSTING_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -48965,10 +50305,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLTHRUSTING(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdlthrustingOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdlthrustingOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49030,19 +50387,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLTRISTAR(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLTRISTAR_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLTRISTAR_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49061,10 +50418,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLTRISTAR(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CdltristarOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.CdltristarOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49126,19 +50500,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLUNIQUE3RIVER(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLUNIQUE3RIVER_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLUNIQUE3RIVER_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49157,10 +50531,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLUNIQUE3RIVER(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdlunique3riverOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdlunique3riverOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49222,19 +50613,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLUPSIDEGAP2CROWS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLUPSIDEGAP2CROWS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLUPSIDEGAP2CROWS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49253,10 +50644,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLUPSIDEGAP2CROWS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdlupsidegap2crowsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdlupsidegap2crowsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49318,19 +50726,19 @@ public class TaCodegenServe {
 
     static void RideBodyCDLXSIDEGAP3METHODS(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.CDLXSIDEGAP3METHODS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CDLXSIDEGAP3METHODS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49349,10 +50757,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CDLXSIDEGAP3METHODS(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Cdlxsidegap3methodsOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.Cdlxsidegap3methodsOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49414,16 +50839,16 @@ public class TaCodegenServe {
 
     static void RideBodyCEIL(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.CEIL_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CEIL_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49439,10 +50864,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CEIL(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CeilOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CeilOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49504,19 +50946,19 @@ public class TaCodegenServe {
 
     static void RideBodyCMF(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.CMF_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CMF_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49536,10 +50978,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CMF(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CmfOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CmfOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49601,16 +51060,16 @@ public class TaCodegenServe {
 
     static void RideBodyCMO(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.CMO_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CMO_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49627,10 +51086,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CMO(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CmoOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CmoOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49692,16 +51168,16 @@ public class TaCodegenServe {
 
     static void RideBodyCMOU(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.CMOU_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CMOU_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49718,10 +51194,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CMOU(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CmouOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CmouOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49783,16 +51276,16 @@ public class TaCodegenServe {
 
     static void RideBodyCOPPOCK(Core core, JsonElement p, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, RideResult r)
     {
-        try { r.Lb = core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49811,10 +51304,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.COPPOCK(0, m - 1, inReal.AsSpan(0, m), optInWMAPeriod, optInROC1Period, optInROC2Period, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CoppockOpen(inReal.AsSpan(0, m), optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CoppockOpenAndFill(inReal.AsSpan(0, m), optInWMAPeriod, optInROC1Period, optInROC2Period, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49876,17 +51386,17 @@ public class TaCodegenServe {
 
     static void RideBodyCORREL(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.CORREL_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CORREL_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49904,10 +51414,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CORREL(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CorrelOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CorrelOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -49969,16 +51496,16 @@ public class TaCodegenServe {
 
     static void RideBodyCOS(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.COS_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.COS_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -49994,10 +51521,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.COS(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CosOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CosOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50059,16 +51603,16 @@ public class TaCodegenServe {
 
     static void RideBodyCOSH(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.COSH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.COSH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50084,10 +51628,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.COSH(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CoshOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CoshOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50149,16 +51710,16 @@ public class TaCodegenServe {
 
     static void RideBodyCUMSUM(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.CUMSUM_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CUMSUM_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50174,10 +51735,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CUMSUM(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CumsumOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CumsumOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50239,17 +51817,17 @@ public class TaCodegenServe {
 
     static void RideBodyCVI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, RideResult r)
     {
-        try { r.Lb = core.CVI_Lookback(optInTimePeriod, optInROCPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.CVI_Lookback(optInTimePeriod, optInROCPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50268,10 +51846,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.CVI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, optInROCPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.CviOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, optInROCPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.CviOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, optInROCPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50333,16 +51928,16 @@ public class TaCodegenServe {
 
     static void RideBodyDEMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.DEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.DEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50359,10 +51954,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.DEMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.DemaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.DemaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50424,17 +52036,17 @@ public class TaCodegenServe {
 
     static void RideBodyDIV(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, RideResult r)
     {
-        try { r.Lb = core.DIV_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.DIV_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50451,10 +52063,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.DIV(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.DivOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.DivOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50516,17 +52145,17 @@ public class TaCodegenServe {
 
     static void RideBodyDONCHIAN(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.DONCHIAN_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.DONCHIAN_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50546,10 +52175,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.DONCHIAN(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.DonchianOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.DonchianOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50619,16 +52267,16 @@ public class TaCodegenServe {
 
     static void RideBodyDPO(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.DPO_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.DPO_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50645,10 +52293,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.DPO(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.DpoOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.DpoOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50710,18 +52375,18 @@ public class TaCodegenServe {
 
     static void RideBodyDX(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.DX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.DX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50740,10 +52405,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.DX(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.DxOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.DxOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50805,17 +52487,17 @@ public class TaCodegenServe {
 
     static void RideBodyEFI(Core core, JsonElement p, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.EFI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.EFI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50833,10 +52515,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.EFI(0, m - 1, inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.EfiOpen(inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.EfiOpenAndFill(inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50898,16 +52597,16 @@ public class TaCodegenServe {
 
     static void RideBodyEMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.EMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.EMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -50924,10 +52623,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.EMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.EmaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.EmaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -50989,16 +52705,16 @@ public class TaCodegenServe {
 
     static void RideBodyER(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ER_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ER_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51015,10 +52731,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ER(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ErOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ErOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51080,18 +52813,18 @@ public class TaCodegenServe {
 
     static void RideBodyERI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ERI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ERI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51111,10 +52844,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ERI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.EriOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.EriOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51180,16 +52931,16 @@ public class TaCodegenServe {
 
     static void RideBodyEXP(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.EXP_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.EXP_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51205,10 +52956,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.EXP(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ExpOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ExpOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51270,16 +53038,16 @@ public class TaCodegenServe {
 
     static void RideBodyFLOOR(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.FLOOR_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.FLOOR_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51295,10 +53063,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.FLOOR(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.FloorOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.FloorOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51360,16 +53145,16 @@ public class TaCodegenServe {
 
     static void RideBodyFOSC(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.FOSC_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.FOSC_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51386,10 +53171,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.FOSC(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.FoscOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.FoscOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51451,17 +53253,17 @@ public class TaCodegenServe {
 
     static void RideBodyFRACTAL(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, RideResult r)
     {
-        try { r.Lb = core.FRACTAL_Lookback(optInLeftBars, optInRightBars); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.FRACTAL_Lookback(optInLeftBars, optInRightBars); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51481,10 +53283,28 @@ public class TaCodegenServe {
 
         int[] rib0 = new int[m];
         int[] rib1 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.FRACTAL(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInLeftBars, optInRightBars, rib0, rib1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.FractalOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInLeftBars, optInRightBars); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            int[] fib1 = new int[m];
+            try { core.FractalOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInLeftBars, optInRightBars, fib0, fib1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51550,19 +53370,19 @@ public class TaCodegenServe {
 
     static void RideBodyHA(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.HA_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HA_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51584,10 +53404,30 @@ public class TaCodegenServe {
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
         double[] rb3 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HA(0, m - 1, inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0, rb1, rb2, rb3); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HaOpen(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            double[] fb3 = new double[m];
+            try { core.HaOpenAndFill(inOpen.AsSpan(0, m), inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0, fb1, fb2, fb3); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51661,16 +53501,16 @@ public class TaCodegenServe {
 
     static void RideBodyHMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.HMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51687,10 +53527,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HmaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.HmaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51752,16 +53609,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_DCPERIOD(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_DCPERIOD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_DCPERIOD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51777,10 +53634,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_DCPERIOD(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtDcperiodOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.HtDcperiodOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51842,16 +53716,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_DCPHASE(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_DCPHASE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_DCPHASE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51867,10 +53741,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_DCPHASE(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtDcphaseOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.HtDcphaseOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -51932,16 +53823,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_PHASOR(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_PHASOR_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_PHASOR_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -51958,10 +53849,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_PHASOR(0, m - 1, inReal.AsSpan(0, m), rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtPhasorOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.HtPhasorOpenAndFill(inReal.AsSpan(0, m), fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52027,16 +53936,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_SINE(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_SINE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_SINE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52053,10 +53962,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_SINE(0, m - 1, inReal.AsSpan(0, m), rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtSineOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.HtSineOpenAndFill(inReal.AsSpan(0, m), fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52122,16 +54049,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_TRENDLINE(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_TRENDLINE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_TRENDLINE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52147,10 +54074,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_TRENDLINE(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtTrendlineOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.HtTrendlineOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52212,16 +54156,16 @@ public class TaCodegenServe {
 
     static void RideBodyHT_TRENDMODE(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.HT_TRENDMODE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.HT_TRENDMODE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52237,10 +54181,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.HT_TRENDMODE(0, m - 1, inReal.AsSpan(0, m), rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.HtTrendmodeOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.HtTrendmodeOpenAndFill(inReal.AsSpan(0, m), fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52302,17 +54263,17 @@ public class TaCodegenServe {
 
     static void RideBodyIMI(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.IMI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.IMI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52330,10 +54291,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.IMI(0, m - 1, inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ImiOpen(inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ImiOpenAndFill(inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52395,16 +54373,16 @@ public class TaCodegenServe {
 
     static void RideBodyKAMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.KAMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.KAMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52421,10 +54399,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.KAMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.KamaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.KamaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52486,18 +54481,18 @@ public class TaCodegenServe {
 
     static void RideBodyKC(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, RideResult r)
     {
-        try { r.Lb = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52520,10 +54515,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.KC(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInATRPeriod, optInNbDev, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.KcOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInATRPeriod, optInNbDev); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.KcOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInATRPeriod, optInNbDev, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52593,18 +54607,18 @@ public class TaCodegenServe {
 
     static void RideBodyKDJ(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r)
     {
-        try { r.Lb = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52629,10 +54643,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.KDJ(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.KdjOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.KdjOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52702,16 +54735,16 @@ public class TaCodegenServe {
 
     static void RideBodyLINEARREG(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.LINEARREG_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LINEARREG_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52728,10 +54761,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LINEARREG(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.LinearregOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.LinearregOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52793,16 +54843,16 @@ public class TaCodegenServe {
 
     static void RideBodyLINEARREG_ANGLE(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52819,10 +54869,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LINEARREG_ANGLE(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.LinearregAngleOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.LinearregAngleOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52884,16 +54951,16 @@ public class TaCodegenServe {
 
     static void RideBodyLINEARREG_INTERCEPT(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -52910,10 +54977,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LINEARREG_INTERCEPT(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.LinearregInterceptOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.LinearregInterceptOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -52975,16 +55059,16 @@ public class TaCodegenServe {
 
     static void RideBodyLINEARREG_SLOPE(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53001,10 +55085,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LINEARREG_SLOPE(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.LinearregSlopeOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.LinearregSlopeOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53066,16 +55167,16 @@ public class TaCodegenServe {
 
     static void RideBodyLN(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.LN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53091,10 +55192,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LN(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.LnOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.LnOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53156,16 +55274,16 @@ public class TaCodegenServe {
 
     static void RideBodyLOG10(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.LOG10_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.LOG10_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53181,10 +55299,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.LOG10(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Log10Open(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.Log10OpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53246,16 +55381,16 @@ public class TaCodegenServe {
 
     static void RideBodyMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.MA_Lookback(optInTimePeriod, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MA_Lookback(optInTimePeriod, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53273,10 +55408,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInMAType, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MaOpen(inReal.AsSpan(0, m), optInTimePeriod, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInMAType, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53338,16 +55490,16 @@ public class TaCodegenServe {
 
     static void RideBodyMACD(Core core, JsonElement p, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r)
     {
-        try { r.Lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53368,10 +55520,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MACD(0, m - 1, inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MacdOpen(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.MacdOpenAndFill(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53441,16 +55612,16 @@ public class TaCodegenServe {
 
     static void RideBodyMACDEXT(Core core, JsonElement p, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, RideResult r)
     {
-        try { r.Lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53474,10 +55645,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MACDEXT(0, m - 1, inReal.AsSpan(0, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MacdextOpen(inReal.AsSpan(0, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.MacdextOpenAndFill(inReal.AsSpan(0, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53547,16 +55737,16 @@ public class TaCodegenServe {
 
     static void RideBodyMACDFIX(Core core, JsonElement p, int endIdx, double[] inReal, int optInSignalPeriod, RideResult r)
     {
-        try { r.Lb = core.MACDFIX_Lookback(optInSignalPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MACDFIX_Lookback(optInSignalPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53575,10 +55765,29 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MACDFIX(0, m - 1, inReal.AsSpan(0, m), optInSignalPeriod, rb0, rb1, rb2); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MacdfixOpen(inReal.AsSpan(0, m), optInSignalPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.MacdfixOpenAndFill(inReal.AsSpan(0, m), optInSignalPeriod, fb0, fb1, fb2); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53648,16 +55857,16 @@ public class TaCodegenServe {
 
     static void RideBodyMAMA(Core core, JsonElement p, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, RideResult r)
     {
-        try { r.Lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53676,10 +55885,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MAMA(0, m - 1, inReal.AsSpan(0, m), optInFastLimit, optInSlowLimit, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MamaOpen(inReal.AsSpan(0, m), optInFastLimit, optInSlowLimit); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.MamaOpenAndFill(inReal.AsSpan(0, m), optInFastLimit, optInSlowLimit, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53745,18 +55972,18 @@ public class TaCodegenServe {
 
     static void RideBodyMARKETFI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.MARKETFI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MARKETFI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53774,10 +56001,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MARKETFI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MarketfiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MarketfiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53839,17 +56083,17 @@ public class TaCodegenServe {
 
     static void RideBodyMASSI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r)
     {
-        try { r.Lb = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53868,10 +56112,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MASSI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MassiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MassiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -53933,17 +56194,17 @@ public class TaCodegenServe {
 
     static void RideBodyMAVP(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -53963,10 +56224,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MAVP(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInMinPeriod, optInMaxPeriod, optInMAType, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MavpOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInMinPeriod, optInMaxPeriod, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MavpOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), optInMinPeriod, optInMaxPeriod, optInMAType, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54028,16 +56306,16 @@ public class TaCodegenServe {
 
     static void RideBodyMAX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MAX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MAX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54054,10 +56332,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MAX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MaxOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MaxOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54119,16 +56414,16 @@ public class TaCodegenServe {
 
     static void RideBodyMAXINDEX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MAXINDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MAXINDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54145,10 +56440,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MAXINDEX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MaxindexOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.MaxindexOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54210,17 +56522,17 @@ public class TaCodegenServe {
 
     static void RideBodyMEDPRICE(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, RideResult r)
     {
-        try { r.Lb = core.MEDPRICE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MEDPRICE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54237,10 +56549,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MEDPRICE(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MedpriceOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MedpriceOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54302,19 +56631,19 @@ public class TaCodegenServe {
 
     static void RideBodyMFI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MFI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MFI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54334,10 +56663,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MFI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MfiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MfiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54399,16 +56745,16 @@ public class TaCodegenServe {
 
     static void RideBodyMIDPOINT(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MIDPOINT_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MIDPOINT_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54425,10 +56771,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MIDPOINT(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MidpointOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MidpointOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54490,17 +56853,17 @@ public class TaCodegenServe {
 
     static void RideBodyMIDPRICE(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MIDPRICE_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MIDPRICE_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54518,10 +56881,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MIDPRICE(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MidpriceOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MidpriceOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54583,16 +56963,16 @@ public class TaCodegenServe {
 
     static void RideBodyMIN(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MIN_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MIN_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54609,10 +56989,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MIN(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MinOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54674,16 +57071,16 @@ public class TaCodegenServe {
 
     static void RideBodyMININDEX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MININDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MININDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54700,10 +57097,27 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MININDEX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinindexOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            try { core.MinindexOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54765,16 +57179,16 @@ public class TaCodegenServe {
 
     static void RideBodyMINMAX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MINMAX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MINMAX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54792,10 +57206,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MINMAX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinmaxOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.MinmaxOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54861,16 +57293,16 @@ public class TaCodegenServe {
 
     static void RideBodyMINMAXINDEX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MINMAXINDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MINMAXINDEX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54888,10 +57320,28 @@ public class TaCodegenServe {
 
         int[] rib0 = new int[m];
         int[] rib1 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MINMAXINDEX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rib0, rib1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinmaxindexOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            int[] fib0 = new int[m];
+            int[] fib1 = new int[m];
+            try { core.MinmaxindexOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fib0, fib1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -54957,18 +57407,18 @@ public class TaCodegenServe {
 
     static void RideBodyMINUS_DI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MINUS_DI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MINUS_DI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -54987,10 +57437,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MINUS_DI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinusDiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MinusDiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55052,17 +57519,17 @@ public class TaCodegenServe {
 
     static void RideBodyMINUS_DM(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MINUS_DM_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MINUS_DM_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55080,10 +57547,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MINUS_DM(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MinusDmOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MinusDmOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55145,16 +57629,16 @@ public class TaCodegenServe {
 
     static void RideBodyMOM(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.MOM_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MOM_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55171,10 +57655,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MOM(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MomOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MomOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55236,17 +57737,17 @@ public class TaCodegenServe {
 
     static void RideBodyMULT(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, RideResult r)
     {
-        try { r.Lb = core.MULT_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.MULT_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55263,10 +57764,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.MULT(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.MultOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.MultOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55328,18 +57846,18 @@ public class TaCodegenServe {
 
     static void RideBodyNATR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.NATR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.NATR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55358,10 +57876,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.NATR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.NatrOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.NatrOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55423,17 +57958,17 @@ public class TaCodegenServe {
 
     static void RideBodyNVI(Core core, JsonElement p, int endIdx, double[] inClose, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.NVI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.NVI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55450,10 +57985,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.NVI(0, m - 1, inClose.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.NviOpen(inClose.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.NviOpenAndFill(inClose.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55515,17 +58067,17 @@ public class TaCodegenServe {
 
     static void RideBodyOBV(Core core, JsonElement p, int endIdx, double[] inReal, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.OBV_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.OBV_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55542,10 +58094,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.OBV(0, m - 1, inReal.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ObvOpen(inReal.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ObvOpenAndFill(inReal.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55607,16 +58176,16 @@ public class TaCodegenServe {
 
     static void RideBodyPERCENTILE(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, RideResult r)
     {
-        try { r.Lb = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55634,10 +58203,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PERCENTILE(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInPercentile, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PercentileOpen(inReal.AsSpan(0, m), optInTimePeriod, optInPercentile); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PercentileOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInPercentile, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55699,16 +58285,16 @@ public class TaCodegenServe {
 
     static void RideBodyPERCENTRANK(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.PERCENTRANK_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PERCENTRANK_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55725,10 +58311,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PERCENTRANK(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PercentrankOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PercentrankOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55790,18 +58393,18 @@ public class TaCodegenServe {
 
     static void RideBodyPLUS_DI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.PLUS_DI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PLUS_DI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55820,10 +58423,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PLUS_DI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PlusDiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PlusDiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55885,17 +58505,17 @@ public class TaCodegenServe {
 
     static void RideBodyPLUS_DM(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.PLUS_DM_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PLUS_DM_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -55913,10 +58533,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PLUS_DM(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PlusDmOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PlusDmOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -55978,16 +58615,16 @@ public class TaCodegenServe {
 
     static void RideBodyPPO(Core core, JsonElement p, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56006,10 +58643,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PPO(0, m - 1, inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PpoOpen(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PpoOpenAndFill(inReal.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56071,17 +58725,17 @@ public class TaCodegenServe {
 
     static void RideBodyPVI(Core core, JsonElement p, int endIdx, double[] inClose, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.PVI_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PVI_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56098,10 +58752,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PVI(0, m - 1, inClose.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PviOpen(inClose.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PviOpenAndFill(inClose.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56163,16 +58834,16 @@ public class TaCodegenServe {
 
     static void RideBodyPVO(Core core, JsonElement p, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r)
     {
-        try { r.Lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56191,10 +58862,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PVO(0, m - 1, inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PvoOpen(inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PvoOpenAndFill(inVolume.AsSpan(0, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56256,17 +58944,17 @@ public class TaCodegenServe {
 
     static void RideBodyPVT(Core core, JsonElement p, int endIdx, double[] inClose, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.PVT_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.PVT_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56283,10 +58971,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.PVT(0, m - 1, inClose.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.PvtOpen(inClose.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.PvtOpenAndFill(inClose.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56348,17 +59053,17 @@ public class TaCodegenServe {
 
     static void RideBodyQSTICK(Core core, JsonElement p, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.QSTICK_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.QSTICK_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.Length < navail) navail = inOpen.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56376,10 +59081,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.QSTICK(0, m - 1, inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.QstickOpen(inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.QstickOpenAndFill(inOpen.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56441,16 +59163,16 @@ public class TaCodegenServe {
 
     static void RideBodyRMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.RMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.RMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56467,10 +59189,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.RMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RmaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RmaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56532,16 +59271,16 @@ public class TaCodegenServe {
 
     static void RideBodyROC(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ROC_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ROC_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56558,10 +59297,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ROC(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RocOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RocOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56623,16 +59379,16 @@ public class TaCodegenServe {
 
     static void RideBodyROCP(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ROCP_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ROCP_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56649,10 +59405,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ROCP(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RocpOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RocpOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56714,16 +59487,16 @@ public class TaCodegenServe {
 
     static void RideBodyROCR(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ROCR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ROCR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56740,10 +59513,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ROCR(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RocrOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RocrOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56805,16 +59595,16 @@ public class TaCodegenServe {
 
     static void RideBodyROCR100(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ROCR100_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ROCR100_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56831,10 +59621,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ROCR100(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.Rocr100Open(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.Rocr100OpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56896,16 +59703,16 @@ public class TaCodegenServe {
 
     static void RideBodyRSI(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.RSI_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.RSI_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -56922,10 +59729,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.RSI(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RsiOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RsiOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -56987,16 +59811,16 @@ public class TaCodegenServe {
 
     static void RideBodyRVI(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, RideResult r)
     {
-        try { r.Lb = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57014,10 +59838,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.RVI(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInStdDevPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RviOpen(inReal.AsSpan(0, m), optInTimePeriod, optInStdDevPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RviOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInStdDevPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57079,16 +59920,16 @@ public class TaCodegenServe {
 
     static void RideBodyRVOL(Core core, JsonElement p, int endIdx, double[] inVolume, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.RVOL_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.RVOL_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57105,10 +59946,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.RVOL(0, m - 1, inVolume.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.RvolOpen(inVolume.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.RvolOpenAndFill(inVolume.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57170,17 +60028,17 @@ public class TaCodegenServe {
 
     static void RideBodySAR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, RideResult r)
     {
-        try { r.Lb = core.SAR_Lookback(optInAcceleration, optInMaximum); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SAR_Lookback(optInAcceleration, optInMaximum); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57199,10 +60057,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SAR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInAcceleration, optInMaximum, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SarOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInAcceleration, optInMaximum); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SarOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInAcceleration, optInMaximum, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57264,17 +60139,17 @@ public class TaCodegenServe {
 
     static void RideBodySAREXT(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, RideResult r)
     {
-        try { r.Lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57299,10 +60174,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SAREXT(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SarextOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SarextOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57364,16 +60256,16 @@ public class TaCodegenServe {
 
     static void RideBodySIN(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.SIN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SIN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57389,10 +60281,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SIN(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SinOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SinOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57454,16 +60363,16 @@ public class TaCodegenServe {
 
     static void RideBodySINH(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.SINH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SINH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57479,10 +60388,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SINH(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SinhOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SinhOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57544,16 +60470,16 @@ public class TaCodegenServe {
 
     static void RideBodySMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.SMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57570,10 +60496,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SmaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SmaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57635,18 +60578,18 @@ public class TaCodegenServe {
 
     static void RideBodySMI(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r)
     {
-        try { r.Lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57669,10 +60612,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SMI(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SmiOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.SmiOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57738,16 +60699,16 @@ public class TaCodegenServe {
 
     static void RideBodySQRT(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.SQRT_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SQRT_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57763,10 +60724,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SQRT(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SqrtOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SqrtOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57828,16 +60806,16 @@ public class TaCodegenServe {
 
     static void RideBodySTDDEV(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r)
     {
-        try { r.Lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57855,10 +60833,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.STDDEV(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInNbDev, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.StddevOpen(inReal.AsSpan(0, m), optInTimePeriod, optInNbDev); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.StddevOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInNbDev, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -57920,18 +60915,18 @@ public class TaCodegenServe {
 
     static void RideBodySTOCH(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r)
     {
-        try { r.Lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -57955,10 +60950,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.STOCH(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.StochOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.StochOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58024,18 +61037,18 @@ public class TaCodegenServe {
 
     static void RideBodySTOCHF(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r)
     {
-        try { r.Lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58057,10 +61070,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.STOCHF(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.StochfOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.StochfOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58126,16 +61157,16 @@ public class TaCodegenServe {
 
     static void RideBodySTOCHRSI(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r)
     {
-        try { r.Lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58156,10 +61187,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.STOCHRSI(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.StochrsiOpen(inReal.AsSpan(0, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.StochrsiOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58225,17 +61274,17 @@ public class TaCodegenServe {
 
     static void RideBodySUB(Core core, JsonElement p, int endIdx, double[] inReal0, double[] inReal1, RideResult r)
     {
-        try { r.Lb = core.SUB_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SUB_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.Length < navail) navail = inReal0.Length;
         if (inReal1.Length < navail) navail = inReal1.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58252,10 +61301,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SUB(0, m - 1, inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SubOpen(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SubOpenAndFill(inReal0.AsSpan(0, m), inReal1.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58317,16 +61383,16 @@ public class TaCodegenServe {
 
     static void RideBodySUM(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.SUM_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SUM_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58343,10 +61409,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SUM(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SumOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.SumOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58408,18 +61491,18 @@ public class TaCodegenServe {
 
     static void RideBodySUPERTREND(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, RideResult r)
     {
-        try { r.Lb = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58440,10 +61523,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.SUPERTREND(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInMultiplier, rb0, rib0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.SupertrendOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInMultiplier); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            int[] fib0 = new int[m];
+            try { core.SupertrendOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, optInMultiplier, fb0, fib0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58509,16 +61610,16 @@ public class TaCodegenServe {
 
     static void RideBodyT3(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, RideResult r)
     {
-        try { r.Lb = core.T3_Lookback(optInTimePeriod, optInVFactor); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.T3_Lookback(optInTimePeriod, optInVFactor); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58536,10 +61637,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.T3(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInVFactor, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.T3Open(inReal.AsSpan(0, m), optInTimePeriod, optInVFactor); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.T3OpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInVFactor, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58601,16 +61719,16 @@ public class TaCodegenServe {
 
     static void RideBodyTAN(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.TAN_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TAN_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58626,10 +61744,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TAN(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TanOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TanOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58691,16 +61826,16 @@ public class TaCodegenServe {
 
     static void RideBodyTANH(Core core, JsonElement p, int endIdx, double[] inReal, RideResult r)
     {
-        try { r.Lb = core.TANH_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TANH_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58716,10 +61851,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TANH(0, m - 1, inReal.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TanhOpen(inReal.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TanhOpenAndFill(inReal.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58781,16 +61933,16 @@ public class TaCodegenServe {
 
     static void RideBodyTEMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.TEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58807,10 +61959,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TEMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TemaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TemaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58872,18 +62041,18 @@ public class TaCodegenServe {
 
     static void RideBodyTRANGE(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.TRANGE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TRANGE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58901,10 +62070,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TRANGE(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TrangeOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TrangeOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -58966,16 +62152,16 @@ public class TaCodegenServe {
 
     static void RideBodyTRIMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.TRIMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TRIMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -58992,10 +62178,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TRIMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TrimaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TrimaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59057,16 +62260,16 @@ public class TaCodegenServe {
 
     static void RideBodyTRIX(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.TRIX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TRIX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59083,10 +62286,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TRIX(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TrixOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TrixOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59148,16 +62368,16 @@ public class TaCodegenServe {
 
     static void RideBodyTSF(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.TSF_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TSF_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59174,10 +62394,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TSF(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TsfOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TsfOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59239,16 +62476,16 @@ public class TaCodegenServe {
 
     static void RideBodyTSI(Core core, JsonElement p, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, RideResult r)
     {
-        try { r.Lb = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59266,10 +62503,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TSI(0, m - 1, inReal.AsSpan(0, m), optInFirstPeriod, optInSecondPeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TsiOpen(inReal.AsSpan(0, m), optInFirstPeriod, optInSecondPeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TsiOpenAndFill(inReal.AsSpan(0, m), optInFirstPeriod, optInSecondPeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59331,18 +62585,18 @@ public class TaCodegenServe {
 
     static void RideBodyTYPPRICE(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.TYPPRICE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.TYPPRICE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59360,10 +62614,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.TYPPRICE(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.TyppriceOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.TyppriceOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59425,18 +62696,18 @@ public class TaCodegenServe {
 
     static void RideBodyULTOSC(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, RideResult r)
     {
-        try { r.Lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59457,10 +62728,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ULTOSC(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.UltoscOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.UltoscOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59522,16 +62810,16 @@ public class TaCodegenServe {
 
     static void RideBodyVAR(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r)
     {
-        try { r.Lb = core.VAR_Lookback(optInTimePeriod, optInNbDev); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.VAR_Lookback(optInTimePeriod, optInNbDev); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59549,10 +62837,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.VAR(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, optInNbDev, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.VarOpen(inReal.AsSpan(0, m), optInTimePeriod, optInNbDev); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.VarOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, optInNbDev, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59614,16 +62919,16 @@ public class TaCodegenServe {
 
     static void RideBodyVHF(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.VHF_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.VHF_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59640,10 +62945,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.VHF(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.VhfOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.VhfOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59705,18 +63027,18 @@ public class TaCodegenServe {
 
     static void RideBodyVORTEX(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.VORTEX_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.VORTEX_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59736,10 +63058,28 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.VORTEX(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0, rb1); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.VortexOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.VortexOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0, fb1); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59805,19 +63145,19 @@ public class TaCodegenServe {
 
     static void RideBodyVWAP(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r)
     {
-        try { r.Lb = core.VWAP_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.VWAP_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59836,10 +63176,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.VWAP(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.VwapOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.VwapOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), inVolume.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59901,17 +63258,17 @@ public class TaCodegenServe {
 
     static void RideBodyVWMA(Core core, JsonElement p, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.VWMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.VWMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
         if (inVolume.Length < navail) navail = inVolume.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -59929,10 +63286,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.VWMA(0, m - 1, inReal.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.VwmaOpen(inReal.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.VwmaOpenAndFill(inReal.AsSpan(0, m), inVolume.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -59994,18 +63368,18 @@ public class TaCodegenServe {
 
     static void RideBodyWAD(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.WAD_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.WAD_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -60023,10 +63397,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.WAD(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.WadOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.WadOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -60088,18 +63479,18 @@ public class TaCodegenServe {
 
     static void RideBodyWCLPRICE(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r)
     {
-        try { r.Lb = core.WCLPRICE_Lookback(); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.WCLPRICE_Lookback(); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -60117,10 +63508,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.WCLPRICE(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.WclpriceOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m)); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.WclpriceOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -60182,18 +63590,18 @@ public class TaCodegenServe {
 
     static void RideBodyWILLR(Core core, JsonElement p, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.WILLR_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.WILLR_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.Length < navail) navail = inHigh.Length;
         if (inLow.Length < navail) navail = inLow.Length;
         if (inClose.Length < navail) navail = inClose.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -60212,10 +63620,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.WILLR(0, m - 1, inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.WillrOpen(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.WillrOpenAndFill(inHigh.AsSpan(0, m), inLow.AsSpan(0, m), inClose.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -60277,16 +63702,16 @@ public class TaCodegenServe {
 
     static void RideBodyWMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.WMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.WMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -60303,10 +63728,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.WMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.WmaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.WmaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 
@@ -60368,16 +63810,16 @@ public class TaCodegenServe {
 
     static void RideBodyZLEMA(Core core, JsonElement p, int endIdx, double[] inReal, int optInTimePeriod, RideResult r)
     {
-        try { r.Lb = core.ZLEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Skip = 1; return; }
+        try { r.Lb = core.ZLEMA_Lookback(optInTimePeriod); } catch (Exception) { r.Lb = -1; }
         int lb = r.Lb;
-        if (lb < 0) { r.Skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.Length < navail) navail = inReal.Length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.M = m;
-        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }
-        if (m < lb + 2) { r.Skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }
+        if (m < 1) { r.Skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
         ulong key = 0xcbf29ce484222325UL;
@@ -60394,10 +63836,27 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        string clsB = "";
+        bool rejected = false;
         try { OutRange _rr = core.ZLEMA(0, m - 1, inReal.AsSpan(0, m), optInTimePeriod, rb0); beg = _rr.BegIdx; nb = _rr.Count; }
-        catch (Exception) { r.Skip = 5; return; }
+        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? ""; rejected = true; }
+        if (rejected)
+        {
+            string clsO = "", clsF = "";
+            try { core.ZlemaOpen(inReal.AsSpan(0, m), optInTimePeriod); } catch (Exception _e) { r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? ""; }
+            double[] fb0 = new double[m];
+            try { core.ZlemaOpenAndFill(inReal.AsSpan(0, m), optInTimePeriod, fb0); } catch (Exception _e) { r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? ""; }
+            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;
+            if (cmpO) r.Rej++;
+            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }
+            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;
+            if (cmpF) r.Rej++;
+            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.Skip = 7; return; }
         if (nb == 0) { r.Skip = 5; return; }
         if (beg != lb) { r.Skip = 6; return; }
 

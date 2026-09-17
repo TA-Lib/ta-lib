@@ -54514,18 +54514,23 @@ struct RideResult {
     out: i32,
     batch: u64,
     stream: u64,
+    rej: i32,
+    rc_batch: i32,
+    rc_open: i32,
+    rc_fill: i32,
 }
 
 impl RideResult {
     fn new() -> Self {
         RideResult { ok: true, skip: 0, dedup: 0, open_bars: 0, fill_bars: 0, benign: 0,
-                     m: 0, lb: -1, leg: 0, bar: -1, out: -1, batch: 0, stream: 0 }
+                     m: 0, lb: -1, leg: 0, bar: -1, out: -1, batch: 0, stream: 0,
+                     rej: 0, rc_batch: 0, rc_open: 0, rc_fill: 0 }
     }
     fn emit(&self, resp: &mut String) {
         resp.push_str(&format!(
-            ",\"ride_ok\":{},\"ride_skip\":{},\"ride_dedup\":{},\"ride_open_bars\":{},\"ride_fill_bars\":{},\"ride_benign\":{},\"ride_m\":{},\"ride_lb\":{}",
+            ",\"ride_ok\":{},\"ride_skip\":{},\"ride_dedup\":{},\"ride_open_bars\":{},\"ride_fill_bars\":{},\"ride_benign\":{},\"ride_m\":{},\"ride_lb\":{},\"ride_rej\":{},\"ride_rc_batch\":{},\"ride_rc_open\":{},\"ride_rc_fill\":{}",
             i32::from(self.ok), self.skip, self.dedup, self.open_bars, self.fill_bars,
-            self.benign, self.m, self.lb));
+            self.benign, self.m, self.lb, self.rej, self.rc_batch, self.rc_open, self.rc_fill));
         if !self.ok {
             resp.push_str(&format!(
                 ",\"ride_leg\":{},\"ride_bar\":{},\"ride_out\":{},\"ride_batch\":\"{:016x}\",\"ride_stream\":\"{:016x}\"",
@@ -54538,16 +54543,17 @@ impl RideResult {
 fn ride_ac(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54567,7 +54573,24 @@ fn ride_ac(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AC(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AC(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ac_open(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ac_open_and_fill(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -54621,17 +54644,18 @@ fn ride_ac(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
 fn ride_accbands(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ACCBANDS_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ACCBANDS_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54652,7 +54676,26 @@ fn ride_accbands(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.ACCBANDS(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ACCBANDS(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.accbands_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.accbands_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -54714,15 +54757,16 @@ fn ride_accbands(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_acos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ACOS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ACOS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54738,7 +54782,24 @@ fn ride_acos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ACOS(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ACOS(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.acos_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.acos_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -54792,18 +54853,19 @@ fn ride_acos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_ad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54822,7 +54884,24 @@ fn ride_ad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AD(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AD(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ad_open(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ad_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -54876,16 +54955,17 @@ fn ride_ad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
 fn ride_add(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ADD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ADD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54902,7 +54982,24 @@ fn ride_add(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ADD(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ADD(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.add_open(&inReal0[..m], &inReal1[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.add_open_and_fill(&inReal0[..m], &inReal1[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -54956,18 +55053,19 @@ fn ride_add(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
 fn ride_adosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -54988,7 +55086,24 @@ fn ride_adosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ADOSC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ADOSC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.adosc_open(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInFastPeriod, optInSlowPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.adosc_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInFastPeriod, optInSlowPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55042,16 +55157,17 @@ fn ride_adosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 fn ride_adr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ADR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ADR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55069,7 +55185,24 @@ fn ride_adr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ADR(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ADR(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.adr_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.adr_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55123,17 +55256,18 @@ fn ride_adr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_adx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ADX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ADX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55152,7 +55286,24 @@ fn ride_adx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ADX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ADX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.adx_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.adx_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55206,17 +55357,18 @@ fn ride_adx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_adxr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ADXR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ADXR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55235,7 +55387,24 @@ fn ride_adxr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ADXR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ADXR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.adxr_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.adxr_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55289,16 +55458,17 @@ fn ride_adxr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
 fn ride_ao(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AO_Lookback(optInFastPeriod, optInSlowPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AO_Lookback(optInFastPeriod, optInSlowPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55317,7 +55487,24 @@ fn ride_ao(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AO(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AO(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ao_open(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ao_open_and_fill(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55371,15 +55558,16 @@ fn ride_ao(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
 fn ride_apo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55398,7 +55586,24 @@ fn ride_apo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.APO(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.APO(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.apo_open(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.apo_open_and_fill(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55452,16 +55657,17 @@ fn ride_apo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
 fn ride_aroon(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AROON_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AROON_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55480,7 +55686,25 @@ fn ride_aroon(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.AROON(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AROON(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.aroon_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.aroon_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55538,16 +55762,17 @@ fn ride_aroon(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 fn ride_aroonosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AROONOSC_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AROONOSC_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55565,7 +55790,24 @@ fn ride_aroonosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AROONOSC(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AROONOSC(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.aroonosc_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.aroonosc_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55619,15 +55861,16 @@ fn ride_aroonosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_asin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ASIN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ASIN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55643,7 +55886,24 @@ fn ride_asin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ASIN(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ASIN(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.asin_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.asin_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55697,15 +55957,16 @@ fn ride_asin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_atan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ATAN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ATAN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55721,7 +55982,24 @@ fn ride_atan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ATAN(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ATAN(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.atan_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.atan_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55775,17 +56053,18 @@ fn ride_atan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_atr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ATR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ATR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55804,7 +56083,24 @@ fn ride_atr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ATR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ATR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.atr_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.atr_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55858,15 +56154,16 @@ fn ride_atr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_avgdev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AVGDEV_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AVGDEV_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55883,7 +56180,24 @@ fn ride_avgdev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AVGDEV(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AVGDEV(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.avgdev_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.avgdev_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -55937,18 +56251,19 @@ fn ride_avgdev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
 fn ride_avgprice(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.AVGPRICE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.AVGPRICE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -55967,7 +56282,24 @@ fn ride_avgprice(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inH
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.AVGPRICE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.AVGPRICE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.avgprice_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.avgprice_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56021,15 +56353,16 @@ fn ride_avgprice(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inH
 fn ride_bbands(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56051,7 +56384,26 @@ fn ride_bbands(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.BBANDS(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.BBANDS(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.bbands_open(&inReal[..m], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.bbands_open_and_fill(&inReal[..m], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56113,16 +56465,17 @@ fn ride_bbands(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
 fn ride_beta(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.BETA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.BETA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56140,7 +56493,24 @@ fn ride_beta(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.BETA(0, m - 1, &inReal0[..m], &inReal1[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.BETA(0, m - 1, &inReal0[..m], &inReal1[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.beta_open(&inReal0[..m], &inReal1[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.beta_open_and_fill(&inReal0[..m], &inReal1[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56194,18 +56564,19 @@ fn ride_beta(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
 fn ride_bop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.BOP_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.BOP_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56224,7 +56595,24 @@ fn ride_bop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.BOP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.BOP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.bop_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.bop_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56278,17 +56666,18 @@ fn ride_bop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: 
 fn ride_cci(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CCI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CCI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56307,7 +56696,24 @@ fn ride_cci(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CCI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CCI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cci_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cci_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56361,18 +56767,19 @@ fn ride_cci(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_cdl2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL2CROWS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL2CROWS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56391,7 +56798,24 @@ fn ride_cdl2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL2CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL2CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl2crows_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl2crows_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56445,18 +56869,19 @@ fn ride_cdl2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdl3blackcrows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3BLACKCROWS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3BLACKCROWS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56475,7 +56900,24 @@ fn ride_cdl3blackcrows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3BLACKCROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3BLACKCROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3blackcrows_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3blackcrows_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56529,18 +56971,19 @@ fn ride_cdl3blackcrows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdl3inside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3INSIDE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3INSIDE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56559,7 +57002,24 @@ fn ride_cdl3inside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3INSIDE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3INSIDE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3inside_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3inside_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56613,18 +57073,19 @@ fn ride_cdl3inside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
 fn ride_cdl3linestrike(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3LINESTRIKE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3LINESTRIKE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56643,7 +57104,24 @@ fn ride_cdl3linestrike(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3LINESTRIKE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3LINESTRIKE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3linestrike_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3linestrike_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56697,18 +57175,19 @@ fn ride_cdl3linestrike(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdl3outside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3OUTSIDE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3OUTSIDE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56727,7 +57206,24 @@ fn ride_cdl3outside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3OUTSIDE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3OUTSIDE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3outside_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3outside_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56781,18 +57277,19 @@ fn ride_cdl3outside(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdl3starsinsouth(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3STARSINSOUTH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3STARSINSOUTH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56811,7 +57308,24 @@ fn ride_cdl3starsinsouth(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3STARSINSOUTH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3STARSINSOUTH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3starsinsouth_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3starsinsouth_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56865,18 +57379,19 @@ fn ride_cdl3starsinsouth(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
 fn ride_cdl3whitesoldiers(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDL3WHITESOLDIERS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDL3WHITESOLDIERS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56895,7 +57410,24 @@ fn ride_cdl3whitesoldiers(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDL3WHITESOLDIERS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDL3WHITESOLDIERS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdl3whitesoldiers_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdl3whitesoldiers_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -56949,18 +57481,19 @@ fn ride_cdl3whitesoldiers(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdlabandonedbaby(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLABANDONEDBABY_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLABANDONEDBABY_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -56980,7 +57513,24 @@ fn ride_cdlabandonedbaby(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLABANDONEDBABY(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLABANDONEDBABY(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlabandonedbaby_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlabandonedbaby_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57034,18 +57584,19 @@ fn ride_cdlabandonedbaby(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
 fn ride_cdladvanceblock(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLADVANCEBLOCK_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLADVANCEBLOCK_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57064,7 +57615,24 @@ fn ride_cdladvanceblock(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLADVANCEBLOCK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLADVANCEBLOCK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdladvanceblock_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdladvanceblock_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57118,18 +57686,19 @@ fn ride_cdladvanceblock(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
 fn ride_cdlbelthold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLBELTHOLD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLBELTHOLD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57148,7 +57717,24 @@ fn ride_cdlbelthold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLBELTHOLD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLBELTHOLD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlbelthold_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlbelthold_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57202,18 +57788,19 @@ fn ride_cdlbelthold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdlbreakaway(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLBREAKAWAY_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLBREAKAWAY_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57232,7 +57819,24 @@ fn ride_cdlbreakaway(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLBREAKAWAY(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLBREAKAWAY(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlbreakaway_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlbreakaway_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57286,18 +57890,19 @@ fn ride_cdlbreakaway(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
 fn ride_cdlclosingmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLCLOSINGMARUBOZU_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLCLOSINGMARUBOZU_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57316,7 +57921,24 @@ fn ride_cdlclosingmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLCLOSINGMARUBOZU(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLCLOSINGMARUBOZU(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlclosingmarubozu_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlclosingmarubozu_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57370,18 +57992,19 @@ fn ride_cdlclosingmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlconcealbabyswall(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLCONCEALBABYSWALL_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLCONCEALBABYSWALL_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57400,7 +58023,24 @@ fn ride_cdlconcealbabyswall(core: &Core, params: &Value, endIdx: usize, inOpen: 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLCONCEALBABYSWALL(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLCONCEALBABYSWALL(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlconcealbabyswall_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlconcealbabyswall_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57454,18 +58094,19 @@ fn ride_cdlconcealbabyswall(core: &Core, params: &Value, endIdx: usize, inOpen: 
 fn ride_cdlcounterattack(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLCOUNTERATTACK_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLCOUNTERATTACK_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57484,7 +58125,24 @@ fn ride_cdlcounterattack(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLCOUNTERATTACK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLCOUNTERATTACK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlcounterattack_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlcounterattack_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57538,18 +58196,19 @@ fn ride_cdlcounterattack(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
 fn ride_cdldarkcloudcover(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLDARKCLOUDCOVER_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57569,7 +58228,24 @@ fn ride_cdldarkcloudcover(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLDARKCLOUDCOVER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLDARKCLOUDCOVER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdldarkcloudcover_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdldarkcloudcover_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57623,18 +58299,19 @@ fn ride_cdldarkcloudcover(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdldoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLDOJI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLDOJI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57653,7 +58330,24 @@ fn ride_cdldoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHi
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdldoji_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdldoji_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57707,18 +58401,19 @@ fn ride_cdldoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHi
 fn ride_cdldojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLDOJISTAR_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLDOJISTAR_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57737,7 +58432,24 @@ fn ride_cdldojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdldojistar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdldojistar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57791,18 +58503,19 @@ fn ride_cdldojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdldragonflydoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLDRAGONFLYDOJI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLDRAGONFLYDOJI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57821,7 +58534,24 @@ fn ride_cdldragonflydoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLDRAGONFLYDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLDRAGONFLYDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdldragonflydoji_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdldragonflydoji_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57875,18 +58605,19 @@ fn ride_cdldragonflydoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
 fn ride_cdlengulfing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLENGULFING_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLENGULFING_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57905,7 +58636,24 @@ fn ride_cdlengulfing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLENGULFING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLENGULFING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlengulfing_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlengulfing_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -57959,18 +58707,19 @@ fn ride_cdlengulfing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
 fn ride_cdleveningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLEVENINGDOJISTAR_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -57990,7 +58739,24 @@ fn ride_cdleveningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLEVENINGDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLEVENINGDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdleveningdojistar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdleveningdojistar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58044,18 +58810,19 @@ fn ride_cdleveningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdleveningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLEVENINGSTAR_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLEVENINGSTAR_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58075,7 +58842,24 @@ fn ride_cdleveningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLEVENINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLEVENINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdleveningstar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdleveningstar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58129,18 +58913,19 @@ fn ride_cdleveningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlgapsidesidewhite(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLGAPSIDESIDEWHITE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLGAPSIDESIDEWHITE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58159,7 +58944,24 @@ fn ride_cdlgapsidesidewhite(core: &Core, params: &Value, endIdx: usize, inOpen: 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLGAPSIDESIDEWHITE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLGAPSIDESIDEWHITE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlgapsidesidewhite_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlgapsidesidewhite_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58213,18 +59015,19 @@ fn ride_cdlgapsidesidewhite(core: &Core, params: &Value, endIdx: usize, inOpen: 
 fn ride_cdlgravestonedoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLGRAVESTONEDOJI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLGRAVESTONEDOJI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58243,7 +59046,24 @@ fn ride_cdlgravestonedoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLGRAVESTONEDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLGRAVESTONEDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlgravestonedoji_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlgravestonedoji_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58297,18 +59117,19 @@ fn ride_cdlgravestonedoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdlhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHAMMER_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHAMMER_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58327,7 +59148,24 @@ fn ride_cdlhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHAMMER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHAMMER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhammer_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhammer_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58381,18 +59219,19 @@ fn ride_cdlhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdlhangingman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHANGINGMAN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHANGINGMAN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58411,7 +59250,24 @@ fn ride_cdlhangingman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHANGINGMAN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHANGINGMAN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhangingman_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhangingman_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58465,18 +59321,19 @@ fn ride_cdlhangingman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
 fn ride_cdlharami(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHARAMI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHARAMI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58495,7 +59352,24 @@ fn ride_cdlharami(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHARAMI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHARAMI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlharami_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlharami_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58549,18 +59423,19 @@ fn ride_cdlharami(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdlharamicross(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHARAMICROSS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHARAMICROSS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58579,7 +59454,24 @@ fn ride_cdlharamicross(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHARAMICROSS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHARAMICROSS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlharamicross_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlharamicross_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58633,18 +59525,19 @@ fn ride_cdlharamicross(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlhighwave(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHIGHWAVE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHIGHWAVE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58663,7 +59556,24 @@ fn ride_cdlhighwave(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHIGHWAVE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHIGHWAVE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhighwave_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhighwave_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58717,18 +59627,19 @@ fn ride_cdlhighwave(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdlhikkake(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHIKKAKE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHIKKAKE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58747,7 +59658,24 @@ fn ride_cdlhikkake(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHIKKAKE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHIKKAKE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhikkake_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhikkake_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58801,18 +59729,19 @@ fn ride_cdlhikkake(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
 fn ride_cdlhikkakemod(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHIKKAKEMOD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHIKKAKEMOD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58831,7 +59760,24 @@ fn ride_cdlhikkakemod(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHIKKAKEMOD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHIKKAKEMOD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhikkakemod_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhikkakemod_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58885,18 +59831,19 @@ fn ride_cdlhikkakemod(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64]
 fn ride_cdlhomingpigeon(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLHOMINGPIGEON_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLHOMINGPIGEON_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58915,7 +59862,24 @@ fn ride_cdlhomingpigeon(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLHOMINGPIGEON(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLHOMINGPIGEON(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlhomingpigeon_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlhomingpigeon_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -58969,18 +59933,19 @@ fn ride_cdlhomingpigeon(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
 fn ride_cdlidentical3crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLIDENTICAL3CROWS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLIDENTICAL3CROWS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -58999,7 +59964,24 @@ fn ride_cdlidentical3crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLIDENTICAL3CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLIDENTICAL3CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlidentical3crows_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlidentical3crows_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59053,18 +60035,19 @@ fn ride_cdlidentical3crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlinneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLINNECK_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLINNECK_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59083,7 +60066,24 @@ fn ride_cdlinneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLINNECK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLINNECK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlinneck_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlinneck_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59137,18 +60137,19 @@ fn ride_cdlinneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdlinvertedhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLINVERTEDHAMMER_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLINVERTEDHAMMER_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59167,7 +60168,24 @@ fn ride_cdlinvertedhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLINVERTEDHAMMER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLINVERTEDHAMMER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlinvertedhammer_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlinvertedhammer_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59221,18 +60239,19 @@ fn ride_cdlinvertedhammer(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdlkicking(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLKICKING_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLKICKING_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59251,7 +60270,24 @@ fn ride_cdlkicking(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLKICKING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLKICKING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlkicking_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlkicking_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59305,18 +60341,19 @@ fn ride_cdlkicking(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
 fn ride_cdlkickingbylength(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLKICKINGBYLENGTH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLKICKINGBYLENGTH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59335,7 +60372,24 @@ fn ride_cdlkickingbylength(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLKICKINGBYLENGTH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLKICKINGBYLENGTH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlkickingbylength_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlkickingbylength_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59389,18 +60443,19 @@ fn ride_cdlkickingbylength(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlladderbottom(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLLADDERBOTTOM_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLLADDERBOTTOM_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59419,7 +60474,24 @@ fn ride_cdlladderbottom(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLLADDERBOTTOM(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLLADDERBOTTOM(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlladderbottom_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlladderbottom_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59473,18 +60545,19 @@ fn ride_cdlladderbottom(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
 fn ride_cdllongleggeddoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLLONGLEGGEDDOJI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLLONGLEGGEDDOJI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59503,7 +60576,24 @@ fn ride_cdllongleggeddoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLLONGLEGGEDDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLLONGLEGGEDDOJI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdllongleggeddoji_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdllongleggeddoji_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59557,18 +60647,19 @@ fn ride_cdllongleggeddoji(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdllongline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLLONGLINE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLLONGLINE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59587,7 +60678,24 @@ fn ride_cdllongline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLLONGLINE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLLONGLINE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdllongline_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdllongline_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59641,18 +60749,19 @@ fn ride_cdllongline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdlmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLMARUBOZU_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLMARUBOZU_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59671,7 +60780,24 @@ fn ride_cdlmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLMARUBOZU(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLMARUBOZU(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlmarubozu_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlmarubozu_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59725,18 +60851,19 @@ fn ride_cdlmarubozu(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdlmatchinglow(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLMATCHINGLOW_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLMATCHINGLOW_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59755,7 +60882,24 @@ fn ride_cdlmatchinglow(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLMATCHINGLOW(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLMATCHINGLOW(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlmatchinglow_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlmatchinglow_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59809,18 +60953,19 @@ fn ride_cdlmatchinglow(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlmathold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLMATHOLD_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLMATHOLD_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59840,7 +60985,24 @@ fn ride_cdlmathold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLMATHOLD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLMATHOLD(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlmathold_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlmathold_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59894,18 +61056,19 @@ fn ride_cdlmathold(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
 fn ride_cdlmorningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLMORNINGDOJISTAR_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -59925,7 +61088,24 @@ fn ride_cdlmorningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLMORNINGDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLMORNINGDOJISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlmorningdojistar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlmorningdojistar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -59979,18 +61159,19 @@ fn ride_cdlmorningdojistar(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlmorningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLMORNINGSTAR_Lookback(optInPenetration) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLMORNINGSTAR_Lookback(optInPenetration).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60010,7 +61191,24 @@ fn ride_cdlmorningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLMORNINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLMORNINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlmorningstar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlmorningstar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], optInPenetration, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60064,18 +61262,19 @@ fn ride_cdlmorningstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlonneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLONNECK_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLONNECK_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60094,7 +61293,24 @@ fn ride_cdlonneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLONNECK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLONNECK(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlonneck_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlonneck_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60148,18 +61364,19 @@ fn ride_cdlonneck(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdlpiercing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLPIERCING_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLPIERCING_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60178,7 +61395,24 @@ fn ride_cdlpiercing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLPIERCING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLPIERCING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlpiercing_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlpiercing_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60232,18 +61466,19 @@ fn ride_cdlpiercing(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], 
 fn ride_cdlrickshawman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLRICKSHAWMAN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLRICKSHAWMAN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60262,7 +61497,24 @@ fn ride_cdlrickshawman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLRICKSHAWMAN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLRICKSHAWMAN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlrickshawman_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlrickshawman_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60316,18 +61568,19 @@ fn ride_cdlrickshawman(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlrisefall3methods(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLRISEFALL3METHODS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLRISEFALL3METHODS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60346,7 +61599,24 @@ fn ride_cdlrisefall3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLRISEFALL3METHODS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLRISEFALL3METHODS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlrisefall3methods_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlrisefall3methods_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60400,18 +61670,19 @@ fn ride_cdlrisefall3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
 fn ride_cdlseparatinglines(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSEPARATINGLINES_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSEPARATINGLINES_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60430,7 +61701,24 @@ fn ride_cdlseparatinglines(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSEPARATINGLINES(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSEPARATINGLINES(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlseparatinglines_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlseparatinglines_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60484,18 +61772,19 @@ fn ride_cdlseparatinglines(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlshootingstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSHOOTINGSTAR_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSHOOTINGSTAR_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60514,7 +61803,24 @@ fn ride_cdlshootingstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSHOOTINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSHOOTINGSTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlshootingstar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlshootingstar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60568,18 +61874,19 @@ fn ride_cdlshootingstar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
 fn ride_cdlshortline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSHORTLINE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSHORTLINE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60598,7 +61905,24 @@ fn ride_cdlshortline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSHORTLINE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSHORTLINE(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlshortline_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlshortline_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60652,18 +61976,19 @@ fn ride_cdlshortline(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
 fn ride_cdlspinningtop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSPINNINGTOP_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSPINNINGTOP_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60682,7 +62007,24 @@ fn ride_cdlspinningtop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSPINNINGTOP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSPINNINGTOP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlspinningtop_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlspinningtop_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60736,18 +62078,19 @@ fn ride_cdlspinningtop(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64
 fn ride_cdlstalledpattern(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSTALLEDPATTERN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSTALLEDPATTERN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60766,7 +62109,24 @@ fn ride_cdlstalledpattern(core: &Core, params: &Value, endIdx: usize, inOpen: &[
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSTALLEDPATTERN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSTALLEDPATTERN(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlstalledpattern_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlstalledpattern_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60820,18 +62180,19 @@ fn ride_cdlstalledpattern(core: &Core, params: &Value, endIdx: usize, inOpen: &[
 fn ride_cdlsticksandwich(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLSTICKSANDWICH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLSTICKSANDWICH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60850,7 +62211,24 @@ fn ride_cdlsticksandwich(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLSTICKSANDWICH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLSTICKSANDWICH(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlsticksandwich_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlsticksandwich_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60904,18 +62282,19 @@ fn ride_cdlsticksandwich(core: &Core, params: &Value, endIdx: usize, inOpen: &[f
 fn ride_cdltakuri(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLTAKURI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLTAKURI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -60934,7 +62313,24 @@ fn ride_cdltakuri(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLTAKURI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLTAKURI(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdltakuri_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdltakuri_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -60988,18 +62384,19 @@ fn ride_cdltakuri(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], in
 fn ride_cdltasukigap(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLTASUKIGAP_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLTASUKIGAP_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61018,7 +62415,24 @@ fn ride_cdltasukigap(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLTASUKIGAP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLTASUKIGAP(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdltasukigap_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdltasukigap_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61072,18 +62486,19 @@ fn ride_cdltasukigap(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
 fn ride_cdlthrusting(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLTHRUSTING_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLTHRUSTING_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61102,7 +62517,24 @@ fn ride_cdlthrusting(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLTHRUSTING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLTHRUSTING(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlthrusting_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlthrusting_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61156,18 +62588,19 @@ fn ride_cdlthrusting(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64],
 fn ride_cdltristar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLTRISTAR_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLTRISTAR_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61186,7 +62619,24 @@ fn ride_cdltristar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLTRISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLTRISTAR(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdltristar_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdltristar_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61240,18 +62690,19 @@ fn ride_cdltristar(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], i
 fn ride_cdlunique3river(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLUNIQUE3RIVER_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLUNIQUE3RIVER_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61270,7 +62721,24 @@ fn ride_cdlunique3river(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLUNIQUE3RIVER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLUNIQUE3RIVER(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlunique3river_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlunique3river_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61324,18 +62792,19 @@ fn ride_cdlunique3river(core: &Core, params: &Value, endIdx: usize, inOpen: &[f6
 fn ride_cdlupsidegap2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLUPSIDEGAP2CROWS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLUPSIDEGAP2CROWS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61354,7 +62823,24 @@ fn ride_cdlupsidegap2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLUPSIDEGAP2CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLUPSIDEGAP2CROWS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlupsidegap2crows_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlupsidegap2crows_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61408,18 +62894,19 @@ fn ride_cdlupsidegap2crows(core: &Core, params: &Value, endIdx: usize, inOpen: &
 fn ride_cdlxsidegap3methods(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CDLXSIDEGAP3METHODS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CDLXSIDEGAP3METHODS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61438,7 +62925,24 @@ fn ride_cdlxsidegap3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.CDLXSIDEGAP3METHODS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CDLXSIDEGAP3METHODS(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cdlxsidegap3methods_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.cdlxsidegap3methods_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61492,15 +62996,16 @@ fn ride_cdlxsidegap3methods(core: &Core, params: &Value, endIdx: usize, inOpen: 
 fn ride_ceil(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CEIL_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CEIL_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61516,7 +63021,24 @@ fn ride_ceil(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CEIL(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CEIL(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ceil_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ceil_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61570,18 +63092,19 @@ fn ride_ceil(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_cmf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CMF_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CMF_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61601,7 +63124,24 @@ fn ride_cmf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CMF(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CMF(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cmf_open(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cmf_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61655,15 +63195,16 @@ fn ride_cmf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_cmo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CMO_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CMO_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61680,7 +63221,24 @@ fn ride_cmo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CMO(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CMO(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cmo_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cmo_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61734,15 +63292,16 @@ fn ride_cmo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_cmou(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CMOU_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CMOU_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61759,7 +63318,24 @@ fn ride_cmou(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CMOU(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CMOU(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cmou_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cmou_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61813,15 +63389,16 @@ fn ride_cmou(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_coppock(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInWMAPeriod: i32, optInROC1Period: i32, optInROC2Period: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61840,7 +63417,24 @@ fn ride_coppock(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.COPPOCK(0, m - 1, &inReal[..m], optInWMAPeriod, optInROC1Period, optInROC2Period, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.COPPOCK(0, m - 1, &inReal[..m], optInWMAPeriod, optInROC1Period, optInROC2Period, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.coppock_open(&inReal[..m], optInWMAPeriod, optInROC1Period, optInROC2Period) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.coppock_open_and_fill(&inReal[..m], optInWMAPeriod, optInROC1Period, optInROC2Period, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61894,16 +63488,17 @@ fn ride_coppock(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
 fn ride_correl(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CORREL_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CORREL_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61921,7 +63516,24 @@ fn ride_correl(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inRe
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CORREL(0, m - 1, &inReal0[..m], &inReal1[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CORREL(0, m - 1, &inReal0[..m], &inReal1[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.correl_open(&inReal0[..m], &inReal1[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.correl_open_and_fill(&inReal0[..m], &inReal1[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -61975,15 +63587,16 @@ fn ride_correl(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inRe
 fn ride_cos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.COS_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.COS_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -61999,7 +63612,24 @@ fn ride_cos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.COS(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.COS(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cos_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cos_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62053,15 +63683,16 @@ fn ride_cos(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
 fn ride_cosh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.COSH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.COSH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62077,7 +63708,24 @@ fn ride_cosh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.COSH(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.COSH(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cosh_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cosh_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62131,15 +63779,16 @@ fn ride_cosh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_cumsum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CUMSUM_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CUMSUM_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62155,7 +63804,24 @@ fn ride_cumsum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp:
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CUMSUM(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CUMSUM(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cumsum_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cumsum_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62209,16 +63875,17 @@ fn ride_cumsum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp:
 fn ride_cvi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, optInROCPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.CVI_Lookback(optInTimePeriod, optInROCPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.CVI_Lookback(optInTimePeriod, optInROCPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62237,7 +63904,24 @@ fn ride_cvi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.CVI(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, optInROCPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.CVI(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, optInROCPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cvi_open(&inHigh[..m], &inLow[..m], optInTimePeriod, optInROCPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cvi_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, optInROCPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62291,15 +63975,16 @@ fn ride_cvi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_dema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.DEMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.DEMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62316,7 +64001,24 @@ fn ride_dema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.DEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.DEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.dema_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.dema_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62370,16 +64072,17 @@ fn ride_dema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_div(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.DIV_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.DIV_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62396,7 +64099,24 @@ fn ride_div(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.DIV(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.DIV(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.div_open(&inReal0[..m], &inReal1[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.div_open_and_fill(&inReal0[..m], &inReal1[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62450,16 +64170,17 @@ fn ride_div(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
 fn ride_donchian(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.DONCHIAN_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.DONCHIAN_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62479,7 +64200,26 @@ fn ride_donchian(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.DONCHIAN(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.DONCHIAN(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.donchian_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.donchian_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62541,15 +64281,16 @@ fn ride_donchian(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_dpo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.DPO_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.DPO_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62566,7 +64307,24 @@ fn ride_dpo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.DPO(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.DPO(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.dpo_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.dpo_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62620,17 +64378,18 @@ fn ride_dpo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_dx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.DX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.DX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62649,7 +64408,24 @@ fn ride_dx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.DX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.DX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.dx_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.dx_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62703,16 +64479,17 @@ fn ride_dx(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
 fn ride_efi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.EFI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.EFI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62730,7 +64507,24 @@ fn ride_efi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.EFI(0, m - 1, &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.EFI(0, m - 1, &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.efi_open(&inClose[..m], &inVolume[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.efi_open_and_fill(&inClose[..m], &inVolume[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62784,15 +64578,16 @@ fn ride_efi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
 fn ride_ema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.EMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.EMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62809,7 +64604,24 @@ fn ride_ema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.EMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.EMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ema_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ema_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62863,15 +64675,16 @@ fn ride_ema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_er(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ER_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ER_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62888,7 +64701,24 @@ fn ride_er(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ER(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ER(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.er_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.er_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -62942,17 +64772,18 @@ fn ride_er(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
 fn ride_eri(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ERI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ERI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -62972,7 +64803,25 @@ fn ride_eri(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.ERI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ERI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.eri_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.eri_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63030,15 +64879,16 @@ fn ride_eri(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_exp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.EXP_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.EXP_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63054,7 +64904,24 @@ fn ride_exp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.EXP(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.EXP(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.exp_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.exp_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63108,15 +64975,16 @@ fn ride_exp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
 fn ride_floor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.FLOOR_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.FLOOR_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63132,7 +65000,24 @@ fn ride_floor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.FLOOR(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.FLOOR(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.floor_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.floor_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63186,15 +65071,16 @@ fn ride_floor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
 fn ride_fosc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.FOSC_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.FOSC_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63211,7 +65097,24 @@ fn ride_fosc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.FOSC(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.FOSC(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.fosc_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.fosc_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63265,16 +65168,17 @@ fn ride_fosc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_fractal(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInLeftBars: i32, optInRightBars: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.FRACTAL_Lookback(optInLeftBars, optInRightBars) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.FRACTAL_Lookback(optInLeftBars, optInRightBars).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63294,7 +65198,25 @@ fn ride_fractal(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
 
     let mut rib0 = vec![0i32; m];
     let mut rib1 = vec![0i32; m];
-    let (beg, nb) = match core.FRACTAL(0, m - 1, &inHigh[..m], &inLow[..m], optInLeftBars, optInRightBars, &mut rib0, &mut rib1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.FRACTAL(0, m - 1, &inHigh[..m], &inLow[..m], optInLeftBars, optInRightBars, &mut rib0, &mut rib1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.fractal_open(&inHigh[..m], &inLow[..m], optInLeftBars, optInRightBars) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            let mut fib1 = vec![0i32; m];
+            r.rc_fill = match core.fractal_open_and_fill(&inHigh[..m], &inLow[..m], optInLeftBars, optInRightBars, &mut fib0, &mut fib1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63352,18 +65274,19 @@ fn ride_fractal(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
 fn ride_ha(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HA_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HA_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63385,7 +65308,27 @@ fn ride_ha(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
     let mut rb3 = vec![0.0f64; m];
-    let (beg, nb) = match core.HA(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0, &mut rb1, &mut rb2, &mut rb3) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HA(0, m - 1, &inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0, &mut rb1, &mut rb2, &mut rb3) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ha_open(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            let mut fb3 = vec![0.0f64; m];
+            r.rc_fill = match core.ha_open_and_fill(&inOpen[..m], &inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0, &mut fb1, &mut fb2, &mut fb3) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63451,15 +65394,16 @@ fn ride_ha(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inHigh: &
 fn ride_hma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63476,7 +65420,24 @@ fn ride_hma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.HMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.hma_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.hma_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63530,15 +65491,16 @@ fn ride_hma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_ht_dcperiod(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_DCPERIOD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_DCPERIOD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63554,7 +65516,24 @@ fn ride_ht_dcperiod(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.HT_DCPERIOD(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_DCPERIOD(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_dcperiod_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ht_dcperiod_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63608,15 +65587,16 @@ fn ride_ht_dcperiod(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
 fn ride_ht_dcphase(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_DCPHASE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_DCPHASE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63632,7 +65612,24 @@ fn ride_ht_dcphase(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], r
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.HT_DCPHASE(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_DCPHASE(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_dcphase_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ht_dcphase_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63686,15 +65683,16 @@ fn ride_ht_dcphase(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], r
 fn ride_ht_phasor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_PHASOR_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_PHASOR_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63711,7 +65709,25 @@ fn ride_ht_phasor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], re
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.HT_PHASOR(0, m - 1, &inReal[..m], &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_PHASOR(0, m - 1, &inReal[..m], &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_phasor_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.ht_phasor_open_and_fill(&inReal[..m], &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63769,15 +65785,16 @@ fn ride_ht_phasor(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], re
 fn ride_ht_sine(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_SINE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_SINE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63794,7 +65811,25 @@ fn ride_ht_sine(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.HT_SINE(0, m - 1, &inReal[..m], &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_SINE(0, m - 1, &inReal[..m], &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_sine_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.ht_sine_open_and_fill(&inReal[..m], &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63852,15 +65887,16 @@ fn ride_ht_sine(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp
 fn ride_ht_trendline(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_TRENDLINE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_TRENDLINE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63876,7 +65912,24 @@ fn ride_ht_trendline(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.HT_TRENDLINE(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_TRENDLINE(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_trendline_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ht_trendline_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -63930,15 +65983,16 @@ fn ride_ht_trendline(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
 fn ride_ht_trendmode(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.HT_TRENDMODE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.HT_TRENDMODE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -63954,7 +66008,24 @@ fn ride_ht_trendmode(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.HT_TRENDMODE(0, m - 1, &inReal[..m], &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.HT_TRENDMODE(0, m - 1, &inReal[..m], &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ht_trendmode_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.ht_trendmode_open_and_fill(&inReal[..m], &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64008,16 +66079,17 @@ fn ride_ht_trendmode(core: &Core, params: &Value, endIdx: usize, inReal: &[f64],
 fn ride_imi(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.IMI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.IMI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64035,7 +66107,24 @@ fn ride_imi(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClose:
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.IMI(0, m - 1, &inOpen[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.IMI(0, m - 1, &inOpen[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.imi_open(&inOpen[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.imi_open_and_fill(&inOpen[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64089,15 +66178,16 @@ fn ride_imi(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClose:
 fn ride_kama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.KAMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.KAMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64114,7 +66204,24 @@ fn ride_kama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.KAMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.KAMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.kama_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.kama_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64168,17 +66275,18 @@ fn ride_kama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_kc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInATRPeriod: i32, optInNbDev: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64201,7 +66309,26 @@ fn ride_kc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.KC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInATRPeriod, optInNbDev, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.KC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInATRPeriod, optInNbDev, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.kc_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInATRPeriod, optInNbDev) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.kc_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInATRPeriod, optInNbDev, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64263,17 +66390,18 @@ fn ride_kc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[
 fn ride_kdj(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64298,7 +66426,26 @@ fn ride_kdj(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.KDJ(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.KDJ(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.kdj_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.kdj_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64360,15 +66507,16 @@ fn ride_kdj(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_linearreg(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LINEARREG_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LINEARREG_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64385,7 +66533,24 @@ fn ride_linearreg(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], op
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LINEARREG(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LINEARREG(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.linearreg_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.linearreg_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64439,15 +66604,16 @@ fn ride_linearreg(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], op
 fn ride_linearreg_angle(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LINEARREG_ANGLE_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LINEARREG_ANGLE_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64464,7 +66630,24 @@ fn ride_linearreg_angle(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LINEARREG_ANGLE(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LINEARREG_ANGLE(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.linearreg_angle_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.linearreg_angle_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64518,15 +66701,16 @@ fn ride_linearreg_angle(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
 fn ride_linearreg_intercept(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64543,7 +66727,24 @@ fn ride_linearreg_intercept(core: &Core, params: &Value, endIdx: usize, inReal: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LINEARREG_INTERCEPT(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LINEARREG_INTERCEPT(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.linearreg_intercept_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.linearreg_intercept_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64597,15 +66798,16 @@ fn ride_linearreg_intercept(core: &Core, params: &Value, endIdx: usize, inReal: 
 fn ride_linearreg_slope(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LINEARREG_SLOPE_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LINEARREG_SLOPE_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64622,7 +66824,24 @@ fn ride_linearreg_slope(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LINEARREG_SLOPE(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LINEARREG_SLOPE(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.linearreg_slope_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.linearreg_slope_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64676,15 +66895,16 @@ fn ride_linearreg_slope(core: &Core, params: &Value, endIdx: usize, inReal: &[f6
 fn ride_ln(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64700,7 +66920,24 @@ fn ride_ln(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mu
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LN(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LN(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ln_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ln_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64754,15 +66991,16 @@ fn ride_ln(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mu
 fn ride_log10(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.LOG10_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.LOG10_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64778,7 +67016,24 @@ fn ride_log10(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.LOG10(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.LOG10(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.log10_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.log10_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64832,15 +67087,16 @@ fn ride_log10(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: 
 fn ride_ma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MA_Lookback(optInTimePeriod, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MA_Lookback(optInTimePeriod, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64858,7 +67114,24 @@ fn ride_ma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MA(0, m - 1, &inReal[..m], optInTimePeriod, optInMAType, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MA(0, m - 1, &inReal[..m], optInTimePeriod, optInMAType, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ma_open(&inReal[..m], optInTimePeriod, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ma_open_and_fill(&inReal[..m], optInTimePeriod, optInMAType, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -64912,15 +67185,16 @@ fn ride_ma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
 fn ride_macd(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -64941,7 +67215,26 @@ fn ride_macd(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.MACD(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MACD(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.macd_open(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.macd_open_and_fill(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65003,15 +67296,16 @@ fn ride_macd(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
 fn ride_macdext(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFastPeriod: i32, optInFastMAType: MAType, optInSlowPeriod: i32, optInSlowMAType: MAType, optInSignalPeriod: i32, optInSignalMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65035,7 +67329,26 @@ fn ride_macdext(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.MACDEXT(0, m - 1, &inReal[..m], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MACDEXT(0, m - 1, &inReal[..m], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.macdext_open(&inReal[..m], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.macdext_open_and_fill(&inReal[..m], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65097,15 +67410,16 @@ fn ride_macdext(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
 fn ride_macdfix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInSignalPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MACDFIX_Lookback(optInSignalPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MACDFIX_Lookback(optInSignalPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65124,7 +67438,26 @@ fn ride_macdfix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
     let mut rb2 = vec![0.0f64; m];
-    let (beg, nb) = match core.MACDFIX(0, m - 1, &inReal[..m], optInSignalPeriod, &mut rb0, &mut rb1, &mut rb2) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MACDFIX(0, m - 1, &inReal[..m], optInSignalPeriod, &mut rb0, &mut rb1, &mut rb2) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.macdfix_open(&inReal[..m], optInSignalPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            let mut fb2 = vec![0.0f64; m];
+            r.rc_fill = match core.macdfix_open_and_fill(&inReal[..m], optInSignalPeriod, &mut fb0, &mut fb1, &mut fb2) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65186,15 +67519,16 @@ fn ride_macdfix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
 fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MAMA_Lookback(optInFastLimit, optInSlowLimit) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MAMA_Lookback(optInFastLimit, optInSlowLimit).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65213,7 +67547,25 @@ fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.MAMA(0, m - 1, &inReal[..m], optInFastLimit, optInSlowLimit, &mut rb0, Some(&mut rb1)) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MAMA(0, m - 1, &inReal[..m], optInFastLimit, optInSlowLimit, &mut rb0, Some(&mut rb1)) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.mama_open(&inReal[..m], optInFastLimit, optInSlowLimit) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.mama_open_and_fill(&inReal[..m], optInFastLimit, optInSlowLimit, &mut fb0, Some(&mut fb1)) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65271,17 +67623,18 @@ fn ride_mama(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFa
 fn ride_marketfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MARKETFI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MARKETFI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65299,7 +67652,24 @@ fn ride_marketfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MARKETFI(0, m - 1, &inHigh[..m], &inLow[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MARKETFI(0, m - 1, &inHigh[..m], &inLow[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.marketfi_open(&inHigh[..m], &inLow[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.marketfi_open_and_fill(&inHigh[..m], &inLow[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65353,16 +67723,17 @@ fn ride_marketfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_massi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65381,7 +67752,24 @@ fn ride_massi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MASSI(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MASSI(0, m - 1, &inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.massi_open(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.massi_open_and_fill(&inHigh[..m], &inLow[..m], optInFastPeriod, optInSlowPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65435,16 +67823,17 @@ fn ride_massi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 fn ride_mavp(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65464,7 +67853,24 @@ fn ride_mavp(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MAVP(0, m - 1, &inReal0[..m], &inReal1[..m], optInMinPeriod, optInMaxPeriod, optInMAType, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MAVP(0, m - 1, &inReal0[..m], &inReal1[..m], optInMinPeriod, optInMaxPeriod, optInMAType, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.mavp_open(&inReal0[..m], &inReal1[..m], optInMinPeriod, optInMaxPeriod, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.mavp_open_and_fill(&inReal0[..m], &inReal1[..m], optInMinPeriod, optInMaxPeriod, optInMAType, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65518,15 +67924,16 @@ fn ride_mavp(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
 fn ride_max(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MAX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MAX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65543,7 +67950,24 @@ fn ride_max(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MAX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MAX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.max_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.max_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65597,15 +68021,16 @@ fn ride_max(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_maxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MAXINDEX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MAXINDEX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65622,7 +68047,24 @@ fn ride_maxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.MAXINDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MAXINDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.maxindex_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.maxindex_open_and_fill(&inReal[..m], optInTimePeriod, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65676,16 +68118,17 @@ fn ride_maxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
 fn ride_medprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MEDPRICE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MEDPRICE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65702,7 +68145,24 @@ fn ride_medprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MEDPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MEDPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.medprice_open(&inHigh[..m], &inLow[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.medprice_open_and_fill(&inHigh[..m], &inLow[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65756,18 +68216,19 @@ fn ride_medprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_mfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MFI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MFI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65787,7 +68248,24 @@ fn ride_mfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MFI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MFI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.mfi_open(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.mfi_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65841,15 +68319,16 @@ fn ride_mfi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_midpoint(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MIDPOINT_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MIDPOINT_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65866,7 +68345,24 @@ fn ride_midpoint(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MIDPOINT(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MIDPOINT(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.midpoint_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.midpoint_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -65920,16 +68416,17 @@ fn ride_midpoint(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
 fn ride_midprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MIDPRICE_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MIDPRICE_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -65947,7 +68444,24 @@ fn ride_midprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MIDPRICE(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MIDPRICE(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.midprice_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.midprice_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66001,15 +68515,16 @@ fn ride_midprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_min(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MIN_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MIN_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66026,7 +68541,24 @@ fn ride_min(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MIN(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MIN(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.min_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.min_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66080,15 +68612,16 @@ fn ride_min(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_minindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MININDEX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MININDEX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66105,7 +68638,24 @@ fn ride_minindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
     }
 
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.MININDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MININDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.minindex_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.minindex_open_and_fill(&inReal[..m], optInTimePeriod, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66159,15 +68709,16 @@ fn ride_minindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
 fn ride_minmax(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MINMAX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MINMAX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66185,7 +68736,25 @@ fn ride_minmax(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.MINMAX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MINMAX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.minmax_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.minmax_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66243,15 +68812,16 @@ fn ride_minmax(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
 fn ride_minmaxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MINMAXINDEX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MINMAXINDEX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66269,7 +68839,25 @@ fn ride_minmaxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
 
     let mut rib0 = vec![0i32; m];
     let mut rib1 = vec![0i32; m];
-    let (beg, nb) = match core.MINMAXINDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0, &mut rib1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MINMAXINDEX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rib0, &mut rib1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.minmaxindex_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fib0 = vec![0i32; m];
+            let mut fib1 = vec![0i32; m];
+            r.rc_fill = match core.minmaxindex_open_and_fill(&inReal[..m], optInTimePeriod, &mut fib0, &mut fib1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66327,17 +68915,18 @@ fn ride_minmaxindex(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
 fn ride_minus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MINUS_DI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MINUS_DI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66356,7 +68945,24 @@ fn ride_minus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MINUS_DI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MINUS_DI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.minus_di_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.minus_di_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66410,16 +69016,17 @@ fn ride_minus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_minus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MINUS_DM_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MINUS_DM_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66437,7 +69044,24 @@ fn ride_minus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MINUS_DM(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MINUS_DM(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.minus_dm_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.minus_dm_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66491,15 +69115,16 @@ fn ride_minus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_mom(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MOM_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MOM_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66516,7 +69141,24 @@ fn ride_mom(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MOM(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MOM(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.mom_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.mom_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66570,16 +69212,17 @@ fn ride_mom(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_mult(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.MULT_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.MULT_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66596,7 +69239,24 @@ fn ride_mult(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.MULT(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.MULT(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.mult_open(&inReal0[..m], &inReal1[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.mult_open_and_fill(&inReal0[..m], &inReal1[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66650,17 +69310,18 @@ fn ride_mult(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal
 fn ride_natr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.NATR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.NATR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66679,7 +69340,24 @@ fn ride_natr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.NATR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.NATR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.natr_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.natr_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66733,16 +69411,17 @@ fn ride_natr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
 fn ride_nvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.NVI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.NVI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66759,7 +69438,24 @@ fn ride_nvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.NVI(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.NVI(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.nvi_open(&inClose[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.nvi_open_and_fill(&inClose[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66813,16 +69509,17 @@ fn ride_nvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
 fn ride_obv(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.OBV_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.OBV_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66839,7 +69536,24 @@ fn ride_obv(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolume
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.OBV(0, m - 1, &inReal[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.OBV(0, m - 1, &inReal[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.obv_open(&inReal[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.obv_open_and_fill(&inReal[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66893,15 +69607,16 @@ fn ride_obv(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolume
 fn ride_percentile(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInPercentile: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66919,7 +69634,24 @@ fn ride_percentile(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], o
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PERCENTILE(0, m - 1, &inReal[..m], optInTimePeriod, optInPercentile, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PERCENTILE(0, m - 1, &inReal[..m], optInTimePeriod, optInPercentile, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.percentile_open(&inReal[..m], optInTimePeriod, optInPercentile) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.percentile_open_and_fill(&inReal[..m], optInTimePeriod, optInPercentile, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -66973,15 +69705,16 @@ fn ride_percentile(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], o
 fn ride_percentrank(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PERCENTRANK_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PERCENTRANK_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -66998,7 +69731,24 @@ fn ride_percentrank(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PERCENTRANK(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PERCENTRANK(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.percentrank_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.percentrank_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67052,17 +69802,18 @@ fn ride_percentrank(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], 
 fn ride_plus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PLUS_DI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PLUS_DI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67081,7 +69832,24 @@ fn ride_plus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PLUS_DI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PLUS_DI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.plus_di_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.plus_di_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67135,16 +69903,17 @@ fn ride_plus_di(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
 fn ride_plus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PLUS_DM_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PLUS_DM_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67162,7 +69931,24 @@ fn ride_plus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PLUS_DM(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PLUS_DM(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.plus_dm_open(&inHigh[..m], &inLow[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.plus_dm_open_and_fill(&inHigh[..m], &inLow[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67216,15 +70002,16 @@ fn ride_plus_dm(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLo
 fn ride_ppo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67243,7 +70030,24 @@ fn ride_ppo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PPO(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PPO(0, m - 1, &inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ppo_open(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ppo_open_and_fill(&inReal[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67297,16 +70101,17 @@ fn ride_ppo(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFas
 fn ride_pvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PVI_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PVI_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67323,7 +70128,24 @@ fn ride_pvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PVI(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PVI(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.pvi_open(&inClose[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.pvi_open_and_fill(&inClose[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67377,15 +70199,16 @@ fn ride_pvi(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
 fn ride_pvo(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67404,7 +70227,24 @@ fn ride_pvo(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optInF
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PVO(0, m - 1, &inVolume[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PVO(0, m - 1, &inVolume[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.pvo_open(&inVolume[..m], optInFastPeriod, optInSlowPeriod, optInMAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.pvo_open_and_fill(&inVolume[..m], optInFastPeriod, optInSlowPeriod, optInMAType, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67458,16 +70298,17 @@ fn ride_pvo(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optInF
 fn ride_pvt(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.PVT_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.PVT_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67484,7 +70325,24 @@ fn ride_pvt(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.PVT(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.PVT(0, m - 1, &inClose[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.pvt_open(&inClose[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.pvt_open_and_fill(&inClose[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67538,16 +70396,17 @@ fn ride_pvt(core: &Core, params: &Value, endIdx: usize, inClose: &[f64], inVolum
 fn ride_qstick(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.QSTICK_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.QSTICK_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inOpen.len() < navail { navail = inOpen.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inOpen[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67565,7 +70424,24 @@ fn ride_qstick(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClo
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.QSTICK(0, m - 1, &inOpen[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.QSTICK(0, m - 1, &inOpen[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.qstick_open(&inOpen[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.qstick_open_and_fill(&inOpen[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67619,15 +70495,16 @@ fn ride_qstick(core: &Core, params: &Value, endIdx: usize, inOpen: &[f64], inClo
 fn ride_rma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.RMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.RMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67644,7 +70521,24 @@ fn ride_rma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.RMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.RMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rma_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rma_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67698,15 +70592,16 @@ fn ride_rma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_roc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ROC_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ROC_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67723,7 +70618,24 @@ fn ride_roc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ROC(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ROC(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.roc_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.roc_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67777,15 +70689,16 @@ fn ride_roc(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_rocp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ROCP_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ROCP_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67802,7 +70715,24 @@ fn ride_rocp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ROCP(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ROCP(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rocp_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rocp_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67856,15 +70786,16 @@ fn ride_rocp(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_rocr(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ROCR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ROCR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67881,7 +70812,24 @@ fn ride_rocr(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ROCR(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ROCR(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rocr_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rocr_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -67935,15 +70883,16 @@ fn ride_rocr(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_rocr100(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ROCR100_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ROCR100_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -67960,7 +70909,24 @@ fn ride_rocr100(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ROCR100(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ROCR100(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rocr100_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rocr100_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68014,15 +70980,16 @@ fn ride_rocr100(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optI
 fn ride_rsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.RSI_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.RSI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68039,7 +71006,24 @@ fn ride_rsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.RSI(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.RSI(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rsi_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rsi_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68093,15 +71077,16 @@ fn ride_rsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_rvi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInStdDevPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68119,7 +71104,24 @@ fn ride_rvi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.RVI(0, m - 1, &inReal[..m], optInTimePeriod, optInStdDevPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.RVI(0, m - 1, &inReal[..m], optInTimePeriod, optInStdDevPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rvi_open(&inReal[..m], optInTimePeriod, optInStdDevPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rvi_open_and_fill(&inReal[..m], optInTimePeriod, optInStdDevPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68173,15 +71175,16 @@ fn ride_rvi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_rvol(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.RVOL_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.RVOL_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68198,7 +71201,24 @@ fn ride_rvol(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optIn
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.RVOL(0, m - 1, &inVolume[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.RVOL(0, m - 1, &inVolume[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.rvol_open(&inVolume[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.rvol_open_and_fill(&inVolume[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68252,16 +71272,17 @@ fn ride_rvol(core: &Core, params: &Value, endIdx: usize, inVolume: &[f64], optIn
 fn ride_sar(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SAR_Lookback(optInAcceleration, optInMaximum) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SAR_Lookback(optInAcceleration, optInMaximum).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68280,7 +71301,24 @@ fn ride_sar(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SAR(0, m - 1, &inHigh[..m], &inLow[..m], optInAcceleration, optInMaximum, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SAR(0, m - 1, &inHigh[..m], &inLow[..m], optInAcceleration, optInMaximum, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sar_open(&inHigh[..m], &inLow[..m], optInAcceleration, optInMaximum) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sar_open_and_fill(&inHigh[..m], &inLow[..m], optInAcceleration, optInMaximum, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68334,16 +71372,17 @@ fn ride_sar(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_sarext(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68368,7 +71407,24 @@ fn ride_sarext(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SAREXT(0, m - 1, &inHigh[..m], &inLow[..m], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SAREXT(0, m - 1, &inHigh[..m], &inLow[..m], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sarext_open(&inHigh[..m], &inLow[..m], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sarext_open_and_fill(&inHigh[..m], &inLow[..m], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68422,15 +71478,16 @@ fn ride_sarext(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 fn ride_sin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SIN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SIN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68446,7 +71503,24 @@ fn ride_sin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SIN(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SIN(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sin_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sin_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68500,15 +71574,16 @@ fn ride_sin(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
 fn ride_sinh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SINH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SINH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68524,7 +71599,24 @@ fn ride_sinh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SINH(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SINH(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sinh_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sinh_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68578,15 +71670,16 @@ fn ride_sinh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_sma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68603,7 +71696,24 @@ fn ride_sma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sma_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sma_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68657,17 +71767,18 @@ fn ride_sma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_smi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68690,7 +71801,25 @@ fn ride_smi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.SMI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SMI(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.smi_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.smi_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68748,15 +71877,16 @@ fn ride_smi(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_sqrt(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SQRT_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SQRT_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68772,7 +71902,24 @@ fn ride_sqrt(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SQRT(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SQRT(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sqrt_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sqrt_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68826,15 +71973,16 @@ fn ride_sqrt(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_stddev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.STDDEV_Lookback(optInTimePeriod, optInNbDev) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.STDDEV_Lookback(optInTimePeriod, optInNbDev).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68852,7 +72000,24 @@ fn ride_stddev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.STDDEV(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDev, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.STDDEV(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDev, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.stddev_open(&inReal[..m], optInTimePeriod, optInNbDev) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.stddev_open_and_fill(&inReal[..m], optInTimePeriod, optInNbDev, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68906,17 +72071,18 @@ fn ride_stddev(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optIn
 fn ride_stoch(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -68940,7 +72106,25 @@ fn ride_stoch(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.STOCH(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.STOCH(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.stoch_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.stoch_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -68998,17 +72182,18 @@ fn ride_stoch(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 fn ride_stochf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69030,7 +72215,25 @@ fn ride_stochf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.STOCHF(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.STOCHF(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.stochf_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.stochf_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69088,15 +72291,16 @@ fn ride_stochf(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 fn ride_stochrsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69117,7 +72321,25 @@ fn ride_stochrsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.STOCHRSI(0, m - 1, &inReal[..m], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.STOCHRSI(0, m - 1, &inReal[..m], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.stochrsi_open(&inReal[..m], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.stochrsi_open_and_fill(&inReal[..m], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69175,16 +72397,17 @@ fn ride_stochrsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], opt
 fn ride_sub(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SUB_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SUB_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal0.len() < navail { navail = inReal0.len(); }
     if inReal1.len() < navail { navail = inReal1.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal0[..m]) || !ride_finite(&inReal1[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69201,7 +72424,24 @@ fn ride_sub(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SUB(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SUB(0, m - 1, &inReal0[..m], &inReal1[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sub_open(&inReal0[..m], &inReal1[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sub_open_and_fill(&inReal0[..m], &inReal1[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69255,15 +72495,16 @@ fn ride_sub(core: &Core, params: &Value, endIdx: usize, inReal0: &[f64], inReal1
 fn ride_sum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SUM_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SUM_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69280,7 +72521,24 @@ fn ride_sum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.SUM(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SUM(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.sum_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.sum_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69334,17 +72592,18 @@ fn ride_sum(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_supertrend(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, optInMultiplier: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69365,7 +72624,25 @@ fn ride_supertrend(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], i
 
     let mut rb0 = vec![0.0f64; m];
     let mut rib0 = vec![0i32; m];
-    let (beg, nb) = match core.SUPERTREND(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, &mut rb0, &mut rib0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.SUPERTREND(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, &mut rb0, &mut rib0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.supertrend_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fib0 = vec![0i32; m];
+            r.rc_fill = match core.supertrend_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, optInMultiplier, &mut fb0, &mut fib0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69423,15 +72700,16 @@ fn ride_supertrend(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], i
 fn ride_t3(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInVFactor: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.T3_Lookback(optInTimePeriod, optInVFactor) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.T3_Lookback(optInTimePeriod, optInVFactor).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69449,7 +72727,24 @@ fn ride_t3(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.T3(0, m - 1, &inReal[..m], optInTimePeriod, optInVFactor, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.T3(0, m - 1, &inReal[..m], optInTimePeriod, optInVFactor, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.t3_open(&inReal[..m], optInTimePeriod, optInVFactor) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.t3_open_and_fill(&inReal[..m], optInTimePeriod, optInVFactor, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69503,15 +72798,16 @@ fn ride_t3(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTime
 fn ride_tan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TAN_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TAN_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69527,7 +72823,24 @@ fn ride_tan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TAN(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TAN(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.tan_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.tan_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69581,15 +72894,16 @@ fn ride_tan(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &m
 fn ride_tanh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TANH_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TANH_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69605,7 +72919,24 @@ fn ride_tanh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TANH(0, m - 1, &inReal[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TANH(0, m - 1, &inReal[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.tanh_open(&inReal[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.tanh_open_and_fill(&inReal[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69659,15 +72990,16 @@ fn ride_tanh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
 fn ride_tema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TEMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TEMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69684,7 +73016,24 @@ fn ride_tema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.tema_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.tema_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69738,17 +73087,18 @@ fn ride_tema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_trange(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TRANGE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TRANGE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69766,7 +73116,24 @@ fn ride_trange(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TRANGE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TRANGE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.trange_open(&inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.trange_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69820,15 +73187,16 @@ fn ride_trange(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 fn ride_trima(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TRIMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TRIMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69845,7 +73213,24 @@ fn ride_trima(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInT
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TRIMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TRIMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.trima_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.trima_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69899,15 +73284,16 @@ fn ride_trima(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInT
 fn ride_trix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TRIX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TRIX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -69924,7 +73310,24 @@ fn ride_trix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TRIX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TRIX(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.trix_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.trix_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -69978,15 +73381,16 @@ fn ride_trix(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTi
 fn ride_tsf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TSF_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TSF_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70003,7 +73407,24 @@ fn ride_tsf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TSF(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TSF(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.tsf_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.tsf_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70057,15 +73478,16 @@ fn ride_tsf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_tsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFirstPeriod: i32, optInSecondPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70083,7 +73505,24 @@ fn ride_tsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFir
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TSI(0, m - 1, &inReal[..m], optInFirstPeriod, optInSecondPeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TSI(0, m - 1, &inReal[..m], optInFirstPeriod, optInSecondPeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.tsi_open(&inReal[..m], optInFirstPeriod, optInSecondPeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.tsi_open_and_fill(&inReal[..m], optInFirstPeriod, optInSecondPeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70137,17 +73576,18 @@ fn ride_tsi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInFir
 fn ride_typprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.TYPPRICE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.TYPPRICE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70165,7 +73605,24 @@ fn ride_typprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.TYPPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.TYPPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.typprice_open(&inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.typprice_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70219,17 +73676,18 @@ fn ride_typprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_ultosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70250,7 +73708,24 @@ fn ride_ultosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ULTOSC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ULTOSC(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.ultosc_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.ultosc_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70304,15 +73779,16 @@ fn ride_ultosc(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 fn ride_var(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.VAR_Lookback(optInTimePeriod, optInNbDev) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.VAR_Lookback(optInTimePeriod, optInNbDev).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70330,7 +73806,24 @@ fn ride_var(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.VAR(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDev, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.VAR(0, m - 1, &inReal[..m], optInTimePeriod, optInNbDev, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.var_open(&inReal[..m], optInTimePeriod, optInNbDev) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.var_open_and_fill(&inReal[..m], optInTimePeriod, optInNbDev, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70384,15 +73877,16 @@ fn ride_var(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_vhf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.VHF_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.VHF_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70409,7 +73903,24 @@ fn ride_vhf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.VHF(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.VHF(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.vhf_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.vhf_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70463,17 +73974,18 @@ fn ride_vhf(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_vortex(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.VORTEX_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.VORTEX_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70493,7 +74005,25 @@ fn ride_vortex(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 
     let mut rb0 = vec![0.0f64; m];
     let mut rb1 = vec![0.0f64; m];
-    let (beg, nb) = match core.VORTEX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.VORTEX(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0, &mut rb1) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.vortex_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            let mut fb1 = vec![0.0f64; m];
+            r.rc_fill = match core.vortex_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0, &mut fb1) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70551,18 +74081,19 @@ fn ride_vortex(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow
 fn ride_vwap(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.VWAP_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.VWAP_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70581,7 +74112,24 @@ fn ride_vwap(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.VWAP(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.VWAP(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.vwap_open(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.vwap_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &inVolume[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70635,16 +74183,17 @@ fn ride_vwap(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
 fn ride_vwma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.VWMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.VWMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
     if inVolume.len() < navail { navail = inVolume.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || !ride_finite(&inVolume[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70662,7 +74211,24 @@ fn ride_vwma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolum
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.VWMA(0, m - 1, &inReal[..m], &inVolume[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.VWMA(0, m - 1, &inReal[..m], &inVolume[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.vwma_open(&inReal[..m], &inVolume[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.vwma_open_and_fill(&inReal[..m], &inVolume[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70716,17 +74282,18 @@ fn ride_vwma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], inVolum
 fn ride_wad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.WAD_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.WAD_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70744,7 +74311,24 @@ fn ride_wad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.WAD(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.WAD(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.wad_open(&inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.wad_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70798,17 +74382,18 @@ fn ride_wad(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &
 fn ride_wclprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.WCLPRICE_Lookback() { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.WCLPRICE_Lookback().ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70826,7 +74411,24 @@ fn ride_wclprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.WCLPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.WCLPRICE(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.wclprice_open(&inHigh[..m], &inLow[..m], &inClose[..m], ) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.wclprice_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70880,17 +74482,18 @@ fn ride_wclprice(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inL
 fn ride_willr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.WILLR_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.WILLR_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
     if inLow.len() < navail { navail = inLow.len(); }
     if inClose.len() < navail { navail = inClose.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inHigh[..m]) || !ride_finite(&inLow[..m]) || !ride_finite(&inClose[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70909,7 +74512,24 @@ fn ride_willr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.WILLR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.WILLR(0, m - 1, &inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.willr_open(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.willr_open_and_fill(&inHigh[..m], &inLow[..m], &inClose[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -70963,15 +74583,16 @@ fn ride_willr(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow:
 fn ride_wma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.WMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.WMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -70988,7 +74609,24 @@ fn ride_wma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.WMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.WMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.wma_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.wma_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 
@@ -71042,15 +74680,16 @@ fn ride_wma(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_zlema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb = match core.ZLEMA_Lookback(optInTimePeriod) { Ok(v) => v, Err(_) => { r.skip = 1; r.emit(resp); return; } };
-    r.lb = lb as i32;
+    let lb_opt = core.ZLEMA_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inReal.len() < navail { navail = inReal.len(); }
-    let mut m = 2 * lb + 10;
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
     if m > navail { m = navail; }
     r.m = m as i32;
-    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }
-    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
     if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
 
     let mut key = fuzz_hash_init();
@@ -71067,7 +74706,24 @@ fn ride_zlema(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInT
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.ZLEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) { Ok(rr) => (rr.beg_idx, rr.count), Err(_) => { r.skip = 5; r.emit(resp); return; } };
+    let (beg, nb) = match core.ZLEMA(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.zlema_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.zlema_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
     if nb == 0 { r.skip = 5; r.emit(resp); return; }
     if beg != lb { r.skip = 6; r.emit(resp); return; }
 

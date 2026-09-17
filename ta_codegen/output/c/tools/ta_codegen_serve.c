@@ -57740,21 +57740,21 @@ static void sr_AC( const char *json, int endIdx, int optInFastPeriod, int optInS
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AC_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -57776,7 +57776,27 @@ static void sr_AC( const char *json, int endIdx, int optInFastPeriod, int optInS
     }
 
     srRc = TA_AC( 0, srM - 1, g_inBuf0, g_inBuf1, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AC_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srO0 );
+        if( srHR ) TA_AC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AC_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -57832,8 +57852,10 @@ static void sr_AC( const char *json, int endIdx, int optInFastPeriod, int optInS
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -57847,22 +57869,22 @@ static void sr_ACCBANDS( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ACCBANDS_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -57883,7 +57905,29 @@ static void sr_ACCBANDS( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_ACCBANDS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ACCBANDS_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ACCBANDS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_ACCBANDS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ACCBANDS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_ACCBANDS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -57947,8 +57991,10 @@ static void sr_ACCBANDS( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -57962,20 +58008,20 @@ static void sr_ACOS( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ACOS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -57993,7 +58039,27 @@ static void sr_ACOS( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_ACOS( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ACOS_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ACOS_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_ACOS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ACOS_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ACOS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58049,8 +58115,10 @@ static void sr_ACOS( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58064,23 +58132,23 @@ static void sr_AD( const char *json, int endIdx, char *resp, int resp_size, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58101,7 +58169,27 @@ static void sr_AD( const char *json, int endIdx, char *resp, int resp_size, int 
     }
 
     srRc = TA_AD( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AD_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AD_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_AD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58157,8 +58245,10 @@ static void sr_AD( const char *json, int endIdx, char *resp, int resp_size, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58172,21 +58262,21 @@ static void sr_ADD( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ADD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58205,7 +58295,27 @@ static void sr_ADD( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_ADD( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ADD_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ADD_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_ADD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ADD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ADD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58261,8 +58371,10 @@ static void sr_ADD( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58276,23 +58388,23 @@ static void sr_ADOSC( const char *json, int endIdx, int optInFastPeriod, int opt
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ADOSC_Lookback( optInFastPeriod, optInSlowPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58315,7 +58427,27 @@ static void sr_ADOSC( const char *json, int endIdx, int optInFastPeriod, int opt
     }
 
     srRc = TA_ADOSC( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInFastPeriod, optInSlowPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ADOSC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ADOSC_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInFastPeriod, optInSlowPeriod, &srO0 );
+        if( srHR ) TA_ADOSC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ADOSC_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInFastPeriod, optInSlowPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ADOSC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58371,8 +58503,10 @@ static void sr_ADOSC( const char *json, int endIdx, int optInFastPeriod, int opt
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58386,21 +58520,21 @@ static void sr_ADR( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ADR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58420,7 +58554,27 @@ static void sr_ADR( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_ADR( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ADR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ADR_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ADR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ADR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ADR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58476,8 +58630,10 @@ static void sr_ADR( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58491,22 +58647,22 @@ static void sr_ADX( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ADX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58527,7 +58683,27 @@ static void sr_ADX( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_ADX( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ADX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ADX_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ADX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ADX_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ADX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58583,8 +58759,10 @@ static void sr_ADX( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58598,22 +58776,22 @@ static void sr_ADXR( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ADXR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58634,7 +58812,27 @@ static void sr_ADXR( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_ADXR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ADXR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ADXR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ADXR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ADXR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ADXR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58690,8 +58888,10 @@ static void sr_ADXR( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58705,21 +58905,21 @@ static void sr_AO( const char *json, int endIdx, int optInFastPeriod, int optInS
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AO_Lookback( optInFastPeriod, optInSlowPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58740,7 +58940,27 @@ static void sr_AO( const char *json, int endIdx, int optInFastPeriod, int optInS
     }
 
     srRc = TA_AO( 0, srM - 1, g_inBuf0, g_inBuf1, optInFastPeriod, optInSlowPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AO_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, &srO0 );
+        if( srHR ) TA_AO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AO_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58796,8 +59016,10 @@ static void sr_AO( const char *json, int endIdx, int optInFastPeriod, int optInS
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58811,20 +59033,20 @@ static void sr_APO( const char *json, int endIdx, int optInFastPeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_APO_Lookback( optInFastPeriod, optInSlowPeriod, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58845,7 +59067,27 @@ static void sr_APO( const char *json, int endIdx, int optInFastPeriod, int optIn
     }
 
     srRc = TA_APO( 0, srM - 1, g_inBuf0, optInFastPeriod, optInSlowPeriod, optInMAType, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_APO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_APO_Open( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srO0 );
+        if( srHR ) TA_APO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_APO_OpenAndFill( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_APO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -58901,8 +59143,10 @@ static void sr_APO( const char *json, int endIdx, int optInFastPeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -58916,21 +59160,21 @@ static void sr_AROON( const char *json, int endIdx, int optInTimePeriod, char *r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AROON_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -58950,7 +59194,28 @@ static void sr_AROON( const char *json, int endIdx, int optInTimePeriod, char *r
     }
 
     srRc = TA_AROON( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AROON_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AROON_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0, &srO1 );
+        if( srHR ) TA_AROON_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AROON_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_AROON_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59010,8 +59275,10 @@ static void sr_AROON( const char *json, int endIdx, int optInTimePeriod, char *r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59025,21 +59292,21 @@ static void sr_AROONOSC( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AROONOSC_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59059,7 +59326,27 @@ static void sr_AROONOSC( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_AROONOSC( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AROONOSC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AROONOSC_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_AROONOSC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AROONOSC_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AROONOSC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59115,8 +59402,10 @@ static void sr_AROONOSC( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59130,20 +59419,20 @@ static void sr_ASIN( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ASIN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59161,7 +59450,27 @@ static void sr_ASIN( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_ASIN( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ASIN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ASIN_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_ASIN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ASIN_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ASIN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59217,8 +59526,10 @@ static void sr_ASIN( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59232,20 +59543,20 @@ static void sr_ATAN( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ATAN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59263,7 +59574,27 @@ static void sr_ATAN( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_ATAN( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ATAN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ATAN_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_ATAN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ATAN_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ATAN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59319,8 +59650,10 @@ static void sr_ATAN( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59334,22 +59667,22 @@ static void sr_ATR( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ATR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59370,7 +59703,27 @@ static void sr_ATR( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_ATR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ATR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ATR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ATR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ATR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ATR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59426,8 +59779,10 @@ static void sr_ATR( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59441,20 +59796,20 @@ static void sr_AVGDEV( const char *json, int endIdx, int optInTimePeriod, char *
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AVGDEV_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59473,7 +59828,27 @@ static void sr_AVGDEV( const char *json, int endIdx, int optInTimePeriod, char *
     }
 
     srRc = TA_AVGDEV( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AVGDEV_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AVGDEV_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_AVGDEV_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AVGDEV_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AVGDEV_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59529,8 +59904,10 @@ static void sr_AVGDEV( const char *json, int endIdx, int optInTimePeriod, char *
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59544,23 +59921,23 @@ static void sr_AVGPRICE( const char *json, int endIdx, char *resp, int resp_size
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_AVGPRICE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59581,7 +59958,27 @@ static void sr_AVGPRICE( const char *json, int endIdx, char *resp, int resp_size
     }
 
     srRc = TA_AVGPRICE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_AVGPRICE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_AVGPRICE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_AVGPRICE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_AVGPRICE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_AVGPRICE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59637,8 +60034,10 @@ static void sr_AVGPRICE( const char *json, int endIdx, char *resp, int resp_size
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59652,20 +60051,20 @@ static void sr_BBANDS( const char *json, int endIdx, int optInTimePeriod, double
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_BBANDS_Lookback( optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59687,7 +60086,29 @@ static void sr_BBANDS( const char *json, int endIdx, int optInTimePeriod, double
     }
 
     srRc = TA_BBANDS( 0, srM - 1, g_inBuf0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_BBANDS_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_BBANDS_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_BBANDS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_BBANDS_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_BBANDS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59751,8 +60172,10 @@ static void sr_BBANDS( const char *json, int endIdx, int optInTimePeriod, double
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59766,21 +60189,21 @@ static void sr_BETA( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_BETA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59800,7 +60223,27 @@ static void sr_BETA( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_BETA( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_BETA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_BETA_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_BETA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_BETA_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_BETA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59856,8 +60299,10 @@ static void sr_BETA( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59871,23 +60316,23 @@ static void sr_BOP( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_BOP_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -59908,7 +60353,27 @@ static void sr_BOP( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_BOP( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_BOP_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_BOP_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_BOP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_BOP_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_BOP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -59964,8 +60429,10 @@ static void sr_BOP( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -59979,22 +60446,22 @@ static void sr_CCI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CCI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60015,7 +60482,27 @@ static void sr_CCI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_CCI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CCI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CCI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CCI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CCI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CCI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60071,8 +60558,10 @@ static void sr_CCI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60086,23 +60575,23 @@ static void sr_CDL2CROWS( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL2CROWS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60123,7 +60612,27 @@ static void sr_CDL2CROWS( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDL2CROWS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL2CROWS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL2CROWS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL2CROWS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL2CROWS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL2CROWS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60179,8 +60688,10 @@ static void sr_CDL2CROWS( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60194,23 +60705,23 @@ static void sr_CDL3BLACKCROWS( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3BLACKCROWS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60231,7 +60742,27 @@ static void sr_CDL3BLACKCROWS( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDL3BLACKCROWS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3BLACKCROWS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3BLACKCROWS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3BLACKCROWS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3BLACKCROWS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3BLACKCROWS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60287,8 +60818,10 @@ static void sr_CDL3BLACKCROWS( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60302,23 +60835,23 @@ static void sr_CDL3INSIDE( const char *json, int endIdx, char *resp, int resp_si
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3INSIDE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60339,7 +60872,27 @@ static void sr_CDL3INSIDE( const char *json, int endIdx, char *resp, int resp_si
     }
 
     srRc = TA_CDL3INSIDE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3INSIDE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3INSIDE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3INSIDE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3INSIDE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3INSIDE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60395,8 +60948,10 @@ static void sr_CDL3INSIDE( const char *json, int endIdx, char *resp, int resp_si
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60410,23 +60965,23 @@ static void sr_CDL3LINESTRIKE( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3LINESTRIKE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60447,7 +61002,27 @@ static void sr_CDL3LINESTRIKE( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDL3LINESTRIKE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3LINESTRIKE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3LINESTRIKE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3LINESTRIKE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3LINESTRIKE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3LINESTRIKE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60503,8 +61078,10 @@ static void sr_CDL3LINESTRIKE( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60518,23 +61095,23 @@ static void sr_CDL3OUTSIDE( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3OUTSIDE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60555,7 +61132,27 @@ static void sr_CDL3OUTSIDE( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDL3OUTSIDE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3OUTSIDE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3OUTSIDE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3OUTSIDE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3OUTSIDE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3OUTSIDE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60611,8 +61208,10 @@ static void sr_CDL3OUTSIDE( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60626,23 +61225,23 @@ static void sr_CDL3STARSINSOUTH( const char *json, int endIdx, char *resp, int r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3STARSINSOUTH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60663,7 +61262,27 @@ static void sr_CDL3STARSINSOUTH( const char *json, int endIdx, char *resp, int r
     }
 
     srRc = TA_CDL3STARSINSOUTH( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3STARSINSOUTH_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3STARSINSOUTH_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3STARSINSOUTH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3STARSINSOUTH_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3STARSINSOUTH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60719,8 +61338,10 @@ static void sr_CDL3STARSINSOUTH( const char *json, int endIdx, char *resp, int r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60734,23 +61355,23 @@ static void sr_CDL3WHITESOLDIERS( const char *json, int endIdx, char *resp, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDL3WHITESOLDIERS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60771,7 +61392,27 @@ static void sr_CDL3WHITESOLDIERS( const char *json, int endIdx, char *resp, int 
     }
 
     srRc = TA_CDL3WHITESOLDIERS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDL3WHITESOLDIERS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDL3WHITESOLDIERS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDL3WHITESOLDIERS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDL3WHITESOLDIERS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDL3WHITESOLDIERS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60827,8 +61468,10 @@ static void sr_CDL3WHITESOLDIERS( const char *json, int endIdx, char *resp, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60842,23 +61485,23 @@ static void sr_CDLABANDONEDBABY( const char *json, int endIdx, double optInPenet
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLABANDONEDBABY_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60880,7 +61523,27 @@ static void sr_CDLABANDONEDBABY( const char *json, int endIdx, double optInPenet
     }
 
     srRc = TA_CDLABANDONEDBABY( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLABANDONEDBABY_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLABANDONEDBABY_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLABANDONEDBABY_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLABANDONEDBABY_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLABANDONEDBABY_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -60936,8 +61599,10 @@ static void sr_CDLABANDONEDBABY( const char *json, int endIdx, double optInPenet
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -60951,23 +61616,23 @@ static void sr_CDLADVANCEBLOCK( const char *json, int endIdx, char *resp, int re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLADVANCEBLOCK_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -60988,7 +61653,27 @@ static void sr_CDLADVANCEBLOCK( const char *json, int endIdx, char *resp, int re
     }
 
     srRc = TA_CDLADVANCEBLOCK( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLADVANCEBLOCK_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLADVANCEBLOCK_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLADVANCEBLOCK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLADVANCEBLOCK_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLADVANCEBLOCK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61044,8 +61729,10 @@ static void sr_CDLADVANCEBLOCK( const char *json, int endIdx, char *resp, int re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61059,23 +61746,23 @@ static void sr_CDLBELTHOLD( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLBELTHOLD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61096,7 +61783,27 @@ static void sr_CDLBELTHOLD( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLBELTHOLD( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLBELTHOLD_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLBELTHOLD_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLBELTHOLD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLBELTHOLD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLBELTHOLD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61152,8 +61859,10 @@ static void sr_CDLBELTHOLD( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61167,23 +61876,23 @@ static void sr_CDLBREAKAWAY( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLBREAKAWAY_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61204,7 +61913,27 @@ static void sr_CDLBREAKAWAY( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_CDLBREAKAWAY( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLBREAKAWAY_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLBREAKAWAY_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLBREAKAWAY_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLBREAKAWAY_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLBREAKAWAY_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61260,8 +61989,10 @@ static void sr_CDLBREAKAWAY( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61275,23 +62006,23 @@ static void sr_CDLCLOSINGMARUBOZU( const char *json, int endIdx, char *resp, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLCLOSINGMARUBOZU_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61312,7 +62043,27 @@ static void sr_CDLCLOSINGMARUBOZU( const char *json, int endIdx, char *resp, int
     }
 
     srRc = TA_CDLCLOSINGMARUBOZU( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLCLOSINGMARUBOZU_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLCLOSINGMARUBOZU_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLCLOSINGMARUBOZU_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLCLOSINGMARUBOZU_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLCLOSINGMARUBOZU_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61368,8 +62119,10 @@ static void sr_CDLCLOSINGMARUBOZU( const char *json, int endIdx, char *resp, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61383,23 +62136,23 @@ static void sr_CDLCONCEALBABYSWALL( const char *json, int endIdx, char *resp, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLCONCEALBABYSWALL_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61420,7 +62173,27 @@ static void sr_CDLCONCEALBABYSWALL( const char *json, int endIdx, char *resp, in
     }
 
     srRc = TA_CDLCONCEALBABYSWALL( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLCONCEALBABYSWALL_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLCONCEALBABYSWALL_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLCONCEALBABYSWALL_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLCONCEALBABYSWALL_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLCONCEALBABYSWALL_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61476,8 +62249,10 @@ static void sr_CDLCONCEALBABYSWALL( const char *json, int endIdx, char *resp, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61491,23 +62266,23 @@ static void sr_CDLCOUNTERATTACK( const char *json, int endIdx, char *resp, int r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLCOUNTERATTACK_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61528,7 +62303,27 @@ static void sr_CDLCOUNTERATTACK( const char *json, int endIdx, char *resp, int r
     }
 
     srRc = TA_CDLCOUNTERATTACK( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLCOUNTERATTACK_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLCOUNTERATTACK_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLCOUNTERATTACK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLCOUNTERATTACK_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLCOUNTERATTACK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61584,8 +62379,10 @@ static void sr_CDLCOUNTERATTACK( const char *json, int endIdx, char *resp, int r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61599,23 +62396,23 @@ static void sr_CDLDARKCLOUDCOVER( const char *json, int endIdx, double optInPene
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLDARKCLOUDCOVER_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61637,7 +62434,27 @@ static void sr_CDLDARKCLOUDCOVER( const char *json, int endIdx, double optInPene
     }
 
     srRc = TA_CDLDARKCLOUDCOVER( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLDARKCLOUDCOVER_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLDARKCLOUDCOVER_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLDARKCLOUDCOVER_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLDARKCLOUDCOVER_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLDARKCLOUDCOVER_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61693,8 +62510,10 @@ static void sr_CDLDARKCLOUDCOVER( const char *json, int endIdx, double optInPene
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61708,23 +62527,23 @@ static void sr_CDLDOJI( const char *json, int endIdx, char *resp, int resp_size,
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLDOJI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61745,7 +62564,27 @@ static void sr_CDLDOJI( const char *json, int endIdx, char *resp, int resp_size,
     }
 
     srRc = TA_CDLDOJI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLDOJI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLDOJI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLDOJI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLDOJI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLDOJI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61801,8 +62640,10 @@ static void sr_CDLDOJI( const char *json, int endIdx, char *resp, int resp_size,
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61816,23 +62657,23 @@ static void sr_CDLDOJISTAR( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLDOJISTAR_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61853,7 +62694,27 @@ static void sr_CDLDOJISTAR( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLDOJISTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLDOJISTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLDOJISTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLDOJISTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLDOJISTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLDOJISTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -61909,8 +62770,10 @@ static void sr_CDLDOJISTAR( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -61924,23 +62787,23 @@ static void sr_CDLDRAGONFLYDOJI( const char *json, int endIdx, char *resp, int r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLDRAGONFLYDOJI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -61961,7 +62824,27 @@ static void sr_CDLDRAGONFLYDOJI( const char *json, int endIdx, char *resp, int r
     }
 
     srRc = TA_CDLDRAGONFLYDOJI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLDRAGONFLYDOJI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLDRAGONFLYDOJI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLDRAGONFLYDOJI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLDRAGONFLYDOJI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLDRAGONFLYDOJI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62017,8 +62900,10 @@ static void sr_CDLDRAGONFLYDOJI( const char *json, int endIdx, char *resp, int r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62032,23 +62917,23 @@ static void sr_CDLENGULFING( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLENGULFING_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62069,7 +62954,27 @@ static void sr_CDLENGULFING( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_CDLENGULFING( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLENGULFING_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLENGULFING_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLENGULFING_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLENGULFING_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLENGULFING_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62125,8 +63030,10 @@ static void sr_CDLENGULFING( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62140,23 +63047,23 @@ static void sr_CDLEVENINGDOJISTAR( const char *json, int endIdx, double optInPen
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLEVENINGDOJISTAR_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62178,7 +63085,27 @@ static void sr_CDLEVENINGDOJISTAR( const char *json, int endIdx, double optInPen
     }
 
     srRc = TA_CDLEVENINGDOJISTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLEVENINGDOJISTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLEVENINGDOJISTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLEVENINGDOJISTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLEVENINGDOJISTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLEVENINGDOJISTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62234,8 +63161,10 @@ static void sr_CDLEVENINGDOJISTAR( const char *json, int endIdx, double optInPen
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62249,23 +63178,23 @@ static void sr_CDLEVENINGSTAR( const char *json, int endIdx, double optInPenetra
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLEVENINGSTAR_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62287,7 +63216,27 @@ static void sr_CDLEVENINGSTAR( const char *json, int endIdx, double optInPenetra
     }
 
     srRc = TA_CDLEVENINGSTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLEVENINGSTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLEVENINGSTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLEVENINGSTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLEVENINGSTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLEVENINGSTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62343,8 +63292,10 @@ static void sr_CDLEVENINGSTAR( const char *json, int endIdx, double optInPenetra
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62358,23 +63309,23 @@ static void sr_CDLGAPSIDESIDEWHITE( const char *json, int endIdx, char *resp, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLGAPSIDESIDEWHITE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62395,7 +63346,27 @@ static void sr_CDLGAPSIDESIDEWHITE( const char *json, int endIdx, char *resp, in
     }
 
     srRc = TA_CDLGAPSIDESIDEWHITE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLGAPSIDESIDEWHITE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLGAPSIDESIDEWHITE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLGAPSIDESIDEWHITE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLGAPSIDESIDEWHITE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLGAPSIDESIDEWHITE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62451,8 +63422,10 @@ static void sr_CDLGAPSIDESIDEWHITE( const char *json, int endIdx, char *resp, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62466,23 +63439,23 @@ static void sr_CDLGRAVESTONEDOJI( const char *json, int endIdx, char *resp, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLGRAVESTONEDOJI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62503,7 +63476,27 @@ static void sr_CDLGRAVESTONEDOJI( const char *json, int endIdx, char *resp, int 
     }
 
     srRc = TA_CDLGRAVESTONEDOJI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLGRAVESTONEDOJI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLGRAVESTONEDOJI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLGRAVESTONEDOJI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLGRAVESTONEDOJI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLGRAVESTONEDOJI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62559,8 +63552,10 @@ static void sr_CDLGRAVESTONEDOJI( const char *json, int endIdx, char *resp, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62574,23 +63569,23 @@ static void sr_CDLHAMMER( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHAMMER_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62611,7 +63606,27 @@ static void sr_CDLHAMMER( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDLHAMMER( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHAMMER_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHAMMER_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHAMMER_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHAMMER_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHAMMER_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62667,8 +63682,10 @@ static void sr_CDLHAMMER( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62682,23 +63699,23 @@ static void sr_CDLHANGINGMAN( const char *json, int endIdx, char *resp, int resp
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHANGINGMAN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62719,7 +63736,27 @@ static void sr_CDLHANGINGMAN( const char *json, int endIdx, char *resp, int resp
     }
 
     srRc = TA_CDLHANGINGMAN( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHANGINGMAN_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHANGINGMAN_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHANGINGMAN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHANGINGMAN_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHANGINGMAN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62775,8 +63812,10 @@ static void sr_CDLHANGINGMAN( const char *json, int endIdx, char *resp, int resp
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62790,23 +63829,23 @@ static void sr_CDLHARAMI( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHARAMI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62827,7 +63866,27 @@ static void sr_CDLHARAMI( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDLHARAMI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHARAMI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHARAMI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHARAMI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHARAMI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHARAMI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62883,8 +63942,10 @@ static void sr_CDLHARAMI( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -62898,23 +63959,23 @@ static void sr_CDLHARAMICROSS( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHARAMICROSS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -62935,7 +63996,27 @@ static void sr_CDLHARAMICROSS( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDLHARAMICROSS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHARAMICROSS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHARAMICROSS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHARAMICROSS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHARAMICROSS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHARAMICROSS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -62991,8 +64072,10 @@ static void sr_CDLHARAMICROSS( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63006,23 +64089,23 @@ static void sr_CDLHIGHWAVE( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHIGHWAVE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63043,7 +64126,27 @@ static void sr_CDLHIGHWAVE( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLHIGHWAVE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHIGHWAVE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHIGHWAVE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHIGHWAVE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHIGHWAVE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHIGHWAVE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63099,8 +64202,10 @@ static void sr_CDLHIGHWAVE( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63114,23 +64219,23 @@ static void sr_CDLHIKKAKE( const char *json, int endIdx, char *resp, int resp_si
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHIKKAKE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63151,7 +64256,27 @@ static void sr_CDLHIKKAKE( const char *json, int endIdx, char *resp, int resp_si
     }
 
     srRc = TA_CDLHIKKAKE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHIKKAKE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHIKKAKE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHIKKAKE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHIKKAKE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHIKKAKE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63207,8 +64332,10 @@ static void sr_CDLHIKKAKE( const char *json, int endIdx, char *resp, int resp_si
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63222,23 +64349,23 @@ static void sr_CDLHIKKAKEMOD( const char *json, int endIdx, char *resp, int resp
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHIKKAKEMOD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63259,7 +64386,27 @@ static void sr_CDLHIKKAKEMOD( const char *json, int endIdx, char *resp, int resp
     }
 
     srRc = TA_CDLHIKKAKEMOD( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHIKKAKEMOD_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHIKKAKEMOD_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHIKKAKEMOD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHIKKAKEMOD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHIKKAKEMOD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63315,8 +64462,10 @@ static void sr_CDLHIKKAKEMOD( const char *json, int endIdx, char *resp, int resp
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63330,23 +64479,23 @@ static void sr_CDLHOMINGPIGEON( const char *json, int endIdx, char *resp, int re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLHOMINGPIGEON_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63367,7 +64516,27 @@ static void sr_CDLHOMINGPIGEON( const char *json, int endIdx, char *resp, int re
     }
 
     srRc = TA_CDLHOMINGPIGEON( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLHOMINGPIGEON_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLHOMINGPIGEON_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLHOMINGPIGEON_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLHOMINGPIGEON_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLHOMINGPIGEON_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63423,8 +64592,10 @@ static void sr_CDLHOMINGPIGEON( const char *json, int endIdx, char *resp, int re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63438,23 +64609,23 @@ static void sr_CDLIDENTICAL3CROWS( const char *json, int endIdx, char *resp, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLIDENTICAL3CROWS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63475,7 +64646,27 @@ static void sr_CDLIDENTICAL3CROWS( const char *json, int endIdx, char *resp, int
     }
 
     srRc = TA_CDLIDENTICAL3CROWS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLIDENTICAL3CROWS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLIDENTICAL3CROWS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLIDENTICAL3CROWS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLIDENTICAL3CROWS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLIDENTICAL3CROWS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63531,8 +64722,10 @@ static void sr_CDLIDENTICAL3CROWS( const char *json, int endIdx, char *resp, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63546,23 +64739,23 @@ static void sr_CDLINNECK( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLINNECK_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63583,7 +64776,27 @@ static void sr_CDLINNECK( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDLINNECK( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLINNECK_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLINNECK_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLINNECK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLINNECK_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLINNECK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63639,8 +64852,10 @@ static void sr_CDLINNECK( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63654,23 +64869,23 @@ static void sr_CDLINVERTEDHAMMER( const char *json, int endIdx, char *resp, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLINVERTEDHAMMER_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63691,7 +64906,27 @@ static void sr_CDLINVERTEDHAMMER( const char *json, int endIdx, char *resp, int 
     }
 
     srRc = TA_CDLINVERTEDHAMMER( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLINVERTEDHAMMER_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLINVERTEDHAMMER_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLINVERTEDHAMMER_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLINVERTEDHAMMER_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLINVERTEDHAMMER_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63747,8 +64982,10 @@ static void sr_CDLINVERTEDHAMMER( const char *json, int endIdx, char *resp, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63762,23 +64999,23 @@ static void sr_CDLKICKING( const char *json, int endIdx, char *resp, int resp_si
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLKICKING_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63799,7 +65036,27 @@ static void sr_CDLKICKING( const char *json, int endIdx, char *resp, int resp_si
     }
 
     srRc = TA_CDLKICKING( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLKICKING_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLKICKING_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLKICKING_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLKICKING_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLKICKING_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63855,8 +65112,10 @@ static void sr_CDLKICKING( const char *json, int endIdx, char *resp, int resp_si
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63870,23 +65129,23 @@ static void sr_CDLKICKINGBYLENGTH( const char *json, int endIdx, char *resp, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLKICKINGBYLENGTH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -63907,7 +65166,27 @@ static void sr_CDLKICKINGBYLENGTH( const char *json, int endIdx, char *resp, int
     }
 
     srRc = TA_CDLKICKINGBYLENGTH( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLKICKINGBYLENGTH_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLKICKINGBYLENGTH_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLKICKINGBYLENGTH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLKICKINGBYLENGTH_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLKICKINGBYLENGTH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -63963,8 +65242,10 @@ static void sr_CDLKICKINGBYLENGTH( const char *json, int endIdx, char *resp, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -63978,23 +65259,23 @@ static void sr_CDLLADDERBOTTOM( const char *json, int endIdx, char *resp, int re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLLADDERBOTTOM_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64015,7 +65296,27 @@ static void sr_CDLLADDERBOTTOM( const char *json, int endIdx, char *resp, int re
     }
 
     srRc = TA_CDLLADDERBOTTOM( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLLADDERBOTTOM_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLLADDERBOTTOM_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLLADDERBOTTOM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLLADDERBOTTOM_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLLADDERBOTTOM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64071,8 +65372,10 @@ static void sr_CDLLADDERBOTTOM( const char *json, int endIdx, char *resp, int re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64086,23 +65389,23 @@ static void sr_CDLLONGLEGGEDDOJI( const char *json, int endIdx, char *resp, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLLONGLEGGEDDOJI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64123,7 +65426,27 @@ static void sr_CDLLONGLEGGEDDOJI( const char *json, int endIdx, char *resp, int 
     }
 
     srRc = TA_CDLLONGLEGGEDDOJI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLLONGLEGGEDDOJI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLLONGLEGGEDDOJI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLLONGLEGGEDDOJI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLLONGLEGGEDDOJI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLLONGLEGGEDDOJI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64179,8 +65502,10 @@ static void sr_CDLLONGLEGGEDDOJI( const char *json, int endIdx, char *resp, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64194,23 +65519,23 @@ static void sr_CDLLONGLINE( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLLONGLINE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64231,7 +65556,27 @@ static void sr_CDLLONGLINE( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLLONGLINE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLLONGLINE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLLONGLINE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLLONGLINE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLLONGLINE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLLONGLINE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64287,8 +65632,10 @@ static void sr_CDLLONGLINE( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64302,23 +65649,23 @@ static void sr_CDLMARUBOZU( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLMARUBOZU_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64339,7 +65686,27 @@ static void sr_CDLMARUBOZU( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLMARUBOZU( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLMARUBOZU_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLMARUBOZU_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLMARUBOZU_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLMARUBOZU_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLMARUBOZU_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64395,8 +65762,10 @@ static void sr_CDLMARUBOZU( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64410,23 +65779,23 @@ static void sr_CDLMATCHINGLOW( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLMATCHINGLOW_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64447,7 +65816,27 @@ static void sr_CDLMATCHINGLOW( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDLMATCHINGLOW( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLMATCHINGLOW_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLMATCHINGLOW_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLMATCHINGLOW_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLMATCHINGLOW_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLMATCHINGLOW_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64503,8 +65892,10 @@ static void sr_CDLMATCHINGLOW( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64518,23 +65909,23 @@ static void sr_CDLMATHOLD( const char *json, int endIdx, double optInPenetration
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLMATHOLD_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64556,7 +65947,27 @@ static void sr_CDLMATHOLD( const char *json, int endIdx, double optInPenetration
     }
 
     srRc = TA_CDLMATHOLD( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLMATHOLD_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLMATHOLD_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLMATHOLD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLMATHOLD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLMATHOLD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64612,8 +66023,10 @@ static void sr_CDLMATHOLD( const char *json, int endIdx, double optInPenetration
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64627,23 +66040,23 @@ static void sr_CDLMORNINGDOJISTAR( const char *json, int endIdx, double optInPen
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLMORNINGDOJISTAR_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64665,7 +66078,27 @@ static void sr_CDLMORNINGDOJISTAR( const char *json, int endIdx, double optInPen
     }
 
     srRc = TA_CDLMORNINGDOJISTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLMORNINGDOJISTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLMORNINGDOJISTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLMORNINGDOJISTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLMORNINGDOJISTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLMORNINGDOJISTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64721,8 +66154,10 @@ static void sr_CDLMORNINGDOJISTAR( const char *json, int endIdx, double optInPen
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64736,23 +66171,23 @@ static void sr_CDLMORNINGSTAR( const char *json, int endIdx, double optInPenetra
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLMORNINGSTAR_Lookback( optInPenetration );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64774,7 +66209,27 @@ static void sr_CDLMORNINGSTAR( const char *json, int endIdx, double optInPenetra
     }
 
     srRc = TA_CDLMORNINGSTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInPenetration, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLMORNINGSTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLMORNINGSTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srO0 );
+        if( srHR ) TA_CDLMORNINGSTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLMORNINGSTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInPenetration, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLMORNINGSTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64830,8 +66285,10 @@ static void sr_CDLMORNINGSTAR( const char *json, int endIdx, double optInPenetra
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64845,23 +66302,23 @@ static void sr_CDLONNECK( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLONNECK_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64882,7 +66339,27 @@ static void sr_CDLONNECK( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDLONNECK( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLONNECK_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLONNECK_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLONNECK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLONNECK_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLONNECK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -64938,8 +66415,10 @@ static void sr_CDLONNECK( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -64953,23 +66432,23 @@ static void sr_CDLPIERCING( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLPIERCING_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -64990,7 +66469,27 @@ static void sr_CDLPIERCING( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_CDLPIERCING( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLPIERCING_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLPIERCING_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLPIERCING_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLPIERCING_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLPIERCING_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65046,8 +66545,10 @@ static void sr_CDLPIERCING( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65061,23 +66562,23 @@ static void sr_CDLRICKSHAWMAN( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLRICKSHAWMAN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65098,7 +66599,27 @@ static void sr_CDLRICKSHAWMAN( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDLRICKSHAWMAN( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLRICKSHAWMAN_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLRICKSHAWMAN_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLRICKSHAWMAN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLRICKSHAWMAN_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLRICKSHAWMAN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65154,8 +66675,10 @@ static void sr_CDLRICKSHAWMAN( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65169,23 +66692,23 @@ static void sr_CDLRISEFALL3METHODS( const char *json, int endIdx, char *resp, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLRISEFALL3METHODS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65206,7 +66729,27 @@ static void sr_CDLRISEFALL3METHODS( const char *json, int endIdx, char *resp, in
     }
 
     srRc = TA_CDLRISEFALL3METHODS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLRISEFALL3METHODS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLRISEFALL3METHODS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLRISEFALL3METHODS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLRISEFALL3METHODS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLRISEFALL3METHODS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65262,8 +66805,10 @@ static void sr_CDLRISEFALL3METHODS( const char *json, int endIdx, char *resp, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65277,23 +66822,23 @@ static void sr_CDLSEPARATINGLINES( const char *json, int endIdx, char *resp, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSEPARATINGLINES_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65314,7 +66859,27 @@ static void sr_CDLSEPARATINGLINES( const char *json, int endIdx, char *resp, int
     }
 
     srRc = TA_CDLSEPARATINGLINES( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSEPARATINGLINES_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSEPARATINGLINES_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSEPARATINGLINES_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSEPARATINGLINES_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSEPARATINGLINES_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65370,8 +66935,10 @@ static void sr_CDLSEPARATINGLINES( const char *json, int endIdx, char *resp, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65385,23 +66952,23 @@ static void sr_CDLSHOOTINGSTAR( const char *json, int endIdx, char *resp, int re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSHOOTINGSTAR_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65422,7 +66989,27 @@ static void sr_CDLSHOOTINGSTAR( const char *json, int endIdx, char *resp, int re
     }
 
     srRc = TA_CDLSHOOTINGSTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSHOOTINGSTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSHOOTINGSTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSHOOTINGSTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSHOOTINGSTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSHOOTINGSTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65478,8 +67065,10 @@ static void sr_CDLSHOOTINGSTAR( const char *json, int endIdx, char *resp, int re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65493,23 +67082,23 @@ static void sr_CDLSHORTLINE( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSHORTLINE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65530,7 +67119,27 @@ static void sr_CDLSHORTLINE( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_CDLSHORTLINE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSHORTLINE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSHORTLINE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSHORTLINE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSHORTLINE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSHORTLINE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65586,8 +67195,10 @@ static void sr_CDLSHORTLINE( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65601,23 +67212,23 @@ static void sr_CDLSPINNINGTOP( const char *json, int endIdx, char *resp, int res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSPINNINGTOP_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65638,7 +67249,27 @@ static void sr_CDLSPINNINGTOP( const char *json, int endIdx, char *resp, int res
     }
 
     srRc = TA_CDLSPINNINGTOP( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSPINNINGTOP_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSPINNINGTOP_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSPINNINGTOP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSPINNINGTOP_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSPINNINGTOP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65694,8 +67325,10 @@ static void sr_CDLSPINNINGTOP( const char *json, int endIdx, char *resp, int res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65709,23 +67342,23 @@ static void sr_CDLSTALLEDPATTERN( const char *json, int endIdx, char *resp, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSTALLEDPATTERN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65746,7 +67379,27 @@ static void sr_CDLSTALLEDPATTERN( const char *json, int endIdx, char *resp, int 
     }
 
     srRc = TA_CDLSTALLEDPATTERN( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSTALLEDPATTERN_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSTALLEDPATTERN_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSTALLEDPATTERN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSTALLEDPATTERN_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSTALLEDPATTERN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65802,8 +67455,10 @@ static void sr_CDLSTALLEDPATTERN( const char *json, int endIdx, char *resp, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65817,23 +67472,23 @@ static void sr_CDLSTICKSANDWICH( const char *json, int endIdx, char *resp, int r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLSTICKSANDWICH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65854,7 +67509,27 @@ static void sr_CDLSTICKSANDWICH( const char *json, int endIdx, char *resp, int r
     }
 
     srRc = TA_CDLSTICKSANDWICH( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLSTICKSANDWICH_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLSTICKSANDWICH_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLSTICKSANDWICH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLSTICKSANDWICH_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLSTICKSANDWICH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -65910,8 +67585,10 @@ static void sr_CDLSTICKSANDWICH( const char *json, int endIdx, char *resp, int r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -65925,23 +67602,23 @@ static void sr_CDLTAKURI( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLTAKURI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -65962,7 +67639,27 @@ static void sr_CDLTAKURI( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_CDLTAKURI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLTAKURI_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLTAKURI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLTAKURI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLTAKURI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLTAKURI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66018,8 +67715,10 @@ static void sr_CDLTAKURI( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66033,23 +67732,23 @@ static void sr_CDLTASUKIGAP( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLTASUKIGAP_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66070,7 +67769,27 @@ static void sr_CDLTASUKIGAP( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_CDLTASUKIGAP( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLTASUKIGAP_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLTASUKIGAP_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLTASUKIGAP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLTASUKIGAP_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLTASUKIGAP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66126,8 +67845,10 @@ static void sr_CDLTASUKIGAP( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66141,23 +67862,23 @@ static void sr_CDLTHRUSTING( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLTHRUSTING_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66178,7 +67899,27 @@ static void sr_CDLTHRUSTING( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_CDLTHRUSTING( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLTHRUSTING_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLTHRUSTING_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLTHRUSTING_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLTHRUSTING_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLTHRUSTING_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66234,8 +67975,10 @@ static void sr_CDLTHRUSTING( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66249,23 +67992,23 @@ static void sr_CDLTRISTAR( const char *json, int endIdx, char *resp, int resp_si
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLTRISTAR_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66286,7 +68029,27 @@ static void sr_CDLTRISTAR( const char *json, int endIdx, char *resp, int resp_si
     }
 
     srRc = TA_CDLTRISTAR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLTRISTAR_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLTRISTAR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLTRISTAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLTRISTAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLTRISTAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66342,8 +68105,10 @@ static void sr_CDLTRISTAR( const char *json, int endIdx, char *resp, int resp_si
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66357,23 +68122,23 @@ static void sr_CDLUNIQUE3RIVER( const char *json, int endIdx, char *resp, int re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLUNIQUE3RIVER_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66394,7 +68159,27 @@ static void sr_CDLUNIQUE3RIVER( const char *json, int endIdx, char *resp, int re
     }
 
     srRc = TA_CDLUNIQUE3RIVER( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLUNIQUE3RIVER_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLUNIQUE3RIVER_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLUNIQUE3RIVER_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLUNIQUE3RIVER_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLUNIQUE3RIVER_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66450,8 +68235,10 @@ static void sr_CDLUNIQUE3RIVER( const char *json, int endIdx, char *resp, int re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66465,23 +68252,23 @@ static void sr_CDLUPSIDEGAP2CROWS( const char *json, int endIdx, char *resp, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLUPSIDEGAP2CROWS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66502,7 +68289,27 @@ static void sr_CDLUPSIDEGAP2CROWS( const char *json, int endIdx, char *resp, int
     }
 
     srRc = TA_CDLUPSIDEGAP2CROWS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLUPSIDEGAP2CROWS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLUPSIDEGAP2CROWS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLUPSIDEGAP2CROWS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLUPSIDEGAP2CROWS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLUPSIDEGAP2CROWS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66558,8 +68365,10 @@ static void sr_CDLUPSIDEGAP2CROWS( const char *json, int endIdx, char *resp, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66573,23 +68382,23 @@ static void sr_CDLXSIDEGAP3METHODS( const char *json, int endIdx, char *resp, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CDLXSIDEGAP3METHODS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66610,7 +68419,27 @@ static void sr_CDLXSIDEGAP3METHODS( const char *json, int endIdx, char *resp, in
     }
 
     srRc = TA_CDLXSIDEGAP3METHODS( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CDLXSIDEGAP3METHODS_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CDLXSIDEGAP3METHODS_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_CDLXSIDEGAP3METHODS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CDLXSIDEGAP3METHODS_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_CDLXSIDEGAP3METHODS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66666,8 +68495,10 @@ static void sr_CDLXSIDEGAP3METHODS( const char *json, int endIdx, char *resp, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66681,20 +68512,20 @@ static void sr_CEIL( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CEIL_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66712,7 +68543,27 @@ static void sr_CEIL( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_CEIL( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CEIL_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CEIL_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_CEIL_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CEIL_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CEIL_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66768,8 +68619,10 @@ static void sr_CEIL( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66783,23 +68636,23 @@ static void sr_CMF( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CMF_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66821,7 +68674,27 @@ static void sr_CMF( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_CMF( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CMF_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CMF_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CMF_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CMF_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CMF_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66877,8 +68750,10 @@ static void sr_CMF( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66892,20 +68767,20 @@ static void sr_CMO( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CMO_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -66924,7 +68799,27 @@ static void sr_CMO( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_CMO( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CMO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CMO_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CMO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CMO_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CMO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -66980,8 +68875,10 @@ static void sr_CMO( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -66995,20 +68892,20 @@ static void sr_CMOU( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CMOU_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67027,7 +68924,27 @@ static void sr_CMOU( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_CMOU( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CMOU_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CMOU_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CMOU_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CMOU_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CMOU_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67083,8 +69000,10 @@ static void sr_CMOU( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67098,20 +69017,20 @@ static void sr_COPPOCK( const char *json, int endIdx, int optInWMAPeriod, int op
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_COPPOCK_Lookback( optInWMAPeriod, optInROC1Period, optInROC2Period );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67132,7 +69051,27 @@ static void sr_COPPOCK( const char *json, int endIdx, int optInWMAPeriod, int op
     }
 
     srRc = TA_COPPOCK( 0, srM - 1, g_inBuf0, optInWMAPeriod, optInROC1Period, optInROC2Period, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_COPPOCK_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_COPPOCK_Open( &srHR, g_inBuf0, srM, optInWMAPeriod, optInROC1Period, optInROC2Period, &srO0 );
+        if( srHR ) TA_COPPOCK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_COPPOCK_OpenAndFill( &srHR, g_inBuf0, srM, optInWMAPeriod, optInROC1Period, optInROC2Period, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_COPPOCK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67188,8 +69127,10 @@ static void sr_COPPOCK( const char *json, int endIdx, int optInWMAPeriod, int op
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67203,21 +69144,21 @@ static void sr_CORREL( const char *json, int endIdx, int optInTimePeriod, char *
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CORREL_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67237,7 +69178,27 @@ static void sr_CORREL( const char *json, int endIdx, int optInTimePeriod, char *
     }
 
     srRc = TA_CORREL( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CORREL_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CORREL_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CORREL_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CORREL_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CORREL_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67293,8 +69254,10 @@ static void sr_CORREL( const char *json, int endIdx, int optInTimePeriod, char *
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67308,20 +69271,20 @@ static void sr_COS( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_COS_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67339,7 +69302,27 @@ static void sr_COS( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_COS( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_COS_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_COS_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_COS_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_COS_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_COS_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67395,8 +69378,10 @@ static void sr_COS( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67410,20 +69395,20 @@ static void sr_COSH( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_COSH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67441,7 +69426,27 @@ static void sr_COSH( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_COSH( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_COSH_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_COSH_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_COSH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_COSH_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_COSH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67497,8 +69502,10 @@ static void sr_COSH( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67512,20 +69519,20 @@ static void sr_CUMSUM( const char *json, int endIdx, char *resp, int resp_size, 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CUMSUM_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67543,7 +69550,27 @@ static void sr_CUMSUM( const char *json, int endIdx, char *resp, int resp_size, 
     }
 
     srRc = TA_CUMSUM( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CUMSUM_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CUMSUM_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_CUMSUM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CUMSUM_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CUMSUM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67599,8 +69626,10 @@ static void sr_CUMSUM( const char *json, int endIdx, char *resp, int resp_size, 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67614,21 +69643,21 @@ static void sr_CVI( const char *json, int endIdx, int optInTimePeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_CVI_Lookback( optInTimePeriod, optInROCPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67649,7 +69678,27 @@ static void sr_CVI( const char *json, int endIdx, int optInTimePeriod, int optIn
     }
 
     srRc = TA_CVI( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, optInROCPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CVI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CVI_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, optInROCPeriod, &srO0 );
+        if( srHR ) TA_CVI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CVI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, optInROCPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CVI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67705,8 +69754,10 @@ static void sr_CVI( const char *json, int endIdx, int optInTimePeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67720,20 +69771,20 @@ static void sr_DEMA( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_DEMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67752,7 +69803,27 @@ static void sr_DEMA( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_DEMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_DEMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_DEMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_DEMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_DEMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_DEMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67808,8 +69879,10 @@ static void sr_DEMA( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67823,21 +69896,21 @@ static void sr_DIV( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_DIV_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67856,7 +69929,27 @@ static void sr_DIV( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_DIV( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_DIV_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_DIV_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_DIV_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_DIV_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_DIV_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -67912,8 +70005,10 @@ static void sr_DIV( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -67927,21 +70022,21 @@ static void sr_DONCHIAN( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_DONCHIAN_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -67961,7 +70056,29 @@ static void sr_DONCHIAN( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_DONCHIAN( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_DONCHIAN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_DONCHIAN_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_DONCHIAN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_DONCHIAN_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_DONCHIAN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68025,8 +70142,10 @@ static void sr_DONCHIAN( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68040,20 +70159,20 @@ static void sr_DPO( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_DPO_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68072,7 +70191,27 @@ static void sr_DPO( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_DPO( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_DPO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_DPO_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_DPO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_DPO_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_DPO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68128,8 +70267,10 @@ static void sr_DPO( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68143,22 +70284,22 @@ static void sr_DX( const char *json, int endIdx, int optInTimePeriod, char *resp
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_DX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68179,7 +70320,27 @@ static void sr_DX( const char *json, int endIdx, int optInTimePeriod, char *resp
     }
 
     srRc = TA_DX( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_DX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_DX_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_DX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_DX_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_DX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68235,8 +70396,10 @@ static void sr_DX( const char *json, int endIdx, int optInTimePeriod, char *resp
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68250,21 +70413,21 @@ static void sr_EFI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_EFI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68284,7 +70447,27 @@ static void sr_EFI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_EFI( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_EFI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_EFI_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_EFI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_EFI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_EFI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68340,8 +70523,10 @@ static void sr_EFI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68355,20 +70540,20 @@ static void sr_EMA( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_EMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68387,7 +70572,27 @@ static void sr_EMA( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_EMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_EMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_EMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_EMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_EMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_EMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68443,8 +70648,10 @@ static void sr_EMA( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68458,20 +70665,20 @@ static void sr_ER( const char *json, int endIdx, int optInTimePeriod, char *resp
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ER_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68490,7 +70697,27 @@ static void sr_ER( const char *json, int endIdx, int optInTimePeriod, char *resp
     }
 
     srRc = TA_ER( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ER_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ER_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ER_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ER_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ER_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68546,8 +70773,10 @@ static void sr_ER( const char *json, int endIdx, int optInTimePeriod, char *resp
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68561,22 +70790,22 @@ static void sr_ERI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ERI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68597,7 +70826,28 @@ static void sr_ERI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_ERI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ERI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ERI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0, &srO1 );
+        if( srHR ) TA_ERI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ERI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_ERI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68657,8 +70907,10 @@ static void sr_ERI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68672,20 +70924,20 @@ static void sr_EXP( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_EXP_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68703,7 +70955,27 @@ static void sr_EXP( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_EXP( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_EXP_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_EXP_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_EXP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_EXP_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_EXP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68759,8 +71031,10 @@ static void sr_EXP( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68774,20 +71048,20 @@ static void sr_FLOOR( const char *json, int endIdx, char *resp, int resp_size, i
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_FLOOR_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68805,7 +71079,27 @@ static void sr_FLOOR( const char *json, int endIdx, char *resp, int resp_size, i
     }
 
     srRc = TA_FLOOR( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_FLOOR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_FLOOR_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_FLOOR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_FLOOR_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_FLOOR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68861,8 +71155,10 @@ static void sr_FLOOR( const char *json, int endIdx, char *resp, int resp_size, i
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68876,20 +71172,20 @@ static void sr_FOSC( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_FOSC_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -68908,7 +71204,27 @@ static void sr_FOSC( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_FOSC( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_FOSC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_FOSC_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_FOSC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_FOSC_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_FOSC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -68964,8 +71280,10 @@ static void sr_FOSC( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -68979,21 +71297,21 @@ static void sr_FRACTAL( const char *json, int endIdx, int optInLeftBars, int opt
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_FRACTAL_Lookback( optInLeftBars, optInRightBars );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69014,7 +71332,28 @@ static void sr_FRACTAL( const char *json, int endIdx, int optInLeftBars, int opt
     }
 
     srRc = TA_FRACTAL( 0, srM - 1, g_inBuf0, g_inBuf1, optInLeftBars, optInRightBars, &srBeg, &srNb, sr_ib0, sr_ib1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_FRACTAL_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srO1 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_FRACTAL_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInLeftBars, optInRightBars, &srO0, &srO1 );
+        if( srHR ) TA_FRACTAL_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_FRACTAL_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInLeftBars, optInRightBars, &srRBeg, &srRNb, sr_if0, sr_if1 );
+        if( srHR ) TA_FRACTAL_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69074,8 +71413,10 @@ static void sr_FRACTAL( const char *json, int endIdx, int optInLeftBars, int opt
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69089,23 +71430,23 @@ static void sr_HA( const char *json, int endIdx, char *resp, int resp_size, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HA_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69126,7 +71467,30 @@ static void sr_HA( const char *json, int endIdx, char *resp, int resp_size, int 
     }
 
     srRc = TA_HA( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_b0, sr_b1, sr_b2, sr_b3 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        double srO3 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HA_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0, &srO1, &srO2, &srO3 );
+        if( srHR ) TA_HA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HA_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2, sr_f3 );
+        if( srHR ) TA_HA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69194,8 +71558,10 @@ static void sr_HA( const char *json, int endIdx, char *resp, int resp_size, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69209,20 +71575,20 @@ static void sr_HMA( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69241,7 +71607,27 @@ static void sr_HMA( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_HMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_HMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_HMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69297,8 +71683,10 @@ static void sr_HMA( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69312,20 +71700,20 @@ static void sr_HT_DCPERIOD( const char *json, int endIdx, char *resp, int resp_s
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_DCPERIOD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69343,7 +71731,27 @@ static void sr_HT_DCPERIOD( const char *json, int endIdx, char *resp, int resp_s
     }
 
     srRc = TA_HT_DCPERIOD( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_DCPERIOD_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_DCPERIOD_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_HT_DCPERIOD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_DCPERIOD_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_HT_DCPERIOD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69399,8 +71807,10 @@ static void sr_HT_DCPERIOD( const char *json, int endIdx, char *resp, int resp_s
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69414,20 +71824,20 @@ static void sr_HT_DCPHASE( const char *json, int endIdx, char *resp, int resp_si
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_DCPHASE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69445,7 +71855,27 @@ static void sr_HT_DCPHASE( const char *json, int endIdx, char *resp, int resp_si
     }
 
     srRc = TA_HT_DCPHASE( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_DCPHASE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_DCPHASE_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_HT_DCPHASE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_DCPHASE_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_HT_DCPHASE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69501,8 +71931,10 @@ static void sr_HT_DCPHASE( const char *json, int endIdx, char *resp, int resp_si
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69516,20 +71948,20 @@ static void sr_HT_PHASOR( const char *json, int endIdx, char *resp, int resp_siz
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_PHASOR_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69547,7 +71979,28 @@ static void sr_HT_PHASOR( const char *json, int endIdx, char *resp, int resp_siz
     }
 
     srRc = TA_HT_PHASOR( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_PHASOR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_PHASOR_Open( &srHR, g_inBuf0, srM, &srO0, &srO1 );
+        if( srHR ) TA_HT_PHASOR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_PHASOR_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_HT_PHASOR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69607,8 +72060,10 @@ static void sr_HT_PHASOR( const char *json, int endIdx, char *resp, int resp_siz
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69622,20 +72077,20 @@ static void sr_HT_SINE( const char *json, int endIdx, char *resp, int resp_size,
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_SINE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69653,7 +72108,28 @@ static void sr_HT_SINE( const char *json, int endIdx, char *resp, int resp_size,
     }
 
     srRc = TA_HT_SINE( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_SINE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_SINE_Open( &srHR, g_inBuf0, srM, &srO0, &srO1 );
+        if( srHR ) TA_HT_SINE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_SINE_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_HT_SINE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69713,8 +72189,10 @@ static void sr_HT_SINE( const char *json, int endIdx, char *resp, int resp_size,
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69728,20 +72206,20 @@ static void sr_HT_TRENDLINE( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_TRENDLINE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69759,7 +72237,27 @@ static void sr_HT_TRENDLINE( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_HT_TRENDLINE( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_TRENDLINE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_TRENDLINE_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_HT_TRENDLINE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_TRENDLINE_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_HT_TRENDLINE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69815,8 +72313,10 @@ static void sr_HT_TRENDLINE( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69830,20 +72330,20 @@ static void sr_HT_TRENDMODE( const char *json, int endIdx, char *resp, int resp_
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_HT_TRENDMODE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69861,7 +72361,27 @@ static void sr_HT_TRENDMODE( const char *json, int endIdx, char *resp, int resp_
     }
 
     srRc = TA_HT_TRENDMODE( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_HT_TRENDMODE_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_HT_TRENDMODE_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_HT_TRENDMODE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_HT_TRENDMODE_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_HT_TRENDMODE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -69917,8 +72437,10 @@ static void sr_HT_TRENDMODE( const char *json, int endIdx, char *resp, int resp_
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -69932,21 +72454,21 @@ static void sr_IMI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_IMI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -69966,7 +72488,27 @@ static void sr_IMI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_IMI( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_IMI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_IMI_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_IMI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_IMI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_IMI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70022,8 +72564,10 @@ static void sr_IMI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70037,20 +72581,20 @@ static void sr_KAMA( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_KAMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70069,7 +72613,27 @@ static void sr_KAMA( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_KAMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_KAMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_KAMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_KAMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_KAMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_KAMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70125,8 +72689,10 @@ static void sr_KAMA( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70140,22 +72706,22 @@ static void sr_KC( const char *json, int endIdx, int optInTimePeriod, int optInA
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_KC_Lookback( optInTimePeriod, optInATRPeriod, optInNbDev );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70178,7 +72744,29 @@ static void sr_KC( const char *json, int endIdx, int optInTimePeriod, int optInA
     }
 
     srRc = TA_KC( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, optInATRPeriod, optInNbDev, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_KC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_KC_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInATRPeriod, optInNbDev, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_KC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_KC_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInATRPeriod, optInNbDev, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_KC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70242,8 +72830,10 @@ static void sr_KC( const char *json, int endIdx, int optInTimePeriod, int optInA
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70257,22 +72847,22 @@ static void sr_KDJ( const char *json, int endIdx, int optInFastK_Period, int opt
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_KDJ_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70297,7 +72887,29 @@ static void sr_KDJ( const char *json, int endIdx, int optInFastK_Period, int opt
     }
 
     srRc = TA_KDJ( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_KDJ_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_KDJ_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_KDJ_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_KDJ_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_KDJ_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70361,8 +72973,10 @@ static void sr_KDJ( const char *json, int endIdx, int optInFastK_Period, int opt
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70376,20 +72990,20 @@ static void sr_LINEARREG( const char *json, int endIdx, int optInTimePeriod, cha
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LINEARREG_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70408,7 +73022,27 @@ static void sr_LINEARREG( const char *json, int endIdx, int optInTimePeriod, cha
     }
 
     srRc = TA_LINEARREG( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LINEARREG_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LINEARREG_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_LINEARREG_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LINEARREG_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LINEARREG_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70464,8 +73098,10 @@ static void sr_LINEARREG( const char *json, int endIdx, int optInTimePeriod, cha
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70479,20 +73115,20 @@ static void sr_LINEARREG_ANGLE( const char *json, int endIdx, int optInTimePerio
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LINEARREG_ANGLE_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70511,7 +73147,27 @@ static void sr_LINEARREG_ANGLE( const char *json, int endIdx, int optInTimePerio
     }
 
     srRc = TA_LINEARREG_ANGLE( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LINEARREG_ANGLE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LINEARREG_ANGLE_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_LINEARREG_ANGLE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LINEARREG_ANGLE_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LINEARREG_ANGLE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70567,8 +73223,10 @@ static void sr_LINEARREG_ANGLE( const char *json, int endIdx, int optInTimePerio
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70582,20 +73240,20 @@ static void sr_LINEARREG_INTERCEPT( const char *json, int endIdx, int optInTimeP
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LINEARREG_INTERCEPT_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70614,7 +73272,27 @@ static void sr_LINEARREG_INTERCEPT( const char *json, int endIdx, int optInTimeP
     }
 
     srRc = TA_LINEARREG_INTERCEPT( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LINEARREG_INTERCEPT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LINEARREG_INTERCEPT_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_LINEARREG_INTERCEPT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LINEARREG_INTERCEPT_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LINEARREG_INTERCEPT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70670,8 +73348,10 @@ static void sr_LINEARREG_INTERCEPT( const char *json, int endIdx, int optInTimeP
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70685,20 +73365,20 @@ static void sr_LINEARREG_SLOPE( const char *json, int endIdx, int optInTimePerio
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LINEARREG_SLOPE_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70717,7 +73397,27 @@ static void sr_LINEARREG_SLOPE( const char *json, int endIdx, int optInTimePerio
     }
 
     srRc = TA_LINEARREG_SLOPE( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LINEARREG_SLOPE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LINEARREG_SLOPE_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_LINEARREG_SLOPE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LINEARREG_SLOPE_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LINEARREG_SLOPE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70773,8 +73473,10 @@ static void sr_LINEARREG_SLOPE( const char *json, int endIdx, int optInTimePerio
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70788,20 +73490,20 @@ static void sr_LN( const char *json, int endIdx, char *resp, int resp_size, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70819,7 +73521,27 @@ static void sr_LN( const char *json, int endIdx, char *resp, int resp_size, int 
     }
 
     srRc = TA_LN( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LN_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_LN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LN_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70875,8 +73597,10 @@ static void sr_LN( const char *json, int endIdx, char *resp, int resp_size, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70890,20 +73614,20 @@ static void sr_LOG10( const char *json, int endIdx, char *resp, int resp_size, i
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_LOG10_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -70921,7 +73645,27 @@ static void sr_LOG10( const char *json, int endIdx, char *resp, int resp_size, i
     }
 
     srRc = TA_LOG10( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_LOG10_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_LOG10_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_LOG10_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_LOG10_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_LOG10_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -70977,8 +73721,10 @@ static void sr_LOG10( const char *json, int endIdx, char *resp, int resp_size, i
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -70992,20 +73738,20 @@ static void sr_MA( const char *json, int endIdx, int optInTimePeriod, TA_MAType 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71025,7 +73771,27 @@ static void sr_MA( const char *json, int endIdx, int optInTimePeriod, TA_MAType 
     }
 
     srRc = TA_MA( 0, srM - 1, g_inBuf0, optInTimePeriod, optInMAType, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInMAType, &srO0 );
+        if( srHR ) TA_MA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInMAType, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71081,8 +73847,10 @@ static void sr_MA( const char *json, int endIdx, int optInTimePeriod, TA_MAType 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71096,20 +73864,20 @@ static void sr_MACD( const char *json, int endIdx, int optInFastPeriod, int optI
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MACD_Lookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71130,7 +73898,29 @@ static void sr_MACD( const char *json, int endIdx, int optInFastPeriod, int optI
     }
 
     srRc = TA_MACD( 0, srM - 1, g_inBuf0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MACD_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MACD_Open( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_MACD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MACD_OpenAndFill( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_MACD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71194,8 +73984,10 @@ static void sr_MACD( const char *json, int endIdx, int optInFastPeriod, int optI
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71209,20 +74001,20 @@ static void sr_MACDEXT( const char *json, int endIdx, int optInFastPeriod, TA_MA
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MACDEXT_Lookback( optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71246,7 +74038,29 @@ static void sr_MACDEXT( const char *json, int endIdx, int optInFastPeriod, TA_MA
     }
 
     srRc = TA_MACDEXT( 0, srM - 1, g_inBuf0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MACDEXT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MACDEXT_Open( &srHR, g_inBuf0, srM, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_MACDEXT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MACDEXT_OpenAndFill( &srHR, g_inBuf0, srM, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_MACDEXT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71310,8 +74124,10 @@ static void sr_MACDEXT( const char *json, int endIdx, int optInFastPeriod, TA_MA
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71325,20 +74141,20 @@ static void sr_MACDFIX( const char *json, int endIdx, int optInSignalPeriod, cha
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MACDFIX_Lookback( optInSignalPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71357,7 +74173,29 @@ static void sr_MACDFIX( const char *json, int endIdx, int optInSignalPeriod, cha
     }
 
     srRc = TA_MACDFIX( 0, srM - 1, g_inBuf0, optInSignalPeriod, &srBeg, &srNb, sr_b0, sr_b1, sr_b2 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MACDFIX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        double srO2 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MACDFIX_Open( &srHR, g_inBuf0, srM, optInSignalPeriod, &srO0, &srO1, &srO2 );
+        if( srHR ) TA_MACDFIX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MACDFIX_OpenAndFill( &srHR, g_inBuf0, srM, optInSignalPeriod, &srRBeg, &srRNb, sr_f0, sr_f1, sr_f2 );
+        if( srHR ) TA_MACDFIX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71421,8 +74259,10 @@ static void sr_MACDFIX( const char *json, int endIdx, int optInSignalPeriod, cha
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71436,20 +74276,20 @@ static void sr_MAMA( const char *json, int endIdx, double optInFastLimit, double
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MAMA_Lookback( optInFastLimit, optInSlowLimit );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71469,7 +74309,28 @@ static void sr_MAMA( const char *json, int endIdx, double optInFastLimit, double
     }
 
     srRc = TA_MAMA( 0, srM - 1, g_inBuf0, optInFastLimit, optInSlowLimit, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MAMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MAMA_Open( &srHR, g_inBuf0, srM, optInFastLimit, optInSlowLimit, &srO0, &srO1 );
+        if( srHR ) TA_MAMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MAMA_OpenAndFill( &srHR, g_inBuf0, srM, optInFastLimit, optInSlowLimit, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_MAMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71529,8 +74390,10 @@ static void sr_MAMA( const char *json, int endIdx, double optInFastLimit, double
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71544,22 +74407,22 @@ static void sr_MARKETFI( const char *json, int endIdx, char *resp, int resp_size
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MARKETFI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71579,7 +74442,27 @@ static void sr_MARKETFI( const char *json, int endIdx, char *resp, int resp_size
     }
 
     srRc = TA_MARKETFI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MARKETFI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MARKETFI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srO0 );
+        if( srHR ) TA_MARKETFI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MARKETFI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MARKETFI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71635,8 +74518,10 @@ static void sr_MARKETFI( const char *json, int endIdx, char *resp, int resp_size
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71650,21 +74535,21 @@ static void sr_MASSI( const char *json, int endIdx, int optInFastPeriod, int opt
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MASSI_Lookback( optInFastPeriod, optInSlowPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71685,7 +74570,27 @@ static void sr_MASSI( const char *json, int endIdx, int optInFastPeriod, int opt
     }
 
     srRc = TA_MASSI( 0, srM - 1, g_inBuf0, g_inBuf1, optInFastPeriod, optInSlowPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MASSI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MASSI_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, &srO0 );
+        if( srHR ) TA_MASSI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MASSI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInFastPeriod, optInSlowPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MASSI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71741,8 +74646,10 @@ static void sr_MASSI( const char *json, int endIdx, int optInFastPeriod, int opt
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71756,21 +74663,21 @@ static void sr_MAVP( const char *json, int endIdx, int optInMinPeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MAVP_Lookback( optInMinPeriod, optInMaxPeriod, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71792,7 +74699,27 @@ static void sr_MAVP( const char *json, int endIdx, int optInMinPeriod, int optIn
     }
 
     srRc = TA_MAVP( 0, srM - 1, g_inBuf0, g_inBuf1, optInMinPeriod, optInMaxPeriod, optInMAType, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MAVP_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MAVP_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInMinPeriod, optInMaxPeriod, optInMAType, &srO0 );
+        if( srHR ) TA_MAVP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MAVP_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInMinPeriod, optInMaxPeriod, optInMAType, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MAVP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71848,8 +74775,10 @@ static void sr_MAVP( const char *json, int endIdx, int optInMinPeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71863,20 +74792,20 @@ static void sr_MAX( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MAX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71895,7 +74824,27 @@ static void sr_MAX( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_MAX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MAX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MAX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MAX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MAX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MAX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -71951,8 +74900,10 @@ static void sr_MAX( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -71966,20 +74917,20 @@ static void sr_MAXINDEX( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MAXINDEX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -71998,7 +74949,27 @@ static void sr_MAXINDEX( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MAXINDEX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MAXINDEX_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MAXINDEX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MAXINDEX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MAXINDEX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_MAXINDEX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72054,8 +75025,10 @@ static void sr_MAXINDEX( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72069,21 +75042,21 @@ static void sr_MEDPRICE( const char *json, int endIdx, char *resp, int resp_size
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MEDPRICE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72102,7 +75075,27 @@ static void sr_MEDPRICE( const char *json, int endIdx, char *resp, int resp_size
     }
 
     srRc = TA_MEDPRICE( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MEDPRICE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MEDPRICE_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_MEDPRICE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MEDPRICE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MEDPRICE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72158,8 +75151,10 @@ static void sr_MEDPRICE( const char *json, int endIdx, char *resp, int resp_size
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72173,23 +75168,23 @@ static void sr_MFI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MFI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72211,7 +75206,27 @@ static void sr_MFI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_MFI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MFI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MFI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MFI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MFI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MFI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72267,8 +75282,10 @@ static void sr_MFI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72282,20 +75299,20 @@ static void sr_MIDPOINT( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MIDPOINT_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72314,7 +75331,27 @@ static void sr_MIDPOINT( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MIDPOINT( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MIDPOINT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MIDPOINT_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MIDPOINT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MIDPOINT_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MIDPOINT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72370,8 +75407,10 @@ static void sr_MIDPOINT( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72385,21 +75424,21 @@ static void sr_MIDPRICE( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MIDPRICE_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72419,7 +75458,27 @@ static void sr_MIDPRICE( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MIDPRICE( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MIDPRICE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MIDPRICE_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MIDPRICE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MIDPRICE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MIDPRICE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72475,8 +75534,10 @@ static void sr_MIDPRICE( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72490,20 +75551,20 @@ static void sr_MIN( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MIN_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72522,7 +75583,27 @@ static void sr_MIN( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_MIN( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MIN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MIN_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MIN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MIN_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MIN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72578,8 +75659,10 @@ static void sr_MIN( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72593,20 +75676,20 @@ static void sr_MININDEX( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MININDEX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72625,7 +75708,27 @@ static void sr_MININDEX( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MININDEX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MININDEX_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MININDEX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MININDEX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MININDEX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_if0 );
+        if( srHR ) TA_MININDEX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72681,8 +75784,10 @@ static void sr_MININDEX( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72696,20 +75801,20 @@ static void sr_MINMAX( const char *json, int endIdx, int optInTimePeriod, char *
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MINMAX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72728,7 +75833,28 @@ static void sr_MINMAX( const char *json, int endIdx, int optInTimePeriod, char *
     }
 
     srRc = TA_MINMAX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MINMAX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MINMAX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0, &srO1 );
+        if( srHR ) TA_MINMAX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MINMAX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_MINMAX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72788,8 +75914,10 @@ static void sr_MINMAX( const char *json, int endIdx, int optInTimePeriod, char *
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72803,20 +75931,20 @@ static void sr_MINMAXINDEX( const char *json, int endIdx, int optInTimePeriod, c
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MINMAXINDEX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72835,7 +75963,28 @@ static void sr_MINMAXINDEX( const char *json, int endIdx, int optInTimePeriod, c
     }
 
     srRc = TA_MINMAXINDEX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_ib0, sr_ib1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MINMAXINDEX_Stream *srHR = NULL;
+        int srO0 = 0;
+        int srO1 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MINMAXINDEX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0, &srO1 );
+        if( srHR ) TA_MINMAXINDEX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MINMAXINDEX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_if0, sr_if1 );
+        if( srHR ) TA_MINMAXINDEX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -72895,8 +76044,10 @@ static void sr_MINMAXINDEX( const char *json, int endIdx, int optInTimePeriod, c
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -72910,22 +76061,22 @@ static void sr_MINUS_DI( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MINUS_DI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -72946,7 +76097,27 @@ static void sr_MINUS_DI( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MINUS_DI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MINUS_DI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MINUS_DI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MINUS_DI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MINUS_DI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MINUS_DI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73002,8 +76173,10 @@ static void sr_MINUS_DI( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73017,21 +76190,21 @@ static void sr_MINUS_DM( const char *json, int endIdx, int optInTimePeriod, char
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MINUS_DM_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73051,7 +76224,27 @@ static void sr_MINUS_DM( const char *json, int endIdx, int optInTimePeriod, char
     }
 
     srRc = TA_MINUS_DM( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MINUS_DM_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MINUS_DM_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MINUS_DM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MINUS_DM_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MINUS_DM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73107,8 +76300,10 @@ static void sr_MINUS_DM( const char *json, int endIdx, int optInTimePeriod, char
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73122,20 +76317,20 @@ static void sr_MOM( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MOM_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73154,7 +76349,27 @@ static void sr_MOM( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_MOM( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MOM_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MOM_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_MOM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MOM_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MOM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73210,8 +76425,10 @@ static void sr_MOM( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73225,21 +76442,21 @@ static void sr_MULT( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_MULT_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73258,7 +76475,27 @@ static void sr_MULT( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_MULT( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_MULT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_MULT_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_MULT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_MULT_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_MULT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73314,8 +76551,10 @@ static void sr_MULT( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73329,22 +76568,22 @@ static void sr_NATR( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_NATR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73365,7 +76604,27 @@ static void sr_NATR( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_NATR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_NATR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_NATR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_NATR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_NATR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_NATR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73421,8 +76680,10 @@ static void sr_NATR( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73436,21 +76697,21 @@ static void sr_NVI( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_NVI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73469,7 +76730,27 @@ static void sr_NVI( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_NVI( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_NVI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_NVI_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_NVI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_NVI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_NVI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73525,8 +76806,10 @@ static void sr_NVI( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73540,21 +76823,21 @@ static void sr_OBV( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_OBV_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73573,7 +76856,27 @@ static void sr_OBV( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_OBV( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_OBV_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_OBV_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_OBV_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_OBV_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_OBV_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73629,8 +76932,10 @@ static void sr_OBV( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73644,20 +76949,20 @@ static void sr_PERCENTILE( const char *json, int endIdx, int optInTimePeriod, do
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PERCENTILE_Lookback( optInTimePeriod, optInPercentile );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73677,7 +76982,27 @@ static void sr_PERCENTILE( const char *json, int endIdx, int optInTimePeriod, do
     }
 
     srRc = TA_PERCENTILE( 0, srM - 1, g_inBuf0, optInTimePeriod, optInPercentile, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PERCENTILE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PERCENTILE_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInPercentile, &srO0 );
+        if( srHR ) TA_PERCENTILE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PERCENTILE_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInPercentile, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PERCENTILE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73733,8 +77058,10 @@ static void sr_PERCENTILE( const char *json, int endIdx, int optInTimePeriod, do
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73748,20 +77075,20 @@ static void sr_PERCENTRANK( const char *json, int endIdx, int optInTimePeriod, c
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PERCENTRANK_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73780,7 +77107,27 @@ static void sr_PERCENTRANK( const char *json, int endIdx, int optInTimePeriod, c
     }
 
     srRc = TA_PERCENTRANK( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PERCENTRANK_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PERCENTRANK_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_PERCENTRANK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PERCENTRANK_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PERCENTRANK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73836,8 +77183,10 @@ static void sr_PERCENTRANK( const char *json, int endIdx, int optInTimePeriod, c
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73851,22 +77200,22 @@ static void sr_PLUS_DI( const char *json, int endIdx, int optInTimePeriod, char 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PLUS_DI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73887,7 +77236,27 @@ static void sr_PLUS_DI( const char *json, int endIdx, int optInTimePeriod, char 
     }
 
     srRc = TA_PLUS_DI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PLUS_DI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PLUS_DI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_PLUS_DI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PLUS_DI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PLUS_DI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -73943,8 +77312,10 @@ static void sr_PLUS_DI( const char *json, int endIdx, int optInTimePeriod, char 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -73958,21 +77329,21 @@ static void sr_PLUS_DM( const char *json, int endIdx, int optInTimePeriod, char 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PLUS_DM_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -73992,7 +77363,27 @@ static void sr_PLUS_DM( const char *json, int endIdx, int optInTimePeriod, char 
     }
 
     srRc = TA_PLUS_DM( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PLUS_DM_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PLUS_DM_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_PLUS_DM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PLUS_DM_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PLUS_DM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74048,8 +77439,10 @@ static void sr_PLUS_DM( const char *json, int endIdx, int optInTimePeriod, char 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74063,20 +77456,20 @@ static void sr_PPO( const char *json, int endIdx, int optInFastPeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PPO_Lookback( optInFastPeriod, optInSlowPeriod, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74097,7 +77490,27 @@ static void sr_PPO( const char *json, int endIdx, int optInFastPeriod, int optIn
     }
 
     srRc = TA_PPO( 0, srM - 1, g_inBuf0, optInFastPeriod, optInSlowPeriod, optInMAType, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PPO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PPO_Open( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srO0 );
+        if( srHR ) TA_PPO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PPO_OpenAndFill( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PPO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74153,8 +77566,10 @@ static void sr_PPO( const char *json, int endIdx, int optInFastPeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74168,21 +77583,21 @@ static void sr_PVI( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PVI_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74201,7 +77616,27 @@ static void sr_PVI( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_PVI( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PVI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PVI_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_PVI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PVI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PVI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74257,8 +77692,10 @@ static void sr_PVI( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74272,20 +77709,20 @@ static void sr_PVO( const char *json, int endIdx, int optInFastPeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PVO_Lookback( optInFastPeriod, optInSlowPeriod, optInMAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74306,7 +77743,27 @@ static void sr_PVO( const char *json, int endIdx, int optInFastPeriod, int optIn
     }
 
     srRc = TA_PVO( 0, srM - 1, g_inBuf0, optInFastPeriod, optInSlowPeriod, optInMAType, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PVO_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PVO_Open( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srO0 );
+        if( srHR ) TA_PVO_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PVO_OpenAndFill( &srHR, g_inBuf0, srM, optInFastPeriod, optInSlowPeriod, optInMAType, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PVO_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74362,8 +77819,10 @@ static void sr_PVO( const char *json, int endIdx, int optInFastPeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74377,21 +77836,21 @@ static void sr_PVT( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_PVT_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74410,7 +77869,27 @@ static void sr_PVT( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_PVT( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_PVT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_PVT_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_PVT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_PVT_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_PVT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74466,8 +77945,10 @@ static void sr_PVT( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74481,21 +77962,21 @@ static void sr_QSTICK( const char *json, int endIdx, int optInTimePeriod, char *
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_QSTICK_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inOpen"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74515,7 +77996,27 @@ static void sr_QSTICK( const char *json, int endIdx, int optInTimePeriod, char *
     }
 
     srRc = TA_QSTICK( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_QSTICK_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_QSTICK_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_QSTICK_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_QSTICK_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_QSTICK_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74571,8 +78072,10 @@ static void sr_QSTICK( const char *json, int endIdx, int optInTimePeriod, char *
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74586,20 +78089,20 @@ static void sr_RMA( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_RMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74618,7 +78121,27 @@ static void sr_RMA( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_RMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_RMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_RMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_RMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_RMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_RMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74674,8 +78197,10 @@ static void sr_RMA( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74689,20 +78214,20 @@ static void sr_ROC( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ROC_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74721,7 +78246,27 @@ static void sr_ROC( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_ROC( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ROC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ROC_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ROC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ROC_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ROC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74777,8 +78322,10 @@ static void sr_ROC( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74792,20 +78339,20 @@ static void sr_ROCP( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ROCP_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74824,7 +78371,27 @@ static void sr_ROCP( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_ROCP( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ROCP_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ROCP_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ROCP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ROCP_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ROCP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74880,8 +78447,10 @@ static void sr_ROCP( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74895,20 +78464,20 @@ static void sr_ROCR( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ROCR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -74927,7 +78496,27 @@ static void sr_ROCR( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_ROCR( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ROCR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ROCR_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ROCR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ROCR_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ROCR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -74983,8 +78572,10 @@ static void sr_ROCR( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -74998,20 +78589,20 @@ static void sr_ROCR100( const char *json, int endIdx, int optInTimePeriod, char 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ROCR100_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75030,7 +78621,27 @@ static void sr_ROCR100( const char *json, int endIdx, int optInTimePeriod, char 
     }
 
     srRc = TA_ROCR100( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ROCR100_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ROCR100_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ROCR100_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ROCR100_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ROCR100_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75086,8 +78697,10 @@ static void sr_ROCR100( const char *json, int endIdx, int optInTimePeriod, char 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75101,20 +78714,20 @@ static void sr_RSI( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_RSI_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75133,7 +78746,27 @@ static void sr_RSI( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_RSI( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_RSI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_RSI_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_RSI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_RSI_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_RSI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75189,8 +78822,10 @@ static void sr_RSI( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75204,20 +78839,20 @@ static void sr_RVI( const char *json, int endIdx, int optInTimePeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_RVI_Lookback( optInTimePeriod, optInStdDevPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75237,7 +78872,27 @@ static void sr_RVI( const char *json, int endIdx, int optInTimePeriod, int optIn
     }
 
     srRc = TA_RVI( 0, srM - 1, g_inBuf0, optInTimePeriod, optInStdDevPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_RVI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_RVI_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInStdDevPeriod, &srO0 );
+        if( srHR ) TA_RVI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_RVI_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInStdDevPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_RVI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75293,8 +78948,10 @@ static void sr_RVI( const char *json, int endIdx, int optInTimePeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75308,20 +78965,20 @@ static void sr_RVOL( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_RVOL_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75340,7 +78997,27 @@ static void sr_RVOL( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_RVOL( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_RVOL_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_RVOL_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_RVOL_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_RVOL_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_RVOL_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75396,8 +79073,10 @@ static void sr_RVOL( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75411,21 +79090,21 @@ static void sr_SAR( const char *json, int endIdx, double optInAcceleration, doub
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SAR_Lookback( optInAcceleration, optInMaximum );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75446,7 +79125,27 @@ static void sr_SAR( const char *json, int endIdx, double optInAcceleration, doub
     }
 
     srRc = TA_SAR( 0, srM - 1, g_inBuf0, g_inBuf1, optInAcceleration, optInMaximum, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SAR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SAR_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInAcceleration, optInMaximum, &srO0 );
+        if( srHR ) TA_SAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SAR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInAcceleration, optInMaximum, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75502,8 +79201,10 @@ static void sr_SAR( const char *json, int endIdx, double optInAcceleration, doub
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75517,21 +79218,21 @@ static void sr_SAREXT( const char *json, int endIdx, double optInStartValue, dou
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SAREXT_Lookback( optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75558,7 +79259,27 @@ static void sr_SAREXT( const char *json, int endIdx, double optInStartValue, dou
     }
 
     srRc = TA_SAREXT( 0, srM - 1, g_inBuf0, g_inBuf1, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SAREXT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SAREXT_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &srO0 );
+        if( srHR ) TA_SAREXT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SAREXT_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SAREXT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75614,8 +79335,10 @@ static void sr_SAREXT( const char *json, int endIdx, double optInStartValue, dou
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75629,20 +79352,20 @@ static void sr_SIN( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SIN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75660,7 +79383,27 @@ static void sr_SIN( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_SIN( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SIN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SIN_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_SIN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SIN_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SIN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75716,8 +79459,10 @@ static void sr_SIN( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75731,20 +79476,20 @@ static void sr_SINH( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SINH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75762,7 +79507,27 @@ static void sr_SINH( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_SINH( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SINH_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SINH_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_SINH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SINH_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SINH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75818,8 +79583,10 @@ static void sr_SINH( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75833,20 +79600,20 @@ static void sr_SMA( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75865,7 +79632,27 @@ static void sr_SMA( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_SMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_SMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -75921,8 +79708,10 @@ static void sr_SMA( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -75936,22 +79725,22 @@ static void sr_SMI( const char *json, int endIdx, int optInTimePeriod, int optIn
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SMI_Lookback( optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -75975,7 +79764,28 @@ static void sr_SMI( const char *json, int endIdx, int optInTimePeriod, int optIn
     }
 
     srRc = TA_SMI( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SMI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SMI_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srO0, &srO1 );
+        if( srHR ) TA_SMI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SMI_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_SMI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76035,8 +79845,10 @@ static void sr_SMI( const char *json, int endIdx, int optInTimePeriod, int optIn
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76050,20 +79862,20 @@ static void sr_SQRT( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SQRT_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76081,7 +79893,27 @@ static void sr_SQRT( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_SQRT( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SQRT_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SQRT_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_SQRT_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SQRT_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SQRT_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76137,8 +79969,10 @@ static void sr_SQRT( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76152,20 +79986,20 @@ static void sr_STDDEV( const char *json, int endIdx, int optInTimePeriod, double
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_STDDEV_Lookback( optInTimePeriod, optInNbDev );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76185,7 +80019,27 @@ static void sr_STDDEV( const char *json, int endIdx, int optInTimePeriod, double
     }
 
     srRc = TA_STDDEV( 0, srM - 1, g_inBuf0, optInTimePeriod, optInNbDev, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_STDDEV_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_STDDEV_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDev, &srO0 );
+        if( srHR ) TA_STDDEV_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_STDDEV_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDev, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_STDDEV_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76241,8 +80095,10 @@ static void sr_STDDEV( const char *json, int endIdx, int optInTimePeriod, double
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76256,22 +80112,22 @@ static void sr_STOCH( const char *json, int endIdx, int optInFastK_Period, int o
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_STOCH_Lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76296,7 +80152,28 @@ static void sr_STOCH( const char *json, int endIdx, int optInFastK_Period, int o
     }
 
     srRc = TA_STOCH( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_STOCH_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_STOCH_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srO0, &srO1 );
+        if( srHR ) TA_STOCH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_STOCH_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_STOCH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76356,8 +80233,10 @@ static void sr_STOCH( const char *json, int endIdx, int optInFastK_Period, int o
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76371,22 +80250,22 @@ static void sr_STOCHF( const char *json, int endIdx, int optInFastK_Period, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_STOCHF_Lookback( optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76409,7 +80288,28 @@ static void sr_STOCHF( const char *json, int endIdx, int optInFastK_Period, int 
     }
 
     srRc = TA_STOCHF( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_STOCHF_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_STOCHF_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srO0, &srO1 );
+        if( srHR ) TA_STOCHF_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_STOCHF_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_STOCHF_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76469,8 +80369,10 @@ static void sr_STOCHF( const char *json, int endIdx, int optInFastK_Period, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76484,20 +80386,20 @@ static void sr_STOCHRSI( const char *json, int endIdx, int optInTimePeriod, int 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_STOCHRSI_Lookback( optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76519,7 +80421,28 @@ static void sr_STOCHRSI( const char *json, int endIdx, int optInTimePeriod, int 
     }
 
     srRc = TA_STOCHRSI( 0, srM - 1, g_inBuf0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_STOCHRSI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_STOCHRSI_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srO0, &srO1 );
+        if( srHR ) TA_STOCHRSI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_STOCHRSI_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_STOCHRSI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76579,8 +80502,10 @@ static void sr_STOCHRSI( const char *json, int endIdx, int optInTimePeriod, int 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76594,21 +80519,21 @@ static void sr_SUB( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SUB_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal0"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inReal1"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76627,7 +80552,27 @@ static void sr_SUB( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_SUB( 0, srM - 1, g_inBuf0, g_inBuf1, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SUB_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SUB_Open( &srHR, g_inBuf0, g_inBuf1, srM, &srO0 );
+        if( srHR ) TA_SUB_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SUB_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SUB_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76683,8 +80628,10 @@ static void sr_SUB( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76698,20 +80645,20 @@ static void sr_SUM( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SUM_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76730,7 +80677,27 @@ static void sr_SUM( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_SUM( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SUM_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SUM_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_SUM_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SUM_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_SUM_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76786,8 +80753,10 @@ static void sr_SUM( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76801,22 +80770,22 @@ static void sr_SUPERTREND( const char *json, int endIdx, int optInTimePeriod, do
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_SUPERTREND_Lookback( optInTimePeriod, optInMultiplier );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76838,7 +80807,28 @@ static void sr_SUPERTREND( const char *json, int endIdx, int optInTimePeriod, do
     }
 
     srRc = TA_SUPERTREND( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, optInMultiplier, &srBeg, &srNb, sr_b0, sr_ib0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_SUPERTREND_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srO1 = 0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_SUPERTREND_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInMultiplier, &srO0, &srO1 );
+        if( srHR ) TA_SUPERTREND_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_SUPERTREND_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, optInMultiplier, &srRBeg, &srRNb, sr_f0, sr_if0 );
+        if( srHR ) TA_SUPERTREND_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -76898,8 +80888,10 @@ static void sr_SUPERTREND( const char *json, int endIdx, int optInTimePeriod, do
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -76913,20 +80905,20 @@ static void sr_T3( const char *json, int endIdx, int optInTimePeriod, double opt
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_T3_Lookback( optInTimePeriod, optInVFactor );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -76946,7 +80938,27 @@ static void sr_T3( const char *json, int endIdx, int optInTimePeriod, double opt
     }
 
     srRc = TA_T3( 0, srM - 1, g_inBuf0, optInTimePeriod, optInVFactor, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_T3_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_T3_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInVFactor, &srO0 );
+        if( srHR ) TA_T3_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_T3_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInVFactor, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_T3_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77002,8 +81014,10 @@ static void sr_T3( const char *json, int endIdx, int optInTimePeriod, double opt
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77017,20 +81031,20 @@ static void sr_TAN( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TAN_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77048,7 +81062,27 @@ static void sr_TAN( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_TAN( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TAN_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TAN_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_TAN_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TAN_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TAN_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77104,8 +81138,10 @@ static void sr_TAN( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77119,20 +81155,20 @@ static void sr_TANH( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TANH_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77150,7 +81186,27 @@ static void sr_TANH( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_TANH( 0, srM - 1, g_inBuf0, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TANH_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TANH_Open( &srHR, g_inBuf0, srM, &srO0 );
+        if( srHR ) TA_TANH_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TANH_OpenAndFill( &srHR, g_inBuf0, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TANH_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77206,8 +81262,10 @@ static void sr_TANH( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77221,20 +81279,20 @@ static void sr_TEMA( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TEMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77253,7 +81311,27 @@ static void sr_TEMA( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_TEMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TEMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TEMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_TEMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TEMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TEMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77309,8 +81387,10 @@ static void sr_TEMA( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77324,22 +81404,22 @@ static void sr_TRANGE( const char *json, int endIdx, char *resp, int resp_size, 
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TRANGE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77359,7 +81439,27 @@ static void sr_TRANGE( const char *json, int endIdx, char *resp, int resp_size, 
     }
 
     srRc = TA_TRANGE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TRANGE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TRANGE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srO0 );
+        if( srHR ) TA_TRANGE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TRANGE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TRANGE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77415,8 +81515,10 @@ static void sr_TRANGE( const char *json, int endIdx, char *resp, int resp_size, 
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77430,20 +81532,20 @@ static void sr_TRIMA( const char *json, int endIdx, int optInTimePeriod, char *r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TRIMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77462,7 +81564,27 @@ static void sr_TRIMA( const char *json, int endIdx, int optInTimePeriod, char *r
     }
 
     srRc = TA_TRIMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TRIMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TRIMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_TRIMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TRIMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TRIMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77518,8 +81640,10 @@ static void sr_TRIMA( const char *json, int endIdx, int optInTimePeriod, char *r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77533,20 +81657,20 @@ static void sr_TRIX( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TRIX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77565,7 +81689,27 @@ static void sr_TRIX( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_TRIX( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TRIX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TRIX_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_TRIX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TRIX_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TRIX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77621,8 +81765,10 @@ static void sr_TRIX( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77636,20 +81782,20 @@ static void sr_TSF( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TSF_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77668,7 +81814,27 @@ static void sr_TSF( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_TSF( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TSF_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TSF_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_TSF_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TSF_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TSF_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77724,8 +81890,10 @@ static void sr_TSF( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77739,20 +81907,20 @@ static void sr_TSI( const char *json, int endIdx, int optInFirstPeriod, int optI
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TSI_Lookback( optInFirstPeriod, optInSecondPeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77772,7 +81940,27 @@ static void sr_TSI( const char *json, int endIdx, int optInFirstPeriod, int optI
     }
 
     srRc = TA_TSI( 0, srM - 1, g_inBuf0, optInFirstPeriod, optInSecondPeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TSI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TSI_Open( &srHR, g_inBuf0, srM, optInFirstPeriod, optInSecondPeriod, &srO0 );
+        if( srHR ) TA_TSI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TSI_OpenAndFill( &srHR, g_inBuf0, srM, optInFirstPeriod, optInSecondPeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TSI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77828,8 +82016,10 @@ static void sr_TSI( const char *json, int endIdx, int optInFirstPeriod, int optI
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77843,22 +82033,22 @@ static void sr_TYPPRICE( const char *json, int endIdx, char *resp, int resp_size
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_TYPPRICE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77878,7 +82068,27 @@ static void sr_TYPPRICE( const char *json, int endIdx, char *resp, int resp_size
     }
 
     srRc = TA_TYPPRICE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_TYPPRICE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_TYPPRICE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srO0 );
+        if( srHR ) TA_TYPPRICE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_TYPPRICE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_TYPPRICE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -77934,8 +82144,10 @@ static void sr_TYPPRICE( const char *json, int endIdx, char *resp, int resp_size
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -77949,22 +82161,22 @@ static void sr_ULTOSC( const char *json, int endIdx, int optInTimePeriod1, int o
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ULTOSC_Lookback( optInTimePeriod1, optInTimePeriod2, optInTimePeriod3 );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -77987,7 +82199,27 @@ static void sr_ULTOSC( const char *json, int endIdx, int optInTimePeriod1, int o
     }
 
     srRc = TA_ULTOSC( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ULTOSC_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ULTOSC_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &srO0 );
+        if( srHR ) TA_ULTOSC_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ULTOSC_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ULTOSC_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78043,8 +82275,10 @@ static void sr_ULTOSC( const char *json, int endIdx, int optInTimePeriod1, int o
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78058,20 +82292,20 @@ static void sr_VAR( const char *json, int endIdx, int optInTimePeriod, double op
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_VAR_Lookback( optInTimePeriod, optInNbDev );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78091,7 +82325,27 @@ static void sr_VAR( const char *json, int endIdx, int optInTimePeriod, double op
     }
 
     srRc = TA_VAR( 0, srM - 1, g_inBuf0, optInTimePeriod, optInNbDev, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VAR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VAR_Open( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDev, &srO0 );
+        if( srHR ) TA_VAR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VAR_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, optInNbDev, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_VAR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78147,8 +82401,10 @@ static void sr_VAR( const char *json, int endIdx, int optInTimePeriod, double op
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78162,20 +82418,20 @@ static void sr_VHF( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_VHF_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78194,7 +82450,27 @@ static void sr_VHF( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_VHF( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VHF_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VHF_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_VHF_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VHF_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_VHF_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78250,8 +82526,10 @@ static void sr_VHF( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78265,22 +82543,22 @@ static void sr_VORTEX( const char *json, int endIdx, int optInTimePeriod, char *
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_VORTEX_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78301,7 +82579,28 @@ static void sr_VORTEX( const char *json, int endIdx, int optInTimePeriod, char *
     }
 
     srRc = TA_VORTEX( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0, sr_b1 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VORTEX_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        double srO1 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VORTEX_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0, &srO1 );
+        if( srHR ) TA_VORTEX_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VORTEX_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0, sr_f1 );
+        if( srHR ) TA_VORTEX_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78361,8 +82660,10 @@ static void sr_VORTEX( const char *json, int endIdx, int optInTimePeriod, char *
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78376,23 +82677,23 @@ static void sr_VWAP( const char *json, int endIdx, char *resp, int resp_size, in
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_VWAP_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || !sr_finite(g_inBuf3, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78413,7 +82714,27 @@ static void sr_VWAP( const char *json, int endIdx, char *resp, int resp_size, in
     }
 
     srRc = TA_VWAP( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VWAP_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VWAP_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srO0 );
+        if( srHR ) TA_VWAP_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VWAP_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_VWAP_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78469,8 +82790,10 @@ static void sr_VWAP( const char *json, int endIdx, char *resp, int resp_size, in
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78484,21 +82807,21 @@ static void sr_VWMA( const char *json, int endIdx, int optInTimePeriod, char *re
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_VWMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inVolume"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78518,7 +82841,27 @@ static void sr_VWMA( const char *json, int endIdx, int optInTimePeriod, char *re
     }
 
     srRc = TA_VWMA( 0, srM - 1, g_inBuf0, g_inBuf1, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_VWMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_VWMA_Open( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_VWMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_VWMA_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_VWMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78574,8 +82917,10 @@ static void sr_VWMA( const char *json, int endIdx, int optInTimePeriod, char *re
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78589,22 +82934,22 @@ static void sr_WAD( const char *json, int endIdx, char *resp, int resp_size, int
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_WAD_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78624,7 +82969,27 @@ static void sr_WAD( const char *json, int endIdx, char *resp, int resp_size, int
     }
 
     srRc = TA_WAD( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_WAD_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_WAD_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srO0 );
+        if( srHR ) TA_WAD_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_WAD_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_WAD_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78680,8 +83045,10 @@ static void sr_WAD( const char *json, int endIdx, char *resp, int resp_size, int
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78695,22 +83062,22 @@ static void sr_WCLPRICE( const char *json, int endIdx, char *resp, int resp_size
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_WCLPRICE_Lookback(  );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78730,7 +83097,27 @@ static void sr_WCLPRICE( const char *json, int endIdx, char *resp, int resp_size
     }
 
     srRc = TA_WCLPRICE( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_WCLPRICE_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_WCLPRICE_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srO0 );
+        if( srHR ) TA_WCLPRICE_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_WCLPRICE_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_WCLPRICE_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78786,8 +83173,10 @@ static void sr_WCLPRICE( const char *json, int endIdx, char *resp, int resp_size
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78801,22 +83190,22 @@ static void sr_WILLR( const char *json, int endIdx, int optInTimePeriod, char *r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_WILLR_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inHigh"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inLow"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
     { int _c = sr_count_array(json, "inClose"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || !sr_finite(g_inBuf1, srM) || !sr_finite(g_inBuf2, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78837,7 +83226,27 @@ static void sr_WILLR( const char *json, int endIdx, int optInTimePeriod, char *r
     }
 
     srRc = TA_WILLR( 0, srM - 1, g_inBuf0, g_inBuf1, g_inBuf2, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_WILLR_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_WILLR_Open( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_WILLR_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_WILLR_OpenAndFill( &srHR, g_inBuf0, g_inBuf1, g_inBuf2, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_WILLR_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78893,8 +83302,10 @@ static void sr_WILLR( const char *json, int endIdx, int optInTimePeriod, char *r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -78908,20 +83319,20 @@ static void sr_WMA( const char *json, int endIdx, int optInTimePeriod, char *res
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_WMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -78940,7 +83351,27 @@ static void sr_WMA( const char *json, int endIdx, int optInTimePeriod, char *res
     }
 
     srRc = TA_WMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_WMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_WMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_WMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_WMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_WMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -78996,8 +83427,10 @@ static void sr_WMA( const char *json, int endIdx, int optInTimePeriod, char *res
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
@@ -79011,20 +83444,20 @@ static void sr_ZLEMA( const char *json, int endIdx, int optInTimePeriod, char *r
     int srOpenBars = 0, srFillBars = 0;
     int srLeg = 0, srBar = -1, srOut = -1;
     double srA = 0.0, srB = 0.0;
-    int srBeg = 0, srNb = 0, srSlot = 0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
     unsigned long long srKey;
-    TA_RetCode srRc;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
 
     if( !sr_gate(json) ) return;
 
     srLb = TA_ZLEMA_Lookback( optInTimePeriod );
-    if( srLb < 0 ) { srSkip = 1; goto sr_out; }
     srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
     { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
-    srM = 2 * srLb + 10;
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
     if( srM > srAvail ) srM = srAvail;
-    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }
-    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
     if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
 
     srKey = sr_ambient(fuzz_hash_init());
@@ -79043,7 +83476,27 @@ static void sr_ZLEMA( const char *json, int endIdx, int optInTimePeriod, char *r
     }
 
     srRc = TA_ZLEMA( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
-    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srRc != TA_SUCCESS )
+    {
+        TA_ZLEMA_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_ZLEMA_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_ZLEMA_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_ZLEMA_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_ZLEMA_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
     if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
 
     {
@@ -79099,8 +83552,10 @@ static void sr_ZLEMA( const char *json, int endIdx, int optInTimePeriod, char *r
 
 sr_out:
     *pos = json_appendf(resp, resp_size, *pos,
-        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d",
-        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
     if( !srOk )
         *pos = json_appendf(resp, resp_size, *pos,
             ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",

@@ -245703,6 +245703,14 @@ public class TaCodegenServe {
         return jsonInt(json, "iters") <= 1;
     }
 
+    /* 0 means the call returned. Anything else is the code C would have
+     * returned for the same condition, so the three entry points are comparable
+     * without narrowing the catch types; -1 is an exception the library does
+     * not own, which is itself a divergence. */
+    static int rideCode(RuntimeException e) {
+        return (e instanceof TaLibFailure) ? ((TaLibFailure) e).retCode().toInt() : -1;
+    }
+
     static boolean rideFinite(double[] a, int n) {
         for (int i = 0; i < n; i++) if (!Double.isFinite(a[i])) return false;
         return true;
@@ -245736,6 +245744,7 @@ public class TaCodegenServe {
         boolean ok = true;
         int skip = 0, dedup = 0, openBars = 0, fillBars = 0;
         int leg = 0, bar = -1, out = -1, m = 0, lb = -1;
+        int rej = 0, rcBatch = 0, rcOpen = 0, rcFill = 0;
         long batch = 0, stream = 0;
         long[] benign = new long[1];
         void emit(StringBuilder sb) {
@@ -245746,7 +245755,11 @@ public class TaCodegenServe {
               .append(",\"ride_fill_bars\":").append(fillBars)
               .append(",\"ride_benign\":").append(benign[0])
               .append(",\"ride_m\":").append(m)
-              .append(",\"ride_lb\":").append(lb);
+              .append(",\"ride_lb\":").append(lb)
+              .append(",\"ride_rej\":").append(rej)
+              .append(",\"ride_rc_batch\":").append(rcBatch)
+              .append(",\"ride_rc_open\":").append(rcOpen)
+              .append(",\"ride_rc_fill\":").append(rcFill);
             if (!ok) {
                 sb.append(",\"ride_leg\":").append(leg)
                   .append(",\"ride_bar\":").append(bar)
@@ -245766,17 +245779,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAC(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
-        try { r.lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -245795,10 +245808,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AC(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.acOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.acOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -245851,18 +245880,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyACCBANDS(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ACCBANDS_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ACCBANDS_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -245882,10 +245911,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ACCBANDS(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.accbandsOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.accbandsOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -245945,16 +245992,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyACOS(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.ACOS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ACOS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -245969,10 +246016,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ACOS(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.acosOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.acosOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246025,19 +246088,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAD(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
-        try { r.lb = core.AD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246055,10 +246118,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AD(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.adOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.adOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246111,17 +246190,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyADD(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
-        try { r.lb = core.ADD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ADD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246137,10 +246216,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ADD(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.addOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.addOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246193,19 +246288,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyADOSC(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
-        try { r.lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246225,10 +246320,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ADOSC(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.adoscOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.adoscOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246281,17 +246392,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyADR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ADR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ADR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246308,10 +246419,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ADR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.adrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.adrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246364,18 +246491,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyADX(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ADX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ADX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246393,10 +246520,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ADX(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.adxOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.adxOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246449,18 +246592,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyADXR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ADXR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ADXR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246478,10 +246621,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ADXR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.adxrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.adxrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246534,17 +246693,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAO(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
-        try { r.lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AO_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246562,10 +246721,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AO(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.aoOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.aoOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246618,16 +246793,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAPO(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
-        try { r.lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246645,10 +246820,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.APO(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.apoOpen(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.apoOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246701,17 +246892,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAROON(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.AROON_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AROON_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246729,10 +246920,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AROON(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.aroonOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.aroonOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246788,17 +246996,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAROONOSC(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.AROONOSC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AROONOSC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246815,10 +247023,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AROONOSC(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.aroonoscOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.aroonoscOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246871,16 +247095,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyASIN(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.ASIN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ASIN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246895,10 +247119,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ASIN(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.asinOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.asinOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -246951,16 +247191,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyATAN(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.ATAN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ATAN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -246975,10 +247215,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ATAN(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.atanOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.atanOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247031,18 +247287,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyATR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ATR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ATR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247060,10 +247316,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ATR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.atrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.atrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247116,16 +247388,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAVGDEV(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.AVGDEV_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AVGDEV_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247141,10 +247413,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AVGDEV(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.avgdevOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.avgdevOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247197,19 +247485,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyAVGPRICE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.AVGPRICE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.AVGPRICE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247227,10 +247515,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.AVGPRICE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.avgpriceOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.avgpriceOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247283,16 +247587,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyBBANDS(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, RideResult r) {
-        try { r.lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247313,10 +247617,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.BBANDS(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.bbandsOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.bbandsOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247376,17 +247698,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyBETA(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.BETA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.BETA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247403,10 +247725,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.BETA(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.betaOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.betaOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247459,19 +247797,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyBOP(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.BOP_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.BOP_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247489,10 +247827,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.BOP(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.bopOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.bopOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247545,18 +247899,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCCI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.CCI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CCI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247574,10 +247928,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CCI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cciOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cciOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247630,19 +248000,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL2CROWS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL2CROWS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL2CROWS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247660,10 +248030,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL2CROWS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl2crowsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl2crowsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247716,19 +248102,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3BLACKCROWS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3BLACKCROWS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3BLACKCROWS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247746,10 +248132,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3BLACKCROWS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3blackcrowsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3blackcrowsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247802,19 +248204,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3INSIDE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3INSIDE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3INSIDE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247832,10 +248234,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3INSIDE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3insideOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3insideOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247888,19 +248306,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3LINESTRIKE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3LINESTRIKE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3LINESTRIKE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -247918,10 +248336,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3LINESTRIKE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3linestrikeOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3linestrikeOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -247974,19 +248408,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3OUTSIDE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3OUTSIDE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3OUTSIDE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248004,10 +248438,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3OUTSIDE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3outsideOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3outsideOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248060,19 +248510,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3STARSINSOUTH(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3STARSINSOUTH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3STARSINSOUTH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248090,10 +248540,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3STARSINSOUTH(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3starsinsouthOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3starsinsouthOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248146,19 +248612,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDL3WHITESOLDIERS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDL3WHITESOLDIERS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDL3WHITESOLDIERS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248176,10 +248642,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDL3WHITESOLDIERS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdl3whitesoldiersOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248232,19 +248714,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLABANDONEDBABY(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLABANDONEDBABY_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLABANDONEDBABY_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248263,10 +248745,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLABANDONEDBABY(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlabandonedbabyOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlabandonedbabyOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248319,19 +248817,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLADVANCEBLOCK(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLADVANCEBLOCK_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLADVANCEBLOCK_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248349,10 +248847,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLADVANCEBLOCK(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdladvanceblockOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdladvanceblockOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248405,19 +248919,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLBELTHOLD(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLBELTHOLD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLBELTHOLD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248435,10 +248949,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLBELTHOLD(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlbeltholdOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlbeltholdOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248491,19 +249021,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLBREAKAWAY(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLBREAKAWAY_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLBREAKAWAY_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248521,10 +249051,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLBREAKAWAY(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlbreakawayOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlbreakawayOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248577,19 +249123,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLCLOSINGMARUBOZU(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLCLOSINGMARUBOZU_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLCLOSINGMARUBOZU_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248607,10 +249153,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLCLOSINGMARUBOZU(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlclosingmarubozuOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248663,19 +249225,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLCONCEALBABYSWALL(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLCONCEALBABYSWALL_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLCONCEALBABYSWALL_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248693,10 +249255,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLCONCEALBABYSWALL(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlconcealbabyswallOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248749,19 +249327,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLCOUNTERATTACK(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLCOUNTERATTACK_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLCOUNTERATTACK_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248779,10 +249357,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLCOUNTERATTACK(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlcounterattackOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlcounterattackOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248835,19 +249429,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLDARKCLOUDCOVER(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLDARKCLOUDCOVER_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248866,10 +249460,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLDARKCLOUDCOVER(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdldarkcloudcoverOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -248922,19 +249532,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLDOJI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLDOJI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLDOJI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -248952,10 +249562,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLDOJI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdldojiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdldojiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249008,19 +249634,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLDOJISTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLDOJISTAR_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLDOJISTAR_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249038,10 +249664,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLDOJISTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdldojistarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdldojistarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249094,19 +249736,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLDRAGONFLYDOJI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLDRAGONFLYDOJI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLDRAGONFLYDOJI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249124,10 +249766,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLDRAGONFLYDOJI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdldragonflydojiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdldragonflydojiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249180,19 +249838,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLENGULFING(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLENGULFING_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLENGULFING_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249210,10 +249868,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLENGULFING(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlengulfingOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlengulfingOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249266,19 +249940,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLEVENINGDOJISTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLEVENINGDOJISTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249297,10 +249971,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLEVENINGDOJISTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdleveningdojistarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdleveningdojistarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249353,19 +250043,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLEVENINGSTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLEVENINGSTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLEVENINGSTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249384,10 +250074,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLEVENINGSTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdleveningstarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdleveningstarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249440,19 +250146,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLGAPSIDESIDEWHITE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLGAPSIDESIDEWHITE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLGAPSIDESIDEWHITE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249470,10 +250176,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLGAPSIDESIDEWHITE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlgapsidesidewhiteOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249526,19 +250248,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLGRAVESTONEDOJI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLGRAVESTONEDOJI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLGRAVESTONEDOJI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249556,10 +250278,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLGRAVESTONEDOJI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlgravestonedojiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlgravestonedojiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249612,19 +250350,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHAMMER(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHAMMER_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHAMMER_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249642,10 +250380,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHAMMER(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhammerOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhammerOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249698,19 +250452,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHANGINGMAN(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHANGINGMAN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHANGINGMAN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249728,10 +250482,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHANGINGMAN(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhangingmanOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhangingmanOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249784,19 +250554,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHARAMI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHARAMI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHARAMI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249814,10 +250584,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHARAMI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlharamiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlharamiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249870,19 +250656,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHARAMICROSS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHARAMICROSS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHARAMICROSS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249900,10 +250686,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHARAMICROSS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlharamicrossOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlharamicrossOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -249956,19 +250758,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHIGHWAVE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHIGHWAVE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHIGHWAVE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -249986,10 +250788,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHIGHWAVE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhighwaveOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhighwaveOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250042,19 +250860,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHIKKAKE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHIKKAKE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHIKKAKE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250072,10 +250890,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHIKKAKE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhikkakeOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhikkakeOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250128,19 +250962,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHIKKAKEMOD(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHIKKAKEMOD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHIKKAKEMOD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250158,10 +250992,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHIKKAKEMOD(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhikkakemodOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhikkakemodOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250214,19 +251064,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLHOMINGPIGEON(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLHOMINGPIGEON_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLHOMINGPIGEON_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250244,10 +251094,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLHOMINGPIGEON(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlhomingpigeonOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlhomingpigeonOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250300,19 +251166,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLIDENTICAL3CROWS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLIDENTICAL3CROWS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLIDENTICAL3CROWS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250330,10 +251196,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLIDENTICAL3CROWS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlidentical3crowsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlidentical3crowsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250386,19 +251268,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLINNECK(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLINNECK_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLINNECK_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250416,10 +251298,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLINNECK(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlinneckOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlinneckOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250472,19 +251370,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLINVERTEDHAMMER(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLINVERTEDHAMMER_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLINVERTEDHAMMER_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250502,10 +251400,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLINVERTEDHAMMER(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlinvertedhammerOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlinvertedhammerOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250558,19 +251472,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLKICKING(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLKICKING_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLKICKING_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250588,10 +251502,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLKICKING(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlkickingOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlkickingOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250644,19 +251574,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLKICKINGBYLENGTH(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLKICKINGBYLENGTH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLKICKINGBYLENGTH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250674,10 +251604,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLKICKINGBYLENGTH(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlkickingbylengthOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlkickingbylengthOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250730,19 +251676,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLLADDERBOTTOM(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLLADDERBOTTOM_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLLADDERBOTTOM_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250760,10 +251706,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLLADDERBOTTOM(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlladderbottomOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlladderbottomOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250816,19 +251778,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLLONGLEGGEDDOJI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLLONGLEGGEDDOJI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLLONGLEGGEDDOJI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250846,10 +251808,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLLONGLEGGEDDOJI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdllongleggeddojiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdllongleggeddojiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250902,19 +251880,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLLONGLINE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLLONGLINE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLLONGLINE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -250932,10 +251910,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLLONGLINE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdllonglineOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdllonglineOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -250988,19 +251982,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLMARUBOZU(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLMARUBOZU_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLMARUBOZU_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251018,10 +252012,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLMARUBOZU(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlmarubozuOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlmarubozuOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251074,19 +252084,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLMATCHINGLOW(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLMATCHINGLOW_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLMATCHINGLOW_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251104,10 +252114,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLMATCHINGLOW(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlmatchinglowOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlmatchinglowOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251160,19 +252186,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLMATHOLD(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLMATHOLD_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLMATHOLD_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251191,10 +252217,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLMATHOLD(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlmatholdOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlmatholdOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251247,19 +252289,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLMORNINGDOJISTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLMORNINGDOJISTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251278,10 +252320,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLMORNINGDOJISTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlmorningdojistarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlmorningdojistarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251334,19 +252392,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLMORNINGSTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
-        try { r.lb = core.CDLMORNINGSTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLMORNINGSTAR_Lookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251365,10 +252423,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLMORNINGSTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlmorningstarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlmorningstarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInPenetration, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251421,19 +252495,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLONNECK(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLONNECK_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLONNECK_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251451,10 +252525,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLONNECK(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlonneckOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlonneckOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251507,19 +252597,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLPIERCING(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLPIERCING_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLPIERCING_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251537,10 +252627,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLPIERCING(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlpiercingOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlpiercingOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251593,19 +252699,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLRICKSHAWMAN(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLRICKSHAWMAN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLRICKSHAWMAN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251623,10 +252729,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLRICKSHAWMAN(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlrickshawmanOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlrickshawmanOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251679,19 +252801,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLRISEFALL3METHODS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLRISEFALL3METHODS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLRISEFALL3METHODS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251709,10 +252831,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLRISEFALL3METHODS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlrisefall3methodsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251765,19 +252903,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSEPARATINGLINES(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSEPARATINGLINES_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSEPARATINGLINES_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251795,10 +252933,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSEPARATINGLINES(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlseparatinglinesOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlseparatinglinesOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251851,19 +253005,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSHOOTINGSTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSHOOTINGSTAR_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSHOOTINGSTAR_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251881,10 +253035,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSHOOTINGSTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlshootingstarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlshootingstarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -251937,19 +253107,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSHORTLINE(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSHORTLINE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSHORTLINE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -251967,10 +253137,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSHORTLINE(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlshortlineOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlshortlineOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252023,19 +253209,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSPINNINGTOP(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSPINNINGTOP_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSPINNINGTOP_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252053,10 +253239,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSPINNINGTOP(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlspinningtopOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlspinningtopOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252109,19 +253311,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSTALLEDPATTERN(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSTALLEDPATTERN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSTALLEDPATTERN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252139,10 +253341,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSTALLEDPATTERN(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlstalledpatternOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlstalledpatternOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252195,19 +253413,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLSTICKSANDWICH(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLSTICKSANDWICH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLSTICKSANDWICH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252225,10 +253443,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLSTICKSANDWICH(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlsticksandwichOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlsticksandwichOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252281,19 +253515,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLTAKURI(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLTAKURI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLTAKURI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252311,10 +253545,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLTAKURI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdltakuriOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdltakuriOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252367,19 +253617,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLTASUKIGAP(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLTASUKIGAP_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLTASUKIGAP_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252397,10 +253647,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLTASUKIGAP(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdltasukigapOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdltasukigapOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252453,19 +253719,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLTHRUSTING(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLTHRUSTING_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLTHRUSTING_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252483,10 +253749,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLTHRUSTING(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlthrustingOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlthrustingOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252539,19 +253821,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLTRISTAR(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLTRISTAR_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLTRISTAR_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252569,10 +253851,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLTRISTAR(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdltristarOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdltristarOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252625,19 +253923,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLUNIQUE3RIVER(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLUNIQUE3RIVER_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLUNIQUE3RIVER_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252655,10 +253953,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLUNIQUE3RIVER(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlunique3riverOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlunique3riverOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252711,19 +254025,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLUPSIDEGAP2CROWS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLUPSIDEGAP2CROWS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLUPSIDEGAP2CROWS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252741,10 +254055,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLUPSIDEGAP2CROWS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlupsidegap2crowsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252797,19 +254127,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCDLXSIDEGAP3METHODS(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.CDLXSIDEGAP3METHODS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CDLXSIDEGAP3METHODS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252827,10 +254157,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CDLXSIDEGAP3METHODS(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.cdlxsidegap3methodsOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252883,16 +254229,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCEIL(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.CEIL_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CEIL_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252907,10 +254253,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CEIL(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ceilOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ceilOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -252963,19 +254325,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCMF(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.CMF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CMF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -252994,10 +254356,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CMF(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cmfOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cmfOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253050,16 +254428,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCMO(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.CMO_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CMO_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253075,10 +254453,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CMO(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cmoOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cmoOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253131,16 +254525,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCMOU(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.CMOU_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CMOU_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253156,10 +254550,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CMOU(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cmouOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cmouOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253212,16 +254622,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCOPPOCK(Core core, String json, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, RideResult r) {
-        try { r.lb = core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253239,10 +254649,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.COPPOCK(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInWMAPeriod, optInROC1Period, optInROC2Period, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.coppockOpen(java.util.Arrays.copyOf(inReal, m), optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.coppockOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInWMAPeriod, optInROC1Period, optInROC2Period, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253295,17 +254721,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCORREL(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.CORREL_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CORREL_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253322,10 +254748,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CORREL(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.correlOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.correlOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253378,16 +254820,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCOS(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.COS_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.COS_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253402,10 +254844,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.COS(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cosOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cosOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253458,16 +254916,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCOSH(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.COSH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.COSH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253482,10 +254940,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.COSH(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.coshOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.coshOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253538,16 +255012,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCUMSUM(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.CUMSUM_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CUMSUM_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253562,10 +255036,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CUMSUM(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cumsumOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cumsumOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253618,17 +255108,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyCVI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, RideResult r) {
-        try { r.lb = core.CVI_Lookback(optInTimePeriod, optInROCPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.CVI_Lookback(optInTimePeriod, optInROCPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253646,10 +255136,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.CVI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, optInROCPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.cviOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, optInROCPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.cviOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, optInROCPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253702,16 +255208,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyDEMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.DEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.DEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253727,10 +255233,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.DEMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.demaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.demaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253783,17 +255305,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyDIV(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
-        try { r.lb = core.DIV_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.DIV_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253809,10 +255331,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.DIV(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.divOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.divOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253865,17 +255403,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyDONCHIAN(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.DONCHIAN_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.DONCHIAN_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253894,10 +255432,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.DONCHIAN(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.donchianOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.donchianOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -253957,16 +255513,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyDPO(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.DPO_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.DPO_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -253982,10 +255538,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.DPO(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.dpoOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.dpoOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254038,18 +255610,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyDX(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.DX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.DX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254067,10 +255639,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.DX(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.dxOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.dxOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254123,17 +255711,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyEFI(Core core, String json, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.EFI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.EFI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254150,10 +255738,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.EFI(0, m - 1, java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.efiOpen(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.efiOpenAndFill(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254206,16 +255810,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyEMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.EMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.EMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254231,10 +255835,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.EMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.emaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.emaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254287,16 +255907,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyER(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ER_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ER_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254312,10 +255932,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ER(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.erOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.erOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254368,18 +256004,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyERI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ERI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ERI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254398,10 +256034,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ERI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.eriOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.eriOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254457,16 +256110,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyEXP(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.EXP_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.EXP_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254481,10 +256134,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.EXP(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.expOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.expOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254537,16 +256206,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyFLOOR(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.FLOOR_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.FLOOR_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254561,10 +256230,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.FLOOR(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.floorOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.floorOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254617,16 +256302,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyFOSC(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.FOSC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.FOSC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254642,10 +256327,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.FOSC(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.foscOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.foscOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254698,17 +256399,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyFRACTAL(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, RideResult r) {
-        try { r.lb = core.FRACTAL_Lookback(optInLeftBars, optInRightBars); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.FRACTAL_Lookback(optInLeftBars, optInRightBars); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254727,10 +256428,27 @@ public class TaCodegenServe {
 
         int[] rib0 = new int[m];
         int[] rib1 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.FRACTAL(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInLeftBars, optInRightBars, rib0, rib1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.fractalOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInLeftBars, optInRightBars); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            int[] fib1 = new int[m];
+            try { core.fractalOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInLeftBars, optInRightBars, fib0, fib1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254786,19 +256504,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHA(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.HA_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HA_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254819,10 +256537,29 @@ public class TaCodegenServe {
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
         double[] rb3 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HA(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0, rb1, rb2, rb3); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.haOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            double[] fb3 = new double[m];
+            try { core.haOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0, fb1, fb2, fb3); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254886,16 +256623,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.HMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254911,10 +256648,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.hmaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.hmaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -254967,16 +256720,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_DCPERIOD(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_DCPERIOD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_DCPERIOD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -254991,10 +256744,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_DCPERIOD(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htDcperiodOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.htDcperiodOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255047,16 +256816,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_DCPHASE(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_DCPHASE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_DCPHASE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255071,10 +256840,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_DCPHASE(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htDcphaseOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.htDcphaseOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255127,16 +256912,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_PHASOR(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_PHASOR_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_PHASOR_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255152,10 +256937,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_PHASOR(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htPhasorOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.htPhasorOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255211,16 +257013,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_SINE(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_SINE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_SINE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255236,10 +257038,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_SINE(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htSineOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.htSineOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255295,16 +257114,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_TRENDLINE(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_TRENDLINE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_TRENDLINE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255319,10 +257138,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_TRENDLINE(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htTrendlineOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.htTrendlineOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255375,16 +257210,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyHT_TRENDMODE(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.HT_TRENDMODE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.HT_TRENDMODE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255399,10 +257234,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.HT_TRENDMODE(0, m - 1, java.util.Arrays.copyOf(inReal, m), rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.htTrendmodeOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.htTrendmodeOpenAndFill(java.util.Arrays.copyOf(inReal, m), fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255455,17 +257306,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyIMI(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.IMI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.IMI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255482,10 +257333,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.IMI(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.imiOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.imiOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255538,16 +257405,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyKAMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.KAMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.KAMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255563,10 +257430,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.KAMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.kamaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.kamaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255619,18 +257502,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyKC(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, RideResult r) {
-        try { r.lb = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255652,10 +257535,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.KC(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInATRPeriod, optInNbDev, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.kcOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInATRPeriod, optInNbDev); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.kcOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInATRPeriod, optInNbDev, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255715,18 +257616,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyKDJ(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
-        try { r.lb = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255750,10 +257651,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.KDJ(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.kdjOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.kdjOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255813,16 +257732,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLINEARREG(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.LINEARREG_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LINEARREG_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255838,10 +257757,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LINEARREG(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.linearregOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.linearregOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255894,16 +257829,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLINEARREG_ANGLE(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LINEARREG_ANGLE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -255919,10 +257854,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LINEARREG_ANGLE(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.linearregAngleOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.linearregAngleOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -255975,16 +257926,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLINEARREG_INTERCEPT(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LINEARREG_INTERCEPT_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256000,10 +257951,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LINEARREG_INTERCEPT(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.linearregInterceptOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.linearregInterceptOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256056,16 +258023,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLINEARREG_SLOPE(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LINEARREG_SLOPE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256081,10 +258048,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LINEARREG_SLOPE(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.linearregSlopeOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.linearregSlopeOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256137,16 +258120,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLN(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.LN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256161,10 +258144,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LN(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.lnOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.lnOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256217,16 +258216,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyLOG10(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.LOG10_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.LOG10_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256241,10 +258240,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.LOG10(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.log10Open(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.log10OpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256297,16 +258312,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, RideResult r) {
-        try { r.lb = core.MA_Lookback(optInTimePeriod, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MA_Lookback(optInTimePeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256323,10 +258338,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInMAType, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.maOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.maOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInMAType, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256379,16 +258410,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMACD(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
-        try { r.lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256408,10 +258439,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MACD(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.macdOpen(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.macdOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256471,16 +258520,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMACDEXT(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, RideResult r) {
-        try { r.lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256503,10 +258552,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MACDEXT(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.macdextOpen(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.macdextOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256566,16 +258633,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMACDFIX(Core core, String json, int endIdx, double[] inReal, int optInSignalPeriod, RideResult r) {
-        try { r.lb = core.MACDFIX_Lookback(optInSignalPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MACDFIX_Lookback(optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256593,10 +258660,28 @@ public class TaCodegenServe {
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
         double[] rb2 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MACDFIX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInSignalPeriod, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.macdfixOpen(java.util.Arrays.copyOf(inReal, m), optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.macdfixOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInSignalPeriod, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256656,16 +258741,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMAMA(Core core, String json, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, RideResult r) {
-        try { r.lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MAMA_Lookback(optInFastLimit, optInSlowLimit); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256683,10 +258768,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MAMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastLimit, optInSlowLimit, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.mamaOpen(java.util.Arrays.copyOf(inReal, m), optInFastLimit, optInSlowLimit); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.mamaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastLimit, optInSlowLimit, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256742,18 +258844,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMARKETFI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, RideResult r) {
-        try { r.lb = core.MARKETFI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MARKETFI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256770,10 +258872,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MARKETFI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.marketfiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.marketfiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256826,17 +258944,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMASSI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
-        try { r.lb = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256854,10 +258972,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MASSI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.massiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.massiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInFastPeriod, optInSlowPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256910,17 +259044,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMAVP(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, RideResult r) {
-        try { r.lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -256939,10 +259073,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MAVP(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInMinPeriod, optInMaxPeriod, optInMAType, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.mavpOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInMinPeriod, optInMaxPeriod, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.mavpOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), optInMinPeriod, optInMaxPeriod, optInMAType, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -256995,16 +259145,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMAX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MAX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MAX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257020,10 +259170,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MAX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.maxOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.maxOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257076,16 +259242,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMAXINDEX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MAXINDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MAXINDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257101,10 +259267,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MAXINDEX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.maxindexOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.maxindexOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257157,17 +259339,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMEDPRICE(Core core, String json, int endIdx, double[] inHigh, double[] inLow, RideResult r) {
-        try { r.lb = core.MEDPRICE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MEDPRICE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257183,10 +259365,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MEDPRICE(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.medpriceOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.medpriceOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257239,19 +259437,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMFI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MFI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MFI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257270,10 +259468,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MFI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.mfiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.mfiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257326,16 +259540,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMIDPOINT(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MIDPOINT_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MIDPOINT_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257351,10 +259565,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MIDPOINT(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.midpointOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.midpointOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257407,17 +259637,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMIDPRICE(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MIDPRICE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MIDPRICE_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257434,10 +259664,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MIDPRICE(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.midpriceOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.midpriceOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257490,16 +259736,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMIN(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MIN_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MIN_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257515,10 +259761,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MIN(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.minOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257571,16 +259833,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMININDEX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MININDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MININDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257596,10 +259858,26 @@ public class TaCodegenServe {
         }
 
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MININDEX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minindexOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            try { core.minindexOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257652,16 +259930,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMINMAX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MINMAX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MINMAX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257678,10 +259956,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MINMAX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minmaxOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.minmaxOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257737,16 +260032,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMINMAXINDEX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MINMAXINDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MINMAXINDEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257763,10 +260058,27 @@ public class TaCodegenServe {
 
         int[] rib0 = new int[m];
         int[] rib1 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MINMAXINDEX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rib0, rib1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minmaxindexOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            int[] fib0 = new int[m];
+            int[] fib1 = new int[m];
+            try { core.minmaxindexOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fib0, fib1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257822,18 +260134,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMINUS_DI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MINUS_DI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MINUS_DI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257851,10 +260163,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MINUS_DI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minusDiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.minusDiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257907,17 +260235,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMINUS_DM(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MINUS_DM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MINUS_DM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -257934,10 +260262,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MINUS_DM(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.minusDmOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.minusDmOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -257990,16 +260334,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMOM(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.MOM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MOM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258015,10 +260359,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MOM(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.momOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.momOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258071,17 +260431,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyMULT(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
-        try { r.lb = core.MULT_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.MULT_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258097,10 +260457,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.MULT(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.multOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.multOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258153,18 +260529,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyNATR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.NATR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.NATR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258182,10 +260558,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.NATR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.natrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.natrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258238,17 +260630,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyNVI(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
-        try { r.lb = core.NVI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.NVI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258264,10 +260656,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.NVI(0, m - 1, java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.nviOpen(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.nviOpenAndFill(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258320,17 +260728,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyOBV(Core core, String json, int endIdx, double[] inReal, double[] inVolume, RideResult r) {
-        try { r.lb = core.OBV_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.OBV_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258346,10 +260754,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.OBV(0, m - 1, java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.obvOpen(java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.obvOpenAndFill(java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258402,16 +260826,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPERCENTILE(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, RideResult r) {
-        try { r.lb = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258428,10 +260852,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PERCENTILE(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInPercentile, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.percentileOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInPercentile); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.percentileOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInPercentile, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258484,16 +260924,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPERCENTRANK(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.PERCENTRANK_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PERCENTRANK_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258509,10 +260949,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PERCENTRANK(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.percentrankOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.percentrankOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258565,18 +261021,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPLUS_DI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.PLUS_DI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PLUS_DI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258594,10 +261050,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PLUS_DI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.plusDiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.plusDiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258650,17 +261122,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPLUS_DM(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.PLUS_DM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PLUS_DM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258677,10 +261149,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PLUS_DM(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.plusDmOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.plusDmOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258733,16 +261221,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPPO(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
-        try { r.lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258760,10 +261248,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PPO(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ppoOpen(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ppoOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258816,17 +261320,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPVI(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
-        try { r.lb = core.PVI_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PVI_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258842,10 +261346,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PVI(0, m - 1, java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.pviOpen(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.pviOpenAndFill(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258898,16 +261418,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPVO(Core core, String json, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
-        try { r.lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -258925,10 +261445,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PVO(0, m - 1, java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod, optInMAType, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.pvoOpen(java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.pvoOpenAndFill(java.util.Arrays.copyOf(inVolume, m), optInFastPeriod, optInSlowPeriod, optInMAType, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -258981,17 +261517,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyPVT(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
-        try { r.lb = core.PVT_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.PVT_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259007,10 +261543,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.PVT(0, m - 1, java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.pvtOpen(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.pvtOpenAndFill(java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259063,17 +261615,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyQSTICK(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.QSTICK_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.QSTICK_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inOpen.length < navail) navail = inOpen.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259090,10 +261642,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.QSTICK(0, m - 1, java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.qstickOpen(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.qstickOpenAndFill(java.util.Arrays.copyOf(inOpen, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259146,16 +261714,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyRMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.RMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.RMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259171,10 +261739,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.RMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rmaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rmaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259227,16 +261811,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyROC(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ROC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ROC_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259252,10 +261836,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ROC(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rocOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rocOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259308,16 +261908,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyROCP(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ROCP_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ROCP_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259333,10 +261933,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ROCP(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rocpOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rocpOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259389,16 +262005,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyROCR(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ROCR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ROCR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259414,10 +262030,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ROCR(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rocrOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rocrOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259470,16 +262102,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyROCR100(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ROCR100_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ROCR100_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259495,10 +262127,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ROCR100(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rocr100Open(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rocr100OpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259551,16 +262199,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyRSI(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.RSI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.RSI_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259576,10 +262224,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.RSI(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rsiOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rsiOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259632,16 +262296,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyRVI(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, RideResult r) {
-        try { r.lb = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259658,10 +262322,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.RVI(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInStdDevPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rviOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInStdDevPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rviOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInStdDevPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259714,16 +262394,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyRVOL(Core core, String json, int endIdx, double[] inVolume, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.RVOL_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.RVOL_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259739,10 +262419,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.RVOL(0, m - 1, java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.rvolOpen(java.util.Arrays.copyOf(inVolume, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.rvolOpenAndFill(java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259795,17 +262491,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySAR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, RideResult r) {
-        try { r.lb = core.SAR_Lookback(optInAcceleration, optInMaximum); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SAR_Lookback(optInAcceleration, optInMaximum); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259823,10 +262519,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SAR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInAcceleration, optInMaximum, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sarOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInAcceleration, optInMaximum); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sarOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInAcceleration, optInMaximum, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259879,17 +262591,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySAREXT(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, RideResult r) {
-        try { r.lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259913,10 +262625,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SAREXT(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sarextOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sarextOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -259969,16 +262697,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySIN(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.SIN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SIN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -259993,10 +262721,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SIN(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sinOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sinOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260049,16 +262793,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySINH(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.SINH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SINH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260073,10 +262817,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SINH(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sinhOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sinhOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260129,16 +262889,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.SMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260154,10 +262914,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.smaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.smaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260210,18 +262986,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySMI(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
-        try { r.lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260243,10 +263019,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SMI(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.smiOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.smiOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260302,16 +263095,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySQRT(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.SQRT_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SQRT_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260326,10 +263119,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SQRT(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sqrtOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sqrtOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260382,16 +263191,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySTDDEV(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
-        try { r.lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.STDDEV_Lookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260408,10 +263217,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.STDDEV(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.stddevOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.stddevOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260464,18 +263289,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySTOCH(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
-        try { r.lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260498,10 +263323,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.STOCH(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.stochOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.stochOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260557,18 +263399,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySTOCHF(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
-        try { r.lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260589,10 +263431,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.STOCHF(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.stochfOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.stochfOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastK_Period, optInFastD_Period, optInFastD_MAType, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260648,16 +263507,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySTOCHRSI(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
-        try { r.lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260677,10 +263536,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.STOCHRSI(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.stochrsiOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.stochrsiOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260736,17 +263612,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySUB(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
-        try { r.lb = core.SUB_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SUB_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal0.length < navail) navail = inReal0.length;
         if (inReal1.length < navail) navail = inReal1.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260762,10 +263638,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SUB(0, m - 1, java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.subOpen(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.subOpenAndFill(java.util.Arrays.copyOf(inReal0, m), java.util.Arrays.copyOf(inReal1, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260818,16 +263710,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySUM(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.SUM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SUM_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260843,10 +263735,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SUM(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sumOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sumOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260899,18 +263807,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodySUPERTREND(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, RideResult r) {
-        try { r.lb = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -260930,10 +263838,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         int[] rib0 = new int[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.SUPERTREND(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, rb0, rib0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.supertrendOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            int[] fib0 = new int[m];
+            try { core.supertrendOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, optInMultiplier, fb0, fib0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -260989,16 +263914,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyT3(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, RideResult r) {
-        try { r.lb = core.T3_Lookback(optInTimePeriod, optInVFactor); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.T3_Lookback(optInTimePeriod, optInVFactor); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261015,10 +263940,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.T3(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInVFactor, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.t3Open(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInVFactor); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.t3OpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInVFactor, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261071,16 +264012,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTAN(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.TAN_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TAN_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261095,10 +264036,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TAN(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.tanOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.tanOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261151,16 +264108,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTANH(Core core, String json, int endIdx, double[] inReal, RideResult r) {
-        try { r.lb = core.TANH_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TANH_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261175,10 +264132,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TANH(0, m - 1, java.util.Arrays.copyOf(inReal, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.tanhOpen(java.util.Arrays.copyOf(inReal, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.tanhOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261231,16 +264204,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTEMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.TEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261256,10 +264229,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TEMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.temaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.temaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261312,18 +264301,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTRANGE(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.TRANGE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TRANGE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261340,10 +264329,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TRANGE(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.trangeOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.trangeOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261396,16 +264401,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTRIMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.TRIMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TRIMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261421,10 +264426,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TRIMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.trimaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.trimaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261477,16 +264498,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTRIX(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.TRIX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TRIX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261502,10 +264523,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TRIX(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.trixOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.trixOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261558,16 +264595,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTSF(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.TSF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TSF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261583,10 +264620,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TSF(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.tsfOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.tsfOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261639,16 +264692,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTSI(Core core, String json, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, RideResult r) {
-        try { r.lb = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261665,10 +264718,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TSI(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInFirstPeriod, optInSecondPeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.tsiOpen(java.util.Arrays.copyOf(inReal, m), optInFirstPeriod, optInSecondPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.tsiOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInFirstPeriod, optInSecondPeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261721,18 +264790,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyTYPPRICE(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.TYPPRICE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.TYPPRICE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261749,10 +264818,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.TYPPRICE(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.typpriceOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.typpriceOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261805,18 +264890,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyULTOSC(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, RideResult r) {
-        try { r.lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261836,10 +264921,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ULTOSC(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ultoscOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ultoscOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261892,16 +264993,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyVAR(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
-        try { r.lb = core.VAR_Lookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.VAR_Lookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261918,10 +265019,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.VAR(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.varOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.varOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInNbDev, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -261974,16 +265091,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyVHF(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.VHF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.VHF_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -261999,10 +265116,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.VHF(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.vhfOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.vhfOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262055,18 +265188,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyVORTEX(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.VORTEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.VORTEX_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262085,10 +265218,27 @@ public class TaCodegenServe {
 
         double[] rb0 = new double[m];
         double[] rb1 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.VORTEX(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0, rb1); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.vortexOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            try { core.vortexOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0, fb1); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262144,19 +265294,19 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyVWAP(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
-        try { r.lb = core.VWAP_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.VWAP_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262174,10 +265324,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.VWAP(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.vwapOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.vwapOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), java.util.Arrays.copyOf(inVolume, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262230,17 +265396,17 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyVWMA(Core core, String json, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.VWMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.VWMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
         if (inVolume.length < navail) navail = inVolume.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262257,10 +265423,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.VWMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.vwmaOpen(java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.vwmaOpenAndFill(java.util.Arrays.copyOf(inReal, m), java.util.Arrays.copyOf(inVolume, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262313,18 +265495,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyWAD(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.WAD_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.WAD_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262341,10 +265523,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.WAD(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.wadOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.wadOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262397,18 +265595,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyWCLPRICE(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
-        try { r.lb = core.WCLPRICE_Lookback(); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.WCLPRICE_Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262425,10 +265623,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.WCLPRICE(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.wclpriceOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m)); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.wclpriceOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262481,18 +265695,18 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyWILLR(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.WILLR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.WILLR_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inHigh.length < navail) navail = inHigh.length;
         if (inLow.length < navail) navail = inLow.length;
         if (inClose.length < navail) navail = inClose.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262510,10 +265724,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.WILLR(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.willrOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.willrOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262566,16 +265796,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyWMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.WMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.WMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262591,10 +265821,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.WMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.wmaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.wmaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
@@ -262647,16 +265893,16 @@ public class TaCodegenServe {
 
     @SuppressWarnings("unused")
     static void rideBodyZLEMA(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
-        try { r.lb = core.ZLEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.skip = 1; return; }
+        try { r.lb = core.ZLEMA_Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
-        if (lb < 0) { r.skip = 1; return; }
         int navail = endIdx + 1;
         if (inReal.length < navail) navail = inReal.length;
-        int m = 2 * lb + 10;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
         if (m > navail) m = navail;
         r.m = m;
-        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }
-        if (m < lb + 2) { r.skip = 3; return; }
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
         long key = 0xcbf29ce484222325L;
@@ -262672,10 +265918,26 @@ public class TaCodegenServe {
         }
 
         double[] rb0 = new double[m];
-        int beg;
-        int nb;
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
         try { OutRange _rr = core.ZLEMA(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
-        catch (RuntimeException _e) { r.skip = 5; return; }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.zlemaOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.zlemaOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
         if (nb == 0) { r.skip = 5; return; }
         if (beg != lb) { r.skip = 6; return; }
 
