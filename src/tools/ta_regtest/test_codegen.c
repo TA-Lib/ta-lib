@@ -2173,33 +2173,6 @@ static const char *const g_rideSkipName[CODEGEN_RIDE_SKIP_N] = {
     "batch-empty", "beg!=lb", "lookback-vs-batch"
 };
 
-/* Copy the quoted value of `key` (a 16-hex-digit IEEE-754 bit string) out of a
- * response. The two divergent values travel as bits, not as text: %a is
- * unspellable in C# and formats differently in Java, so a printable form would
- * make the repro backend-dependent. */
-static void ride_hex(const char *resp, const char *key, char out[17])
-{
-    const char *p = strstr(resp, key);
-    out[0] = '\0';
-    if( !p ) return;
-    p += strlen(key);
-    if( *p != '"' ) return;
-    p++;
-    int i = 0;
-    while( i < 16 && p[i] && p[i] != '"' ) { out[i] = p[i]; i++; }
-    out[i] = '\0';
-}
-
-/* The ride-along verdict the server computed for the data THIS request carried.
- *
- * Absent fields mean the server does not offer the check (ta_ref_serve compiles
- * it out, and so does any pre-feature build), which is not a failure -- read
- * with stream_flag, which answers -1 for absent, never json_get_int, which
- * answers 0 and would report silence as a divergence.
- *
- * A dedup hit replays the counts of the identical replay that already passed,
- * so the per-response counts stay truthful and the floors below stay live; a
- * failing replay is never cached, so it re-runs and re-reports at every site. */
 static void ride_read(ForEachFuncContext *ctx, const char *funcName, const char *resp)
 {
     int ok = stream_flag(resp, "\"ride_ok\":");

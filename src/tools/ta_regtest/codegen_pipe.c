@@ -146,6 +146,9 @@ static long      g_rideVerdicts;
 static long long g_rideBars;
 static long      g_rideSkips[CODEGEN_RIDE_SKIP_N];
 static long      g_rideRejects;
+static int       g_rideMismatchesEver;
+static long      g_rideVerdictsEver;
+static long      g_rideRejectsEver;
 
 int       codegen_ride_mismatches(void) { return g_rideMismatches; }
 long      codegen_ride_verdicts(void)   { return g_rideVerdicts; }
@@ -156,6 +159,9 @@ long codegen_ride_skips(int reason)
     return g_rideSkips[reason];
 }
 long codegen_ride_rejects(void)         { return g_rideRejects; }
+int  codegen_ride_mismatches_ever(void) { return g_rideMismatchesEver; }
+long codegen_ride_verdicts_ever(void)   { return g_rideVerdictsEver; }
+long codegen_ride_rejects_ever(void)    { return g_rideRejectsEver; }
 void codegen_ride_reset(void)
 {
     int i;
@@ -195,12 +201,13 @@ static void ride_scan(const char *request, const char *response)
     int ok = ride_int_field(response, "\"ride_ok\":");
     if( ok < 0 ) return;             /* ta_ref_serve and pre-feature builds */
     g_rideVerdicts++;
+    g_rideVerdictsEver++;
     /* `ride_rej` is how many streaming entry points AGREED with the batch
      * tier's rejection, computed by the comparison itself -- so this total
      * cannot outlive the comparison that feeds it. */
     {
         int rej = ride_int_field(response, "\"ride_rej\":");
-        if( rej > 0 ) g_rideRejects += rej;
+        if( rej > 0 ) { g_rideRejects += rej; g_rideRejectsEver += rej; }
     }
     /* A dedup hit re-reports the cached counts, so counting it would credit bars
      * nobody compared on this call. Only a replay that actually ran counts. */
@@ -219,6 +226,7 @@ static void ride_scan(const char *request, const char *response)
     }
 
     g_rideMismatches++;
+    g_rideMismatchesEver++;
     {
         static const char *const LEG[] = {
             "?", "Open+Update", "OpenAndFill", "rejection code", "exception class"

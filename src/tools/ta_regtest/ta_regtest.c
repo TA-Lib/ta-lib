@@ -140,7 +140,35 @@ static const char *displayTag( const char *tag, const char *label )
 }
 
 /**** Global functions definitions.   ****/
+static ErrorNumber regtest_main( int argc, char **argv );
+
+/* A ride-along divergence fails the run that FOUND it.
+ *
+ * The ride is a passenger on the language servers, so every pass that drives
+ * them computes verdicts -- the plain suite's abstract and server_verify legs,
+ * --xlang-hash, and --codegen. Only --codegen read the verdict, because its
+ * per-language floors are where the read lived; everywhere else a divergence
+ * printed its diagnostic and the run still exited 0. */
 int main( int argc, char **argv )
+{
+   ErrorNumber rideRet = regtest_main( argc, argv );
+
+   if( codegen_ride_mismatches_ever() > 0 && rideRet == TA_TEST_PASS )
+   {
+      printf( "\nFAILED: %d ride-along divergence(s) -- batch and the streaming "
+              "tiers disagreed on the caller's own data.\n",
+              codegen_ride_mismatches_ever() );
+      return TA_CODEGEN_RIDE_MISMATCH;
+   }
+   /* --codegen prints its own per-language census; this is the reach of every
+    * OTHER pass, which had no number at all. */
+   if( !doCodegenTest && codegen_ride_verdicts_ever() > 0 )
+      printf( "  ride-along: %ld verdict(s), %ld rejection leg(s) compared\n",
+              codegen_ride_verdicts_ever(), codegen_ride_rejects_ever() );
+   return rideRet;
+}
+
+static ErrorNumber regtest_main( int argc, char **argv )
 {
    ErrorNumber retValue;
 

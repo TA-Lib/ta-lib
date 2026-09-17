@@ -59,6 +59,14 @@ long long codegen_ride_bars(void);
 long codegen_ride_skips(int reason);
 long codegen_ride_rejects(void);
 void codegen_ride_reset(void);
+/* The same three totals, never reset. `codegen_ride_reset` runs per LANGUAGE,
+ * inside --codegen's own loop, so the counters above cannot speak for a pass
+ * that has no such loop -- and the plain suite, --xlang-hash and the abstract
+ * legs all drive the same servers. A divergence must fail the run that FOUND
+ * it, not only the one pass that happens to read a floor. */
+int  codegen_ride_mismatches_ever(void);
+long codegen_ride_verdicts_ever(void);
+long codegen_ride_rejects_ever(void);
 
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,
