@@ -29,4 +29,5 @@ pub mod registry;
 pub mod ride_gen;
 pub mod server_gen;
 pub mod stability;
+pub mod stream_verify_gen;
 pub mod streaming;
