@@ -5,6 +5,42 @@
 #include <stdarg.h>
 #include <string.h>
 
+/* The ride-along verdict rides on EVERY response, but the codegen driver reads it
+ * at one of its ~31 call sites, so a divergence found by the parameter sweep or
+ * the large-period pass was computed by the server and then overwritten by the
+ * next request. This is the one point every response passes through, which is
+ * what makes those sites count. */
+static int       g_rideMismatches;
+static long      g_rideVerdicts;
+static long long g_rideBars;
+static long      g_rideSkips[CODEGEN_RIDE_SKIP_N];
+static long      g_rideRejects;
+static int       g_rideMismatchesEver;
+static long      g_rideVerdictsEver;
+static long      g_rideRejectsEver;
+
+int       codegen_ride_mismatches(void) { return g_rideMismatches; }
+long      codegen_ride_verdicts(void)   { return g_rideVerdicts; }
+long long codegen_ride_bars(void)       { return g_rideBars; }
+long codegen_ride_skips(int reason)
+{
+    if( reason < 0 || reason >= CODEGEN_RIDE_SKIP_N ) return 0;
+    return g_rideSkips[reason];
+}
+long codegen_ride_rejects(void)         { return g_rideRejects; }
+int  codegen_ride_mismatches_ever(void) { return g_rideMismatchesEver; }
+long codegen_ride_verdicts_ever(void)   { return g_rideVerdictsEver; }
+long codegen_ride_rejects_ever(void)    { return g_rideRejectsEver; }
+void codegen_ride_reset(void)
+{
+    int i;
+    g_rideMismatches = 0;
+    g_rideVerdicts = 0;
+    g_rideBars = 0;
+    g_rideRejects = 0;
+    for( i = 0; i < CODEGEN_RIDE_SKIP_N; i++ ) g_rideSkips[i] = 0;
+}
+
 #if defined(WIN32) || defined(_WIN32)
 
 /* Subprocess JSON-RPC pipes are not implemented for Windows yet.
@@ -134,42 +170,6 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
     }
 
     return TA_TEST_PASS;
-}
-
-/* The ride-along verdict rides on EVERY response, but the codegen driver reads it
- * at one of its ~31 call sites, so a divergence found by the parameter sweep or
- * the large-period pass was computed by the server and then overwritten by the
- * next request. This is the one point every response passes through, which is
- * what makes those sites count. */
-static int       g_rideMismatches;
-static long      g_rideVerdicts;
-static long long g_rideBars;
-static long      g_rideSkips[CODEGEN_RIDE_SKIP_N];
-static long      g_rideRejects;
-static int       g_rideMismatchesEver;
-static long      g_rideVerdictsEver;
-static long      g_rideRejectsEver;
-
-int       codegen_ride_mismatches(void) { return g_rideMismatches; }
-long      codegen_ride_verdicts(void)   { return g_rideVerdicts; }
-long long codegen_ride_bars(void)       { return g_rideBars; }
-long codegen_ride_skips(int reason)
-{
-    if( reason < 0 || reason >= CODEGEN_RIDE_SKIP_N ) return 0;
-    return g_rideSkips[reason];
-}
-long codegen_ride_rejects(void)         { return g_rideRejects; }
-int  codegen_ride_mismatches_ever(void) { return g_rideMismatchesEver; }
-long codegen_ride_verdicts_ever(void)   { return g_rideVerdictsEver; }
-long codegen_ride_rejects_ever(void)    { return g_rideRejectsEver; }
-void codegen_ride_reset(void)
-{
-    int i;
-    g_rideMismatches = 0;
-    g_rideVerdicts = 0;
-    g_rideBars = 0;
-    g_rideRejects = 0;
-    for( i = 0; i < CODEGEN_RIDE_SKIP_N; i++ ) g_rideSkips[i] = 0;
 }
 
 static int ride_int_field(const char *s, const char *key)
