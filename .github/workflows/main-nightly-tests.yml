@@ -241,6 +241,52 @@ jobs:
         shell: bash
         run: python3 scripts/build.py xlang-hash
 
+  # --codegen is where the ride-along's vacuity floors live, and nowhere else.
+  # xlang-hash above fails on a ride divergence, so main could see the ride go
+  # WRONG; only this job can see it go SILENT. It also gives the release branch
+  # the hand-written tests' cross-language check, which server_verify runs under
+  # --codegen alone.
+  #
+  # dev-nightly's cross-language job with three deltas: ref, `!cancelled()` so a
+  # dist-pool failure cannot skip the release branch's coverage (main's posture
+  # for every job here), and no `ta_bench --verify-corpus` step -- the corpus is
+  # branch-independent and dev already proves it.
+  cross-language:
+    name: "xlang: all langs vs pre-cutover C"
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build servers and run cross-language verification
+        shell: bash
+        run: |
+          # Rust toolchain and cmake are preinstalled on ubuntu-latest.
+          # Benchmarks are skipped: CI timing is noise.
+          python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
+
   # Rust on the release branch (#179 E5): dev-nightly's `clippy` job with
   # `ref: main`, plus rust_package_check.py because main is the branch a .crate
   # publishes from and nothing here ever compiled the crate. Content merged from
@@ -301,10 +347,13 @@ jobs:
   # and does not: it builds the Java SERVER, which embeds its own Core copy, not
   # the Maven artifact.
   #
-  # Not gated on 'test', for the same reason the Rust job is not: no C build is
-  # needed, so a dist-pool failure must not skip the release branch's only Java
-  # coverage. `unzip` is preinstalled on ubuntu-latest and the wrapper downloads
-  # and SHA-256-verifies Maven itself, so the JDK is the only thing to install.
+  # `cross-language` above now builds the same jar as a side effect of --codegen,
+  # which does NOT make this job redundant: that one needs a C build and is
+  # gated on 'test', this one is gated on nothing. A dist-pool failure must not
+  # skip the release branch's only unconditional Java coverage, the same reason
+  # the Rust job is not gated. `unzip` is preinstalled on ubuntu-latest and the
+  # wrapper downloads and SHA-256-verifies Maven itself, so the JDK is the only
+  # thing to install.
   java:
     name: Java jars built and tested (release branch)
     runs-on: ubuntu-latest
