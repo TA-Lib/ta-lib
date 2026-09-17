@@ -153,10 +153,10 @@ PREREQS_UNZIP = ("unzip", is_unzip_installed, "apt install unzip (or brew instal
 PREREQS_BUILD_BASIC = [PREREQS_CMAKE]
 PREREQS_BUILD_CODEGEN = [PREREQS_CMAKE, PREREQS_CARGO]
 PREREQS_BUILD_SERVERS = [PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-                         PREREQS_UNZIP, PREREQS_DOTNET]
+                         PREREQS_DOTNET]
 
-# Tools each --language= backend needs, on top of the base set below. Unknown
-# tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
+# Tools each --language= backend's SERVER needs, on top of the base set below.
+# Unknown tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
 # widen the check, never shrink it below the base.
 #
 # Shared by scripts/regtest.py and scripts/build.py so the two cannot drift:
@@ -164,6 +164,14 @@ PREREQS_BUILD_SERVERS = [PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVA
 LANG_PREREQS = {
     "c":      [PREREQS_GCC],
     "rust":   [],                            # cargo is already in the base set
+    "java":   [PREREQS_JAVAC, PREREQS_JAVA],
+    "csharp": [PREREQS_DOTNET],
+}
+
+# Tools the PUBLISHABLE library of each backend needs, which is a different
+# question: only this path runs the Maven wrapper (hence unzip), and none of it
+# compiles C. A backend absent here has no publishable library.
+LIBRARY_PREREQS = {
     "java":   [PREREQS_JAVAC, PREREQS_JAVA, PREREQS_UNZIP],
     "csharp": [PREREQS_DOTNET],
 }

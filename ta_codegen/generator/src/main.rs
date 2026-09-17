@@ -84,6 +84,10 @@ fn main() {
             let servers_only = args.iter().any(|a| a == "--servers-only");
             build_servers(backend_filter.as_deref(), servers_only);
         }
+        "build-libraries" => {
+            let backend_filter = find_arg(&args, &["--backend"]);
+            build_libraries(backend_filter.as_deref());
+        }
         "format" => {
             let func_filter = find_arg(&args, &["--func", "--function"]);
             let check_only = args.iter().any(|a| a == "--check");
@@ -103,6 +107,9 @@ fn main() {
             eprintln!("  generate-bench   Only the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
             eprintln!("                   --servers-only skips the C benchmark binaries");
+            eprintln!("  build-libraries  Build the publishable Java/C# libraries and run");
+            eprintln!("                   their suites (--backend=java,csharp; JDK + unzip");
+            eprintln!("                   and/or the .NET SDK)");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
             eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
@@ -1225,8 +1232,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                 // build's bytes -- and every Java gate would agree with it,
                 // because they all drive this same classpath. Demonstrated by
                 // corrupting FunctionDescription.java: the abstract gate passed
-                // until this directory was removed by hand. The library build
-                // below gets the same property from `mvnw clean`.
+                // until this directory was removed by hand.
                 let _ = std::fs::remove_dir_all(&class_dir);
                 std::fs::create_dir_all(&class_dir).ok();
                 // The server's ta_abstract RPCs answer from the SHIPPED registry
@@ -1263,9 +1269,6 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                         println!("FAILED (javac not found: {})", e);
                     }
                 }
-                if !build_java_library(&root, &bin_dir) {
-                    failures += 1;
-                }
             }
             "csharp" => {
                 print!("  Building C# server... ");
@@ -1297,14 +1300,6 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                         failures += 1;
                         println!("FAILED (dotnet not found: {})", e);
                     }
-                }
-                // The shipped library itself (the artifact users get) — the
-                // server build above proves nothing about its csproj or its
-                // doc-comment gate (CS1591 via TreatWarningsAsErrors), so build
-                // it too, like Java's library step — and it is what runs the
-                // hand-written C# suites.
-                if !build_csharp_library(&root) {
-                    failures += 1;
                 }
             }
             "rust" => {
@@ -1354,14 +1349,68 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
     }
 }
 
+/// Build the publishable managed libraries (the artifacts users get) and run
+/// their suites.
+///
+/// Deliberately not part of `build`: nothing drives the jar or the C# assembly
+/// at run time, so a packaging break must red a job named for the artifact
+/// rather than whichever parity gate happened to build it on the way past
+/// (#428).
+///
+/// Selecting no managed backend is a failure, not a skip, and so is a missing
+/// library tree: a job that asked for a library and got silence reads green
+/// having tested nothing.
+fn build_libraries(backend_filter: Option<&str>) {
+    let root = repo_root();
+    let bin_dir = root.join("bin");
+    let backends_to_build: Vec<&str> = match backend_filter {
+        Some(b) => b.split(',').map(|s| s.trim()).collect(),
+        None => vec!["java", "csharp"],
+    };
+
+    let mut failures: u32 = 0;
+    let mut built: u32 = 0;
+    for backend in &backends_to_build {
+        match *backend {
+            "java" => {
+                built += 1;
+                if !build_java_library(&root, &bin_dir) {
+                    failures += 1;
+                }
+            }
+            "csharp" => {
+                built += 1;
+                if !build_csharp_library(&root) {
+                    failures += 1;
+                }
+            }
+            "c" | "rust" => println!("  {backend}: no managed library, SKIPPED"),
+            _ => {
+                failures += 1;
+                eprintln!("  Unknown backend: {backend}");
+            }
+        }
+    }
+
+    if built == 0 {
+        eprintln!(
+            "\nError: --backend={} names no backend with a publishable library (java, \
+             csharp), so this command built and tested nothing.",
+            backends_to_build.join(",")
+        );
+        std::process::exit(1);
+    }
+    if failures > 0 {
+        eprintln!("\nError: {failures} library build step(s) FAILED (see above).");
+        std::process::exit(1);
+    }
+}
+
 /// Compile the **shipped** Java library and run its junit-free tests.
 ///
 /// The JSON-RPC server above is self-contained (it splices the same per-function
 /// fragments into its own inline `Core`), so building it proves nothing about
-/// `output/java/library/` — which is the artifact users get. Without this step the
-/// shipped tree has no compile coverage at all in any gate, and a break in the
-/// hand-written scaffolding (`Core.java`'s preserved region, `CoreBuilder`, the
-/// shared types) surfaces only when someone opens an IDE.
+/// `output/java/library/` — which is the artifact users get.
 ///
 /// The in-tree JUnit-3 tests are skipped: `junit.jar` is not in the tree and no
 /// script or CI job ever ran them. The junit-free `main()` tests are compiled AND
@@ -1373,8 +1422,8 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     let lib_dir = root.join("ta_codegen/output/java/library");
     let src_root = lib_dir.join("src");
     if !src_root.exists() {
-        println!("  Building Java library... SKIPPED (no {})", src_root.display());
-        return true;
+        println!("  Building Java library... FAILED (no {})", src_root.display());
+        return false;
     }
 
     // Maven builds the artifact -- there is no second builder, and nothing here
@@ -2105,8 +2154,8 @@ fn collect_java_sources(
 fn build_csharp_library(root: &Path) -> bool {
     let lib_dir = root.join("ta_codegen/output/csharp/library");
     if !lib_dir.exists() {
-        println!("  Building C# library... SKIPPED (no {})", lib_dir.display());
-        return true;
+        println!("  Building C# library... FAILED (no {})", lib_dir.display());
+        return false;
     }
     print!("  Building C# library... ");
     match std::process::Command::new("dotnet")
@@ -2148,8 +2197,8 @@ fn build_csharp_library(root: &Path) -> bool {
 fn run_csharp_tests(lib_dir: &Path) -> bool {
     let test_dir = lib_dir.join("test");
     if !test_dir.exists() {
-        println!("  Running C# tests... SKIPPED (no {})", test_dir.display());
-        return true;
+        println!("  Running C# tests... FAILED (no {})", test_dir.display());
+        return false;
     }
 
     // Parsed from the test csproj so this cannot drift from what is built.

@@ -375,6 +375,13 @@ def main():
                 "scripts/build.py fuzz-064",
                 "",
             ),
+            (
+                "libraries",
+                "the publishable Java jars and the C# library, built and "
+                "tested as the artifact",
+                "scripts/build.py libraries",
+                "",
+            ),
         ]
         if skipped or func_filter or lang_filter:
             print("\n" + "=" * 60)

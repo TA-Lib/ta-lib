@@ -236,6 +236,7 @@ formatted `  - NAME: Human name, short clause (#NNN)`.
 scripts/build.py format          # regen-check runs `format --check` first and hard-fails
 scripts/build.py generate        # FULL, unfiltered — writes what --func= skipped
 scripts/build.py servers         # note: this runs generate-servers only, not generate
+scripts/build.py libraries       # the jar asserts your function is on the packaged Core
 cd bin && ./ta_regtest --function=<NAME>              # your hand-written legs
 cd bin && ./ta_regtest --codegen --function=<NAME>    # + server_verify, all four languages
 cd bin && ./ta_regtest --xlang-hash --function=<NAME> # the zero-tolerance bitwise gate

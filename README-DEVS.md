@@ -31,7 +31,7 @@ Repeat whenever you need to refresh the makefiles.
 
 Prerequisites: CMake 3.18+, a C compiler (clang or gcc), and the Rust toolchain (`rustup`).
 
-For cross-language server testing (`servers`, `regtest` targets), also: JDK (`javac` + `java`) and .NET SDK (`dotnet`).
+For cross-language server testing (`servers`, `regtest` targets), also: JDK (`javac` + `java`) and .NET SDK (`dotnet`). The `libraries` target additionally needs `unzip`, for the committed Maven wrapper.
 
 ```
 scripts/build.py                # Build the C library + all C tools (CMake)
@@ -41,6 +41,7 @@ scripts/build.py generate       # Regenerate every committed source for all back
                                 # libraries, JSON-RPC servers, benches (cargo only: writing
                                 # the Java/C# sources needs no JDK or .NET SDK)
 scripts/build.py servers        # Generate + compile JSON-RPC language servers (cargo)
+scripts/build.py libraries      # Build + test the publishable Java/C# libraries (cargo)
 ```
 
 Built binaries go to `bin/`. CMake is configured automatically on first run. The C
@@ -77,6 +78,7 @@ cargo run -- generate                            # Generate everything, all back
 cargo run -- generate --func=SMA --backend=rust  # Specific function + backend
 cargo run -- generate-servers                    # Only the JSON-RPC servers
 cargo run -- build                               # Compile servers
+cargo run -- build-libraries                     # Build + test the publishable Java/C# libraries
 ```
 
 Generated output goes to `ta_codegen/output/` organized by language.

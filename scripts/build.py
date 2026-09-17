@@ -15,6 +15,7 @@
 #   scripts/build.py regen-check    The PR gate: regenerating must change nothing (cargo)
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
+#   scripts/build.py libraries      Build + test the publishable Java/C# libraries (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -32,7 +33,7 @@ from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
     PREREQS_CARGO, PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-    PREREQS_DOTNET,
+    PREREQS_DOTNET, LIBRARY_PREREQS,
     prereqs_for_languages, backends_for_languages,
 )
 
@@ -116,6 +117,10 @@ def show_help():
     servers             Generate all source + compile JSON-RPC language servers,
                         and bring bin/ta_regtest — the only thing that drives
                         them — up to date, so bin/ can be run by hand
+    libraries           Build the publishable Java jars and C# library from the
+                        committed source and run their suites against them.
+                        Generates nothing; needs a JDK + unzip and/or the
+                        .NET SDK, narrowed by --language
     format              Re-indent the ta_codegen/input/ C source of truth
     format-check        Verify inputs are formatted (fails if not); writes nothing
     clippy              Lint both Rust crates as the dev nightly does
@@ -226,6 +231,20 @@ def build_servers(root_dir: str, lang_filter=None):
     extra = [f'--backend={backends}'] if backends else []
     run_codegen(root_dir, 'run', '--release', '--', 'generate-servers', *extra)
     run_codegen(root_dir, 'run', '--release', '--', 'build', *extra)
+
+def build_libraries(root_dir: str, lang_filter=None) -> int:
+    """Build the publishable Java/C# libraries and run their suites (issue #428).
+
+    Builds the COMMITTED source and generates nothing, so after editing
+    ta_codegen/input/ run `generate` first or this tests the previous tree."""
+    picked = library_backends(lang_filter)
+    if not picked:
+        print(f"Error: --language={lang_filter} selects no backend with a publishable "
+              f"library (valid: {', '.join(LIBRARY_PREREQS)}).", flush=True)
+        return 2
+    run_codegen(root_dir, 'run', '--release', '--', 'build-libraries',
+                f'--backend={",".join(picked)}')
+    return 0
 
 def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
     """Opt-in bit-exact differential fuzz of the current library vs the frozen
@@ -600,7 +619,7 @@ def regen_check(root_dir: str) -> int:
 
 # Rust targets run cargo directly (no CMake).
 CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
-                 'regen-check'}
+                 'regen-check', 'libraries'}
 
 # C targets map to a cmake target.
 #
@@ -623,6 +642,11 @@ SIMPLE_TARGETS = {
 # Targets that build language servers and therefore honour --language, both for
 # which backends get built and for which toolchains must be present.
 LANG_FILTERED_TARGETS = ('servers', 'regtest', 'xlang-hash')
+
+def library_backends(lang_filter):
+    """The backends with a publishable library that this --language selects."""
+    resolved = backends_for_languages(lang_filter) or ','.join(LIBRARY_PREREQS)
+    return [b for b in resolved.split(',') if b in LIBRARY_PREREQS]
 
 # Map each target to the prerequisite set it requires. These are the
 # no---language defaults; see LANG_FILTERED_TARGETS above for the narrowed path.
@@ -743,7 +767,14 @@ def main():
     # meaning "build everything" — and then the full toolchain is required,
     # rather than promising a short tool list and building all four anyway.
     _backends = backends_for_languages(args.language)
-    if args.target in LANG_FILTERED_TARGETS and _backends:
+    if args.target == 'libraries':
+        # cargo runs the generator; everything else comes from the backends that
+        # actually have a publishable library.
+        _prereqs = [PREREQS_CARGO]
+        for _b in library_backends(args.language):
+            _prereqs += [t for t in LIBRARY_PREREQS[_b] if t not in _prereqs]
+        check_prerequisites(_prereqs)
+    elif args.target in LANG_FILTERED_TARGETS and _backends:
         check_prerequisites(prereqs_for_languages(_backends))
     else:
         check_prerequisites(TARGET_PREREQS.get(args.target, PREREQS_BUILD_BASIC))
@@ -760,6 +791,8 @@ def main():
             run_codegen(root_dir, 'run', '--release', '--', 'format', '--check')
         elif args.target == 'clippy':
             run_clippy(root_dir)
+        elif args.target == 'libraries':
+            sys.exit(build_libraries(root_dir, args.language))
         elif args.target == 'regen-check':
             sys.exit(regen_check(root_dir))
         return

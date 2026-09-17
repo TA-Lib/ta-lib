@@ -94,6 +94,7 @@ cargo run -- generate --func=SMA,RSI         # Specific functions
 cargo run -- generate --backend=rust         # Specific backend
 cargo run -- generate-servers [--backend=c]  # Only the JSON-RPC servers
 cargo run -- build [--backend=c,java]        # Compile generated servers into bin/
+cargo run -- build-libraries [--backend=java] # Build + test the publishable libraries
 ```
 
 `generate` writes **everything committed**, so "regenerate, then `git status` is

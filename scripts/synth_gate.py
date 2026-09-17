@@ -21,6 +21,9 @@ the SYNTH family:
        Legs 1 and 2 only compare implementations against each other, so a
        fixture that computes the wrong thing in all four backends passes both;
        this is the only leg that knows what the numbers should be.
+  4. scripts/build.py libraries
+       the publishable Java jars and C# library over the injected tree --
+       nothing else asks whether a synthetic construct packages.
 
 Leg 0 is the generator's own `cargo test` on the injected tree — the static
 sweeps that read emitted text for structural properties, the class no value leg
@@ -46,6 +49,9 @@ import re
 import shutil
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from utilities.common import check_prerequisites, LIBRARY_PREREQS
 
 LANGS = 4  # C, Rust, Java, C# — servers exercised by the stream leg
 
@@ -152,6 +158,10 @@ def main():
                 sys.exit(f"synth_gate: fixture {f} is missing {f}.{ext}")
     nfix = len(fixtures)
     print(f"synth_gate: {nfix} synthetic function(s): {', '.join(fixtures)}")
+
+    # Up front, because the leg that needs these runs last: the worktree build
+    # checks only what the SERVERS need.
+    check_prerequisites([t for tools in LIBRARY_PREREQS.values() for t in tools])
 
     # Snapshot the CURRENT tree: dirty local changes are included (stash
     # create); a clean tree (CI) resolves to HEAD.
@@ -310,6 +320,14 @@ def main():
         if int(m.group(1)) != nfix:
             sys.exit(f"synth_gate: VACUOUS — parity gate swept {m.group(1)} "
                      f"function(s), expected {nfix}")
+
+        # Leg 4: the only leg that packages. Its floor: the jar check derives
+        # what it expects from THIS tree's input/, so an injected fixture that
+        # never reaches the packaged Core fails it.
+        rc, _ = run([sys.executable, os.path.join(wt, "scripts", "build.py"), "libraries"],
+                    cwd=wt, capture=True)
+        if rc != 0:
+            sys.exit(f"synth_gate: FAIL — the publishable libraries exited {rc}")
 
         ok = True
         print(f"\nsynth_gate: PASS — {nfix} synthetic function(s), "

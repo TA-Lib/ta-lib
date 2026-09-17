@@ -4706,7 +4706,7 @@ static ErrorNumber test_codegen_for_language(
         if( strcmp(lang->name, "rust") == 0 )
             printf(" (is ./ta_codegen built?)");
         else
-            printf(" (run: ta_codegen build --lang=%s)", lang->name);
+            printf(" (run: ta_codegen build --backend=%s)", lang->name);
         printf("\n");
         return errNb;
     }
