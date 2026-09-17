@@ -86,9 +86,77 @@
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "server_verify.h"
 
 /**** Local declarations. ****/
 #define RVIR_CAP 1100
+
+/* The legs below diff their own corpora against the language servers
+ * bit-for-bit (issue #427). Without it every vector in this file is checked
+ * against in-process C alone: the RMA differential, the two-leg composite
+ * identity and the degenerate high==low case are written specifically to pin
+ * this function's shape, and a Rust/Java/C# port that averaged the legs in the
+ * wrong order or mis-seeded the RMA would satisfy all of them while
+ * disagreeing with C.
+ *
+ * MEASURED that this compares rather than merely runs -- see the commit that
+ * added it: feeding the servers a different optInTimePeriod than C used fails
+ * with "SV FAIL [RVIR] ... BITWISE mismatch vs in-process C".
+ */
+#define RVIR_SERVER_VERIFY(sIdx, eIdx, nbBars, rc, beg, nb, hi, lo, per, sdPer, outArr) \
+   do {                                                                          \
+      if( server_verify_active() )                                               \
+      {                                                                          \
+         int svCmp_ = server_verify_comparisons();                               \
+         ErrorNumber svErr_ = server_verify(                                     \
+            "RVIR", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),                 \
+            (const TA_Real*[]){ (hi), (lo), NULL },                              \
+            (double[]){ (double)(per), (double)(sdPer) }, 2,                     \
+            (const TA_Real*[]){ (outArr), NULL }, NULL );                        \
+         if( svErr_ != TA_TEST_PASS )                                            \
+            return svErr_;                                                       \
+         /* "Returned PASS" and "compared nothing" are the same observation      \
+          * without this floor: server_verify() skips reject cases by design.    \
+          * Every call site below is a success case, so the skip path is         \
+          * unreachable and the count must advance.  */                          \
+         if( server_verify_comparisons() == svCmp_ )                             \
+         {                                                                       \
+            printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
+                    "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
+            return TA_RVIR_VACUOUS;                                              \
+         }                                                                       \
+      }                                                                          \
+   } while(0)
+
+/* Same check, for the two legs that own a `done:` label. Those legs sweep the
+ * unstable period and restore it there, so returning straight out of the macro
+ * would leave TA_FUNC_UNST_RVI (and RMA) set for every test that runs after
+ * this file -- a failure here would corrupt the rest of the run rather than
+ * just reporting itself. */
+#define RVIR_SERVER_VERIFY_GOTO(sIdx, eIdx, nbBars, rc, beg, nb, hi, lo, per, sdPer, outArr) \
+   do {                                                                          \
+      if( server_verify_active() )                                               \
+      {                                                                          \
+         int svCmp_ = server_verify_comparisons();                               \
+         ErrorNumber svErr_ = server_verify(                                     \
+            "RVIR", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),                 \
+            (const TA_Real*[]){ (hi), (lo), NULL },                              \
+            (double[]){ (double)(per), (double)(sdPer) }, 2,                     \
+            (const TA_Real*[]){ (outArr), NULL }, NULL );                        \
+         if( svErr_ != TA_TEST_PASS )                                            \
+         {                                                                       \
+            err = svErr_;                                                        \
+            goto done;                                                           \
+         }                                                                       \
+         if( server_verify_comparisons() == svCmp_ )                             \
+         {                                                                       \
+            printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
+                    "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
+            err = TA_RVIR_VACUOUS;                                               \
+            goto done;                                                           \
+         }                                                                       \
+      }                                                                          \
+   } while(0)
 
 /* optInStdDevPeriod >= 2: a one-bar deviation window is identically zero.
  * optInTimePeriod == 1 is the no-memory case both leg 3 and leg 4 need. */
@@ -289,6 +357,9 @@ static ErrorNumber test_rvir_differential( const TA_History *history )
          err = TA_TESTUTIL_TFRR_BAD_BEGIDX;
          goto done;
       }
+      RVIR_SERVER_VERIFY_GOTO( startIdx, nbBars-1, nbBars, retCode, begIdx,
+                               nbElement, history->high, history->low,
+                               period, sdPeriod, out );
 
       for( k = 0; k < nbElement; k++ )
       {
@@ -348,6 +419,8 @@ static ErrorNumber test_rvir_composite( const TA_History *history )
                  period, sdPeriod, (int)retCode );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      RVIR_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          history->high, history->low, period, sdPeriod, out );
 
       retCode = TA_RVI( begIdx, nbBars-1, history->high, period, sdPeriod,
                         &begH, &nbH, legHigh );
@@ -423,6 +496,9 @@ static ErrorNumber test_rvir_degenerate( const TA_History *history )
          err = TA_TESTUTIL_TFRR_BAD_BEGIDX;
          goto done;
       }
+      RVIR_SERVER_VERIFY_GOTO( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                               history->high, history->high, period, sdPeriod,
+                               out );
 
       for( k = 0; k < nbElement; k++ )
       {
@@ -473,6 +549,9 @@ static ErrorNumber test_rvir_tie( const TA_History *history )
               (int)retCode, begIdx, nbElement );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
+
+   RVIR_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                       history->high, history->low, 1, 10, out );
 
    for( i = 0; i < nbElement; i++ )
    {
@@ -540,6 +619,8 @@ static ErrorNumber test_rvir_edges( void )
                  period, sdPeriod, (int)retCode, begIdx, nbElement );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
+      RVIR_SERVER_VERIFY( 0, 299, 300, retCode, begIdx, nbElement,
+                          high, low, period, sdPeriod, out );
       for( i = 0; i < nbElement; i++ )
       {
          g_rvirEdgeCmp++;
@@ -611,6 +692,10 @@ static ErrorNumber test_rvir_aliasing( const TA_History *history )
                  which == 0 ? "high" : "low", (int)retCode );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      /* The non-aliased call only: in-place behaviour is a C-side memory
+       * property, not something the servers are asked to reproduce. */
+      RVIR_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          history->high, history->low, period, sdPeriod, clean );
 
       for( i = 0; i < nbBars; i++ )
          alias[i] = aliased[i];
