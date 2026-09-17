@@ -18,11 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <time.h>
 
-#ifdef __APPLE__
-#include <mach/mach_time.h>
-#endif
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
 /* MSVC portability: popen/pclose are prefixed, strcasestr is a GNU
@@ -55,29 +51,6 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 #define DEFAULT_ITERS     100
 #define MAX_FUNCTIONS     512
 #define JSON_BUF_SIZE     (32 * 1024 * 1024)
-
-/* ---- Timing ---- */
-
-static long long get_nanotime(void) {
-#ifdef __APPLE__
-    static mach_timebase_info_data_t info = {0, 0};
-    if( info.denom == 0 ) mach_timebase_info(&info);
-    uint64_t t = mach_absolute_time();
-    return (long long)(t * info.numer / info.denom);
-#elif defined(WIN32) || defined(_WIN32)
-    static LARGE_INTEGER freq = {0};
-    LARGE_INTEGER t;
-    if( freq.QuadPart == 0 ) QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&t);
-    return (t.QuadPart / freq.QuadPart) * 1000000000LL
-         + (t.QuadPart % freq.QuadPart) * 1000000000LL / freq.QuadPart;
-#else
-    struct timespec ts;
-    if( clock_gettime(CLOCK_MONOTONIC, &ts) == 0 )
-        return (long long)ts.tv_sec * 1000000000LL + (long long)ts.tv_nsec;
-    return 0;
-#endif
-}
 
 /* ---- Test data (corpus shapes live in bench_corpus.h) ---- */
 
