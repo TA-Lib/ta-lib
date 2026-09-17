@@ -69799,6 +69799,131 @@ sr_out:
             srLeg, srBar, srOut, sr_bits(srA), sr_bits(srB));
 }
 
+static void sr_CTI( const char *json, int endIdx, int optInTimePeriod, char *resp, int resp_size, int *pos )
+{
+    int srLb = -1, srM = 0, srAvail, srT, srK, srCmp;
+    int srSkip = 0, srDedup = 0, srOk = 1, srBenign = 0;
+    int srOpenBars = 0, srFillBars = 0;
+    int srLeg = 0, srBar = -1, srOut = -1;
+    double srA = 0.0, srB = 0.0;
+    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;
+    unsigned long long srKey;
+    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;
+
+    if( !sr_gate(json) ) return;
+
+    srLb = TA_CTI_Lookback( optInTimePeriod );
+    srAvail = json_find_int(json, "use_preloaded") && g_refN > 0 ? g_refN : endIdx + 1;
+    { int _c = sr_count_array(json, "inReal"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }
+    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;
+    if( srM > srAvail ) srM = srAvail;
+    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }
+    if( srM < 1 ) { srSkip = 2; goto sr_out; }
+    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }
+    if( !sr_finite(g_inBuf0, srM) || 0 ) { srSkip = 4; goto sr_out; }
+
+    srKey = sr_ambient(fuzz_hash_init());
+    srKey = fuzz_hash_bytes(srKey, "TA_CTI", 6);
+    srKey = fuzz_hash_bytes(srKey, &srM, sizeof(srM));
+    srKey = fuzz_hash_bytes(srKey, &optInTimePeriod, sizeof(optInTimePeriod));
+    srKey = fuzz_hash_bytes(srKey, g_inBuf0, (unsigned long)srM * sizeof(double));
+    srKey = fuzz_hash_fin(srKey);
+    srSlot = (int)(srKey % (unsigned long long)SR_SEEN_N);
+    if( g_srKeyUsed[srSlot] && g_srKey[srSlot] == srKey )
+    {
+        srDedup = 1;
+        srOpenBars = g_srOpenBars[srSlot];
+        srFillBars = g_srFillBars[srSlot];
+        goto sr_out;
+    }
+
+    srRc = TA_CTI( 0, srM - 1, g_inBuf0, optInTimePeriod, &srBeg, &srNb, sr_b0 );
+    if( srRc != TA_SUCCESS )
+    {
+        TA_CTI_Stream *srHR = NULL;
+        double srO0 = 0.0;
+        int srRBeg = 0, srRNb = 0;
+        srRcB = srRc;
+        srRcO = TA_CTI_Open( &srHR, g_inBuf0, srM, optInTimePeriod, &srO0 );
+        if( srHR ) TA_CTI_Close( srHR );
+        srHR = NULL;
+        srRcF = TA_CTI_OpenAndFill( &srHR, g_inBuf0, srM, optInTimePeriod, &srRBeg, &srRNb, sr_f0 );
+        if( srHR ) TA_CTI_Close( srHR );
+        srCmp = srRcO == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        srCmp = srRcF == srRcB;
+        if( srCmp ) srRej++;
+        if( !srCmp ) { srOk = 0; srLeg = 3; }
+        goto sr_out;
+    }
+    if( srLb < 0 ) { srSkip = 7; goto sr_out; }
+    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }
+    if( srBeg != srLb ) { srSkip = 6; goto sr_out; }
+
+    {
+        TA_CTI_Stream *srH = NULL;
+        double srO0 = 0.0;
+        srRc = TA_CTI_Open( &srH, g_inBuf0, srLb + 1, optInTimePeriod, &srO0 );
+        if( srRc != TA_SUCCESS || !srH ) { srOk = 0; srLeg = 1; srBar = srLb; }
+        if( srOk )
+        {
+            srCmp = 1;
+            if( srCmp && sv_xtier_ne(sr_b0[srLb - srBeg], srO0, &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srLb - srBeg]; srB = srO0; }
+            if( srCmp ) srOpenBars++;
+            if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srLb; }
+            for( srT = srLb + 1; srOk && srT < srM; srT++ )
+            {
+                srRc = TA_CTI_Update( srH, g_inBuf0[srT], &srO0 );
+                if( srRc != TA_SUCCESS ) { srOk = 0; srLeg = 1; srBar = srT; break; }
+                srCmp = 1;
+                if( srCmp && sv_xtier_ne(sr_b0[srT - srBeg], srO0, &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srT - srBeg]; srB = srO0; }
+                if( srCmp ) srOpenBars++;
+                if( !srCmp ) { srOk = 0; srLeg = 1; srBar = srT; }
+            }
+        }
+        if( srH ) TA_CTI_Close( srH );
+    }
+
+    if( srOk )
+    {
+        TA_CTI_Stream *srH2 = NULL;
+        int srFBeg = 0, srFNb = 0;
+        srRc = TA_CTI_OpenAndFill( &srH2, g_inBuf0, srM, optInTimePeriod, &srFBeg, &srFNb, sr_f0 );
+        if( srRc != TA_SUCCESS || !srH2 || srFBeg != srBeg || srFNb != srNb ) { srOk = 0; srLeg = 2; srBar = -1; }
+        if( srOk )
+        {
+            for( srK = 0; srOk && srK < srNb; srK++ )
+            {
+                srCmp = 1;
+                if( srCmp && sv_xtier_ne(sr_b0[srK], sr_f0[srK], &srBenign) ) { srCmp = 0; srOut = 0; srA = sr_b0[srK]; srB = sr_f0[srK]; }
+                if( srCmp ) srFillBars++;
+                if( !srCmp ) { srOk = 0; srLeg = 2; srBar = srBeg + srK; }
+            }
+        }
+        if( srH2 ) TA_CTI_Close( srH2 );
+    }
+
+    if( srOk )
+    {
+        g_srKeyUsed[srSlot] = 1;
+        g_srKey[srSlot] = srKey;
+        g_srOpenBars[srSlot] = srOpenBars;
+        g_srFillBars[srSlot] = srFillBars;
+    }
+
+sr_out:
+    *pos = json_appendf(resp, resp_size, *pos,
+        ",\"ride_ok\":%d,\"ride_skip\":%d,\"ride_dedup\":%d,\"ride_open_bars\":%d,\"ride_fill_bars\":%d,\"ride_benign\":%d,\"ride_m\":%d,\"ride_lb\":%d"
+        ",\"ride_rej\":%d,\"ride_rc_batch\":%d,\"ride_rc_open\":%d,\"ride_rc_fill\":%d",
+        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,
+        srRej, (int)srRcB, (int)srRcO, (int)srRcF);
+    if( !srOk )
+        *pos = json_appendf(resp, resp_size, *pos,
+            ",\"ride_leg\":%d,\"ride_bar\":%d,\"ride_out\":%d,\"ride_batch\":\"%016llx\",\"ride_stream\":\"%016llx\"",
+            srLeg, srBar, srOut, sr_bits(srA), sr_bits(srB));
+}
+
 static void sr_CUMSUM( const char *json, int endIdx, char *resp, int resp_size, int *pos )
 {
     int srLb = -1, srM = 0, srAvail, srT, srK, srCmp;
@@ -92484,7 +92609,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
             }
             _oh = fuzz_hash_fin(_oh);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            int _hp = json_appendf(resp, resp_size, 0, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"", (int)rc, outBegIdx, outNBElement, _oh);
+#ifndef TA_REF_SERVE
+            sr_CTI( json, endIdx, optInTimePeriod, resp, resp_size, &_hp );
+#endif /* TA_REF_SERVE */
+            json_appendf(resp, resp_size, _hp, "}");
             return;
         }
 #endif /* TA_REF_SERVE */
@@ -92505,7 +92634,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         }
-        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d", usedFloat);
+#ifndef TA_REF_SERVE
+        sr_CTI( json, endIdx, optInTimePeriod, resp, resp_size, &pos );
+#endif /* TA_REF_SERVE */
+        pos = json_appendf(resp, resp_size, pos, "}");
     }
     else if ( methodLen == 9 && strncmp(method, "TA_CUMSUM", 9) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");

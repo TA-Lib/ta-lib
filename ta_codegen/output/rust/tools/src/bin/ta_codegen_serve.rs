@@ -11962,11 +11962,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                     _oh = fuzz_hash_bytes_f64(_oh, &outBuf0[..outNBElement]);
                 }
                 _oh = fuzz_hash_fin(_oh);
-                return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                ride_cti(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
+                hresp.push('}');
+                return hresp;
             }
             let lookback: i64 = core.CTI_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
+            ride_cti(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
             resp
         }
@@ -63998,6 +64002,103 @@ fn ride_cosh(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], resp: &
     if r.ok {
         let mut fb0 = vec![0.0f64; m];
         match core.cosh_open_and_fill(&inReal[..m], &mut fb0) {
+            Err(_) => { r.ok = false; r.leg = 2; }
+            Ok((_st, rng)) => {
+                if rng.beg_idx != beg || rng.count != nb { r.ok = false; r.leg = 2; }
+                if r.ok {
+                    for k in 0..nb {
+                        let mut cmp = true;
+                        if cmp && sv_xtier_ne(rb0[k], fb0[k], &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[k].to_bits(); r.stream = fb0[k].to_bits(); }
+                        if cmp { r.fill_bars += 1; }
+                        if !cmp { r.ok = false; r.leg = 2; r.bar = (beg + k) as i32; break; }
+                    }
+                }
+            }
+        }
+    }
+
+    if r.ok {
+        RIDE_SEEN.with(|t| { t.borrow_mut()[slot] = (key, r.open_bars, r.fill_bars); });
+    }
+    r.emit(resp);
+}
+
+#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
+fn ride_cti(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTimePeriod: i32, resp: &mut String) {
+    if !ride_gate(params) { return; }
+    let mut r = RideResult::new();
+    let lb_opt = core.CTI_Lookback(optInTimePeriod).ok();
+    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
+    let mut navail = endIdx + 1;
+    if inReal.len() < navail { navail = inReal.len(); }
+    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };
+    if m > navail { m = navail; }
+    r.m = m as i32;
+    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }
+    if m < 1 { r.skip = 2; r.emit(resp); return; }
+    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }
+    if !ride_finite(&inReal[..m]) || false { r.skip = 4; r.emit(resp); return; }
+
+    let mut key = fuzz_hash_init();
+    key = ride_mix_str(key, "TA_CTI");
+    key = ride_mix_u64(key, m as u64);
+    key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));
+    key = ride_mix_u64(key, params["unstablePeriod"].as_i64().unwrap_or(0) as u64);
+    key = ride_mix_u64(key, optInTimePeriod as u64);
+    key = ride_mix_f64s(key, &inReal[..m]);
+    key = fuzz_hash_fin(key);
+    let slot = (key as usize) % RIDE_SEEN_N;
+    if let Some((ob, fb)) = RIDE_SEEN.with(|t| { let t = t.borrow(); let e = t[slot]; if e.0 == key { Some((e.1, e.2)) } else { None } }) {
+        r.dedup = 1; r.open_bars = ob; r.fill_bars = fb; r.emit(resp); return;
+    }
+
+    let mut rb0 = vec![0.0f64; m];
+    let (beg, nb) = match core.CTI(0, m - 1, &inReal[..m], optInTimePeriod, &mut rb0) {
+        Ok(rr) => (rr.beg_idx, rr.count),
+        Err(rc) => {
+            r.rc_batch = retcode_to_int(rc);
+            r.rc_open = match core.cti_open(&inReal[..m], optInTimePeriod) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut fb0 = vec![0.0f64; m];
+            r.rc_fill = match core.cti_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) { Ok(_) => 0, Err(e) => retcode_to_int(e) };
+            let mut cmp = r.rc_open == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            cmp = r.rc_fill == r.rc_batch;
+            if cmp { r.rej += 1; }
+            if !cmp { r.ok = false; r.leg = 3; }
+            r.emit(resp);
+            return;
+        }
+    };
+    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };
+    if nb == 0 { r.skip = 5; r.emit(resp); return; }
+    if beg != lb { r.skip = 6; r.emit(resp); return; }
+
+    match core.cti_open(&inReal[..=lb], optInTimePeriod) {
+        Err(_) => { r.ok = false; r.leg = 1; r.bar = lb as i32; }
+        Ok((mut st, u)) => {
+            let mut cmp = true;
+            if cmp && sv_xtier_ne(rb0[lb - beg], u, &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[lb - beg].to_bits(); r.stream = u.to_bits(); }
+            if cmp { r.open_bars += 1; }
+            if !cmp { r.ok = false; r.leg = 1; r.bar = lb as i32; }
+            for t in (lb + 1)..m {
+                match st.update(inReal[t]) {
+                    Err(_) => { r.ok = false; r.leg = 1; r.bar = t as i32; break; }
+                    Ok(u) => {
+                        let mut cmp = true;
+                        if cmp && sv_xtier_ne(rb0[t - beg], u, &mut r.benign) { cmp = false; r.out = 0; r.batch = rb0[t - beg].to_bits(); r.stream = u.to_bits(); }
+                        if cmp { r.open_bars += 1; }
+                        if !cmp { r.ok = false; r.leg = 1; r.bar = t as i32; }
+                    }
+                }
+                if !r.ok { break; }
+            }
+        }
+    }
+
+    if r.ok {
+        let mut fb0 = vec![0.0f64; m];
+        match core.cti_open_and_fill(&inReal[..m], optInTimePeriod, &mut fb0) {
             Err(_) => { r.ok = false; r.leg = 2; }
             Ok((_st, rng)) => {
                 if rng.beg_idx != beg || rng.count != nb { r.ok = false; r.leg = 2; }
