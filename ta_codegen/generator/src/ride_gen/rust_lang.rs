@@ -85,18 +85,23 @@ struct RideResult {
     out: i32,
     batch: u64,
     stream: u64,
+    rej: i32,
+    rc_batch: i32,
+    rc_open: i32,
+    rc_fill: i32,
 }
 
 impl RideResult {
     fn new() -> Self {
         RideResult { ok: true, skip: 0, dedup: 0, open_bars: 0, fill_bars: 0, benign: 0,
-                     m: 0, lb: -1, leg: 0, bar: -1, out: -1, batch: 0, stream: 0 }
+                     m: 0, lb: -1, leg: 0, bar: -1, out: -1, batch: 0, stream: 0,
+                     rej: 0, rc_batch: 0, rc_open: 0, rc_fill: 0 }
     }
     fn emit(&self, resp: &mut String) {
         resp.push_str(&format!(
-            ",\"ride_ok\":{},\"ride_skip\":{},\"ride_dedup\":{},\"ride_open_bars\":{},\"ride_fill_bars\":{},\"ride_benign\":{},\"ride_m\":{},\"ride_lb\":{}",
+            ",\"ride_ok\":{},\"ride_skip\":{},\"ride_dedup\":{},\"ride_open_bars\":{},\"ride_fill_bars\":{},\"ride_benign\":{},\"ride_m\":{},\"ride_lb\":{},\"ride_rej\":{},\"ride_rc_batch\":{},\"ride_rc_open\":{},\"ride_rc_fill\":{}",
             i32::from(self.ok), self.skip, self.dedup, self.open_bars, self.fill_bars,
-            self.benign, self.m, self.lb));
+            self.benign, self.m, self.lb, self.rej, self.rc_batch, self.rc_open, self.rc_fill));
         if !self.ok {
             resp.push_str(&format!(
                 ",\"ride_leg\":{},\"ride_bar\":{},\"ride_out\":{},\"ride_batch\":\"{:016x}\",\"ride_stream\":\"{:016x}\"",
@@ -120,10 +125,14 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     let mut slice_m = String::new();
     let mut slice_open = String::new();
     let mut upd_args = String::new();
+    // The reject leg hands every entry point the SAME range: nothing reads a
+    // bar before it says no, so there is nothing to shorten.
+    let mut slice_rej = String::new();
     for name in &input_names {
         let _ = write!(sig_ins, "{name}: &[f64], ");
         let _ = write!(slice_m, "&{name}[..m], ");
         let _ = write!(slice_open, "&{name}[..=lb], ");
+        let _ = write!(slice_rej, "&{name}[..m], ");
         let _ = write!(upd_args, "{name}[t], ");
     }
     let mut sig_opts = String::new();
@@ -202,21 +211,27 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     );
     s.push_str("    if !ride_gate(params) { return; }\n");
     s.push_str("    let mut r = RideResult::new();\n");
+    // A negative lookback is a REJECTED parameter and travels on: it is the
+    // only rejection the ride can reach, and the reject leg below is what
+    // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(
         s,
-        "    let lb = match core.{n}_Lookback({}) {{ Ok(v) => v, Err(_) => {{ r.skip = 1; r.emit(resp); return; }} }};",
+        "    let lb_opt = core.{n}_Lookback({}).ok();",
         opt_args.trim_end().trim_end_matches(',')
     );
-    s.push_str("    r.lb = lb as i32;\n");
+    s.push_str("    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };\n");
     s.push_str("    let mut navail = endIdx + 1;\n");
     for name in &input_names {
         let _ = writeln!(s, "    if {name}.len() < navail {{ navail = {name}.len(); }}");
     }
-    s.push_str("    let mut m = 2 * lb + 10;\n");
+    // The success path shortens the replay to keep the ride cheap; the reject
+    // path has nothing to shorten and takes the caller's own range.
+    s.push_str("    let mut m = match lb_opt { Some(lb) => 2 * lb + 10, None => navail };\n");
     s.push_str("    if m > navail { m = navail; }\n");
     s.push_str("    r.m = m as i32;\n");
-    s.push_str("    if m > RIDE_MAX_BARS { r.skip = 2; r.emit(resp); return; }\n");
-    s.push_str("    if m < lb + 2 { r.skip = 3; r.emit(resp); return; }\n");
+    s.push_str("    if m > RIDE_MAX_BARS { r.skip = 1; r.emit(resp); return; }\n");
+    s.push_str("    if m < 1 { r.skip = 2; r.emit(resp); return; }\n");
+    s.push_str("    if matches!(lb_opt, Some(lb) if m < lb + 2) { r.skip = 3; r.emit(resp); return; }\n");
     s.push_str("    if ");
     for name in &input_names {
         let _ = write!(s, "!ride_finite(&{name}[..m]) || ");
@@ -250,11 +265,41 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("        r.dedup = 1; r.open_bars = ob; r.fill_bars = fb; r.emit(resp); return;\n    }\n\n");
 
     s.push_str(&ref_decl);
+    // The reject leg. A rejection is a property of the CALL, so the three entry
+    // points owe the same answer on it, over the same range.
+    let reject_buffers = fill_decl.replace("        let mut f", "            let mut f");
     let _ = writeln!(
         s,
-        "    let (beg, nb) = match core.{n}(0, m - 1, {slice_m}{opt_args}{}) {{ Ok(rr) => (rr.beg_idx, rr.count), Err(_) => {{ r.skip = 5; r.emit(resp); return; }} }};",
+        "    let (beg, nb) = match core.{n}(0, m - 1, {slice_m}{opt_args}{}) {{",
         ref_args.trim_start_matches(", ")
     );
+    s.push_str("        Ok(rr) => (rr.beg_idx, rr.count),\n");
+    s.push_str("        Err(rc) => {\n");
+    s.push_str("            r.rc_batch = retcode_to_int(rc);\n");
+    let _ = writeln!(
+        s,
+        "            r.rc_open = match core.{base}_open({slice_rej}{}) {{ Ok(_) => 0, Err(e) => retcode_to_int(e) }};",
+        opt_args.trim_end().trim_end_matches(',')
+    );
+    s.push_str(&reject_buffers);
+    let _ = writeln!(
+        s,
+        "            r.rc_fill = match core.{base}_open_and_fill({slice_rej}{opt_args}{}) {{ Ok(_) => 0, Err(e) => retcode_to_int(e) }};",
+        fill_args.trim_start_matches(", ")
+    );
+    // `r.rej` is the comparison's own verdict, exactly like the bar counters:
+    // a count bumped beside a compare keeps climbing once the compare is gone.
+    s.push_str("            let mut cmp = r.rc_open == r.rc_batch;\n");
+    s.push_str("            if cmp { r.rej += 1; }\n");
+    s.push_str("            if !cmp { r.ok = false; r.leg = 3; }\n");
+    s.push_str("            cmp = r.rc_fill == r.rc_batch;\n");
+    s.push_str("            if cmp { r.rej += 1; }\n");
+    s.push_str("            if !cmp { r.ok = false; r.leg = 3; }\n");
+    s.push_str("            r.emit(resp);\n            return;\n");
+    s.push_str("        }\n    };\n");
+    // Lookback said no and the batch tier said yes: the two read the same
+    // parameters, so the replay below has no anchor to stand on.
+    s.push_str("    let lb = match lb_opt { Some(v) => v, None => { r.skip = 7; r.emit(resp); return; } };\n");
     s.push_str("    if nb == 0 { r.skip = 5; r.emit(resp); return; }\n");
     s.push_str("    if beg != lb { r.skip = 6; r.emit(resp); return; }\n\n");
 

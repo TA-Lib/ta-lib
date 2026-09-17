@@ -48,6 +48,16 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[]);
 int  codegen_ride_mismatches(void);
 long codegen_ride_verdicts(void);
 long long codegen_ride_bars(void);
+/* How many verdicts declined to replay, per reason. Reason 0 is "replayed";
+ * the reasons are the server's own `ride_skip` numbering. A collapsed total
+ * cannot say whether the ride is walking past a rejection or past empty output.
+ * `codegen_ride_rejects` is the rejection leg's OWN numerator -- streaming
+ * entry points that agreed with a batch rejection -- because the value
+ * comparison cannot fire on a call that was refused, so a shared counter would
+ * let the whole leg die while reading full. */
+#define CODEGEN_RIDE_SKIP_N 8
+long codegen_ride_skips(int reason);
+long codegen_ride_rejects(void);
 void codegen_ride_reset(void);
 
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,

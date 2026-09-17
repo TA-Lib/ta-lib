@@ -3,6 +3,12 @@
 //! fresh internal `batch(0, m-1)`. One emitter per backend, all four emitting
 //! the same field set -- `ride_along_suite.rs` pins that on emitted text,
 //! because a runtime floor cannot see a comparison that was never emitted.
+//!
+//! When that reference is REJECTED rather than computed, the same three entry
+//! points owe the same rejection, over the same range. The range half is
+//! load-bearing: `Open` on `lookback + 1` bars is a call on zero bars when the
+//! lookback is what was rejected, so it would answer the range code instead of
+//! the parameter one and every rejection would read as a divergence.
 
 use std::fmt::Write as _;
 

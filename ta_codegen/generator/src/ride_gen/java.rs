@@ -40,6 +40,14 @@ const RIDE_JAVA_SUPPORT: &str = r#"
         return jsonInt(json, "iters") <= 1;
     }
 
+    /* 0 means the call returned. Anything else is the code C would have
+     * returned for the same condition, so the three entry points are comparable
+     * without narrowing the catch types; -1 is an exception the library does
+     * not own, which is itself a divergence. */
+    static int rideCode(RuntimeException e) {
+        return (e instanceof TaLibFailure) ? ((TaLibFailure) e).retCode().toInt() : -1;
+    }
+
     static boolean rideFinite(double[] a, int n) {
         for (int i = 0; i < n; i++) if (!Double.isFinite(a[i])) return false;
         return true;
@@ -73,6 +81,7 @@ const RIDE_JAVA_SUPPORT: &str = r#"
         boolean ok = true;
         int skip = 0, dedup = 0, openBars = 0, fillBars = 0;
         int leg = 0, bar = -1, out = -1, m = 0, lb = -1;
+        int rej = 0, rcBatch = 0, rcOpen = 0, rcFill = 0;
         long batch = 0, stream = 0;
         long[] benign = new long[1];
         void emit(StringBuilder sb) {
@@ -83,7 +92,11 @@ const RIDE_JAVA_SUPPORT: &str = r#"
               .append(",\"ride_fill_bars\":").append(fillBars)
               .append(",\"ride_benign\":").append(benign[0])
               .append(",\"ride_m\":").append(m)
-              .append(",\"ride_lb\":").append(lb);
+              .append(",\"ride_lb\":").append(lb)
+              .append(",\"ride_rej\":").append(rej)
+              .append(",\"ride_rc_batch\":").append(rcBatch)
+              .append(",\"ride_rc_open\":").append(rcOpen)
+              .append(",\"ride_rc_fill\":").append(rcFill);
             if (!ok) {
                 sb.append(",\"ride_leg\":").append(leg)
                   .append(",\"ride_bar\":").append(bar)
@@ -110,10 +123,14 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     let mut args_m = String::new();
     let mut args_open = String::new();
     let mut upd_args = String::new();
+    // The reject leg hands every entry point the SAME range: nothing reads a
+    // bar before it says no, so there is nothing to shorten.
+    let mut args_rej = String::new();
     for name in &input_names {
         let _ = write!(sig_ins, "double[] {name}, ");
         let _ = write!(args_m, "java.util.Arrays.copyOf({name}, m), ");
         let _ = write!(args_open, "java.util.Arrays.copyOf({name}, lb + 1), ");
+        let _ = write!(args_rej, "java.util.Arrays.copyOf({name}, m), ");
         let _ = write!(upd_args, "{name}[t], ");
     }
     let mut sig_opts = String::new();
@@ -204,21 +221,26 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
         s,
         "    @SuppressWarnings(\"unused\")\n    static void rideBody{n}(Core core, String json, int endIdx, {sig_ins}{sig_opts}RideResult r) {{"
     );
+    // A negative lookback is a REJECTED parameter and travels on: it is the
+    // only rejection the ride can reach, and the reject leg below is what
+    // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(
         s,
-        "        try {{ r.lb = core.{n}_Lookback({opt_bare}); }} catch (RuntimeException _e) {{ r.skip = 1; return; }}"
+        "        try {{ r.lb = core.{n}_Lookback({opt_bare}); }} catch (RuntimeException _e) {{ r.lb = -1; }}"
     );
     s.push_str("        int lb = r.lb;\n");
-    s.push_str("        if (lb < 0) { r.skip = 1; return; }\n");
     s.push_str("        int navail = endIdx + 1;\n");
     for name in &input_names {
         let _ = writeln!(s, "        if ({name}.length < navail) navail = {name}.length;");
     }
-    s.push_str("        int m = 2 * lb + 10;\n");
+    // The success path shortens the replay to keep the ride cheap; the reject
+    // path has nothing to shorten and takes the caller's own range.
+    s.push_str("        int m = lb >= 0 ? 2 * lb + 10 : navail;\n");
     s.push_str("        if (m > navail) m = navail;\n");
     s.push_str("        r.m = m;\n");
-    s.push_str("        if (m > RIDE_MAX_BARS) { r.skip = 2; return; }\n");
-    s.push_str("        if (m < lb + 2) { r.skip = 3; return; }\n");
+    s.push_str("        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }\n");
+    s.push_str("        if (m < 1) { r.skip = 2; return; }\n");
+    s.push_str("        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }\n");
     s.push_str("        if (");
     for name in &input_names {
         let _ = write!(s, "!rideFinite({name}, m) || ");
@@ -251,13 +273,46 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;\n        }\n\n");
 
     s.push_str(&ref_decl);
-    s.push_str("        int beg;\n        int nb;\n");
+    s.push_str("        int beg = 0;\n        int nb = 0;\n");
+    s.push_str("        String clsB = \"\";\n");
+    s.push_str("        boolean rejected = false;\n");
     let _ = writeln!(
         s,
         "        try {{ OutRange _rr = core.{n}(0, m - 1, {args_m}{opt_args}{}); beg = _rr.begIdx(); nb = _rr.count(); }}",
         ref_args.trim_start_matches(", ")
     );
-    s.push_str("        catch (RuntimeException _e) { r.skip = 5; return; }\n");
+    s.push_str("        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }\n");
+    // The reject leg. A rejection is a property of the CALL, so the three entry
+    // points owe the same answer on it, over the same range -- and in a backend
+    // that throws, the same exception class too: the code alone cannot tell a
+    // library rejection from a guard that happens to report the same condition.
+    s.push_str("        if (rejected) {\n");
+    s.push_str("            String clsO = \"\", clsF = \"\";\n");
+    let rej_open = format!("{args_rej}{opt_bare}");
+    let rej_open = rej_open.trim_end().trim_end_matches(',').to_string();
+    let _ = writeln!(
+        s,
+        "            try {{ core.{base}Open({rej_open}); }} catch (RuntimeException _e) {{ r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }}"
+    );
+    s.push_str(&fill_decl);
+    let _ = writeln!(
+        s,
+        "            try {{ core.{base}OpenAndFill({args_rej}{opt_args}{}); }} catch (RuntimeException _e) {{ r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }}",
+        fill_args.trim_start_matches(", ")
+    );
+    // `r.rej` is the comparison's own verdict, exactly like the bar counters:
+    // a count bumped beside a compare keeps climbing once the compare is gone.
+    // The class is folded into that verdict, and the leg says which half spoke.
+    s.push_str("            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);\n");
+    s.push_str("            if (cmpO) r.rej++;\n");
+    s.push_str("            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }\n");
+    s.push_str("            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);\n");
+    s.push_str("            if (cmpF) r.rej++;\n");
+    s.push_str("            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }\n");
+    s.push_str("            return;\n        }\n");
+    // Lookback said no and the batch tier said yes: the two read the same
+    // parameters, so the replay below has no anchor to stand on.
+    s.push_str("        if (lb < 0) { r.skip = 7; return; }\n");
     s.push_str("        if (nb == 0) { r.skip = 5; return; }\n");
     s.push_str("        if (beg != lb) { r.skip = 6; return; }\n\n");
 

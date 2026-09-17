@@ -107,7 +107,7 @@ fn every_backend_compares_every_ride_output() {
 #[test]
 fn every_backend_emits_the_same_ride_field_set() {
     let (funcs, enums) = corpus();
-    const FIELDS: [&str; 8] = [
+    const FIELDS: [&str; 12] = [
         "ride_ok",
         "ride_skip",
         "ride_dedup",
@@ -116,6 +116,10 @@ fn every_backend_emits_the_same_ride_field_set() {
         "ride_benign",
         "ride_m",
         "ride_lb",
+        "ride_rej",
+        "ride_rc_batch",
+        "ride_rc_open",
+        "ride_rc_fill",
     ];
     const DIAG: [&str; 5] = [
         "ride_leg",
@@ -325,4 +329,216 @@ fn the_c_ride_along_is_entirely_inside_the_ref_serve_guard() {
         guarded,
         "a ride-along symbol is emitted outside `#ifndef TA_REF_SERVE`"
     );
+}
+
+/// A rejection is a property of the CALL, so batch, `Open` and `OpenAndFill`
+/// owe the same answer on it. The value comparison cannot see this: the leg it
+/// lives on only runs once the batch reference has SUCCEEDED, so every rejection
+/// the corpus makes used to leave the ride with nothing to say.
+///
+/// Both halves are pinned, because either alone is satisfiable by dead text: a
+/// comparison with no call compares two zeros for ever, and a call with no
+/// comparison is a rejection nobody read.
+#[test]
+fn every_backend_compares_the_rejection_code_on_all_three_entry_points() {
+    let (funcs, enums) = corpus();
+    let want_fns = funcs.iter().filter(|f| f.streaming).count();
+    // (backend, the reject-leg Open call, its OpenAndFill, the two comparisons)
+    let probes: [(&str, &str, &str, &str, &str); 4] = [
+        (
+            "c",
+            "_Open( &srHR,",
+            "_OpenAndFill( &srHR,",
+            "srCmp = srRcO == srRcB;",
+            "srCmp = srRcF == srRcB;",
+        ),
+        (
+            "rust",
+            "r.rc_open = match core.",
+            "r.rc_fill = match core.",
+            "let mut cmp = r.rc_open == r.rc_batch;",
+            "cmp = r.rc_fill == r.rc_batch;",
+        ),
+        (
+            "java",
+            "r.rcOpen = rideCode(",
+            "r.rcFill = rideCode(",
+            "boolean cmpO = r.rcOpen == r.rcBatch",
+            "boolean cmpF = r.rcFill == r.rcBatch",
+        ),
+        (
+            "csharp",
+            "r.RcOpen = RideCode(",
+            "r.RcFill = RideCode(",
+            "bool cmpO = r.RcOpen == r.RcBatch",
+            "bool cmpF = r.RcFill == r.RcBatch",
+        ),
+    ];
+    for (lang, src) in servers(&funcs, &enums) {
+        let (_, open_call, fill_call, open_cmp, fill_cmp) = probes
+            .iter()
+            .find(|(l, _, _, _, _)| *l == lang)
+            .copied()
+            .expect("probe for every backend");
+        // Both halves of the verdict, spelled WITH their condition. A bare
+        // `r.rej++;` is a substring of the guarded form, so it would count the
+        // same after the guard is stripped -- and an unguarded bump plus a
+        // deleted mismatch flag is the one edit that leaves the runtime floor
+        // reading full while the leg compares nothing.
+        let verdict: &[(&str, usize)] = match lang {
+            "c" => &[
+                ("if( srCmp ) srRej++;", 2),
+                ("if( !srCmp ) { srOk = 0; srLeg = 3; }", 2),
+            ],
+            "rust" => &[
+                ("if cmp { r.rej += 1; }", 2),
+                ("if !cmp { r.ok = false; r.leg = 3; }", 2),
+            ],
+            "java" => &[
+                ("if (cmpO) r.rej++;", 1),
+                ("if (cmpF) r.rej++;", 1),
+                ("if (!cmpO) { r.ok = false;", 1),
+                ("if (!cmpF) { r.ok = false;", 1),
+            ],
+            _ => &[
+                ("if (cmpO) r.Rej++;", 1),
+                ("if (cmpF) r.Rej++;", 1),
+                ("if (!cmpO) { r.Ok = false;", 1),
+                ("if (!cmpF) { r.Ok = false;", 1),
+            ],
+        };
+        for (needle, per_fn) in verdict {
+            assert_eq!(
+                src.matches(needle).count(),
+                want_fns * per_fn,
+                "{lang}: `{needle}` appears {} time(s), not {per_fn} per streaming \
+                 function. The runtime floor reads the count this guards, so a \
+                 bump that outlives its comparison reads as full coverage of a \
+                 leg that stopped comparing.",
+                src.matches(needle).count()
+            );
+        }
+        for needle in [open_call, fill_call, open_cmp, fill_cmp] {
+            assert_eq!(
+                src.matches(needle).count(),
+                want_fns,
+                "{lang}: `{needle}` appears {} time(s), not once per streaming \
+                 function. A rejection the batch tier reports and the streaming \
+                 tiers do not is then invisible.",
+                src.matches(needle).count()
+            );
+        }
+    }
+}
+
+/// Java and C# report a rejection by THROWING, and what a caller catches is the
+/// class, not the code. The two are separate facts: most sites derive the class
+/// from the code through one total map, but several guards construct their
+/// exception directly, so two tiers can agree on the code and still hand the
+/// caller different types.
+#[test]
+fn both_throwing_backends_compare_the_exception_class() {
+    let (funcs, enums) = corpus();
+    let want_fns = funcs.iter().filter(|f| f.streaming).count();
+    // (backend, the three captures -- one per entry point, the two comparisons)
+    let probes: [(&str, [&str; 3], &str, &str); 2] = [
+        (
+            "java",
+            [
+                "clsB = _e.getClass().getName()",
+                "clsO = _e.getClass().getName()",
+                "clsF = _e.getClass().getName()",
+            ],
+            "&& clsO.equals(clsB);",
+            "&& clsF.equals(clsB);",
+        ),
+        (
+            "csharp",
+            [
+                "clsB = _e.GetType().FullName",
+                "clsO = _e.GetType().FullName",
+                "clsF = _e.GetType().FullName",
+            ],
+            "&& clsO == clsB;",
+            "&& clsF == clsB;",
+        ),
+    ];
+    for (lang, src) in servers(&funcs, &enums) {
+        let Some((_, captures, open_cmp, fill_cmp)) =
+            probes.iter().find(|(l, _, _, _)| *l == lang).copied()
+        else {
+            continue;
+        };
+        // One capture per entry point: batch, Open, OpenAndFill.
+        for capture in captures {
+            assert_eq!(
+                src.matches(capture).count(),
+                want_fns,
+                "{lang}: `{capture}` appears {} time(s), not once per streaming \
+                 function -- a class nobody captured is a class nobody compared",
+                src.matches(capture).count()
+            );
+        }
+        for needle in [open_cmp, fill_cmp] {
+            assert_eq!(
+                src.matches(needle).count(),
+                want_fns,
+                "{lang}: `{needle}` appears {} time(s), not once per streaming \
+                 function. Two tiers then agree on the code while raising \
+                 different exceptions, which is what a caller actually sees.",
+                src.matches(needle).count()
+            );
+        }
+    }
+}
+
+/// The reject leg hands all three entry points the SAME range. The success leg
+/// deliberately shortens the replay, and carrying that shortening over would be
+/// silent: `Open` on `lookback + 1` bars is a call on ZERO bars when the
+/// lookback is what was rejected, so it answers the range code rather than the
+/// parameter one and every rejection reads as a divergence.
+#[test]
+fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
+    let (funcs, enums) = corpus();
+    let want_fns = funcs.iter().filter(|f| f.streaming).count();
+    // (backend, the two reject-leg lines, the range every one must carry). Java
+    // and C# put the call and its catch on one line, so the assignment anchors
+    // both.
+    let probes: [(&str, [&str; 2], &str); 4] = [
+        ("c", ["_Open( &srHR,", "_OpenAndFill( &srHR,"], ", srM,"),
+        (
+            "rust",
+            ["r.rc_open = match core.", "r.rc_fill = match core."],
+            "[..m]",
+        ),
+        ("java", ["r.rcOpen = rideCode(", "r.rcFill = rideCode("], ", m)"),
+        (
+            "csharp",
+            ["r.RcOpen = RideCode(", "r.RcFill = RideCode("],
+            ".AsSpan(0, m)",
+        ),
+    ];
+    for (lang, src) in servers(&funcs, &enums) {
+        let (_, anchor, range) = probes
+            .iter()
+            .find(|(l, _, _)| *l == lang)
+            .copied()
+            .expect("probe for every backend");
+        let mut seen = 0usize;
+        for line in src.lines() {
+            if anchor.iter().any(|a| line.contains(a)) {
+                seen += 1;
+                assert!(
+                    line.contains(range),
+                    "{lang}: a reject-leg call does not carry `{range}`, so the \
+                     three entry points no longer see the same input:\n{line}"
+                );
+            }
+        }
+        assert_eq!(
+            seen,
+            want_fns * 2,
+            "{lang}: {seen} reject-leg call line(s), not two per streaming function"
+        );
+    }
 }

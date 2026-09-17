@@ -144,15 +144,26 @@ ErrorNumber codegen_pipe_open(CodegenPipe *cp, const char *const argv[])
 static int       g_rideMismatches;
 static long      g_rideVerdicts;
 static long long g_rideBars;
+static long      g_rideSkips[CODEGEN_RIDE_SKIP_N];
+static long      g_rideRejects;
 
 int       codegen_ride_mismatches(void) { return g_rideMismatches; }
 long      codegen_ride_verdicts(void)   { return g_rideVerdicts; }
 long long codegen_ride_bars(void)       { return g_rideBars; }
+long codegen_ride_skips(int reason)
+{
+    if( reason < 0 || reason >= CODEGEN_RIDE_SKIP_N ) return 0;
+    return g_rideSkips[reason];
+}
+long codegen_ride_rejects(void)         { return g_rideRejects; }
 void codegen_ride_reset(void)
 {
+    int i;
     g_rideMismatches = 0;
     g_rideVerdicts = 0;
     g_rideBars = 0;
+    g_rideRejects = 0;
+    for( i = 0; i < CODEGEN_RIDE_SKIP_N; i++ ) g_rideSkips[i] = 0;
 }
 
 static int ride_int_field(const char *s, const char *key)
@@ -184,10 +195,19 @@ static void ride_scan(const char *request, const char *response)
     int ok = ride_int_field(response, "\"ride_ok\":");
     if( ok < 0 ) return;             /* ta_ref_serve and pre-feature builds */
     g_rideVerdicts++;
+    /* `ride_rej` is how many streaming entry points AGREED with the batch
+     * tier's rejection, computed by the comparison itself -- so this total
+     * cannot outlive the comparison that feeds it. */
+    {
+        int rej = ride_int_field(response, "\"ride_rej\":");
+        if( rej > 0 ) g_rideRejects += rej;
+    }
     /* A dedup hit re-reports the cached counts, so counting it would credit bars
      * nobody compared on this call. Only a replay that actually ran counts. */
     if( ok != 0 )
     {
+        int reason = ride_int_field(response, "\"ride_skip\":");
+        if( reason >= 0 && reason < CODEGEN_RIDE_SKIP_N ) g_rideSkips[reason]++;
         if( ride_int_field(response, "\"ride_dedup\":") <= 0 )
         {
             int ob = ride_int_field(response, "\"ride_open_bars\":");
@@ -200,8 +220,12 @@ static void ride_scan(const char *request, const char *response)
 
     g_rideMismatches++;
     {
+        static const char *const LEG[] = {
+            "?", "Open+Update", "OpenAndFill", "rejection code", "exception class"
+        };
         char b[17], st[17], fn[64];
         const char *m = strstr(request, "\"method\":\"");
+        int leg = ride_int_field(response, "\"ride_leg\":");
         int i = 0;
         fn[0] = '\0';
         if( m )
@@ -210,18 +234,31 @@ static void ride_scan(const char *request, const char *response)
             while( i < (int)sizeof(fn) - 1 && m[i] && m[i] != '"' ) { fn[i] = m[i]; i++; }
             fn[i] = '\0';
         }
-        ride_hex_field(response, "\"ride_batch\":", b);
-        ride_hex_field(response, "\"ride_stream\":", st);
-        printf("  RIDE MISMATCH [%s]: leg %d (%s) bar %d output %d  "
-               "batch=%s stream=%s  (m=%d lookback=%d)\n",
-               fn[0] ? fn : "?",
-               ride_int_field(response, "\"ride_leg\":"),
-               ride_int_field(response, "\"ride_leg\":") == 2 ? "OpenAndFill" : "Open+Update",
-               ride_int_field(response, "\"ride_bar\":"),
-               ride_int_field(response, "\"ride_out\":"),
-               b[0] ? b : "?", st[0] ? st : "?",
-               ride_int_field(response, "\"ride_m\":"),
-               ride_int_field(response, "\"ride_lb\":"));
+        if( leg < 0 || leg > 4 ) leg = 0;
+        if( leg >= 3 )
+        {
+            printf("  RIDE MISMATCH [%s]: leg %d (%s) batch=%d Open=%d "
+                   "OpenAndFill=%d  (m=%d lookback=%d)\n",
+                   fn[0] ? fn : "?", leg, LEG[leg],
+                   ride_int_field(response, "\"ride_rc_batch\":"),
+                   ride_int_field(response, "\"ride_rc_open\":"),
+                   ride_int_field(response, "\"ride_rc_fill\":"),
+                   ride_int_field(response, "\"ride_m\":"),
+                   ride_int_field(response, "\"ride_lb\":"));
+        }
+        if( leg < 3 )
+        {
+            ride_hex_field(response, "\"ride_batch\":", b);
+            ride_hex_field(response, "\"ride_stream\":", st);
+            printf("  RIDE MISMATCH [%s]: leg %d (%s) bar %d output %d  "
+                   "batch=%s stream=%s  (m=%d lookback=%d)\n",
+                   fn[0] ? fn : "?", leg, LEG[leg],
+                   ride_int_field(response, "\"ride_bar\":"),
+                   ride_int_field(response, "\"ride_out\":"),
+                   b[0] ? b : "?", st[0] ? st : "?",
+                   ride_int_field(response, "\"ride_m\":"),
+                   ride_int_field(response, "\"ride_lb\":"));
+        }
     }
 }
 

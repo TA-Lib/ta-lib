@@ -212,20 +212,26 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("    int srOpenBars = 0, srFillBars = 0;\n");
     s.push_str("    int srLeg = 0, srBar = -1, srOut = -1;\n");
     s.push_str("    double srA = 0.0, srB = 0.0;\n");
-    s.push_str("    int srBeg = 0, srNb = 0, srSlot = 0;\n");
+    s.push_str("    int srBeg = 0, srNb = 0, srSlot = 0, srRej = 0;\n");
     s.push_str("    unsigned long long srKey;\n");
-    s.push_str("    TA_RetCode srRc;\n\n");
+    s.push_str("    TA_RetCode srRc, srRcB = TA_SUCCESS, srRcO = TA_SUCCESS, srRcF = TA_SUCCESS;\n\n");
     s.push_str("    if( !sr_gate(json) ) return;\n\n");
+    // A negative lookback is a REJECTED parameter and travels on: it is the
+    // only rejection the ride can reach, and the reject leg below is what
+    // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(s, "    srLb = TA_{n}_Lookback( {opt_call} );");
-    s.push_str("    if( srLb < 0 ) { srSkip = 1; goto sr_out; }\n");
     s.push_str("    srAvail = json_find_int(json, \"use_preloaded\") && g_refN > 0 ? g_refN : endIdx + 1;\n");
     for name in &input_names {
         let _ = writeln!(s, "    {{ int _c = sr_count_array(json, \"{name}\"); if( _c >= 0 && _c < srAvail ) srAvail = _c; }}");
     }
-    s.push_str("    srM = 2 * srLb + 10;\n");
+    // The success path shortens the replay to keep the ride cheap. A rejection
+    // fails before it reads a bar, so there is nothing to shorten and every
+    // entry point is handed the caller's own range.
+    s.push_str("    srM = srLb >= 0 ? 2 * srLb + 10 : srAvail;\n");
     s.push_str("    if( srM > srAvail ) srM = srAvail;\n");
-    s.push_str("    if( srM > SR_MAX_BARS ) { srSkip = 2; goto sr_out; }\n");
-    s.push_str("    if( srM < srLb + 2 ) { srSkip = 3; goto sr_out; }\n");
+    s.push_str("    if( srM > SR_MAX_BARS ) { srSkip = 1; goto sr_out; }\n");
+    s.push_str("    if( srM < 1 ) { srSkip = 2; goto sr_out; }\n");
+    s.push_str("    if( srLb >= 0 && srM < srLb + 2 ) { srSkip = 3; goto sr_out; }\n");
     s.push_str("    if( ");
     for j in 0..input_names.len() {
         let _ = write!(s, "!sr_finite(g_inBuf{j}, srM) || ");
@@ -266,7 +272,41 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
         s,
         "    srRc = TA_{n}( 0, srM - 1, {in_args}{opt_list}&srBeg, &srNb{ref_bufs} );"
     );
-    s.push_str("    if( srRc != TA_SUCCESS || srNb <= 0 ) { srSkip = 5; goto sr_out; }\n");
+    // The reject leg. A rejection is a property of the CALL, so the three entry
+    // points owe the same answer on it -- and the same range, because none of
+    // them reads a bar before saying no.
+    s.push_str("    if( srRc != TA_SUCCESS )\n    {\n");
+    let _ = writeln!(s, "        TA_{n}_Stream *srHR = NULL;");
+    for l in scalar_decls.lines() {
+        let _ = writeln!(s, "    {l}");
+    }
+    s.push_str("        int srRBeg = 0, srRNb = 0;\n");
+    s.push_str("        srRcB = srRc;\n");
+    let _ = writeln!(
+        s,
+        "        srRcO = TA_{n}_Open( &srHR, {in_args}srM, {opt_list}{} );",
+        scalar_addrs.trim_start_matches(", ")
+    );
+    let _ = writeln!(s, "        if( srHR ) TA_{n}_Close( srHR );");
+    s.push_str("        srHR = NULL;\n");
+    let _ = writeln!(
+        s,
+        "        srRcF = TA_{n}_OpenAndFill( &srHR, {in_args}srM, {opt_list}&srRBeg, &srRNb{fill_bufs} );"
+    );
+    let _ = writeln!(s, "        if( srHR ) TA_{n}_Close( srHR );");
+    // `srRej` is the comparison's own verdict, exactly like the bar counters:
+    // a count bumped beside a compare keeps climbing once the compare is gone.
+    s.push_str("        srCmp = srRcO == srRcB;\n");
+    s.push_str("        if( srCmp ) srRej++;\n");
+    s.push_str("        if( !srCmp ) { srOk = 0; srLeg = 3; }\n");
+    s.push_str("        srCmp = srRcF == srRcB;\n");
+    s.push_str("        if( srCmp ) srRej++;\n");
+    s.push_str("        if( !srCmp ) { srOk = 0; srLeg = 3; }\n");
+    s.push_str("        goto sr_out;\n    }\n");
+    // Lookback said no and the batch tier said yes: the two read the same
+    // parameters, so the replay below has no anchor to stand on.
+    s.push_str("    if( srLb < 0 ) { srSkip = 7; goto sr_out; }\n");
+    s.push_str("    if( srNb <= 0 ) { srSkip = 5; goto sr_out; }\n");
     // outBegIdx has several assignment forms in src/ta_func and nothing asserts it
     // equals the published lookback; index off the reported beg rather than assume.
     s.push_str("    if( srBeg != srLb ) { srSkip = 6; goto sr_out; }\n\n");
@@ -351,8 +391,10 @@ fn emit_c_ridealong_fn(func: &FuncDef) -> String {
 
     s.push_str("sr_out:\n");
     s.push_str("    *pos = json_appendf(resp, resp_size, *pos,\n");
-    s.push_str("        \",\\\"ride_ok\\\":%d,\\\"ride_skip\\\":%d,\\\"ride_dedup\\\":%d,\\\"ride_open_bars\\\":%d,\\\"ride_fill_bars\\\":%d,\\\"ride_benign\\\":%d,\\\"ride_m\\\":%d,\\\"ride_lb\\\":%d\",\n");
-    s.push_str("        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb);\n");
+    s.push_str("        \",\\\"ride_ok\\\":%d,\\\"ride_skip\\\":%d,\\\"ride_dedup\\\":%d,\\\"ride_open_bars\\\":%d,\\\"ride_fill_bars\\\":%d,\\\"ride_benign\\\":%d,\\\"ride_m\\\":%d,\\\"ride_lb\\\":%d\"\n");
+    s.push_str("        \",\\\"ride_rej\\\":%d,\\\"ride_rc_batch\\\":%d,\\\"ride_rc_open\\\":%d,\\\"ride_rc_fill\\\":%d\",\n");
+    s.push_str("        srOk, srSkip, srDedup, srOpenBars, srFillBars, srBenign, srM, srLb,\n");
+    s.push_str("        srRej, (int)srRcB, (int)srRcO, (int)srRcF);\n");
     s.push_str("    if( !srOk )\n");
     s.push_str("        *pos = json_appendf(resp, resp_size, *pos,\n");
     s.push_str("            \",\\\"ride_leg\\\":%d,\\\"ride_bar\\\":%d,\\\"ride_out\\\":%d,\\\"ride_batch\\\":\\\"%016llx\\\",\\\"ride_stream\\\":\\\"%016llx\\\"\",\n");

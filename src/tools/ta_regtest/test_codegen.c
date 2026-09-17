@@ -2156,7 +2156,6 @@ typedef struct {
     long long         rideOpenBars;
     long long         rideFillBars;
     int               rideDedup;
-    int               rideSkipped;
     long long         rideBenign;
     int               rideEligible;       /* streaming funcs that reached the read site */
     int               rideSkipFunctions;  /* funcs the server declined to replay */
@@ -2166,6 +2165,13 @@ typedef struct {
 } ForEachFuncContext;
 
 static int stream_flag(const char *resp, const char *key);
+
+/* The server's `ride_skip` numbering, in one place. A collapsed total says the
+ * ride declined; only the reason says whether it walked past a rejection. */
+static const char *const g_rideSkipName[CODEGEN_RIDE_SKIP_N] = {
+    "replayed", "over-cap", "no-bars", "too-short", "non-finite",
+    "batch-empty", "beg!=lb", "lookback-vs-batch"
+};
 
 /* Copy the quoted value of `key` (a 16-hex-digit IEEE-754 bit string) out of a
  * response. The two divergent values travel as bits, not as text: %a is
@@ -2216,7 +2222,7 @@ static void ride_read(ForEachFuncContext *ctx, const char *funcName, const char 
         if( fb > 0 ) { ctx->rideFillBars += fb; ctx->rideFnFill = 1; }
         if( bn > 0 ) ctx->rideBenign += bn;
         if( stream_flag(resp, "\"ride_dedup\":") > 0 ) ctx->rideDedup++;
-        if( stream_flag(resp, "\"ride_skip\":")  > 0 ) { ctx->rideSkipped++; ctx->rideFnSkip = 1; }
+        if( stream_flag(resp, "\"ride_skip\":")  > 0 ) ctx->rideFnSkip = 1;
     }
 }
 
@@ -4242,7 +4248,8 @@ typedef struct
 
 static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage *lang,
                                           int langIndex,
-                                          char *reqBuf, char *respBuf)
+                                          char *reqBuf, char *respBuf,
+                                          int *nbRejectCases)
 {
     static const XlangIndexRangeCase CASES[] = {
         { TA_MAX_INDEX+1, TA_MAX_INDEX+1, TA_OUT_OF_RANGE_START_INDEX,
@@ -4303,7 +4310,16 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
                 pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
             }
             if( tc->extraParams != NULL )
+            {
                 pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "%s", tc->extraParams);
+                /* Counted because this is the one case that rejects in EVERY
+                 * backend: a row that leaves the parameter absent rejects only
+                 * where an absent field reads as 0, which Rust does not do. The
+                 * ride's rejection floor takes its denominator from here, so
+                 * deleting this case cannot quietly leave that leg with nothing
+                 * to ride. */
+                (*nbRejectCases)++;
+            }
             codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "}}");
 
             if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
@@ -4743,6 +4759,7 @@ static ErrorNumber test_codegen_for_language(
 
     /* Use TA_ForEachFunc to iterate all functions */
     ForEachFuncContext ctx;
+    int idxRejectCases = 0;
     memset(&ctx, 0, sizeof(ctx));
     codegen_ride_reset();
     ctx.history        = history;
@@ -4813,7 +4830,8 @@ static ErrorNumber test_codegen_for_language(
      * expectation comes from the in-process C contract. */
     if( ctx.error == TA_TEST_PASS )
     {
-        ErrorNumber idxErr = test_index_range_xlang(&cp, lang, langIndex, requestBuf, responseBuf);
+        ErrorNumber idxErr = test_index_range_xlang(&cp, lang, langIndex, requestBuf, responseBuf,
+                                                    &idxRejectCases);
         if( idxErr != TA_TEST_PASS )
         {
             ctx.error = idxErr;
@@ -5041,6 +5059,30 @@ static ErrorNumber test_codegen_for_language(
                        lang->name, ctx.rideEligible);
                 ctx.error = TA_CODEGEN_RIDE_VACUOUS;
             }
+            /* The rejection leg's own floor (#425). It rides a different class of
+             * call from the value comparison -- one the batch tier REFUSED -- so
+             * every bar counter above is satisfied while it never runs. A floor,
+             * not a calibration: a backend that reads an absent field as 0
+             * rejects more calls than the denominator names. The denominator is
+             * the driver's own rejected calls rather than a constant, so
+             * deleting the probe that sends them fails the first arm instead of
+             * turning the second one vacuous. */
+            if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 && idxRejectCases <= 0 )
+            {
+                printf("RIDE REJECT VACUOUS: the driver no longer sends a rejected "
+                       "parameter, so the rejection leg has nothing to ride\n");
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 &&
+                codegen_ride_rejects() < 2L * idxRejectCases )
+            {
+                printf("RIDE REJECT VACUOUS: the %s server compared %ld rejection "
+                       "leg(s) against %d call(s) the driver had rejected, two legs "
+                       "each -- batch refusing a call and a streaming tier accepting "
+                       "it is invisible\n",
+                       lang->name, codegen_ride_rejects(), idxRejectCases);
+                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
+            }
             /* The verdict is now read by the transport, so a divergence found by
              * the parameter sweep or the large-period pass fails the run instead
              * of being overwritten by the next request. */
@@ -5066,10 +5108,17 @@ static ErrorNumber test_codegen_for_language(
              * something is wrong, and a silent gate is how this feature shipped
              * three backends that rode almost nothing. */
             if( ctx.rideResponses > 0 )
+            {
+                int i;
                 printf("  ride-along: %ld verdict(s) over %d function(s), "
                        "%lld bar(s) bit-compared through Open+Update and OpenAndFill\n",
                        codegen_ride_verdicts(), ctx.rideOpenFunctions,
                        codegen_ride_bars());
+                printf("  ride-along declined:");
+                for( i = 1; i < CODEGEN_RIDE_SKIP_N; i++ )
+                    printf(" %s=%ld", g_rideSkipName[i], codegen_ride_skips(i));
+                printf("; rejection legs compared: %ld\n", codegen_ride_rejects());
+            }
             if( ctx.rideBenign > 0 )
                 printf("  BENIGN ride-along: %lld cross-tier signed-zero case(s)\n",
                        ctx.rideBenign);

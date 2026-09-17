@@ -37,6 +37,12 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
         return GetInt(p, "iters", 1) <= 1;
     }
 
+    /* 0 means the call returned. Anything else is the code C would have
+     * returned for the same condition, so the three entry points are comparable
+     * without narrowing the catch types; -1 is an exception the library does
+     * not own, which is itself a divergence. */
+    static int RideCode(Exception e) => e is ITaLibFailure f ? (int) f.RetCode : -1;
+
     static bool RideFinite(double[] a, int n)
     {
         for (int i = 0; i < n; i++) if (!double.IsFinite(a[i])) return false;
@@ -76,6 +82,7 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
     {
         public bool Ok = true;
         public int Skip, Dedup, OpenBars, FillBars, Leg, Bar = -1, Out = -1, M, Lb = -1;
+        public int Rej, RcBatch, RcOpen, RcFill;
         public long Batch, Stream;
         public long[] Benign = new long[1];
         public void Emit(System.Text.StringBuilder sb)
@@ -83,6 +90,8 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
             sb.Append($",\"ride_ok\":{(Ok ? 1 : 0)},\"ride_skip\":{Skip},\"ride_dedup\":{Dedup}");
             sb.Append($",\"ride_open_bars\":{OpenBars},\"ride_fill_bars\":{FillBars}");
             sb.Append($",\"ride_benign\":{Benign[0]},\"ride_m\":{M},\"ride_lb\":{Lb}");
+            sb.Append($",\"ride_rej\":{Rej},\"ride_rc_batch\":{RcBatch}");
+            sb.Append($",\"ride_rc_open\":{RcOpen},\"ride_rc_fill\":{RcFill}");
             if (!Ok)
             {
                 sb.Append($",\"ride_leg\":{Leg},\"ride_bar\":{Bar},\"ride_out\":{Out}");
@@ -106,10 +115,14 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
     let mut args_m = String::new();
     let mut args_open = String::new();
     let mut upd_args = String::new();
+    // The reject leg hands every entry point the SAME range: nothing reads a
+    // bar before it says no, so there is nothing to shorten.
+    let mut args_rej = String::new();
     for name in &input_names {
         let _ = write!(sig_ins, "double[] {name}, ");
         let _ = write!(args_m, "{name}.AsSpan(0, m), ");
         let _ = write!(args_open, "{name}.AsSpan(0, lb + 1), ");
+        let _ = write!(args_rej, "{name}.AsSpan(0, m), ");
         let _ = write!(upd_args, "{name}[t], ");
     }
     let mut sig_opts = String::new();
@@ -199,21 +212,26 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
         s,
         "    static void RideBody{n}(Core core, JsonElement p, int endIdx, {sig_ins}{sig_opts}RideResult r)\n    {{"
     );
+    // A negative lookback is a REJECTED parameter and travels on: it is the
+    // only rejection the ride can reach, and the reject leg below is what
+    // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(
         s,
-        "        try {{ r.Lb = core.{n}_Lookback({opt_bare}); }} catch (Exception) {{ r.Skip = 1; return; }}"
+        "        try {{ r.Lb = core.{n}_Lookback({opt_bare}); }} catch (Exception) {{ r.Lb = -1; }}"
     );
     s.push_str("        int lb = r.Lb;\n");
-    s.push_str("        if (lb < 0) { r.Skip = 1; return; }\n");
     s.push_str("        int navail = endIdx + 1;\n");
     for name in &input_names {
         let _ = writeln!(s, "        if ({name}.Length < navail) navail = {name}.Length;");
     }
-    s.push_str("        int m = 2 * lb + 10;\n");
+    // The success path shortens the replay to keep the ride cheap; the reject
+    // path has nothing to shorten and takes the caller's own range.
+    s.push_str("        int m = lb >= 0 ? 2 * lb + 10 : navail;\n");
     s.push_str("        if (m > navail) m = navail;\n");
     s.push_str("        r.M = m;\n");
-    s.push_str("        if (m > RIDE_MAX_BARS) { r.Skip = 2; return; }\n");
-    s.push_str("        if (m < lb + 2) { r.Skip = 3; return; }\n");
+    s.push_str("        if (m > RIDE_MAX_BARS) { r.Skip = 1; return; }\n");
+    s.push_str("        if (m < 1) { r.Skip = 2; return; }\n");
+    s.push_str("        if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }\n");
     s.push_str("        if (");
     for name in &input_names {
         let _ = write!(s, "!RideFinite({name}, m) || ");
@@ -244,13 +262,46 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("            r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;\n        }\n\n");
 
     s.push_str(&ref_decl);
-    s.push_str("        int beg;\n        int nb;\n");
+    s.push_str("        int beg = 0;\n        int nb = 0;\n");
+    s.push_str("        string clsB = \"\";\n");
+    s.push_str("        bool rejected = false;\n");
     let _ = writeln!(
         s,
         "        try {{ OutRange _rr = core.{n}(0, m - 1, {args_m}{opt_args}{}); beg = _rr.BegIdx; nb = _rr.Count; }}",
         ref_args.trim_start_matches(", ")
     );
-    s.push_str("        catch (Exception) { r.Skip = 5; return; }\n");
+    s.push_str("        catch (Exception _e) { r.RcBatch = RideCode(_e); clsB = _e.GetType().FullName ?? \"\"; rejected = true; }\n");
+    // The reject leg. A rejection is a property of the CALL, so the three entry
+    // points owe the same answer on it, over the same range -- and in a backend
+    // that throws, the same exception class too: the code alone cannot tell a
+    // library rejection from a guard that happens to report the same condition.
+    s.push_str("        if (rejected)\n        {\n");
+    s.push_str("            string clsO = \"\", clsF = \"\";\n");
+    let rej_open = format!("{args_rej}{opt_bare}");
+    let rej_open = rej_open.trim_end().trim_end_matches(',').to_string();
+    let _ = writeln!(
+        s,
+        "            try {{ core.{pas}Open({rej_open}); }} catch (Exception _e) {{ r.RcOpen = RideCode(_e); clsO = _e.GetType().FullName ?? \"\"; }}"
+    );
+    s.push_str(&fill_decl);
+    let _ = writeln!(
+        s,
+        "            try {{ core.{pas}OpenAndFill({args_rej}{opt_args}{}); }} catch (Exception _e) {{ r.RcFill = RideCode(_e); clsF = _e.GetType().FullName ?? \"\"; }}",
+        fill_args.trim_start_matches(", ")
+    );
+    // `r.Rej` is the comparison's own verdict, exactly like the bar counters:
+    // a count bumped beside a compare keeps climbing once the compare is gone.
+    // The class is folded into that verdict, and the leg says which half spoke.
+    s.push_str("            bool cmpO = r.RcOpen == r.RcBatch && clsO == clsB;\n");
+    s.push_str("            if (cmpO) r.Rej++;\n");
+    s.push_str("            if (!cmpO) { r.Ok = false; r.Leg = r.RcOpen == r.RcBatch ? 4 : 3; }\n");
+    s.push_str("            bool cmpF = r.RcFill == r.RcBatch && clsF == clsB;\n");
+    s.push_str("            if (cmpF) r.Rej++;\n");
+    s.push_str("            if (!cmpF) { r.Ok = false; r.Leg = r.RcFill == r.RcBatch ? 4 : 3; }\n");
+    s.push_str("            return;\n        }\n");
+    // Lookback said no and the batch tier said yes: the two read the same
+    // parameters, so the replay below has no anchor to stand on.
+    s.push_str("        if (lb < 0) { r.Skip = 7; return; }\n");
     s.push_str("        if (nb == 0) { r.Skip = 5; return; }\n");
     s.push_str("        if (beg != lb) { r.Skip = 6; return; }\n\n");
 
