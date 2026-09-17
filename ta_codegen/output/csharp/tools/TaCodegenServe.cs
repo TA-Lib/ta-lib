@@ -41385,7 +41385,7 @@ public class TaCodegenServe {
     // ---- ride-along: batch-vs-stream on caller-supplied data ----
     const int RIDE_MAX_BARS = 4096;
     const int RIDE_SEEN_N = 2048;
-    static readonly ulong[] rideSeenKey = new ulong[RIDE_SEEN_N];
+    static readonly ulong[] rideSeenHash = new ulong[RIDE_SEEN_N];
     static readonly bool[] rideSeenUsed = new bool[RIDE_SEEN_N];
     static readonly int[] rideSeenOpen = new int[RIDE_SEEN_N];
     static readonly int[] rideSeenFill = new int[RIDE_SEEN_N];
@@ -41486,18 +41486,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInSignalPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -41570,7 +41570,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -41599,17 +41599,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ACCBANDS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ACCBANDS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -41694,7 +41694,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -41721,14 +41721,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ACOS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ACOS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -41801,7 +41801,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -41831,17 +41831,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -41914,7 +41914,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -41942,15 +41942,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ADD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ADD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42023,7 +42023,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42053,19 +42053,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ADOSC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ADOSC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42138,7 +42138,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42166,16 +42166,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ADR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ADR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42248,7 +42248,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42277,17 +42277,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ADX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ADX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42360,7 +42360,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42389,17 +42389,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ADXR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ADXR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42472,7 +42472,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42500,17 +42500,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42583,7 +42583,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42610,17 +42610,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_APO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_APO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42693,7 +42693,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42721,16 +42721,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AROON");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AROON");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42809,7 +42809,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42837,16 +42837,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AROONOSC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AROONOSC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -42919,7 +42919,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -42946,14 +42946,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ASIN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ASIN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43026,7 +43026,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43053,14 +43053,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ATAN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ATAN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43133,7 +43133,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43162,17 +43162,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ATR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ATR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43245,7 +43245,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43272,15 +43272,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AVGDEV");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AVGDEV");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43353,7 +43353,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43383,17 +43383,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_AVGPRICE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_AVGPRICE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43466,7 +43466,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43493,18 +43493,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_BBANDS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInNbDevUp));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInNbDevDn));
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_BBANDS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInNbDevUp));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInNbDevDn));
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43589,7 +43589,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43617,16 +43617,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_BETA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_BETA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43699,7 +43699,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43729,17 +43729,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_BOP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_BOP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43812,7 +43812,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43841,17 +43841,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CCI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CCI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -43924,7 +43924,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -43954,17 +43954,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL2CROWS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL2CROWS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44037,7 +44037,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44067,17 +44067,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3BLACKCROWS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3BLACKCROWS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44150,7 +44150,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44180,17 +44180,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3INSIDE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3INSIDE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44263,7 +44263,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44293,17 +44293,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3LINESTRIKE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3LINESTRIKE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44376,7 +44376,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44406,17 +44406,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3OUTSIDE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3OUTSIDE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44489,7 +44489,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44519,17 +44519,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3STARSINSOUTH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3STARSINSOUTH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44602,7 +44602,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44632,17 +44632,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDL3WHITESOLDIERS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDL3WHITESOLDIERS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44715,7 +44715,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44745,18 +44745,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLABANDONEDBABY");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLABANDONEDBABY");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44829,7 +44829,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44859,17 +44859,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLADVANCEBLOCK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLADVANCEBLOCK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -44942,7 +44942,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -44972,17 +44972,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLBELTHOLD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLBELTHOLD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45055,7 +45055,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45085,17 +45085,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLBREAKAWAY");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLBREAKAWAY");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45168,7 +45168,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45198,17 +45198,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLCLOSINGMARUBOZU");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLCLOSINGMARUBOZU");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45281,7 +45281,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45311,17 +45311,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLCONCEALBABYSWALL");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLCONCEALBABYSWALL");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45394,7 +45394,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45424,17 +45424,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLCOUNTERATTACK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLCOUNTERATTACK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45507,7 +45507,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45537,18 +45537,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLDARKCLOUDCOVER");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLDARKCLOUDCOVER");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45621,7 +45621,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45651,17 +45651,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLDOJI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLDOJI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45734,7 +45734,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45764,17 +45764,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLDOJISTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLDOJISTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45847,7 +45847,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45877,17 +45877,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLDRAGONFLYDOJI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLDRAGONFLYDOJI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -45960,7 +45960,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -45990,17 +45990,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLENGULFING");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLENGULFING");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46073,7 +46073,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46103,18 +46103,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLEVENINGDOJISTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLEVENINGDOJISTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46187,7 +46187,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46217,18 +46217,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLEVENINGSTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLEVENINGSTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46301,7 +46301,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46331,17 +46331,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLGAPSIDESIDEWHITE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLGAPSIDESIDEWHITE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46414,7 +46414,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46444,17 +46444,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLGRAVESTONEDOJI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLGRAVESTONEDOJI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46527,7 +46527,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46557,17 +46557,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHAMMER");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHAMMER");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46640,7 +46640,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46670,17 +46670,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHANGINGMAN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHANGINGMAN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46753,7 +46753,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46783,17 +46783,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHARAMI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHARAMI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46866,7 +46866,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -46896,17 +46896,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHARAMICROSS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHARAMICROSS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -46979,7 +46979,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47009,17 +47009,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHIGHWAVE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHIGHWAVE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47092,7 +47092,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47122,17 +47122,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHIKKAKE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHIKKAKE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47205,7 +47205,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47235,17 +47235,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHIKKAKEMOD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHIKKAKEMOD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47318,7 +47318,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47348,17 +47348,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLHOMINGPIGEON");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLHOMINGPIGEON");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47431,7 +47431,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47461,17 +47461,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLIDENTICAL3CROWS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLIDENTICAL3CROWS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47544,7 +47544,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47574,17 +47574,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLINNECK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLINNECK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47657,7 +47657,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47687,17 +47687,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLINVERTEDHAMMER");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLINVERTEDHAMMER");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47770,7 +47770,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47800,17 +47800,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLKICKING");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLKICKING");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47883,7 +47883,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -47913,17 +47913,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLKICKINGBYLENGTH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLKICKINGBYLENGTH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -47996,7 +47996,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48026,17 +48026,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLLADDERBOTTOM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLLADDERBOTTOM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48109,7 +48109,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48139,17 +48139,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLLONGLEGGEDDOJI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLLONGLEGGEDDOJI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48222,7 +48222,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48252,17 +48252,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLLONGLINE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLLONGLINE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48335,7 +48335,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48365,17 +48365,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLMARUBOZU");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLMARUBOZU");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48448,7 +48448,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48478,17 +48478,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLMATCHINGLOW");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLMATCHINGLOW");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48561,7 +48561,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48591,18 +48591,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLMATHOLD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLMATHOLD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48675,7 +48675,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48705,18 +48705,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLMORNINGDOJISTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLMORNINGDOJISTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48789,7 +48789,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48819,18 +48819,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLMORNINGSTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLMORNINGSTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPenetration));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -48903,7 +48903,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -48933,17 +48933,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLONNECK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLONNECK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49016,7 +49016,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49046,17 +49046,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLPIERCING");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLPIERCING");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49129,7 +49129,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49159,17 +49159,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLRICKSHAWMAN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLRICKSHAWMAN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49242,7 +49242,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49272,17 +49272,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLRISEFALL3METHODS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLRISEFALL3METHODS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49355,7 +49355,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49385,17 +49385,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSEPARATINGLINES");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSEPARATINGLINES");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49468,7 +49468,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49498,17 +49498,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSHOOTINGSTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSHOOTINGSTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49581,7 +49581,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49611,17 +49611,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSHORTLINE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSHORTLINE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49694,7 +49694,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49724,17 +49724,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSPINNINGTOP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSPINNINGTOP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49807,7 +49807,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49837,17 +49837,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSTALLEDPATTERN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSTALLEDPATTERN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -49920,7 +49920,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -49950,17 +49950,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLSTICKSANDWICH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLSTICKSANDWICH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50033,7 +50033,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50063,17 +50063,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLTAKURI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLTAKURI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50146,7 +50146,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50176,17 +50176,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLTASUKIGAP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLTASUKIGAP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50259,7 +50259,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50289,17 +50289,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLTHRUSTING");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLTHRUSTING");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50372,7 +50372,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50402,17 +50402,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLTRISTAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLTRISTAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50485,7 +50485,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50515,17 +50515,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLUNIQUE3RIVER");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLUNIQUE3RIVER");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50598,7 +50598,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50628,17 +50628,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLUPSIDEGAP2CROWS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLUPSIDEGAP2CROWS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50711,7 +50711,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50741,17 +50741,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CDLXSIDEGAP3METHODS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CDLXSIDEGAP3METHODS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50824,7 +50824,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50851,14 +50851,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CEIL");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CEIL");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -50931,7 +50931,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -50961,18 +50961,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CMF");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CMF");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51045,7 +51045,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51072,15 +51072,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CMO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CMO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51153,7 +51153,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51180,15 +51180,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CMOU");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CMOU");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51261,7 +51261,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51288,17 +51288,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_COPPOCK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInWMAPeriod);
-        key = RideMix(key, (ulong)(long) optInROC1Period);
-        key = RideMix(key, (ulong)(long) optInROC2Period);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_COPPOCK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInWMAPeriod);
+        hash = RideMix(hash, (ulong)(long) optInROC1Period);
+        hash = RideMix(hash, (ulong)(long) optInROC2Period);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51371,7 +51371,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51399,16 +51399,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CORREL");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CORREL");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51481,7 +51481,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51508,14 +51508,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_COS");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_COS");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51588,7 +51588,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51615,14 +51615,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_COSH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_COSH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51695,7 +51695,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51722,14 +51722,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CUMSUM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CUMSUM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51802,7 +51802,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51830,17 +51830,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_CVI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInROCPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_CVI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInROCPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -51913,7 +51913,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -51940,15 +51940,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_DEMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_DEMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52021,7 +52021,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52049,15 +52049,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_DIV");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_DIV");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52130,7 +52130,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52158,16 +52158,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_DONCHIAN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_DONCHIAN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52252,7 +52252,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52279,15 +52279,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_DPO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_DPO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52360,7 +52360,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52389,17 +52389,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_DX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_DX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52472,7 +52472,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52500,16 +52500,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_EFI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_EFI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52582,7 +52582,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52609,15 +52609,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_EMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_EMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52690,7 +52690,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52717,15 +52717,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ER");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ER");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52798,7 +52798,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52827,17 +52827,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ERI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ERI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -52916,7 +52916,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -52943,14 +52943,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_EXP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_EXP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53023,7 +53023,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53050,14 +53050,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_FLOOR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_FLOOR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53130,7 +53130,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53157,15 +53157,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_FOSC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_FOSC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53238,7 +53238,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53266,17 +53266,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_FRACTAL");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInLeftBars);
-        key = RideMix(key, (ulong)(long) optInRightBars);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_FRACTAL");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInLeftBars);
+        hash = RideMix(hash, (ulong)(long) optInRightBars);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53355,7 +53355,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53385,17 +53385,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53486,7 +53486,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53513,15 +53513,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53594,7 +53594,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53621,14 +53621,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_DCPERIOD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_DCPERIOD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53701,7 +53701,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53728,14 +53728,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_DCPHASE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_DCPHASE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53808,7 +53808,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53835,14 +53835,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_PHASOR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_PHASOR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -53921,7 +53921,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -53948,14 +53948,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_SINE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_SINE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54034,7 +54034,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54061,14 +54061,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_TRENDLINE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_TRENDLINE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54141,7 +54141,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54168,14 +54168,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_HT_TRENDMODE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_HT_TRENDMODE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54248,7 +54248,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54276,16 +54276,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_IMI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_IMI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54358,7 +54358,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54385,15 +54385,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_KAMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_KAMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54466,7 +54466,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54495,19 +54495,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_KC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInATRPeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_KC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInATRPeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54592,7 +54592,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54621,21 +54621,21 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_KDJ");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastK_Period);
-        key = RideMix(key, (ulong)(long) optInSlowK_Period);
-        key = RideMix(key, (ulong)(long) optInSlowK_MAType);
-        key = RideMix(key, (ulong)(long) optInSlowD_Period);
-        key = RideMix(key, (ulong)(long) optInSlowD_MAType);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_KDJ");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastK_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowK_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowK_MAType);
+        hash = RideMix(hash, (ulong)(long) optInSlowD_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowD_MAType);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54720,7 +54720,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54747,15 +54747,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LINEARREG");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LINEARREG");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54828,7 +54828,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54855,15 +54855,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LINEARREG_ANGLE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LINEARREG_ANGLE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -54936,7 +54936,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -54963,15 +54963,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LINEARREG_INTERCEPT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LINEARREG_INTERCEPT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55044,7 +55044,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55071,15 +55071,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LINEARREG_SLOPE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LINEARREG_SLOPE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55152,7 +55152,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55179,14 +55179,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55259,7 +55259,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55286,14 +55286,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_LOG10");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_LOG10");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55366,7 +55366,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55393,16 +55393,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55475,7 +55475,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55502,17 +55502,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MACD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInSignalPeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MACD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55597,7 +55597,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55624,20 +55624,20 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MACDEXT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInFastMAType);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowMAType);
-        key = RideMix(key, (ulong)(long) optInSignalPeriod);
-        key = RideMix(key, (ulong)(long) optInSignalMAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MACDEXT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInFastMAType);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowMAType);
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSignalMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55722,7 +55722,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55749,15 +55749,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MACDFIX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInSignalPeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MACDFIX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55842,7 +55842,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55869,16 +55869,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MAMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInFastLimit));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInSlowLimit));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MAMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInFastLimit));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInSlowLimit));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -55957,7 +55957,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -55986,16 +55986,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MARKETFI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MARKETFI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56068,7 +56068,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56096,17 +56096,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MASSI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MASSI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56179,7 +56179,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56207,18 +56207,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MAVP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInMinPeriod);
-        key = RideMix(key, (ulong)(long) optInMaxPeriod);
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MAVP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInMinPeriod);
+        hash = RideMix(hash, (ulong)(long) optInMaxPeriod);
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56291,7 +56291,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56318,15 +56318,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MAX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MAX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56399,7 +56399,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56426,15 +56426,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MAXINDEX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MAXINDEX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56507,7 +56507,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56535,15 +56535,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MEDPRICE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MEDPRICE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56616,7 +56616,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56646,18 +56646,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MFI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MFI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56730,7 +56730,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56757,15 +56757,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MIDPOINT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MIDPOINT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56838,7 +56838,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56866,16 +56866,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MIDPRICE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MIDPRICE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -56948,7 +56948,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -56975,15 +56975,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MIN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MIN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57056,7 +57056,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57083,15 +57083,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MININDEX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MININDEX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57164,7 +57164,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57191,15 +57191,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MINMAX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MINMAX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57278,7 +57278,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57305,15 +57305,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MINMAXINDEX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MINMAXINDEX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57392,7 +57392,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57421,17 +57421,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MINUS_DI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MINUS_DI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57504,7 +57504,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57532,16 +57532,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MINUS_DM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MINUS_DM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57614,7 +57614,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57641,15 +57641,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MOM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MOM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57722,7 +57722,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57750,15 +57750,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_MULT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_MULT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57831,7 +57831,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57860,17 +57860,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_NATR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_NATR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -57943,7 +57943,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -57971,15 +57971,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_NVI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_NVI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58052,7 +58052,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58080,15 +58080,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_OBV");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_OBV");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58161,7 +58161,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58188,16 +58188,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PERCENTILE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInPercentile));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PERCENTILE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInPercentile));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58270,7 +58270,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58297,15 +58297,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PERCENTRANK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PERCENTRANK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58378,7 +58378,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58407,17 +58407,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PLUS_DI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PLUS_DI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58490,7 +58490,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58518,16 +58518,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PLUS_DM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PLUS_DM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58600,7 +58600,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58627,17 +58627,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PPO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PPO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58710,7 +58710,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58738,15 +58738,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PVI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PVI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58819,7 +58819,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58846,17 +58846,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PVO");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInMAType);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PVO");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInMAType);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -58929,7 +58929,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -58957,15 +58957,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_PVT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_PVT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59038,7 +59038,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59066,16 +59066,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inOpen, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_QSTICK");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inOpen, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_QSTICK");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inOpen, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59148,7 +59148,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59175,15 +59175,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_RMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_RMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59256,7 +59256,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59283,15 +59283,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ROC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ROC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59364,7 +59364,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59391,15 +59391,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ROCP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ROCP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59472,7 +59472,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59499,15 +59499,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ROCR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ROCR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59580,7 +59580,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59607,15 +59607,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ROCR100");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ROCR100");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59688,7 +59688,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59715,15 +59715,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_RSI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_RSI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59796,7 +59796,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59823,16 +59823,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_RVI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInStdDevPeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_RVI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInStdDevPeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -59905,7 +59905,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -59932,15 +59932,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_RVOL");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_RVOL");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60013,7 +60013,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60041,17 +60041,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAcceleration));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInMaximum));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAcceleration));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInMaximum));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60124,7 +60124,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60152,23 +60152,23 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SAREXT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInStartValue));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInOffsetOnReverse));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationInitLong));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationLong));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationMaxLong));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationInitShort));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationShort));
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationMaxShort));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SAREXT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInStartValue));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInOffsetOnReverse));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationInitLong));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationLong));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationMaxLong));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationInitShort));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationShort));
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInAccelerationMaxShort));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60241,7 +60241,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60268,14 +60268,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SIN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SIN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60348,7 +60348,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60375,14 +60375,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SINH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SINH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60455,7 +60455,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60482,15 +60482,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60563,7 +60563,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60592,20 +60592,20 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SMI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInFastPeriod);
-        key = RideMix(key, (ulong)(long) optInSlowPeriod);
-        key = RideMix(key, (ulong)(long) optInSignalPeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SMI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInFastPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSlowPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSignalPeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60684,7 +60684,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60711,14 +60711,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SQRT");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SQRT");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60791,7 +60791,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60818,16 +60818,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_STDDEV");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_STDDEV");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -60900,7 +60900,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -60929,21 +60929,21 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_STOCH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastK_Period);
-        key = RideMix(key, (ulong)(long) optInSlowK_Period);
-        key = RideMix(key, (ulong)(long) optInSlowK_MAType);
-        key = RideMix(key, (ulong)(long) optInSlowD_Period);
-        key = RideMix(key, (ulong)(long) optInSlowD_MAType);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_STOCH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastK_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowK_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowK_MAType);
+        hash = RideMix(hash, (ulong)(long) optInSlowD_Period);
+        hash = RideMix(hash, (ulong)(long) optInSlowD_MAType);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61022,7 +61022,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61051,19 +61051,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_STOCHF");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFastK_Period);
-        key = RideMix(key, (ulong)(long) optInFastD_Period);
-        key = RideMix(key, (ulong)(long) optInFastD_MAType);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_STOCHF");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFastK_Period);
+        hash = RideMix(hash, (ulong)(long) optInFastD_Period);
+        hash = RideMix(hash, (ulong)(long) optInFastD_MAType);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61142,7 +61142,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61169,18 +61169,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_STOCHRSI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong)(long) optInFastK_Period);
-        key = RideMix(key, (ulong)(long) optInFastD_Period);
-        key = RideMix(key, (ulong)(long) optInFastD_MAType);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_STOCHRSI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong)(long) optInFastK_Period);
+        hash = RideMix(hash, (ulong)(long) optInFastD_Period);
+        hash = RideMix(hash, (ulong)(long) optInFastD_MAType);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61259,7 +61259,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61287,15 +61287,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal0, m) || !RideFinite(inReal1, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SUB");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal0, m);
-        key = RideMixArr(key, inReal1, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SUB");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal0, m);
+        hash = RideMixArr(hash, inReal1, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61368,7 +61368,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61395,15 +61395,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SUM");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SUM");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61476,7 +61476,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61505,18 +61505,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_SUPERTREND");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInMultiplier));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_SUPERTREND");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInMultiplier));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61595,7 +61595,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61622,16 +61622,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_T3");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInVFactor));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_T3");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInVFactor));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61704,7 +61704,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61731,14 +61731,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TAN");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TAN");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61811,7 +61811,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61838,14 +61838,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TANH");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TANH");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -61918,7 +61918,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -61945,15 +61945,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TEMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TEMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62026,7 +62026,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62055,16 +62055,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TRANGE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TRANGE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62137,7 +62137,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62164,15 +62164,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TRIMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TRIMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62245,7 +62245,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62272,15 +62272,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TRIX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TRIX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62353,7 +62353,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62380,15 +62380,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TSF");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TSF");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62461,7 +62461,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62488,16 +62488,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TSI");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInFirstPeriod);
-        key = RideMix(key, (ulong)(long) optInSecondPeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TSI");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInFirstPeriod);
+        hash = RideMix(hash, (ulong)(long) optInSecondPeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62570,7 +62570,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62599,16 +62599,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_TYPPRICE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_TYPPRICE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62681,7 +62681,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62710,19 +62710,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ULTOSC");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod1);
-        key = RideMix(key, (ulong)(long) optInTimePeriod2);
-        key = RideMix(key, (ulong)(long) optInTimePeriod3);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ULTOSC");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod1);
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod2);
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod3);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62795,7 +62795,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62822,16 +62822,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_VAR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_VAR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits(optInNbDev));
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -62904,7 +62904,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -62931,15 +62931,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_VHF");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_VHF");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63012,7 +63012,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63041,17 +63041,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_VORTEX");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_VORTEX");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63130,7 +63130,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63160,17 +63160,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_VWAP");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_VWAP");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63243,7 +63243,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63271,16 +63271,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || !RideFinite(inVolume, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_VWMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        key = RideMixArr(key, inVolume, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_VWMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        hash = RideMixArr(hash, inVolume, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63353,7 +63353,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63382,16 +63382,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_WAD");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_WAD");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63464,7 +63464,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63493,16 +63493,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_WCLPRICE");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_WCLPRICE");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63575,7 +63575,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63604,17 +63604,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inHigh, m) || !RideFinite(inLow, m) || !RideFinite(inClose, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_WILLR");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inHigh, m);
-        key = RideMixArr(key, inLow, m);
-        key = RideMixArr(key, inClose, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_WILLR");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inHigh, m);
+        hash = RideMixArr(hash, inLow, m);
+        hash = RideMixArr(hash, inClose, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63687,7 +63687,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63714,15 +63714,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_WMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_WMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63795,7 +63795,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }
@@ -63822,15 +63822,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.Skip = 3; return; }
         if (!RideFinite(inReal, m) || false) { r.Skip = 4; return; }
 
-        ulong key = 0xcbf29ce484222325UL;
-        key = RideMixStr(key, "TA_ZLEMA");
-        key = RideMix(key, (ulong) m);
-        key = RideMix(key, rideGen);
-        key = RideMix(key, (ulong)(long) GetInt(p, "unstablePeriod", 0));
-        key = RideMix(key, (ulong)(long) optInTimePeriod);
-        key = RideMixArr(key, inReal, m);
-        int slot = (int)(key % (ulong) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)
+        ulong hash = 0xcbf29ce484222325UL;
+        hash = RideMixStr(hash, "TA_ZLEMA");
+        hash = RideMix(hash, (ulong) m);
+        hash = RideMix(hash, rideGen);
+        hash = RideMix(hash, (ulong)(long) GetInt(p, "unstablePeriod", 0));
+        hash = RideMix(hash, (ulong)(long) optInTimePeriod);
+        hash = RideMixArr(hash, inReal, m);
+        int slot = (int)(hash % (ulong) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)
         {
             r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;
         }
@@ -63903,7 +63903,7 @@ public class TaCodegenServe {
 
         if (r.Ok)
         {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;
         }
     }

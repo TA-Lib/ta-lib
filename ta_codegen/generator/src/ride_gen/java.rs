@@ -26,7 +26,7 @@ const RIDE_JAVA_SUPPORT: &str = r#"
     // ---- ride-along: batch-vs-stream on caller-supplied data ----
     static final int RIDE_MAX_BARS = 4096;
     static final int RIDE_SEEN_N = 2048;
-    static final long[] rideSeenKey = new long[RIDE_SEEN_N];
+    static final long[] rideSeenHash = new long[RIDE_SEEN_N];
     static final boolean[] rideSeenUsed = new boolean[RIDE_SEEN_N];
     static final int[] rideSeenOpen = new int[RIDE_SEEN_N];
     static final int[] rideSeenFill = new int[RIDE_SEEN_N];
@@ -247,29 +247,29 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     }
     s.push_str("false) { r.skip = 4; return; }\n\n");
 
-    s.push_str("        long key = 0xcbf29ce484222325L;\n");
-    let _ = writeln!(s, "        key = rideMixStr(key, \"TA_{}\");", n.to_uppercase());
-    s.push_str("        key = rideMix(key, m);\n");
-    s.push_str("        key = rideMix(key, rideGen);\n");
-    s.push_str("        key = rideMix(key, jsonInt(json, \"unstablePeriod\"));\n");
+    s.push_str("        long hash = 0xcbf29ce484222325L;\n");
+    let _ = writeln!(s, "        hash = rideMixStr(hash, \"TA_{}\");", n.to_uppercase());
+    s.push_str("        hash = rideMix(hash, m);\n");
+    s.push_str("        hash = rideMix(hash, rideGen);\n");
+    s.push_str("        hash = rideMix(hash, jsonInt(json, \"unstablePeriod\"));\n");
     for opt in &func.optional_inputs {
         match &opt.param_type {
             ParamType::Real => {
-                let _ = writeln!(s, "        key = rideMix(key, Double.doubleToRawLongBits({}));", opt.name);
+                let _ = writeln!(s, "        hash = rideMix(hash, Double.doubleToRawLongBits({}));", opt.name);
             }
             ParamType::Enum(_) => {
-                let _ = writeln!(s, "        key = rideMix(key, {}.ordinal());", opt.name);
+                let _ = writeln!(s, "        hash = rideMix(hash, {}.ordinal());", opt.name);
             }
             _ => {
-                let _ = writeln!(s, "        key = rideMix(key, {});", opt.name);
+                let _ = writeln!(s, "        hash = rideMix(hash, {});", opt.name);
             }
         }
     }
     for name in &input_names {
-        let _ = writeln!(s, "        key = rideMixArr(key, {name}, m);");
+        let _ = writeln!(s, "        hash = rideMixArr(hash, {name}, m);");
     }
-    s.push_str("        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);\n");
-    s.push_str("        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {\n");
+    s.push_str("        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);\n");
+    s.push_str("        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {\n");
     s.push_str("            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;\n        }\n\n");
 
     s.push_str(&ref_decl);
@@ -377,7 +377,7 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("        }\n\n");
 
     s.push_str("        if (r.ok) {\n");
-    s.push_str("            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;\n");
+    s.push_str("            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;\n");
     s.push_str("            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");

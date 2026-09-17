@@ -152,8 +152,8 @@ fn every_backend_keys_the_dedup_cache_by_function_identity() {
     let key_form: [(&str, &str, &str); 4] = [
         ("c", "srKey = fuzz_hash_bytes(srKey, \"TA_", "\","),
         ("rust", "key = ride_mix_str(key, \"TA_", "\");"),
-        ("java", "key = rideMixStr(key, \"TA_", "\");"),
-        ("csharp", "key = RideMixStr(key, \"TA_", "\");"),
+        ("java", "hash = rideMixStr(hash, \"TA_", "\");"),
+        ("csharp", "hash = RideMixStr(hash, \"TA_", "\");"),
     ];
     for (lang, src) in servers(&funcs, &enums) {
         let (_, pre, post) = key_form

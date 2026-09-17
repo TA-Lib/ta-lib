@@ -22,7 +22,7 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
     // ---- ride-along: batch-vs-stream on caller-supplied data ----
     const int RIDE_MAX_BARS = 4096;
     const int RIDE_SEEN_N = 2048;
-    static readonly ulong[] rideSeenKey = new ulong[RIDE_SEEN_N];
+    static readonly ulong[] rideSeenHash = new ulong[RIDE_SEEN_N];
     static readonly bool[] rideSeenUsed = new bool[RIDE_SEEN_N];
     static readonly int[] rideSeenOpen = new int[RIDE_SEEN_N];
     static readonly int[] rideSeenFill = new int[RIDE_SEEN_N];
@@ -238,27 +238,27 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
     }
     s.push_str("false) { r.Skip = 4; return; }\n\n");
 
-    s.push_str("        ulong key = 0xcbf29ce484222325UL;\n");
-    let _ = writeln!(s, "        key = RideMixStr(key, \"TA_{}\");", n.to_uppercase());
-    s.push_str("        key = RideMix(key, (ulong) m);\n");
-    s.push_str("        key = RideMix(key, rideGen);\n");
-    s.push_str("        key = RideMix(key, (ulong)(long) GetInt(p, \"unstablePeriod\", 0));\n");
+    s.push_str("        ulong hash = 0xcbf29ce484222325UL;\n");
+    let _ = writeln!(s, "        hash = RideMixStr(hash, \"TA_{}\");", n.to_uppercase());
+    s.push_str("        hash = RideMix(hash, (ulong) m);\n");
+    s.push_str("        hash = RideMix(hash, rideGen);\n");
+    s.push_str("        hash = RideMix(hash, (ulong)(long) GetInt(p, \"unstablePeriod\", 0));\n");
     for opt in &func.optional_inputs {
         match &opt.param_type {
             ParamType::Real => {
-                let _ = writeln!(s, "        key = RideMix(key, (ulong) BitConverter.DoubleToInt64Bits({}));", opt.name);
+                let _ = writeln!(s, "        hash = RideMix(hash, (ulong) BitConverter.DoubleToInt64Bits({}));", opt.name);
             }
             // An enum is an int in C#; both fold the same way.
             _ => {
-                let _ = writeln!(s, "        key = RideMix(key, (ulong)(long) {});", opt.name);
+                let _ = writeln!(s, "        hash = RideMix(hash, (ulong)(long) {});", opt.name);
             }
         }
     }
     for name in &input_names {
-        let _ = writeln!(s, "        key = RideMixArr(key, {name}, m);");
+        let _ = writeln!(s, "        hash = RideMixArr(hash, {name}, m);");
     }
-    s.push_str("        int slot = (int)(key % (ulong) RIDE_SEEN_N);\n");
-    s.push_str("        if (rideSeenUsed[slot] && rideSeenKey[slot] == key)\n        {\n");
+    s.push_str("        int slot = (int)(hash % (ulong) RIDE_SEEN_N);\n");
+    s.push_str("        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash)\n        {\n");
     s.push_str("            r.Dedup = 1; r.OpenBars = rideSeenOpen[slot]; r.FillBars = rideSeenFill[slot]; return;\n        }\n\n");
 
     s.push_str(&ref_decl);
@@ -350,7 +350,7 @@ fn emit_csharp_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("        }\n\n");
 
     s.push_str("        if (r.Ok)\n        {\n");
-    s.push_str("            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;\n");
+    s.push_str("            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;\n");
     s.push_str("            rideSeenOpen[slot] = r.OpenBars; rideSeenFill[slot] = r.FillBars;\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");

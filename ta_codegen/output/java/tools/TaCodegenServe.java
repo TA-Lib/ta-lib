@@ -245689,7 +245689,7 @@ public class TaCodegenServe {
     // ---- ride-along: batch-vs-stream on caller-supplied data ----
     static final int RIDE_MAX_BARS = 4096;
     static final int RIDE_SEEN_N = 2048;
-    static final long[] rideSeenKey = new long[RIDE_SEEN_N];
+    static final long[] rideSeenHash = new long[RIDE_SEEN_N];
     static final boolean[] rideSeenUsed = new boolean[RIDE_SEEN_N];
     static final int[] rideSeenOpen = new int[RIDE_SEEN_N];
     static final int[] rideSeenFill = new int[RIDE_SEEN_N];
@@ -245792,18 +245792,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInSignalPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -245866,7 +245866,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -245894,17 +245894,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ACCBANDS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ACCBANDS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -245978,7 +245978,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246004,14 +246004,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ACOS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ACOS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246074,7 +246074,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246103,17 +246103,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246176,7 +246176,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246203,15 +246203,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ADD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ADD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246274,7 +246274,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246303,19 +246303,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ADOSC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ADOSC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246378,7 +246378,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246405,16 +246405,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ADR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ADR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246477,7 +246477,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246505,17 +246505,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ADX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ADX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246578,7 +246578,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246606,17 +246606,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ADXR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ADXR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246679,7 +246679,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246706,17 +246706,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246779,7 +246779,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246805,17 +246805,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_APO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_APO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246878,7 +246878,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -246905,16 +246905,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AROON");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AROON");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -246982,7 +246982,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247009,16 +247009,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AROONOSC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AROONOSC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247081,7 +247081,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247107,14 +247107,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ASIN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ASIN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247177,7 +247177,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247203,14 +247203,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ATAN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ATAN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247273,7 +247273,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247301,17 +247301,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ATR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ATR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247374,7 +247374,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247400,15 +247400,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AVGDEV");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AVGDEV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247471,7 +247471,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247500,17 +247500,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_AVGPRICE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_AVGPRICE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247573,7 +247573,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247599,18 +247599,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_BBANDS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInNbDevUp));
-        key = rideMix(key, Double.doubleToRawLongBits(optInNbDevDn));
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_BBANDS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDevUp));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDevDn));
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247684,7 +247684,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247711,16 +247711,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_BETA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_BETA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247783,7 +247783,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247812,17 +247812,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_BOP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_BOP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247885,7 +247885,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -247913,17 +247913,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CCI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CCI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -247986,7 +247986,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248015,17 +248015,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL2CROWS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL2CROWS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248088,7 +248088,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248117,17 +248117,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3BLACKCROWS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3BLACKCROWS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248190,7 +248190,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248219,17 +248219,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3INSIDE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3INSIDE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248292,7 +248292,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248321,17 +248321,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3LINESTRIKE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3LINESTRIKE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248394,7 +248394,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248423,17 +248423,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3OUTSIDE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3OUTSIDE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248496,7 +248496,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248525,17 +248525,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3STARSINSOUTH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3STARSINSOUTH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248598,7 +248598,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248627,17 +248627,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDL3WHITESOLDIERS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDL3WHITESOLDIERS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248700,7 +248700,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248729,18 +248729,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLABANDONEDBABY");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLABANDONEDBABY");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248803,7 +248803,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248832,17 +248832,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLADVANCEBLOCK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLADVANCEBLOCK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -248905,7 +248905,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -248934,17 +248934,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLBELTHOLD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLBELTHOLD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249007,7 +249007,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249036,17 +249036,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLBREAKAWAY");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLBREAKAWAY");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249109,7 +249109,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249138,17 +249138,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLCLOSINGMARUBOZU");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLCLOSINGMARUBOZU");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249211,7 +249211,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249240,17 +249240,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLCONCEALBABYSWALL");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLCONCEALBABYSWALL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249313,7 +249313,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249342,17 +249342,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLCOUNTERATTACK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLCOUNTERATTACK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249415,7 +249415,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249444,18 +249444,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLDARKCLOUDCOVER");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLDARKCLOUDCOVER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249518,7 +249518,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249547,17 +249547,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLDOJI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLDOJI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249620,7 +249620,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249649,17 +249649,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLDOJISTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLDOJISTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249722,7 +249722,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249751,17 +249751,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLDRAGONFLYDOJI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLDRAGONFLYDOJI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249824,7 +249824,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249853,17 +249853,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLENGULFING");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLENGULFING");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -249926,7 +249926,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -249955,18 +249955,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLEVENINGDOJISTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLEVENINGDOJISTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250029,7 +250029,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250058,18 +250058,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLEVENINGSTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLEVENINGSTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250132,7 +250132,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250161,17 +250161,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLGAPSIDESIDEWHITE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLGAPSIDESIDEWHITE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250234,7 +250234,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250263,17 +250263,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLGRAVESTONEDOJI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLGRAVESTONEDOJI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250336,7 +250336,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250365,17 +250365,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHAMMER");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHAMMER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250438,7 +250438,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250467,17 +250467,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHANGINGMAN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHANGINGMAN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250540,7 +250540,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250569,17 +250569,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHARAMI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHARAMI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250642,7 +250642,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250671,17 +250671,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHARAMICROSS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHARAMICROSS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250744,7 +250744,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250773,17 +250773,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHIGHWAVE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHIGHWAVE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250846,7 +250846,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250875,17 +250875,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHIKKAKE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHIKKAKE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -250948,7 +250948,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -250977,17 +250977,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHIKKAKEMOD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHIKKAKEMOD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251050,7 +251050,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251079,17 +251079,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLHOMINGPIGEON");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLHOMINGPIGEON");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251152,7 +251152,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251181,17 +251181,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLIDENTICAL3CROWS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLIDENTICAL3CROWS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251254,7 +251254,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251283,17 +251283,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLINNECK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLINNECK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251356,7 +251356,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251385,17 +251385,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLINVERTEDHAMMER");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLINVERTEDHAMMER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251458,7 +251458,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251487,17 +251487,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLKICKING");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLKICKING");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251560,7 +251560,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251589,17 +251589,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLKICKINGBYLENGTH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLKICKINGBYLENGTH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251662,7 +251662,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251691,17 +251691,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLLADDERBOTTOM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLLADDERBOTTOM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251764,7 +251764,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251793,17 +251793,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLLONGLEGGEDDOJI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLLONGLEGGEDDOJI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251866,7 +251866,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251895,17 +251895,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLLONGLINE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLLONGLINE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -251968,7 +251968,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -251997,17 +251997,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLMARUBOZU");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLMARUBOZU");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252070,7 +252070,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252099,17 +252099,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLMATCHINGLOW");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLMATCHINGLOW");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252172,7 +252172,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252201,18 +252201,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLMATHOLD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLMATHOLD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252275,7 +252275,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252304,18 +252304,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLMORNINGDOJISTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLMORNINGDOJISTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252378,7 +252378,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252407,18 +252407,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLMORNINGSTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInPenetration));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLMORNINGSTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPenetration));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252481,7 +252481,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252510,17 +252510,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLONNECK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLONNECK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252583,7 +252583,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252612,17 +252612,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLPIERCING");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLPIERCING");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252685,7 +252685,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252714,17 +252714,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLRICKSHAWMAN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLRICKSHAWMAN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252787,7 +252787,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252816,17 +252816,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLRISEFALL3METHODS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLRISEFALL3METHODS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252889,7 +252889,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -252918,17 +252918,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSEPARATINGLINES");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSEPARATINGLINES");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -252991,7 +252991,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253020,17 +253020,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSHOOTINGSTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSHOOTINGSTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253093,7 +253093,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253122,17 +253122,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSHORTLINE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSHORTLINE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253195,7 +253195,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253224,17 +253224,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSPINNINGTOP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSPINNINGTOP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253297,7 +253297,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253326,17 +253326,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSTALLEDPATTERN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSTALLEDPATTERN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253399,7 +253399,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253428,17 +253428,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLSTICKSANDWICH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLSTICKSANDWICH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253501,7 +253501,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253530,17 +253530,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLTAKURI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLTAKURI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253603,7 +253603,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253632,17 +253632,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLTASUKIGAP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLTASUKIGAP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253705,7 +253705,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253734,17 +253734,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLTHRUSTING");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLTHRUSTING");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253807,7 +253807,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253836,17 +253836,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLTRISTAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLTRISTAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -253909,7 +253909,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -253938,17 +253938,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLUNIQUE3RIVER");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLUNIQUE3RIVER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254011,7 +254011,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254040,17 +254040,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLUPSIDEGAP2CROWS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLUPSIDEGAP2CROWS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254113,7 +254113,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254142,17 +254142,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CDLXSIDEGAP3METHODS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CDLXSIDEGAP3METHODS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254215,7 +254215,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254241,14 +254241,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CEIL");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CEIL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254311,7 +254311,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254340,18 +254340,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CMF");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CMF");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254414,7 +254414,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254440,15 +254440,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CMO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CMO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254511,7 +254511,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254537,15 +254537,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CMOU");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CMOU");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254608,7 +254608,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254634,17 +254634,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_COPPOCK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInWMAPeriod);
-        key = rideMix(key, optInROC1Period);
-        key = rideMix(key, optInROC2Period);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_COPPOCK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInWMAPeriod);
+        hash = rideMix(hash, optInROC1Period);
+        hash = rideMix(hash, optInROC2Period);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254707,7 +254707,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254734,16 +254734,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CORREL");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CORREL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254806,7 +254806,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254832,14 +254832,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_COS");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_COS");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254902,7 +254902,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -254928,14 +254928,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_COSH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_COSH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -254998,7 +254998,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255024,14 +255024,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CUMSUM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CUMSUM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255094,7 +255094,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255121,17 +255121,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_CVI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInROCPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CVI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInROCPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255194,7 +255194,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255220,15 +255220,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_DEMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DEMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255291,7 +255291,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255318,15 +255318,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_DIV");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DIV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255389,7 +255389,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255416,16 +255416,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_DONCHIAN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DONCHIAN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255499,7 +255499,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255525,15 +255525,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_DPO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DPO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255596,7 +255596,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255624,17 +255624,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_DX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_DX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255697,7 +255697,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255724,16 +255724,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_EFI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_EFI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255796,7 +255796,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255822,15 +255822,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_EMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_EMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255893,7 +255893,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -255919,15 +255919,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ER");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ER");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -255990,7 +255990,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256018,17 +256018,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ERI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ERI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256096,7 +256096,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256122,14 +256122,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_EXP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_EXP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256192,7 +256192,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256218,14 +256218,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_FLOOR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_FLOOR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256288,7 +256288,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256314,15 +256314,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_FOSC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_FOSC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256385,7 +256385,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256412,17 +256412,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_FRACTAL");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInLeftBars);
-        key = rideMix(key, optInRightBars);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_FRACTAL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInLeftBars);
+        hash = rideMix(hash, optInRightBars);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256490,7 +256490,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256519,17 +256519,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256609,7 +256609,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256635,15 +256635,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256706,7 +256706,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256732,14 +256732,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_DCPERIOD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_DCPERIOD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256802,7 +256802,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256828,14 +256828,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_DCPHASE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_DCPHASE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256898,7 +256898,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -256924,14 +256924,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_PHASOR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_PHASOR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -256999,7 +256999,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257025,14 +257025,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_SINE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_SINE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257100,7 +257100,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257126,14 +257126,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_TRENDLINE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_TRENDLINE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257196,7 +257196,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257222,14 +257222,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_HT_TRENDMODE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_HT_TRENDMODE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257292,7 +257292,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257319,16 +257319,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_IMI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_IMI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257391,7 +257391,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257417,15 +257417,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_KAMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_KAMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257488,7 +257488,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257516,19 +257516,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_KC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInATRPeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInNbDev));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_KC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInATRPeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDev));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257602,7 +257602,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257630,21 +257630,21 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_KDJ");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastK_Period);
-        key = rideMix(key, optInSlowK_Period);
-        key = rideMix(key, optInSlowK_MAType.ordinal());
-        key = rideMix(key, optInSlowD_Period);
-        key = rideMix(key, optInSlowD_MAType.ordinal());
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_KDJ");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastK_Period);
+        hash = rideMix(hash, optInSlowK_Period);
+        hash = rideMix(hash, optInSlowK_MAType.ordinal());
+        hash = rideMix(hash, optInSlowD_Period);
+        hash = rideMix(hash, optInSlowD_MAType.ordinal());
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257718,7 +257718,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257744,15 +257744,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LINEARREG");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LINEARREG");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257815,7 +257815,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257841,15 +257841,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LINEARREG_ANGLE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LINEARREG_ANGLE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -257912,7 +257912,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -257938,15 +257938,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LINEARREG_INTERCEPT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LINEARREG_INTERCEPT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258009,7 +258009,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258035,15 +258035,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LINEARREG_SLOPE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LINEARREG_SLOPE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258106,7 +258106,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258132,14 +258132,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258202,7 +258202,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258228,14 +258228,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_LOG10");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_LOG10");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258298,7 +258298,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258324,16 +258324,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258396,7 +258396,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258422,17 +258422,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MACD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInSignalPeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MACD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258506,7 +258506,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258532,20 +258532,20 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MACDEXT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInFastMAType.ordinal());
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInSlowMAType.ordinal());
-        key = rideMix(key, optInSignalPeriod);
-        key = rideMix(key, optInSignalMAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MACDEXT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInFastMAType.ordinal());
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInSlowMAType.ordinal());
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMix(hash, optInSignalMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258619,7 +258619,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258645,15 +258645,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MACDFIX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInSignalPeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MACDFIX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258727,7 +258727,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258753,16 +258753,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MAMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInFastLimit));
-        key = rideMix(key, Double.doubleToRawLongBits(optInSlowLimit));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MAMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInFastLimit));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInSlowLimit));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258830,7 +258830,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258858,16 +258858,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MARKETFI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MARKETFI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -258930,7 +258930,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -258957,17 +258957,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MASSI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MASSI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259030,7 +259030,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259057,18 +259057,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MAVP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInMinPeriod);
-        key = rideMix(key, optInMaxPeriod);
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MAVP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInMinPeriod);
+        hash = rideMix(hash, optInMaxPeriod);
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259131,7 +259131,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259157,15 +259157,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MAX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MAX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259228,7 +259228,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259254,15 +259254,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MAXINDEX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MAXINDEX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259325,7 +259325,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259352,15 +259352,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MEDPRICE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MEDPRICE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259423,7 +259423,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259452,18 +259452,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MFI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MFI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259526,7 +259526,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259552,15 +259552,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MIDPOINT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MIDPOINT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259623,7 +259623,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259650,16 +259650,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MIDPRICE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MIDPRICE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259722,7 +259722,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259748,15 +259748,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MIN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MIN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259819,7 +259819,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259845,15 +259845,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MININDEX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MININDEX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -259916,7 +259916,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -259942,15 +259942,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MINMAX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MINMAX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260018,7 +260018,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260044,15 +260044,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MINMAXINDEX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MINMAXINDEX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260120,7 +260120,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260148,17 +260148,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MINUS_DI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MINUS_DI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260221,7 +260221,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260248,16 +260248,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MINUS_DM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MINUS_DM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260320,7 +260320,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260346,15 +260346,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MOM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MOM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260417,7 +260417,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260444,15 +260444,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_MULT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MULT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260515,7 +260515,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260543,17 +260543,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_NATR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_NATR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260616,7 +260616,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260643,15 +260643,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_NVI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_NVI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260714,7 +260714,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260741,15 +260741,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_OBV");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_OBV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260812,7 +260812,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260838,16 +260838,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PERCENTILE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInPercentile));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PERCENTILE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInPercentile));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -260910,7 +260910,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -260936,15 +260936,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PERCENTRANK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PERCENTRANK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261007,7 +261007,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261035,17 +261035,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PLUS_DI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PLUS_DI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261108,7 +261108,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261135,16 +261135,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PLUS_DM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PLUS_DM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261207,7 +261207,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261233,17 +261233,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PPO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PPO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261306,7 +261306,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261333,15 +261333,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PVI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PVI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261404,7 +261404,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261430,17 +261430,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PVO");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInMAType.ordinal());
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PVO");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInMAType.ordinal());
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261503,7 +261503,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261530,15 +261530,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_PVT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_PVT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261601,7 +261601,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261628,16 +261628,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inOpen, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_QSTICK");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inOpen, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_QSTICK");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inOpen, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261700,7 +261700,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261726,15 +261726,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_RMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_RMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261797,7 +261797,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261823,15 +261823,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ROC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ROC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261894,7 +261894,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -261920,15 +261920,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ROCP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ROCP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -261991,7 +261991,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262017,15 +262017,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ROCR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ROCR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262088,7 +262088,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262114,15 +262114,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ROCR100");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ROCR100");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262185,7 +262185,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262211,15 +262211,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_RSI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_RSI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262282,7 +262282,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262308,16 +262308,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_RVI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInStdDevPeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_RVI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInStdDevPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262380,7 +262380,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262406,15 +262406,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_RVOL");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_RVOL");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262477,7 +262477,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262504,17 +262504,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAcceleration));
-        key = rideMix(key, Double.doubleToRawLongBits(optInMaximum));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAcceleration));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInMaximum));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262577,7 +262577,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262604,23 +262604,23 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SAREXT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, Double.doubleToRawLongBits(optInStartValue));
-        key = rideMix(key, Double.doubleToRawLongBits(optInOffsetOnReverse));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationInitLong));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationLong));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationMaxLong));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationInitShort));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationShort));
-        key = rideMix(key, Double.doubleToRawLongBits(optInAccelerationMaxShort));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SAREXT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInStartValue));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInOffsetOnReverse));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationInitLong));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationLong));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationMaxLong));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationInitShort));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationShort));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAccelerationMaxShort));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262683,7 +262683,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262709,14 +262709,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SIN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SIN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262779,7 +262779,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262805,14 +262805,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SINH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SINH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262875,7 +262875,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -262901,15 +262901,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -262972,7 +262972,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263000,20 +263000,20 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SMI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInFastPeriod);
-        key = rideMix(key, optInSlowPeriod);
-        key = rideMix(key, optInSignalPeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SMI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263081,7 +263081,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263107,14 +263107,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SQRT");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SQRT");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263177,7 +263177,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263203,16 +263203,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_STDDEV");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInNbDev));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_STDDEV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDev));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263275,7 +263275,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263303,21 +263303,21 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_STOCH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastK_Period);
-        key = rideMix(key, optInSlowK_Period);
-        key = rideMix(key, optInSlowK_MAType.ordinal());
-        key = rideMix(key, optInSlowD_Period);
-        key = rideMix(key, optInSlowD_MAType.ordinal());
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_STOCH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastK_Period);
+        hash = rideMix(hash, optInSlowK_Period);
+        hash = rideMix(hash, optInSlowK_MAType.ordinal());
+        hash = rideMix(hash, optInSlowD_Period);
+        hash = rideMix(hash, optInSlowD_MAType.ordinal());
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263385,7 +263385,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263413,19 +263413,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_STOCHF");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFastK_Period);
-        key = rideMix(key, optInFastD_Period);
-        key = rideMix(key, optInFastD_MAType.ordinal());
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_STOCHF");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastK_Period);
+        hash = rideMix(hash, optInFastD_Period);
+        hash = rideMix(hash, optInFastD_MAType.ordinal());
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263493,7 +263493,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263519,18 +263519,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_STOCHRSI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, optInFastK_Period);
-        key = rideMix(key, optInFastD_Period);
-        key = rideMix(key, optInFastD_MAType.ordinal());
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_STOCHRSI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, optInFastK_Period);
+        hash = rideMix(hash, optInFastD_Period);
+        hash = rideMix(hash, optInFastD_MAType.ordinal());
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263598,7 +263598,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263625,15 +263625,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal0, m) || !rideFinite(inReal1, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SUB");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal0, m);
-        key = rideMixArr(key, inReal1, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SUB");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal0, m);
+        hash = rideMixArr(hash, inReal1, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263696,7 +263696,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263722,15 +263722,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SUM");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SUM");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263793,7 +263793,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263821,18 +263821,18 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_SUPERTREND");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInMultiplier));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SUPERTREND");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInMultiplier));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263900,7 +263900,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -263926,16 +263926,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_T3");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInVFactor));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_T3");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInVFactor));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -263998,7 +263998,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264024,14 +264024,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TAN");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TAN");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264094,7 +264094,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264120,14 +264120,14 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TANH");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TANH");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264190,7 +264190,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264216,15 +264216,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TEMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TEMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264287,7 +264287,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264315,16 +264315,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TRANGE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TRANGE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264387,7 +264387,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264413,15 +264413,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TRIMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TRIMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264484,7 +264484,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264510,15 +264510,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TRIX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TRIX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264581,7 +264581,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264607,15 +264607,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TSF");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TSF");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264678,7 +264678,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264704,16 +264704,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TSI");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInFirstPeriod);
-        key = rideMix(key, optInSecondPeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TSI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFirstPeriod);
+        hash = rideMix(hash, optInSecondPeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264776,7 +264776,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264804,16 +264804,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_TYPPRICE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_TYPPRICE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264876,7 +264876,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -264904,19 +264904,19 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ULTOSC");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod1);
-        key = rideMix(key, optInTimePeriod2);
-        key = rideMix(key, optInTimePeriod3);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ULTOSC");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod1);
+        hash = rideMix(hash, optInTimePeriod2);
+        hash = rideMix(hash, optInTimePeriod3);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -264979,7 +264979,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265005,16 +265005,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_VAR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMix(key, Double.doubleToRawLongBits(optInNbDev));
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VAR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInNbDev));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265077,7 +265077,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265103,15 +265103,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_VHF");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VHF");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265174,7 +265174,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265202,17 +265202,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_VORTEX");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VORTEX");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265280,7 +265280,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265309,17 +265309,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_VWAP");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VWAP");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265382,7 +265382,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265409,16 +265409,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || !rideFinite(inVolume, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_VWMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        key = rideMixArr(key, inVolume, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_VWMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        hash = rideMixArr(hash, inVolume, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265481,7 +265481,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265509,16 +265509,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_WAD");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_WAD");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265581,7 +265581,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265609,16 +265609,16 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_WCLPRICE");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_WCLPRICE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265681,7 +265681,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265709,17 +265709,17 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_WILLR");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inHigh, m);
-        key = rideMixArr(key, inLow, m);
-        key = rideMixArr(key, inClose, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_WILLR");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265782,7 +265782,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265808,15 +265808,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_WMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_WMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265879,7 +265879,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
@@ -265905,15 +265905,15 @@ public class TaCodegenServe {
         if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
         if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
 
-        long key = 0xcbf29ce484222325L;
-        key = rideMixStr(key, "TA_ZLEMA");
-        key = rideMix(key, m);
-        key = rideMix(key, rideGen);
-        key = rideMix(key, jsonInt(json, "unstablePeriod"));
-        key = rideMix(key, optInTimePeriod);
-        key = rideMixArr(key, inReal, m);
-        int slot = (int) Math.floorMod(key, (long) RIDE_SEEN_N);
-        if (rideSeenUsed[slot] && rideSeenKey[slot] == key) {
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_ZLEMA");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
             r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
         }
 
@@ -265976,7 +265976,7 @@ public class TaCodegenServe {
         }
 
         if (r.ok) {
-            rideSeenUsed[slot] = true; rideSeenKey[slot] = key;
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
             rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
         }
     }
