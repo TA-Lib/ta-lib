@@ -107,7 +107,7 @@
    do {                                                                          \
       if( server_verify_active() )                                               \
       {                                                                          \
-         int svCmp_ = server_verify_comparisons();                               \
+         int svCmp_ = server_verify_value_comparisons();                         \
          ErrorNumber svErr_ = server_verify(                                     \
             "RVIR", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),                 \
             (const TA_Real*[]){ (hi), (lo), NULL },                              \
@@ -119,7 +119,7 @@
           * without this floor: server_verify() skips reject cases by design.    \
           * Every call site below is a success case, so the skip path is         \
           * unreachable and the count must advance.  */                          \
-         if( server_verify_comparisons() == svCmp_ )                             \
+         if( server_verify_value_comparisons() == svCmp_ )                       \
          {                                                                       \
             printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
                     "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
@@ -137,7 +137,7 @@
    do {                                                                          \
       if( server_verify_active() )                                               \
       {                                                                          \
-         int svCmp_ = server_verify_comparisons();                               \
+         int svCmp_ = server_verify_value_comparisons();                         \
          ErrorNumber svErr_ = server_verify(                                     \
             "RVIR", (sIdx), (eIdx), (nbBars), (rc), (beg), (nb),                 \
             (const TA_Real*[]){ (hi), (lo), NULL },                              \
@@ -148,7 +148,7 @@
             err = svErr_;                                                        \
             goto done;                                                           \
          }                                                                       \
-         if( server_verify_comparisons() == svCmp_ )                             \
+         if( server_verify_value_comparisons() == svCmp_ )                       \
          {                                                                       \
             printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
                     "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
