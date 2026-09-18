@@ -85,12 +85,22 @@
  *
  * <h2>Errors</h2>
  *
- * Parameters outside their documented range throw
- * {@link java.lang.IllegalArgumentException}; indices outside the input throw
- * {@link java.lang.IndexOutOfBoundsException}; a stream opened on less history
- * than its lookback throws {@link io.github.talib.InsufficientHistoryException},
- * which extends {@code IllegalArgumentException} so it can be caught to
- * accumulate more bars and retry.
+ * A {@code startIdx} or {@code endIdx} that is negative or above
+ * {@link io.github.talib.Core#MAX_INDEX}, an {@code endIdx} below
+ * {@code startIdx}, or a stream history that is empty or longer than
+ * {@code MAX_INDEX + 1} bars, throws
+ * {@link io.github.talib.TALibIndexException}. A parameter outside its
+ * documented range, a required array that is absent, or an array too short for
+ * the values the call reads or writes (including an {@code endIdx} past the end
+ * of the input), throws {@link io.github.talib.TALibArgumentException}. A stream
+ * opened on a non-empty history of fewer bars than its lookback plus one throws
+ * {@link io.github.talib.InsufficientHistoryException}, which extends
+ * {@code TALibArgumentException} so it can be caught to accumulate more bars and
+ * retry.
+ *
+ * <p>Each extends the platform type a caller would reach for
+ * ({@code IndexOutOfBoundsException}, {@code IllegalArgumentException}), so
+ * catching either shape works.
  *
  * @see io.github.talib.metadata
  * @see <a href="https://ta-lib.org">ta-lib.org</a>

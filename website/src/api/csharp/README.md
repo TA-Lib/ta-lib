@@ -139,9 +139,13 @@ The public methods throw rather than return a status code:
 
 | Condition | Exception |
 |---|---|
-| `startIdx`/`endIdx` negative, above `Core.MaxIndex`, or `endIdx < startIdx` | `ArgumentOutOfRangeException` |
-| An optional parameter outside its documented range | `ArgumentException` |
-| Two outputs overlapping, or an output *partially* overlapping an input | `ArgumentException` |
+| `startIdx`/`endIdx` negative, above `Core.MaxIndex`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
+| An optional parameter outside its documented range | `TALibArgumentException` |
+| Two outputs overlapping, or an output *partially* overlapping an input | `TALibArgumentException` |
+
+Each extends the framework type you would reach for and implements
+`ITALibFailure`, so `catch (ArgumentException)` still works and the `RetCode` is
+there when you want it.
 
 Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. What is rejected is *partial* overlap, which only spans can express: two views of the same memory at different offsets make a body write through what it is still reading, and the result would be silently wrong rather than merely surprising.
 

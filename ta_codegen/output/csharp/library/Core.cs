@@ -82,7 +82,8 @@ public sealed partial class Core
     public const int IntegerMax = int.MaxValue;
 
     /// <summary>Largest value <c>startIdx</c> or <c>endIdx</c> may take. Above
-    /// it a call returns <see cref="RetCode.OutOfRangeStartIndex"/> or
+    /// it a call throws <see cref="TALibArgumentOutOfRangeException"/> carrying
+    /// <see cref="RetCode.OutOfRangeStartIndex"/> or
     /// <see cref="RetCode.OutOfRangeEndIndex"/> rather than computing.</summary>
     /// <remarks><para>This bounds the <i>API domain</i> and nothing else — in
     /// particular it is not an accuracy guarantee. A handful of functions

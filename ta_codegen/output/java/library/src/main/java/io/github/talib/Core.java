@@ -210,7 +210,8 @@ public final class Core {
 
    /**
     * Largest value {@code startIdx} or {@code endIdx} may take. Above it a call
-    * returns {@link RetCode#OUT_OF_RANGE_START_INDEX} or
+    * throws {@link TALibIndexException} carrying
+    * {@link RetCode#OUT_OF_RANGE_START_INDEX} or
     * {@link RetCode#OUT_OF_RANGE_END_INDEX} rather than computing.
     *
     * <p>This bounds the <i>API domain</i> and nothing else — in particular it is

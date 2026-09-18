@@ -134,11 +134,15 @@ Misuse throws rather than returning a return code:
 
 | Mistake | Exception |
 |---|---|
-| `startIdx`/`endIdx` out of range, or `endIdx < startIdx` | `IndexOutOfBoundsException` |
-| Optional parameter outside its documented range | `IllegalArgumentException` |
-| Two outputs sharing one array | `IllegalArgumentException` |
-| An array too short for the range requested | `IllegalArgumentException` |
-| A null input or output array | `IllegalArgumentException` |
+| `startIdx`/`endIdx` negative, above `Core.MAX_INDEX`, or `endIdx < startIdx` | `TALibIndexException` |
+| Optional parameter outside its documented range | `TALibArgumentException` |
+| Two outputs sharing one array | `TALibArgumentException` |
+| An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
+| A null input or output array | `TALibArgumentException` |
+
+Each extends the platform type you would reach for — `TALibIndexException` an
+`IndexOutOfBoundsException`, the rest an `IllegalArgumentException` — so catching
+either shape works, and every one carries its `RetCode`.
 
 Array lengths are checked before anything is written, so a rejected call leaves every buffer untouched. An input must reach `endIdx`; an output must hold the values actually produced, `endIdx - max(startIdx, lookback) + 1`. The message names the array and both sizes — `SMA: outReal has length 3, needs 191`.
 
