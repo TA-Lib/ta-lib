@@ -33,7 +33,7 @@ Each backend uses one fold per kind of identifier: Rust snake for functions and
 UpperCamel for types, Java lowerCamel for methods and UpperCamel for types, C#
 UpperCamel for both.
 
-## 2. Per-function surface, 201 functions
+## 2. Per-function surface
 
 | surface | C (frozen) | Rust | Java | C# |
 |---|---|---|---|---|
@@ -169,7 +169,7 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 
 ## 10. Exceptions: idiom loses
 
-Five places keep a spelling its backend would not choose. Each is load-bearing;
+These keep a spelling their backend would not choose. Each is load-bearing;
 none is inherited by default.
 
 - **E1. Parameter names are verbatim C in every backend.** They are metadata,
