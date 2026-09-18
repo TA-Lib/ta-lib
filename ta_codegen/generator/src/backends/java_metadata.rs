@@ -191,22 +191,29 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
         }
     }
 
-    write(&dir, "package-info.java", &package_info());
-    write(&dir, "InputType.java", &input_type_enum());
-    write(&dir, "OptInputType.java", &opt_input_type_enum());
-    write(&dir, "OutputType.java", &output_type_enum());
-    write(&dir, "FuncFlags.java", &func_flags_class());
-    write(&dir, "InputFlags.java", &input_flags_class());
-    write(&dir, "OptInputFlags.java", &opt_input_flags_class());
-    write(&dir, "OutputFlags.java", &output_flags_class());
-    write(&dir, "InputInfo.java", &input_info_record());
-    write(&dir, "OptInputInfo.java", &opt_input_info_record());
-    write(&dir, "OutputInfo.java", &output_info_record());
-    write(&dir, "FunctionInfo.java", &function_info_record());
-    write(&dir, "Functions.java", &functions_registry(&rows));
-    write(&dir, "ParamHolder.java", &param_holder_class());
-    write(&dir, "Dispatch.java", &dispatch_class(&rows));
-    write(&dir, "FunctionDescription.java", &function_description_class(funcs));
+    let files: Vec<(&str, String)> = vec![
+        ("package-info.java", package_info()),
+        ("InputType.java", input_type_enum()),
+        ("OptInputType.java", opt_input_type_enum()),
+        ("OutputType.java", output_type_enum()),
+        ("FuncFlags.java", func_flags_class()),
+        ("InputFlags.java", input_flags_class()),
+        ("OptInputFlags.java", opt_input_flags_class()),
+        ("OutputFlags.java", output_flags_class()),
+        ("InputInfo.java", input_info_record()),
+        ("OptInputInfo.java", opt_input_info_record()),
+        ("OutputInfo.java", output_info_record()),
+        ("FunctionInfo.java", function_info_record()),
+        ("Functions.java", functions_registry(&rows)),
+        ("ParamHolder.java", param_holder_class()),
+        ("Dispatch.java", dispatch_class(&rows)),
+        ("FunctionDescription.java", function_description_class(funcs)),
+    ];
+    for (name, body) in &files {
+        write(&dir, name, body);
+    }
+    let keep: Vec<&str> = files.iter().map(|(name, _)| *name).collect();
+    clean_stale(&dir, &keep);
 
     println!("  java metadata registry -> {} ({} functions)", dir.display(), rows.len());
 }
@@ -283,6 +290,22 @@ fn function_description_class(funcs: &[FuncDef]) -> String {
 
 fn write(dir: &Path, name: &str, body: &str) {
     super::write_if_changed_silent(&dir.join(name), body);
+}
+
+/// Remove any `.java` in `dir` this module no longer emits. The directory is
+/// wholly generated, and a file left behind after a rename still compiles into
+/// the jar while `git status` stays clean.
+fn clean_stale(dir: &Path, keep: &[&str]) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.ends_with(".java") && !keep.contains(&name.as_str()) {
+            std::fs::remove_file(entry.path()).ok();
+            println!("  removed stale Java metadata file {name}");
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
