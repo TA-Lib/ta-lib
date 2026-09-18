@@ -54,14 +54,14 @@ namespace TALib.Test;
 /// <remarks>
 /// <para>The probe's subject is what a <i>body</i> touches, so it names the
 /// body — and it brings its own call site rather than borrowing
-/// <see cref="FunctionCall.TryInvoke"/>, whose thunks call the public entry
+/// <see cref="ParamHolder.TryCall"/>, whose thunks call the public entry
 /// point like C's frames and Java's Dispatch. Sharing one would make a test's
 /// reach decide which tier the shipped metadata API calls (issue #265).</para>
 ///
 /// <para>Reflection cannot substitute: a generated <c>NAME_Impl</c> takes
 /// <c>ReadOnlySpan&lt;double&gt;</c>, and a ref struct cannot be boxed for
 /// <c>MethodInfo.Invoke</c>. Buffers and parameters still come from
-/// <see cref="FunctionCall"/> — the probe binds them through the public setters
+/// <see cref="ParamHolder"/> — the probe binds them through the public setters
 /// and reads them back through the same internal accessors the catalogue's
 /// thunks use. Only the call itself is local.</para>
 /// </remarks>
@@ -73,18 +73,18 @@ internal static class NoPhantomIoBinder
     /// overload, which throws.</remarks>
     internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
 
-    internal delegate CallOutcome Thunk(Core core, FunctionCall c, int startIdx, int endIdx);
+    internal delegate CallOutcome Thunk(Core core, ParamHolder c, int startIdx, int endIdx);
 
     /// <summary>Runs one function's numerics over the bound buffers.</summary>
     /// <remarks>Reports failure as a code, like
-    /// <see cref="FunctionCall.TryInvoke"/> and for the same reason: a composed
+    /// <see cref="ParamHolder.TryCall"/> and for the same reason: a composed
     /// body cross-calls its callee's PUBLIC tier, and that throws. Converting it
     /// here keeps the sweeps reading one thing. Anything that is not the
     /// library's own failure is left to propagate — the sweeps classify it.
     /// <para>No boundness check: the sweeps bind every input and output before
     /// calling, and an unbound slot faulting is a fixture bug the sweeps should
     /// see rather than a code they should read.</para></remarks>
-    internal static RetCode Invoke(string name, Core core, FunctionCall call,
+    internal static RetCode Invoke(string name, Core core, ParamHolder call,
                                    int startIdx, int endIdx, out OutRange range)
     {
         try

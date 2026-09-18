@@ -2305,7 +2305,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // spelling difference the contract tolerates; what must match, and does, is
     // WHICH calls are rejected.
     s.push_str(r#"    static int computeLookback(String funcName, String json) {
-        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(funcName);
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(funcName);
         if (f == null) return -1;
         try {
             return absBind(f, json, null).lookback();
@@ -2318,7 +2318,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
        output arrays when the caller needs them back; pass null for the lookback
        tier, which binds none. */
     static io.github.talib.metadata.ParamHolder absBind(
-            io.github.talib.metadata.FunctionInfo f, String json, Object[] outs) {
+            io.github.talib.metadata.FuncInfo f, String json, Object[] outs) {
         io.github.talib.metadata.ParamHolder h = f.newCall();
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -2367,7 +2367,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
 
     /* inReal / inReal0 / inReal1, matching the driver's key scheme. */
-    static double[] absRealInput(String json, io.github.talib.metadata.FunctionInfo f, int slot) {
+    static double[] absRealInput(String json, io.github.talib.metadata.FuncInfo f, int slot) {
         int generic = 0;
         for (int i = 0; i < slot; i++) {
             if (f.inputs().get(i).type() != io.github.talib.metadata.InputType.PRICE) generic++;
@@ -2381,7 +2381,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     static String handleAbstractCall(String json) {
         String fn = jsonString(json, "funcName");
-        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(fn);
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(fn);
         if (f == null) return "{\"error\":\"Unknown function\"}";
 
         Object[] outs = new Object[f.outputs().size()];
@@ -2815,7 +2815,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // absent-field fallbacks as the per-function handlers) and call its guarded
     // <Name>Lookback. Mirrors the Java server's computeLookback.
     //
-    // Deliberately NOT routed through FunctionCall: the --xlang-hash sweep
+    // Deliberately NOT routed through ParamHolder: the --xlang-hash sweep
     // drives out-of-range parameter vectors through abstract_get_lookback and
     // requires -1 back, which is exactly what the guarded *Lookback prologue
     // returns. A validating binder would throw before reaching it, and a
@@ -4609,7 +4609,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         _ => throw new InvalidOperationException("unhandled OptInputDomain"),
     };
 
-    static FunctionInfo? AbsLookup(JsonElement p) =>
+    static FuncInfo? AbsLookup(JsonElement p) =>
         FunctionCatalog.Default.TryGet(p.GetProperty("funcName").GetString()!, out var f) ? f : null;
 
     static string AbsFuncInfo(JsonElement p) {
@@ -4704,7 +4704,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
        sent one component per set bit; a lone real input keeps its own name,
        and several become inReal0/inReal1/... by rank (test_abstract.c's
        abstract_verify_server_call and expand_input_names agree on this). */
-    static string AbsRealInputKey(FunctionInfo f, int slot) {
+    static string AbsRealInputKey(FuncInfo f, int slot) {
         int totalReal = 0, rank = 0;
         for (int i = 0; i < f.Inputs.Length; i++) {
             if (f.Inputs[i].Kind != InputKind.Real) continue;
@@ -4724,7 +4724,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         _ => throw new ArgumentException($"not a single component: {c}"),
     };
 
-    /* abstract_call — the fully generic path, bound through FunctionCall. This
+    /* abstract_call — the fully generic path, bound through ParamHolder. This
        is a genuinely independent second implementation rather than a reroute to
        the per-function handler (which is what the Rust and Java servers do), so
        a wrong slot index or a transposed price component shows up as diverging
@@ -4769,9 +4769,9 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         for (int i = 0; i < f.OptInputs.Length; i++) {
             var o = f.OptInputs[i];
             if (o.Domain is OptInputDomain.RealRange or OptInputDomain.RealList) {
-                call.SetOption(i, GetDouble(p, o.ParamName, o.DefaultValue));
+                call.SetOptInput(i, GetDouble(p, o.ParamName, o.DefaultValue));
             } else {
-                call.SetOption(i, GetInt(p, o.ParamName, (int)o.DefaultValue));
+                call.SetOptInput(i, GetInt(p, o.ParamName, (int)o.DefaultValue));
             }
         }
 
@@ -4788,7 +4788,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         }
 
         int lookback = call.Lookback();
-        RetCode rc = call.TryInvoke(startIdx, endIdx, out OutRange range);
+        RetCode rc = call.TryCall(startIdx, endIdx, out OutRange range);
 
         var b = new System.Text.StringBuilder();
         b.Append($"{{\"lookback\":{lookback},\"retCode\":{(int)rc}")

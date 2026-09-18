@@ -50,15 +50,15 @@ namespace TALib.Metadata;
 /// <remarks>
 /// The replacement for C's <c>TA_ParamHolder</c> allocate/set/call/free dance —
 /// there is nothing to free, and every binding is checked against the
-/// <see cref="FunctionInfo"/> row it belongs to. Obtain one from
-/// <see cref="FunctionInfo.CreateCall()"/>:
+/// <see cref="FuncInfo"/> row it belongs to. Obtain one from
+/// <see cref="FuncInfo.CreateCall()"/>:
 /// <code>
 /// var f = FunctionCatalog.Default["SMA"];
 /// var range = f.CreateCall()
 ///     .SetInput(0, close)
-///     .SetOption(0, 30)
+///     .SetOptInput(0, 30)
 ///     .SetOutput(0, outReal)
-///     .Invoke(0, close.Length - 1);
+///     .Call(0, close.Length - 1);
 /// </code>
 /// <para>An index out of range, a type that does not match the declared
 /// parameter, or an unbound input or output at call time throws
@@ -68,7 +68,7 @@ namespace TALib.Metadata;
 /// per call. The <see cref="FunctionCatalog"/> it comes from is immutable and
 /// shared freely.</para>
 /// </remarks>
-public sealed class FunctionCall
+public sealed class ParamHolder
 {
     /* The cross-language "use the documented default" sentinels. Kept here
        rather than read from the row so an unbound parameter takes exactly the
@@ -77,7 +77,7 @@ public sealed class FunctionCall
     private const int IntDefault = int.MinValue;
     private const double RealDefault = -4e37;
 
-    private readonly FunctionInfo _info;
+    private readonly FuncInfo _info;
     private readonly Core _core;
 
     private readonly double[]?[] _series;
@@ -90,7 +90,7 @@ public sealed class FunctionCall
     private readonly double[]?[] _realOuts;
     private readonly int[]?[] _intOuts;
 
-    internal FunctionCall(FunctionInfo info, Core core)
+    internal ParamHolder(FuncInfo info, Core core)
     {
         _info = info;
         _core = core;
@@ -126,7 +126,7 @@ public sealed class FunctionCall
     }
 
     /// <summary>The function this call runs.</summary>
-    public FunctionInfo Info => _info;
+    public FuncInfo Info => _info;
 
     private static int ComponentIndex(PriceComponents c) => c switch
     {
@@ -162,7 +162,7 @@ public sealed class FunctionCall
     /// <param name="series">The series. Not copied.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The slot is not a real input.</exception>
-    public FunctionCall SetInput(int slot, double[] series)
+    public ParamHolder SetInput(int slot, double[] series)
     {
         CheckInput(slot, InputKind.Real);
         ArgumentNullException.ThrowIfNull(series);
@@ -175,7 +175,7 @@ public sealed class FunctionCall
     /// <param name="series">The series. Not copied.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The slot is not an integer input.</exception>
-    public FunctionCall SetInput(int slot, int[] series)
+    public ParamHolder SetInput(int slot, int[] series)
     {
         CheckInput(slot, InputKind.Integer);
         ArgumentNullException.ThrowIfNull(series);
@@ -199,7 +199,7 @@ public sealed class FunctionCall
     /// it take what it needs) would throw for every price function here while
     /// working against C and Java. Rejecting a MISSING required component is the
     /// check that earns its keep, and all three backends do it.</remarks>
-    public FunctionCall SetPriceInput(int slot, PriceComponents component, double[] series)
+    public ParamHolder SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);
         ArgumentNullException.ThrowIfNull(series);
@@ -224,7 +224,7 @@ public sealed class FunctionCall
     /// Interleaved, it committed the components ahead of the offending one, and a
     /// caller re-binding an already-good bundle then got <c>Success</c> over a
     /// mixture of the two — no code, no exception, wrong numbers.</remarks>
-    public FunctionCall SetPriceInput(int slot, double[]? open = null, double[]? high = null,
+    public ParamHolder SetPriceInput(int slot, double[]? open = null, double[]? high = null,
                                       double[]? low = null, double[]? close = null,
                                       double[]? volume = null, double[]? openInterest = null)
     {
@@ -271,7 +271,7 @@ public sealed class FunctionCall
     /// <param name="value">The value.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter's domain is not integral.</exception>
-    public FunctionCall SetOption(int index, int value)
+    public ParamHolder SetOptInput(int index, int value)
     {
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.IntegerRange or OptInputDomain.IntegerList))
@@ -290,7 +290,7 @@ public sealed class FunctionCall
     /// <param name="value">The value.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter's domain is not real.</exception>
-    public FunctionCall SetOption(int index, double value)
+    public ParamHolder SetOptInput(int index, double value)
     {
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.RealRange or OptInputDomain.RealList))
@@ -309,10 +309,10 @@ public sealed class FunctionCall
     /// <param name="value">The moving-average type.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter is not a choice list.</exception>
-    public FunctionCall SetOption(int index, MAType value)
+    public ParamHolder SetOptInput(int index, MAType value)
     {
-        /* Not a delegation to SetOption(int, int): that accepts an
-           IntegerRange too, so `SetOption(0, MAType.EMA)` on SMA would bind a
+        /* Not a delegation to SetOptInput(int, int): that accepts an
+           IntegerRange too, so `SetOptInput(0, MAType.EMA)` on SMA would bind a
            period of 1 and return Success with silently wrong output. Java's
            ParamHolder.setOptInput(int, MAType) checks INTEGER_LIST for the same
            reason, and no moving-average parameter is an IntegerRange, so this
@@ -330,11 +330,11 @@ public sealed class FunctionCall
     }
 
     /// <summary>Binds a parameter from its metadata row and a numeric value.</summary>
-    /// <param name="parameter">A row from <see cref="FunctionInfo.OptInputs"/>.</param>
+    /// <param name="parameter">A row from <see cref="FuncInfo.OptInputs"/>.</param>
     /// <param name="value">The value, converted to the parameter's own type.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The row does not belong to this function.</exception>
-    public FunctionCall SetParam(OptInputInfo parameter, double value)
+    public ParamHolder SetOptInput(OptInputInfo parameter, double value)
     {
         ArgumentNullException.ThrowIfNull(parameter);
         int index = _info.OptInputs.IndexOf(parameter);
@@ -346,16 +346,16 @@ public sealed class FunctionCall
 
         return parameter.Domain switch
         {
-            OptInputDomain.RealRange or OptInputDomain.RealList => SetOption(index, value),
-            _ => SetOption(index, ToIntegerOperand(parameter, value)),
+            OptInputDomain.RealRange or OptInputDomain.RealList => SetOptInput(index, value),
+            _ => SetOptInput(index, ToIntegerOperand(parameter, value)),
         };
     }
 
     /* `(int)value` on a double outside the int range is unspecified in ECMA-334.
        .NET saturates: a large POSITIVE value lands on int.MaxValue, a large
        NEGATIVE one on int.MinValue -- and int.MinValue IS the "use the default"
-       sentinel. So SetParam(p, -1e18) silently meant "use the default", and
-       SetParam(p, 1e18) silently meant a period of 2147483647, where the caller
+       sentinel. So SetOptInput(p, -1e18) silently meant "use the default", and
+       SetOptInput(p, 1e18) silently meant a period of 2147483647, where the caller
        plainly meant an error in both cases; NaN lands on 0. Reject what the
        integer domain cannot represent. The sentinel itself stays reachable:
        asking for the default IS a legal request (issue #162). */
@@ -393,7 +393,7 @@ public sealed class FunctionCall
     /// <param name="buffer">The buffer to write into.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The output is not real.</exception>
-    public FunctionCall SetOutput(int index, double[] buffer)
+    public ParamHolder SetOutput(int index, double[] buffer)
     {
         CheckOutput(index, OutputKind.Real);
         ArgumentNullException.ThrowIfNull(buffer);
@@ -406,7 +406,7 @@ public sealed class FunctionCall
     /// <param name="buffer">The buffer to write into.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The output is not integral.</exception>
-    public FunctionCall SetOutput(int index, int[] buffer)
+    public ParamHolder SetOutput(int index, int[] buffer)
     {
         CheckOutput(index, OutputKind.Integer);
         ArgumentNullException.ThrowIfNull(buffer);
@@ -420,13 +420,13 @@ public sealed class FunctionCall
 
     /* Returns Success when every input and output is bound, or the code C's
        TA_CallFunc returns for the same condition. Split out of RequireBound so
-       TryInvoke can honour its name: it advertises "failure as a code rather than
+       TryCall can honour its name: it advertises "failure as a code rather than
        an exception" and then threw from the binding it performs, which would take
        the C# server's process down on the first reject vector. */
     private RetCode BoundState() => BoundState(out _);
 
-    /* `which` names the offending slot so Invoke can keep the diagnostic it used
-       to throw ("SMA: input 0 (inReal) was not set"). TryInvoke discards it and
+    /* `which` names the offending slot so Call can keep the diagnostic it used
+       to throw ("SMA: input 0 (inReal) was not set"). TryCall discards it and
        returns the bare code. Reporting only the code from both would have made a
        mis-bound multi-input call materially harder to place -- the same class of
        problem the server hardening exists to fix. */
@@ -490,7 +490,7 @@ public sealed class FunctionCall
     /// <exception cref="ArgumentException">A required input or output was never
     /// bound, or an argument is invalid — the same failures the typed method
     /// reports.</exception>
-    public OutRange Invoke(int startIdx, int endIdx)
+    public OutRange Call(int startIdx, int endIdx)
     {
         RetCode bound = BoundState(out string which);
         if (bound != RetCode.Success)
@@ -501,7 +501,7 @@ public sealed class FunctionCall
         // The function's OWN exception, not a relabelled code. Since #265 the
         // thunk calls the public overload, whose message names the buffer and
         // both sizes and whose type carries the RetCode; going through
-        // TryInvoke flattened that to "SMA failed: BadParam". TryInvoke exists
+        // TryCall flattened that to "SMA failed: BadParam". TryCall exists
         // to hand back a code; this method's contract is the exception, so it
         // should be the real one -- which is what Java's ParamHolder.call does.
         return _info.Invoke(_core, this, startIdx, endIdx);
@@ -516,7 +516,7 @@ public sealed class FunctionCall
     /// as <see cref="RetCode.InputNotAllInitialize"/> /
     /// <see cref="RetCode.OutputNotAllInitialize"/>, the codes C returns for the
     /// same condition — this method does not throw.</returns>
-    public RetCode TryInvoke(int startIdx, int endIdx, out OutRange range)
+    public RetCode TryCall(int startIdx, int endIdx, out OutRange range)
     {
         RetCode bound = BoundState();
         if (bound != RetCode.Success)

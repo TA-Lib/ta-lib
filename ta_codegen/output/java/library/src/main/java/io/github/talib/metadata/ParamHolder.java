@@ -48,10 +48,10 @@ import io.github.talib.OutRange;
  * <p>The counterpart of C's {@code TA_ParamHolder}, for an application that does
  * not know at compile time which indicator it will run — a charting UI listing
  * every study, a parameter sweep. Obtain one from
- * {@link FunctionInfo#newCall()}:
+ * {@link FuncInfo#newCall()}:
  *
  * <pre>{@code
- * FunctionInfo f = Functions.byName("SMA");
+ * FuncInfo f = Functions.byName("SMA");
  * OutRange r = f.newCall()
  *     .setInput(0, close)
  *     .setOptInput(0, 30)
@@ -59,7 +59,7 @@ import io.github.talib.OutRange;
  *     .call(0, close.length - 1);
  * }</pre>
  *
- * <p>Everything is validated against the {@link FunctionInfo} row: an index out
+ * <p>Everything is validated against the {@link FuncInfo} row: an index out
  * of bounds, a type that does not match the declared parameter, or an unset
  * parameter at {@link #call} time throws {@link IllegalArgumentException}. The
  * call itself then behaves exactly like the typed method — including throwing
@@ -70,7 +70,7 @@ import io.github.talib.OutRange;
  */
 public final class ParamHolder {
 
-   private final FunctionInfo info;
+   private final FuncInfo info;
    private final Core core;
 
    /** Per input slot: a real series, an int series, or the six price components. */
@@ -86,7 +86,7 @@ public final class ParamHolder {
    private final double[][] realOutputs;
    private final int[][] intOutputs;
 
-   ParamHolder(FunctionInfo info, Core core) {
+   ParamHolder(FuncInfo info, Core core) {
       this.info = info;
       this.core = core;
       int ni = info.inputs().size();
@@ -104,7 +104,7 @@ public final class ParamHolder {
    }
 
    /** The function this holder calls. */
-   public FunctionInfo info() {
+   public FuncInfo info() {
       return info;
    }
 
@@ -261,7 +261,7 @@ public final class ParamHolder {
     * parameters bound so far.
     *
     * <p>The counterpart of C's {@code TA_GetLookback} and C#'s
-    * {@code FunctionCall.Lookback()}. Inputs and outputs need not be bound --
+    * {@code ParamHolder.Lookback()}. Inputs and outputs need not be bound --
     * a lookback depends only on the optional parameters, which is what makes it
     * useful for sizing the output arrays before binding them.
     *

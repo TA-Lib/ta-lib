@@ -46,12 +46,12 @@
  *
  * <p>{@link io.github.talib.metadata.Functions#all()} enumerates every function;
  * {@link io.github.talib.metadata.Functions#byName(java.lang.String)} looks one up.
- * Each {@link io.github.talib.metadata.FunctionInfo} carries its group, its flags and its
+ * Each {@link io.github.talib.metadata.FuncInfo} carries its group, its flags and its
  * input/optional-input/output descriptors, and mints a
  * {@link io.github.talib.metadata.ParamHolder} to bind arguments into:
  *
  * <pre>{@code
- * FunctionInfo rsi = Functions.byName("RSI");
+ * FuncInfo rsi = Functions.byName("RSI");
  * double[] out = new double[close.length];
  * OutRange r = rsi.newCall()
  *     .setInput(0, close)

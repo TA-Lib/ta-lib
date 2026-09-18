@@ -830,7 +830,7 @@ fn metadata_price_setter_validates_before_writing() {
     let helpers = HelperRegistry::empty();
     let _ = (&registry, &helpers);
     let cs = backends::csharp_metadata::render_function_call();
-    let cs_sec = extract_section(&cs, "public FunctionCall SetPriceInput(int slot, double[]? open", "private OptInputInfo CheckOpt(");
+    let cs_sec = extract_section(&cs, "public ParamHolder SetPriceInput(int slot, double[]? open", "private OptInputInfo CheckOpt(");
     let cs_check = cs_sec
         .find("if (info.Requires(all[i]) && given[i] is null)")
         .expect("csharp: no per-component validation");

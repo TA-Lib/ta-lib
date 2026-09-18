@@ -17,7 +17,7 @@
 //!
 //! * Every constructor is `internal`. That is what closes the
 //!   `default(ImmutableArray<T>)` hazard structurally: no caller outside the
-//!   assembly can build a `FunctionInfo`, so an uninitialised collection field
+//!   assembly can build a `FuncInfo`, so an uninitialised collection field
 //!   is unreachable rather than merely undocumented.
 //! * The catalogue is an *instance* singleton (`FunctionCatalog.Default`)
 //!   because a `static class` cannot have an indexer, and `catalog["SMA"]` is
@@ -50,7 +50,7 @@ const NAMESPACE: &str = "TALib.Metadata";
 const EMITTED: &[&str] = &[
     "Vocabulary.g.cs",
     "Model.g.cs",
-    "FunctionCall.g.cs",
+    "ParamHolder.g.cs",
     "FunctionCatalog.g.cs",
     "CatalogFacts.g.cs",
     "FunctionDescription.g.cs",
@@ -75,7 +75,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
 
     write(dir, "Vocabulary.g.cs", &vocabulary(&rows));
     write(dir, "Model.g.cs", &model());
-    write(dir, "FunctionCall.g.cs", &function_call());
+    write(dir, "ParamHolder.g.cs", &function_call());
     write(dir, "FunctionCatalog.g.cs", &catalog(&rows, &by_name));
     write(dir, "CatalogFacts.g.cs", &catalog_facts(&rows));
     write(dir, "FunctionDescription.g.cs", &function_description(funcs));
@@ -141,14 +141,14 @@ namespace TALib.Test;
 /// <remarks>
 /// <para>The probe's subject is what a <i>body</i> touches, so it names the
 /// body — and it brings its own call site rather than borrowing
-/// <see cref="FunctionCall.TryInvoke"/>, whose thunks call the public entry
+/// <see cref="ParamHolder.TryCall"/>, whose thunks call the public entry
 /// point like C's frames and Java's Dispatch. Sharing one would make a test's
 /// reach decide which tier the shipped metadata API calls (issue #265).</para>
 ///
 /// <para>Reflection cannot substitute: a generated <c>NAME_Impl</c> takes
 /// <c>ReadOnlySpan&lt;double&gt;</c>, and a ref struct cannot be boxed for
 /// <c>MethodInfo.Invoke</c>. Buffers and parameters still come from
-/// <see cref="FunctionCall"/> — the probe binds them through the public setters
+/// <see cref="ParamHolder"/> — the probe binds them through the public setters
 /// and reads them back through the same internal accessors the catalogue's
 /// thunks use. Only the call itself is local.</para>
 /// </remarks>
@@ -160,18 +160,18 @@ internal static class NoPhantomIoBinder
     /// overload, which throws.</remarks>
     internal readonly record struct CallOutcome(RetCode Code, int BegIdx, int Count);
 
-    internal delegate CallOutcome Thunk(Core core, FunctionCall c, int startIdx, int endIdx);
+    internal delegate CallOutcome Thunk(Core core, ParamHolder c, int startIdx, int endIdx);
 
     /// <summary>Runs one function's numerics over the bound buffers.</summary>
     /// <remarks>Reports failure as a code, like
-    /// <see cref="FunctionCall.TryInvoke"/> and for the same reason: a composed
+    /// <see cref="ParamHolder.TryCall"/> and for the same reason: a composed
     /// body cross-calls its callee's PUBLIC tier, and that throws. Converting it
     /// here keeps the sweeps reading one thing. Anything that is not the
     /// library's own failure is left to propagate — the sweeps classify it.
     /// <para>No boundness check: the sweeps bind every input and output before
     /// calling, and an unbound slot faulting is a fixture bug the sweeps should
     /// see rather than a code they should read.</para></remarks>
-    internal static RetCode Invoke(string name, Core core, FunctionCall call,
+    internal static RetCode Invoke(string name, Core core, ParamHolder call,
                                    int startIdx, int endIdx, out OutRange range)
     {
         try
@@ -290,7 +290,7 @@ const FUNC_FLAGS: &[(&str, &str, &str)] = &[
     (
         "unstable_period",
         "UnstablePeriod",
-        "Recursive: honours the unstable-period setting. See <see cref=\"FunctionInfo.UnstableId\"/>.",
+        "Recursive: honours the unstable-period setting. See <see cref=\"FuncInfo.UnstableId\"/>.",
     ),
     ("candlestick", "Candlestick", "The function recognises a candlestick pattern."),
     (
@@ -449,7 +449,7 @@ fn vocabulary(rows: &[FuncRow]) -> String {
     // --- flag classes ---
     flags_enum(
         &mut s,
-        "FunctionFlags",
+        "FuncFlags",
         "Behavioural properties of a function. Values match C's <c>TA_FUNC_FLG_*</c>.",
         FUNC_FLAGS,
         func_flag_bits,
@@ -520,7 +520,7 @@ fn model() -> String {
     s
 }
 
-/// `FunctionCall.g.cs`'s text, without writing it — so a test can assert on the
+/// `ParamHolder.g.cs`'s text, without writing it — so a test can assert on the
 /// emitted binder.
 pub fn render_function_call() -> String {
     function_call()
@@ -548,7 +548,7 @@ fn catalog(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
     let _ = writeln!(s, "namespace {NAMESPACE};\n");
 
     s.push_str(CATALOG_DOC);
-    s.push_str("public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>\n{\n");
+    s.push_str("public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>\n{\n");
 
     // The moving-average choice list, emitted once and shared by every parameter
     // that offers it — the C# analogue of C's single &TA_MA_TypeList.
@@ -597,8 +597,8 @@ fn catalog(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
     }
     s.push_str("    ];\n\n");
 
-    s.push_str("    private readonly ImmutableArray<FunctionInfo> _all;\n");
-    s.push_str("    private readonly FrozenDictionary<string, FunctionInfo> _byName;\n\n");
+    s.push_str("    private readonly ImmutableArray<FuncInfo> _all;\n");
+    s.push_str("    private readonly FrozenDictionary<string, FuncInfo> _byName;\n\n");
     s.push_str("    private FunctionCatalog()\n    {\n");
     s.push_str("        _all =\n        [\n");
     for r in rows {
@@ -622,7 +622,7 @@ fn catalog(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
     s
 }
 
-/// The `private static FunctionInfo MakeXxx()` name for a function.
+/// The `private static FuncInfo MakeXxx()` name for a function.
 fn factory_name(name: &str) -> String {
     let mut o = String::from("Make");
     let mut upper = true;
@@ -644,7 +644,7 @@ fn group_ident(g: Group) -> String {
 }
 
 fn func_flags_expr(bits: u32) -> String {
-    flag_expr("FunctionFlags", bits, FUNC_FLAGS, func_flag_bits)
+    flag_expr("FuncFlags", bits, FUNC_FLAGS, func_flag_bits)
 }
 
 fn opt_flags_expr(bits: u32) -> String {
@@ -799,7 +799,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     let def = by_name[r.name.as_str()];
     let method = r.name.clone();
 
-    let _ = writeln!(s, "    private static FunctionInfo {}() => new(", factory_name(&r.name));
+    let _ = writeln!(s, "    private static FuncInfo {}() => new(", factory_name(&r.name));
     let _ = writeln!(s, "        name: {},", cs(&r.name));
     let _ = writeln!(s, "        group: {},", group_ident(r.group));
     let _ = writeln!(s, "        hint: {},", cs(&r.hint));
@@ -835,7 +835,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     // The PUBLIC overload (#265), which is what C's frames and Java's Dispatch
     // have always called. It bound the body until then, so this tier did no
     // argument checking at all and a leg shorter than the range reached the
-    // numerics: an `IndexOutOfRangeException` escaping `TryInvoke`, whose
+    // numerics: an `IndexOutOfRangeException` escaping `TryCall`, whose
     // documented contract is a code and not an exception.
     //
     // It bound the body for a reason, and the reason was a test: `NoPhantomIoTest`
@@ -845,7 +845,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     // freed this one.
     //
     // The public overload returns `OutRange` and throws, so the code comes back
-    // through `FunctionCall.TryInvoke`'s `ITALibFailure` catch -- the same one
+    // through `ParamHolder.TryCall`'s `ITALibFailure` catch -- the same one
     // that already converted a composed body's cross-call rejection since #236
     // step 3, now on the direct path too.
     s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n");
@@ -963,7 +963,7 @@ fn catalog_facts(rows: &[FuncRow]) -> String {
     let mut dead: Vec<String> = Vec::new();
     for (token, member, _) in FUNC_FLAGS {
         if func_flag_bits(&[(*token).to_string()]) & c.func == 0 {
-            dead.push(format!("FunctionFlags.{member}"));
+            dead.push(format!("FuncFlags.{member}"));
         }
     }
     for (comp, member, _) in PRICE_COMPONENTS {
@@ -1010,7 +1010,7 @@ const CATALOG_DOC: &str = r#"/// <summary>
 /// <para>Implements <see cref="IReadOnlyList{T}"/>, so it is directly
 /// enumerable and LINQ-able:</para>
 /// <code>
-/// foreach (var f in FunctionCatalog.Default.Where(f => f.Flags.HasFlag(FunctionFlags.Candlestick)))
+/// foreach (var f in FunctionCatalog.Default.Where(f => f.Flags.HasFlag(FuncFlags.Candlestick)))
 ///     Console.WriteLine($"{f.Name}: {f.Hint}");
 /// </code>
 /// <para>Generated from the same definitions as the indicators themselves, so it
@@ -1027,35 +1027,35 @@ const CATALOG_MEMBERS: &str = r#"    /// <summary>How many functions the catalog
     /// <summary>The function at an index, in canonical name order.</summary>
     /// <param name="index">A zero-based index below <see cref="Count"/>.</param>
     /// <returns>The function's metadata.</returns>
-    public FunctionInfo this[int index] => _all[index];
+    public FuncInfo this[int index] => _all[index];
 
     /// <summary>The function with a given name.</summary>
     /// <param name="name">The function name, for example <c>"SMA"</c> or <c>"sma"</c> —
     /// matched ASCII case-insensitively (<see cref="StringComparer.OrdinalIgnoreCase"/>,
     /// matching C's <c>TA_GetFuncHandle</c>), never culture-aware. The returned metadata's
-    /// own <see cref="FunctionInfo.Name"/> always stays the canonical upper-case spelling.</param>
+    /// own <see cref="FuncInfo.Name"/> always stays the canonical upper-case spelling.</param>
     /// <returns>The function's metadata.</returns>
     /// <exception cref="KeyNotFoundException">No function has that name.</exception>
-    public FunctionInfo this[string name] => _byName[name];
+    public FuncInfo this[string name] => _byName[name];
 
     /// <summary>Looks a function up without throwing.</summary>
     /// <param name="name">The function name, matched ASCII case-insensitively — see
     /// <see cref="this[string]"/>.</param>
     /// <param name="info">The metadata, when the name is known.</param>
     /// <returns><see langword="true"/> when the name is known.</returns>
-    public bool TryGet(string name, [NotNullWhen(true)] out FunctionInfo? info)
+    public bool TryGet(string name, [NotNullWhen(true)] out FuncInfo? info)
         => _byName.TryGetValue(name, out info);
 
     /// <summary>The functions in one group, in canonical name order.</summary>
     /// <param name="group">The group to filter by.</param>
     /// <returns>A lazily filtered sequence.</returns>
-    public IEnumerable<FunctionInfo> InGroup(FunctionGroup group)
+    public IEnumerable<FuncInfo> InGroup(FunctionGroup group)
         => _all.Where(f => f.Group == group);
 
     /// <summary>Enumerates every function, in canonical name order.</summary>
     /// <returns>An enumerator over the catalogue.</returns>
-    public IEnumerator<FunctionInfo> GetEnumerator()
-        => ((IEnumerable<FunctionInfo>)_all).GetEnumerator();
+    public IEnumerator<FuncInfo> GetEnumerator()
+        => ((IEnumerable<FuncInfo>)_all).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -1069,14 +1069,14 @@ using System.Linq;
 namespace TALib.Metadata;
 
 /// <summary>Computes a function's lookback from a bound call.</summary>
-internal delegate int LookbackThunk(Core core, FunctionCall call);
+internal delegate int LookbackThunk(Core core, ParamHolder call);
 
 /// <summary>Runs a function from a bound call.</summary>
 /// <remarks>The thunk calls the function's public overload, so a rejection
 /// arrives as an exception and the range is all that comes back;
-/// <see cref="FunctionCall.TryInvoke"/> turns the exception into the code it
+/// <see cref="ParamHolder.TryCall"/> turns the exception into the code it
 /// promises (#265).</remarks>
-internal delegate OutRange InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
+internal delegate OutRange InvokeThunk(Core core, ParamHolder call, int startIdx, int endIdx);
 
 /// <summary>One entry of a named choice list.</summary>
 public sealed record NamedValue
@@ -1370,10 +1370,10 @@ public sealed record OutputInfo
 }
 
 /// <summary>Everything the library knows about one indicator.</summary>
-public sealed record FunctionInfo
+public sealed record FuncInfo
 {
-    internal FunctionInfo(string name, FunctionGroup group, string hint,
-                          FunctionFlags flags, FuncUnstId? unstableId,
+    internal FuncInfo(string name, FunctionGroup group, string hint,
+                          FuncFlags flags, FuncUnstId? unstableId,
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
@@ -1402,11 +1402,11 @@ public sealed record FunctionInfo
     public string Hint { get; }
 
     /// <summary>Behavioural properties of the function.</summary>
-    public FunctionFlags Flags { get; }
+    public FuncFlags Flags { get; }
 
     /// <summary>The function's unstable-period identity, or <see langword="null"/>
     /// when it has none. Non-null exactly when
-    /// <see cref="FunctionFlags.UnstablePeriod"/> is set.</summary>
+    /// <see cref="FuncFlags.UnstablePeriod"/> is set.</summary>
     public FuncUnstId? UnstableId { get; }
 
     /// <summary>The required inputs, in call order. Price components are folded
@@ -1426,12 +1426,12 @@ public sealed record FunctionInfo
 
     /// <summary>Begins a call whose arguments are bound at run time.</summary>
     /// <returns>A fresh, unbound call against <see cref="Core"/>'s defaults.</returns>
-    public FunctionCall CreateCall() => new(this, new Core());
+    public ParamHolder CreateCall() => new(this, new Core());
 
     /// <summary>Begins a call against a specific <see cref="Core"/>.</summary>
     /// <param name="core">The core whose settings the call should use.</param>
     /// <returns>A fresh, unbound call.</returns>
-    public FunctionCall CreateCall(Core core) => new(this, core);
+    public ParamHolder CreateCall(Core core) => new(this, core);
 
     /// <summary>The function's name.</summary>
     /// <returns><see cref="Name"/>.</returns>
@@ -1450,15 +1450,15 @@ namespace TALib.Metadata;
 /// <remarks>
 /// The replacement for C's <c>TA_ParamHolder</c> allocate/set/call/free dance —
 /// there is nothing to free, and every binding is checked against the
-/// <see cref="FunctionInfo"/> row it belongs to. Obtain one from
-/// <see cref="FunctionInfo.CreateCall()"/>:
+/// <see cref="FuncInfo"/> row it belongs to. Obtain one from
+/// <see cref="FuncInfo.CreateCall()"/>:
 /// <code>
 /// var f = FunctionCatalog.Default["SMA"];
 /// var range = f.CreateCall()
 ///     .SetInput(0, close)
-///     .SetOption(0, 30)
+///     .SetOptInput(0, 30)
 ///     .SetOutput(0, outReal)
-///     .Invoke(0, close.Length - 1);
+///     .Call(0, close.Length - 1);
 /// </code>
 /// <para>An index out of range, a type that does not match the declared
 /// parameter, or an unbound input or output at call time throws
@@ -1468,7 +1468,7 @@ namespace TALib.Metadata;
 /// per call. The <see cref="FunctionCatalog"/> it comes from is immutable and
 /// shared freely.</para>
 /// </remarks>
-public sealed class FunctionCall
+public sealed class ParamHolder
 {
     /* The cross-language "use the documented default" sentinels. Kept here
        rather than read from the row so an unbound parameter takes exactly the
@@ -1477,7 +1477,7 @@ public sealed class FunctionCall
     private const int IntDefault = int.MinValue;
     private const double RealDefault = -4e37;
 
-    private readonly FunctionInfo _info;
+    private readonly FuncInfo _info;
     private readonly Core _core;
 
     private readonly double[]?[] _series;
@@ -1490,7 +1490,7 @@ public sealed class FunctionCall
     private readonly double[]?[] _realOuts;
     private readonly int[]?[] _intOuts;
 
-    internal FunctionCall(FunctionInfo info, Core core)
+    internal ParamHolder(FuncInfo info, Core core)
     {
         _info = info;
         _core = core;
@@ -1526,7 +1526,7 @@ public sealed class FunctionCall
     }
 
     /// <summary>The function this call runs.</summary>
-    public FunctionInfo Info => _info;
+    public FuncInfo Info => _info;
 
     private static int ComponentIndex(PriceComponents c) => c switch
     {
@@ -1562,7 +1562,7 @@ public sealed class FunctionCall
     /// <param name="series">The series. Not copied.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The slot is not a real input.</exception>
-    public FunctionCall SetInput(int slot, double[] series)
+    public ParamHolder SetInput(int slot, double[] series)
     {
         CheckInput(slot, InputKind.Real);
         ArgumentNullException.ThrowIfNull(series);
@@ -1575,7 +1575,7 @@ public sealed class FunctionCall
     /// <param name="series">The series. Not copied.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The slot is not an integer input.</exception>
-    public FunctionCall SetInput(int slot, int[] series)
+    public ParamHolder SetInput(int slot, int[] series)
     {
         CheckInput(slot, InputKind.Integer);
         ArgumentNullException.ThrowIfNull(series);
@@ -1599,7 +1599,7 @@ public sealed class FunctionCall
     /// it take what it needs) would throw for every price function here while
     /// working against C and Java. Rejecting a MISSING required component is the
     /// check that earns its keep, and all three backends do it.</remarks>
-    public FunctionCall SetPriceInput(int slot, PriceComponents component, double[] series)
+    public ParamHolder SetPriceInput(int slot, PriceComponents component, double[] series)
     {
         InputInfo info = CheckInput(slot, InputKind.Price);
         ArgumentNullException.ThrowIfNull(series);
@@ -1624,7 +1624,7 @@ public sealed class FunctionCall
     /// Interleaved, it committed the components ahead of the offending one, and a
     /// caller re-binding an already-good bundle then got <c>Success</c> over a
     /// mixture of the two — no code, no exception, wrong numbers.</remarks>
-    public FunctionCall SetPriceInput(int slot, double[]? open = null, double[]? high = null,
+    public ParamHolder SetPriceInput(int slot, double[]? open = null, double[]? high = null,
                                       double[]? low = null, double[]? close = null,
                                       double[]? volume = null, double[]? openInterest = null)
     {
@@ -1671,7 +1671,7 @@ public sealed class FunctionCall
     /// <param name="value">The value.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter's domain is not integral.</exception>
-    public FunctionCall SetOption(int index, int value)
+    public ParamHolder SetOptInput(int index, int value)
     {
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.IntegerRange or OptInputDomain.IntegerList))
@@ -1690,7 +1690,7 @@ public sealed class FunctionCall
     /// <param name="value">The value.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter's domain is not real.</exception>
-    public FunctionCall SetOption(int index, double value)
+    public ParamHolder SetOptInput(int index, double value)
     {
         OptInputInfo p = CheckOpt(index);
         if (p.Domain is not (OptInputDomain.RealRange or OptInputDomain.RealList))
@@ -1709,10 +1709,10 @@ public sealed class FunctionCall
     /// <param name="value">The moving-average type.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The parameter is not a choice list.</exception>
-    public FunctionCall SetOption(int index, MAType value)
+    public ParamHolder SetOptInput(int index, MAType value)
     {
-        /* Not a delegation to SetOption(int, int): that accepts an
-           IntegerRange too, so `SetOption(0, MAType.EMA)` on SMA would bind a
+        /* Not a delegation to SetOptInput(int, int): that accepts an
+           IntegerRange too, so `SetOptInput(0, MAType.EMA)` on SMA would bind a
            period of 1 and return Success with silently wrong output. Java's
            ParamHolder.setOptInput(int, MAType) checks INTEGER_LIST for the same
            reason, and no moving-average parameter is an IntegerRange, so this
@@ -1730,11 +1730,11 @@ public sealed class FunctionCall
     }
 
     /// <summary>Binds a parameter from its metadata row and a numeric value.</summary>
-    /// <param name="parameter">A row from <see cref="FunctionInfo.OptInputs"/>.</param>
+    /// <param name="parameter">A row from <see cref="FuncInfo.OptInputs"/>.</param>
     /// <param name="value">The value, converted to the parameter's own type.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The row does not belong to this function.</exception>
-    public FunctionCall SetParam(OptInputInfo parameter, double value)
+    public ParamHolder SetOptInput(OptInputInfo parameter, double value)
     {
         ArgumentNullException.ThrowIfNull(parameter);
         int index = _info.OptInputs.IndexOf(parameter);
@@ -1746,16 +1746,16 @@ public sealed class FunctionCall
 
         return parameter.Domain switch
         {
-            OptInputDomain.RealRange or OptInputDomain.RealList => SetOption(index, value),
-            _ => SetOption(index, ToIntegerOperand(parameter, value)),
+            OptInputDomain.RealRange or OptInputDomain.RealList => SetOptInput(index, value),
+            _ => SetOptInput(index, ToIntegerOperand(parameter, value)),
         };
     }
 
     /* `(int)value` on a double outside the int range is unspecified in ECMA-334.
        .NET saturates: a large POSITIVE value lands on int.MaxValue, a large
        NEGATIVE one on int.MinValue -- and int.MinValue IS the "use the default"
-       sentinel. So SetParam(p, -1e18) silently meant "use the default", and
-       SetParam(p, 1e18) silently meant a period of 2147483647, where the caller
+       sentinel. So SetOptInput(p, -1e18) silently meant "use the default", and
+       SetOptInput(p, 1e18) silently meant a period of 2147483647, where the caller
        plainly meant an error in both cases; NaN lands on 0. Reject what the
        integer domain cannot represent. The sentinel itself stays reachable:
        asking for the default IS a legal request (issue #162). */
@@ -1793,7 +1793,7 @@ public sealed class FunctionCall
     /// <param name="buffer">The buffer to write into.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The output is not real.</exception>
-    public FunctionCall SetOutput(int index, double[] buffer)
+    public ParamHolder SetOutput(int index, double[] buffer)
     {
         CheckOutput(index, OutputKind.Real);
         ArgumentNullException.ThrowIfNull(buffer);
@@ -1806,7 +1806,7 @@ public sealed class FunctionCall
     /// <param name="buffer">The buffer to write into.</param>
     /// <returns>This call, for chaining.</returns>
     /// <exception cref="ArgumentException">The output is not integral.</exception>
-    public FunctionCall SetOutput(int index, int[] buffer)
+    public ParamHolder SetOutput(int index, int[] buffer)
     {
         CheckOutput(index, OutputKind.Integer);
         ArgumentNullException.ThrowIfNull(buffer);
@@ -1820,13 +1820,13 @@ public sealed class FunctionCall
 
     /* Returns Success when every input and output is bound, or the code C's
        TA_CallFunc returns for the same condition. Split out of RequireBound so
-       TryInvoke can honour its name: it advertises "failure as a code rather than
+       TryCall can honour its name: it advertises "failure as a code rather than
        an exception" and then threw from the binding it performs, which would take
        the C# server's process down on the first reject vector. */
     private RetCode BoundState() => BoundState(out _);
 
-    /* `which` names the offending slot so Invoke can keep the diagnostic it used
-       to throw ("SMA: input 0 (inReal) was not set"). TryInvoke discards it and
+    /* `which` names the offending slot so Call can keep the diagnostic it used
+       to throw ("SMA: input 0 (inReal) was not set"). TryCall discards it and
        returns the bare code. Reporting only the code from both would have made a
        mis-bound multi-input call materially harder to place -- the same class of
        problem the server hardening exists to fix. */
@@ -1890,7 +1890,7 @@ public sealed class FunctionCall
     /// <exception cref="ArgumentException">A required input or output was never
     /// bound, or an argument is invalid — the same failures the typed method
     /// reports.</exception>
-    public OutRange Invoke(int startIdx, int endIdx)
+    public OutRange Call(int startIdx, int endIdx)
     {
         RetCode bound = BoundState(out string which);
         if (bound != RetCode.Success)
@@ -1901,7 +1901,7 @@ public sealed class FunctionCall
         // The function's OWN exception, not a relabelled code. Since #265 the
         // thunk calls the public overload, whose message names the buffer and
         // both sizes and whose type carries the RetCode; going through
-        // TryInvoke flattened that to "SMA failed: BadParam". TryInvoke exists
+        // TryCall flattened that to "SMA failed: BadParam". TryCall exists
         // to hand back a code; this method's contract is the exception, so it
         // should be the real one -- which is what Java's ParamHolder.call does.
         return _info.Invoke(_core, this, startIdx, endIdx);
@@ -1916,7 +1916,7 @@ public sealed class FunctionCall
     /// as <see cref="RetCode.InputNotAllInitialize"/> /
     /// <see cref="RetCode.OutputNotAllInitialize"/>, the codes C returns for the
     /// same condition — this method does not throw.</returns>
-    public RetCode TryInvoke(int startIdx, int endIdx, out OutRange range)
+    public RetCode TryCall(int startIdx, int endIdx, out OutRange range)
     {
         RetCode bound = BoundState();
         if (bound != RetCode.Success)

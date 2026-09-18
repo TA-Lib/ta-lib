@@ -102,7 +102,7 @@ public static class FunctionGroupExtensions
 
 /// <summary>Behavioural properties of a function. Values match C's <c>TA_FUNC_FLG_*</c>.</summary>
 [Flags]
-public enum FunctionFlags : uint
+public enum FuncFlags : uint
 {
     /// <summary>No flags.</summary>
     None = 0,
@@ -116,7 +116,7 @@ public enum FunctionFlags : uint
     /// <summary>The function consumes volume. No shipped function sets this bit.</summary>
     VolumeUsed = 0x04000000,
 
-    /// <summary>Recursive: honours the unstable-period setting. See <see cref="FunctionInfo.UnstableId"/>.</summary>
+    /// <summary>Recursive: honours the unstable-period setting. See <see cref="FuncInfo.UnstableId"/>.</summary>
     UnstablePeriod = 0x08000000,
 
     /// <summary>The function recognises a candlestick pattern.</summary>

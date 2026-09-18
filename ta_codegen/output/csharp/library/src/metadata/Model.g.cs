@@ -47,14 +47,14 @@ using System.Linq;
 namespace TALib.Metadata;
 
 /// <summary>Computes a function's lookback from a bound call.</summary>
-internal delegate int LookbackThunk(Core core, FunctionCall call);
+internal delegate int LookbackThunk(Core core, ParamHolder call);
 
 /// <summary>Runs a function from a bound call.</summary>
 /// <remarks>The thunk calls the function's public overload, so a rejection
 /// arrives as an exception and the range is all that comes back;
-/// <see cref="FunctionCall.TryInvoke"/> turns the exception into the code it
+/// <see cref="ParamHolder.TryCall"/> turns the exception into the code it
 /// promises (#265).</remarks>
-internal delegate OutRange InvokeThunk(Core core, FunctionCall call, int startIdx, int endIdx);
+internal delegate OutRange InvokeThunk(Core core, ParamHolder call, int startIdx, int endIdx);
 
 /// <summary>One entry of a named choice list.</summary>
 public sealed record NamedValue
@@ -348,10 +348,10 @@ public sealed record OutputInfo
 }
 
 /// <summary>Everything the library knows about one indicator.</summary>
-public sealed record FunctionInfo
+public sealed record FuncInfo
 {
-    internal FunctionInfo(string name, FunctionGroup group, string hint,
-                          FunctionFlags flags, FuncUnstId? unstableId,
+    internal FuncInfo(string name, FunctionGroup group, string hint,
+                          FuncFlags flags, FuncUnstId? unstableId,
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
@@ -380,11 +380,11 @@ public sealed record FunctionInfo
     public string Hint { get; }
 
     /// <summary>Behavioural properties of the function.</summary>
-    public FunctionFlags Flags { get; }
+    public FuncFlags Flags { get; }
 
     /// <summary>The function's unstable-period identity, or <see langword="null"/>
     /// when it has none. Non-null exactly when
-    /// <see cref="FunctionFlags.UnstablePeriod"/> is set.</summary>
+    /// <see cref="FuncFlags.UnstablePeriod"/> is set.</summary>
     public FuncUnstId? UnstableId { get; }
 
     /// <summary>The required inputs, in call order. Price components are folded
@@ -404,12 +404,12 @@ public sealed record FunctionInfo
 
     /// <summary>Begins a call whose arguments are bound at run time.</summary>
     /// <returns>A fresh, unbound call against <see cref="Core"/>'s defaults.</returns>
-    public FunctionCall CreateCall() => new(this, new Core());
+    public ParamHolder CreateCall() => new(this, new Core());
 
     /// <summary>Begins a call against a specific <see cref="Core"/>.</summary>
     /// <param name="core">The core whose settings the call should use.</param>
     /// <returns>A fresh, unbound call.</returns>
-    public FunctionCall CreateCall(Core core) => new(this, core);
+    public ParamHolder CreateCall(Core core) => new(this, core);
 
     /// <summary>The function's name.</summary>
     /// <returns><see cref="Name"/>.</returns>

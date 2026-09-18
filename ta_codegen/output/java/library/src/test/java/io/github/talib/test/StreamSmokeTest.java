@@ -114,7 +114,7 @@ public class StreamSmokeTest {
      * inside each sweep so a flag/surface disagreement still fails. */
     private static int streamingCount() {
         int n = 0;
-        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+        for (io.github.talib.metadata.FuncInfo f : io.github.talib.metadata.Functions.all()) {
             if (f.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
                 n++;
             }
@@ -127,7 +127,7 @@ public class StreamSmokeTest {
         java.util.List<String> substage = new java.util.ArrayList<String>();
         java.util.List<String> unexpected = new java.util.ArrayList<String>();
 
-        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+        for (io.github.talib.metadata.FuncInfo f : io.github.talib.metadata.Functions.all()) {
             java.lang.reflect.Method open = null;
             for (java.lang.reflect.Method m : Core.class.getMethods()) {
                 if (m.getName().equals(camelCase(f.name()) + "Open")) {
@@ -946,7 +946,7 @@ public class StreamSmokeTest {
      * independent facts this sweep can compare.
      */
     private static java.util.List<String> declaredSlots(
-            io.github.talib.metadata.FunctionInfo f, java.util.List<String> unhandled) {
+            io.github.talib.metadata.FuncInfo f, java.util.List<String> unhandled) {
         java.util.List<String> slots = new java.util.ArrayList<String>();
         for (io.github.talib.metadata.InputInfo in : f.inputs()) {
             switch (in.type()) {
@@ -1165,7 +1165,7 @@ public class StreamSmokeTest {
         java.util.List<String> unhandled = new java.util.ArrayList<String>();
         int swept = 0;
 
-        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+        for (io.github.talib.metadata.FuncInfo f : io.github.talib.metadata.Functions.all()) {
             String name = f.name();
             /* The registry name and the Java spelling are two different strings
              * since #278 (HT_TRENDLINE -> HtTrendlineStream, htTrendlineOpen), so
@@ -1649,7 +1649,7 @@ public class StreamSmokeTest {
          * pinned per function against the registry's output list. */
         java.util.List<String> wrongOut = new java.util.ArrayList<String>();
         int expectedOutTypes = 0;
-        for (io.github.talib.metadata.FunctionInfo vf : io.github.talib.metadata.Functions.all()) {
+        for (io.github.talib.metadata.FuncInfo vf : io.github.talib.metadata.Functions.all()) {
             if (vf.outputs().size() <= 1) {
                 continue;
             }

@@ -3265,7 +3265,7 @@ mod sealed {
 
 /// A value bindable to an optional parameter.
 ///
-/// Rust has no overloading, so this is how `set_opt` accepts either an `i32` or an
+/// Rust has no overloading, so this is how `set_opt_input` accepts either an `i32` or an
 /// `f64` under one name — resolved at compile time, and sealed so the set of
 /// bindable types stays the generator's to decide.
 pub trait OptValue: sealed::Sealed {
@@ -3305,7 +3305,7 @@ impl OptValue for f64 {
 
 /// Binds a function's arguments at run time, then calls it — the counterpart of
 /// C's `TA_ParamHolder` + `TA_CallFunc`, of Java's `ParamHolder` and of C#'s
-/// `FunctionCall`.
+/// `ParamHolder`.
 ///
 /// Borrows rather than owns, so binding costs nothing and the caller keeps its
 /// buffers. That is what makes two outputs sharing one buffer — the aliasing every
@@ -3318,7 +3318,7 @@ impl OptValue for f64 {
 /// let mut out = vec![0.0f64; 64];
 /// let mut call = FuncId::SMA.new_call(&core);
 /// call.set_input(0, &close)?;
-/// call.set_opt(0, 30_i32)?;
+/// call.set_opt_input(0, 30_i32)?;
 /// call.set_output(0, &mut out)?;
 /// let range = call.call(0, close.len() - 1)?;
 /// # Ok::<(), ta_lib::RetCode>(())
@@ -3427,7 +3427,7 @@ impl<'a> ParamHolder<'a> {
     /// # Errors
     /// [`RetCode::BadParam`] if the index is out of range or the value's type does
     /// not match the parameter's domain.
-    pub fn set_opt<V: OptValue>(&mut self, index: usize, value: V) -> Result<&mut Self, RetCode> {
+    pub fn set_opt_input<V: OptValue>(&mut self, index: usize, value: V) -> Result<&mut Self, RetCode> {
         value.bind(self, index)?;
         Ok(self)
     }
@@ -6169,7 +6169,7 @@ mod binder_tests {
                 for (k, o) in f.opt_inputs.iter().enumerate() {
                     if let OptInputType::IntegerRange { min, max, .. } = o.kind {
                         let v = (min + 2 + k as i32).min(max);
-                        h.set_opt(k, v).unwrap();
+                        h.set_opt_input(k, v).unwrap();
                     }
                 }
             };
@@ -6206,12 +6206,12 @@ mod binder_tests {
             let explicit = |h: &mut ParamHolder<'_>| {
                 for (k, o) in f.opt_inputs.iter().enumerate() {
                     match o.kind {
-                        OptInputType::IntegerRange { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        OptInputType::IntegerRange { default, .. } => { h.set_opt_input(k, default).unwrap(); }
                         OptInputType::IntegerList { default, .. } => {
-                            h.set_opt(k, i32::try_from(default).unwrap()).unwrap();
+                            h.set_opt_input(k, i32::try_from(default).unwrap()).unwrap();
                         }
                         OptInputType::RealRange { default, .. }
-                        | OptInputType::RealList { default, .. } => { h.set_opt(k, default).unwrap(); }
+                        | OptInputType::RealList { default, .. } => { h.set_opt_input(k, default).unwrap(); }
                     }
                 }
             };
@@ -6250,7 +6250,7 @@ mod binder_tests {
         let mut tiny = vec![0.0; 4];
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();
-        h.set_opt(0, 30_i32).unwrap();
+        h.set_opt_input(0, 30_i32).unwrap();
         h.set_output(0, &mut tiny).unwrap();
         assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam));
     }
@@ -6268,7 +6268,7 @@ mod binder_tests {
         let mut out = vec![0.0; N];
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close[..N / 2]).unwrap();
-        h.set_opt(0, 30_i32).unwrap();
+        h.set_opt_input(0, 30_i32).unwrap();
         h.set_output(0, &mut out).unwrap();
         assert_eq!(h.call(0, N - 1), Err(RetCode::BadParam));
 
@@ -6276,7 +6276,7 @@ mod binder_tests {
         // the rejection above is the length and not the binding.
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close[..N / 2]).unwrap();
-        h.set_opt(0, 30_i32).unwrap();
+        h.set_opt_input(0, 30_i32).unwrap();
         h.set_output(0, &mut out).unwrap();
         assert!(h.call(0, N / 2 - 1).is_ok());
     }
@@ -6293,7 +6293,7 @@ mod binder_tests {
         let mut exact = vec![0.0; N - lookback];
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();
-        h.set_opt(0, 30_i32).unwrap();
+        h.set_opt_input(0, 30_i32).unwrap();
         h.set_output(0, &mut exact).unwrap();
         assert_eq!(h.call(0, N - 1), Ok(OutRange { beg_idx: lookback, count: N - lookback }));
     }
@@ -6350,7 +6350,7 @@ mod binder_tests {
         let close2: Vec<f64> = high2.iter().map(|v| v - 2.0).collect();
 
         let bind = |h: &mut ParamHolder<'_>| {
-            h.set_opt(0, 14_i32).unwrap();
+            h.set_opt_input(0, 14_i32).unwrap();
         };
 
         let mut reference = vec![0.0; N];
@@ -6417,8 +6417,8 @@ mod binder_tests {
         let mut out = vec![0.0; N];
         let mut h = FuncId::SMA.new_call(&core);
         assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
-        assert_eq!(h.set_opt(0, 1.5_f64).err(), Some(RetCode::BadParam));
-        assert_eq!(h.set_opt(9, 30_i32).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt_input(0, 1.5_f64).err(), Some(RetCode::BadParam));
+        assert_eq!(h.set_opt_input(9, 30_i32).err(), Some(RetCode::BadParam));
         let mut wrong_kind = [0i32; 4];
         assert_eq!(h.set_int_output(0, &mut wrong_kind).err(), Some(RetCode::BadParam));
         h.set_output(0, &mut out).unwrap();

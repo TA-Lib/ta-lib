@@ -53,7 +53,7 @@ import java.util.Map;
  * cannot drift from them. Immutable and safe to use from any thread.
  *
  * <pre>{@code
- * for (FunctionInfo f : Functions.all()) {
+ * for (FuncInfo f : Functions.all()) {
  *     System.out.println(f.name() + " — " + f.hint());
  * }
  * }</pre>
@@ -66,10 +66,10 @@ public final class Functions {
 
     private Functions() { }
 
-   private static final Map<String, FunctionInfo> BY_NAME = build();
+   private static final Map<String, FuncInfo> BY_NAME = build();
 
    /** Every function, in canonical name order. */
-   public static List<FunctionInfo> all() {
+   public static List<FuncInfo> all() {
       return List.copyOf(BY_NAME.values());
    }
 
@@ -81,7 +81,7 @@ public final class Functions {
     * @param name the function's name, in any ASCII casing
     * @return the metadata, or {@code null} if no such function exists
     */
-   public static FunctionInfo byName(String name) {
+   public static FuncInfo byName(String name) {
       return name == null ? null : BY_NAME.get(asciiUpper(name));
    }
 
@@ -115,11 +115,11 @@ public final class Functions {
 
    /** The distinct group names, in first-appearance order. */
    public static List<String> groups() {
-      return BY_NAME.values().stream().map(FunctionInfo::group).distinct().toList();
+      return BY_NAME.values().stream().map(FuncInfo::group).distinct().toList();
    }
 
-   private static Map<String, FunctionInfo> build() {
-      Map<String, FunctionInfo> m = new LinkedHashMap<>();
+   private static Map<String, FuncInfo> build() {
+      Map<String, FuncInfo> m = new LinkedHashMap<>();
       put(m, f_AC());
       put(m, f_ACCBANDS());
       put(m, f_ACOS());
@@ -324,12 +324,12 @@ public final class Functions {
       return Collections.unmodifiableMap(m);
    }
 
-   private static void put(Map<String, FunctionInfo> m, FunctionInfo f) {
+   private static void put(Map<String, FuncInfo> m, FuncInfo f) {
       m.put(f.name(), f);
    }
 
-   private static FunctionInfo f_AC() {
-      return new FunctionInfo(
+   private static FuncInfo f_AC() {
+      return new FuncInfo(
          "AC", "Momentum Indicators", "Accelerator/Decelerator Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -356,8 +356,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ACCBANDS() {
-      return new FunctionInfo(
+   private static FuncInfo f_ACCBANDS() {
+      return new FuncInfo(
          "ACCBANDS", "Overlap Studies", "Acceleration Bands", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -376,8 +376,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ACOS() {
-      return new FunctionInfo(
+   private static FuncInfo f_ACOS() {
+      return new FuncInfo(
          "ACOS", "Math Transform", "Vector Trigonometric ACos", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -388,8 +388,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AD() {
-      return new FunctionInfo(
+   private static FuncInfo f_AD() {
+      return new FuncInfo(
          "AD", "Volume Indicators", "Chaikin A/D Line", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
@@ -400,8 +400,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ADD() {
-      return new FunctionInfo(
+   private static FuncInfo f_ADD() {
+      return new FuncInfo(
          "ADD", "Math Operators", "Vector Arithmetic Add", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -413,8 +413,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ADOSC() {
-      return new FunctionInfo(
+   private static FuncInfo f_ADOSC() {
+      return new FuncInfo(
          "ADOSC", "Volume Indicators", "Chaikin A/D Oscillator", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
@@ -436,8 +436,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ADR() {
-      return new FunctionInfo(
+   private static FuncInfo f_ADR() {
+      return new FuncInfo(
          "ADR", "Volatility Indicators", "Average Day Range", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -454,8 +454,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ADX() {
-      return new FunctionInfo(
+   private static FuncInfo f_ADX() {
+      return new FuncInfo(
          "ADX", "Momentum Indicators", "Average Directional Movement Index", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -472,8 +472,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ADXR() {
-      return new FunctionInfo(
+   private static FuncInfo f_ADXR() {
+      return new FuncInfo(
          "ADXR", "Momentum Indicators", "Average Directional Movement Index Rating", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -490,8 +490,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AO() {
-      return new FunctionInfo(
+   private static FuncInfo f_AO() {
+      return new FuncInfo(
          "AO", "Momentum Indicators", "Awesome Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -513,8 +513,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_APO() {
-      return new FunctionInfo(
+   private static FuncInfo f_APO() {
+      return new FuncInfo(
          "APO", "Momentum Indicators", "Absolute Price Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -541,8 +541,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AROON() {
-      return new FunctionInfo(
+   private static FuncInfo f_AROON() {
+      return new FuncInfo(
          "AROON", "Momentum Indicators", "Aroon", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -560,8 +560,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AROONOSC() {
-      return new FunctionInfo(
+   private static FuncInfo f_AROONOSC() {
+      return new FuncInfo(
          "AROONOSC", "Momentum Indicators", "Aroon Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -578,8 +578,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ASIN() {
-      return new FunctionInfo(
+   private static FuncInfo f_ASIN() {
+      return new FuncInfo(
          "ASIN", "Math Transform", "Vector Trigonometric ASin", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -590,8 +590,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ATAN() {
-      return new FunctionInfo(
+   private static FuncInfo f_ATAN() {
+      return new FuncInfo(
          "ATAN", "Math Transform", "Vector Trigonometric ATan", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -602,8 +602,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ATR() {
-      return new FunctionInfo(
+   private static FuncInfo f_ATR() {
+      return new FuncInfo(
          "ATR", "Volatility Indicators", "Average True Range", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -620,8 +620,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AVGDEV() {
-      return new FunctionInfo(
+   private static FuncInfo f_AVGDEV() {
+      return new FuncInfo(
          "AVGDEV", "Price Transform", "Average Deviation", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -638,8 +638,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_AVGPRICE() {
-      return new FunctionInfo(
+   private static FuncInfo f_AVGPRICE() {
+      return new FuncInfo(
          "AVGPRICE", "Price Transform", "Average Price", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -650,8 +650,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_BBANDS() {
-      return new FunctionInfo(
+   private static FuncInfo f_BBANDS() {
+      return new FuncInfo(
          "BBANDS", "Overlap Studies", "Bollinger Bands", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -685,8 +685,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_BETA() {
-      return new FunctionInfo(
+   private static FuncInfo f_BETA() {
+      return new FuncInfo(
          "BETA", "Statistic Functions", "Beta", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -704,8 +704,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_BOP() {
-      return new FunctionInfo(
+   private static FuncInfo f_BOP() {
+      return new FuncInfo(
          "BOP", "Momentum Indicators", "Balance Of Power", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -716,8 +716,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CCI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CCI() {
+      return new FuncInfo(
          "CCI", "Momentum Indicators", "Commodity Channel Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -734,8 +734,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL2CROWS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL2CROWS() {
+      return new FuncInfo(
          "CDL2CROWS", "Pattern Recognition", "Two Crows", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -746,8 +746,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3BLACKCROWS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3BLACKCROWS() {
+      return new FuncInfo(
          "CDL3BLACKCROWS", "Pattern Recognition", "Three Black Crows", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -758,8 +758,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3INSIDE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3INSIDE() {
+      return new FuncInfo(
          "CDL3INSIDE", "Pattern Recognition", "Three Inside Up/Down", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -770,8 +770,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3LINESTRIKE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3LINESTRIKE() {
+      return new FuncInfo(
          "CDL3LINESTRIKE", "Pattern Recognition", "Three-Line Strike", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -782,8 +782,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3OUTSIDE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3OUTSIDE() {
+      return new FuncInfo(
          "CDL3OUTSIDE", "Pattern Recognition", "Three Outside Up/Down", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -794,8 +794,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3STARSINSOUTH() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3STARSINSOUTH() {
+      return new FuncInfo(
          "CDL3STARSINSOUTH", "Pattern Recognition", "Three Stars In The South", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -806,8 +806,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDL3WHITESOLDIERS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDL3WHITESOLDIERS() {
+      return new FuncInfo(
          "CDL3WHITESOLDIERS", "Pattern Recognition", "Three Advancing White Soldiers", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -818,8 +818,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLABANDONEDBABY() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLABANDONEDBABY() {
+      return new FuncInfo(
          "CDLABANDONEDBABY", "Pattern Recognition", "Abandoned Baby", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -836,8 +836,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLADVANCEBLOCK() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLADVANCEBLOCK() {
+      return new FuncInfo(
          "CDLADVANCEBLOCK", "Pattern Recognition", "Advance Block", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -848,8 +848,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLBELTHOLD() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLBELTHOLD() {
+      return new FuncInfo(
          "CDLBELTHOLD", "Pattern Recognition", "Belt-hold", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -860,8 +860,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLBREAKAWAY() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLBREAKAWAY() {
+      return new FuncInfo(
          "CDLBREAKAWAY", "Pattern Recognition", "Breakaway", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -872,8 +872,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLCLOSINGMARUBOZU() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLCLOSINGMARUBOZU() {
+      return new FuncInfo(
          "CDLCLOSINGMARUBOZU", "Pattern Recognition", "Closing Marubozu", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -884,8 +884,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLCONCEALBABYSWALL() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLCONCEALBABYSWALL() {
+      return new FuncInfo(
          "CDLCONCEALBABYSWALL", "Pattern Recognition", "Concealing Baby Swallow", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -896,8 +896,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLCOUNTERATTACK() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLCOUNTERATTACK() {
+      return new FuncInfo(
          "CDLCOUNTERATTACK", "Pattern Recognition", "Counterattack", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -908,8 +908,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLDARKCLOUDCOVER() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLDARKCLOUDCOVER() {
+      return new FuncInfo(
          "CDLDARKCLOUDCOVER", "Pattern Recognition", "Dark Cloud Cover", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -926,8 +926,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLDOJI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLDOJI() {
+      return new FuncInfo(
          "CDLDOJI", "Pattern Recognition", "Doji", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -938,8 +938,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLDOJISTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLDOJISTAR() {
+      return new FuncInfo(
          "CDLDOJISTAR", "Pattern Recognition", "Doji Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -950,8 +950,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLDRAGONFLYDOJI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLDRAGONFLYDOJI() {
+      return new FuncInfo(
          "CDLDRAGONFLYDOJI", "Pattern Recognition", "Dragonfly Doji", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -962,8 +962,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLENGULFING() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLENGULFING() {
+      return new FuncInfo(
          "CDLENGULFING", "Pattern Recognition", "Engulfing Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -974,8 +974,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLEVENINGDOJISTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLEVENINGDOJISTAR() {
+      return new FuncInfo(
          "CDLEVENINGDOJISTAR", "Pattern Recognition", "Evening Doji Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -992,8 +992,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLEVENINGSTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLEVENINGSTAR() {
+      return new FuncInfo(
          "CDLEVENINGSTAR", "Pattern Recognition", "Evening Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1010,8 +1010,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLGAPSIDESIDEWHITE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLGAPSIDESIDEWHITE() {
+      return new FuncInfo(
          "CDLGAPSIDESIDEWHITE", "Pattern Recognition", "Up/Down-gap side-by-side white lines", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1022,8 +1022,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLGRAVESTONEDOJI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLGRAVESTONEDOJI() {
+      return new FuncInfo(
          "CDLGRAVESTONEDOJI", "Pattern Recognition", "Gravestone Doji", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1034,8 +1034,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHAMMER() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHAMMER() {
+      return new FuncInfo(
          "CDLHAMMER", "Pattern Recognition", "Hammer", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1046,8 +1046,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHANGINGMAN() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHANGINGMAN() {
+      return new FuncInfo(
          "CDLHANGINGMAN", "Pattern Recognition", "Hanging Man", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1058,8 +1058,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHARAMI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHARAMI() {
+      return new FuncInfo(
          "CDLHARAMI", "Pattern Recognition", "Harami Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1070,8 +1070,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHARAMICROSS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHARAMICROSS() {
+      return new FuncInfo(
          "CDLHARAMICROSS", "Pattern Recognition", "Harami Cross Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1082,8 +1082,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHIGHWAVE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHIGHWAVE() {
+      return new FuncInfo(
          "CDLHIGHWAVE", "Pattern Recognition", "High-Wave Candle", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1094,8 +1094,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHIKKAKE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHIKKAKE() {
+      return new FuncInfo(
          "CDLHIKKAKE", "Pattern Recognition", "Hikkake Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1106,8 +1106,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHIKKAKEMOD() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHIKKAKEMOD() {
+      return new FuncInfo(
          "CDLHIKKAKEMOD", "Pattern Recognition", "Modified Hikkake Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1118,8 +1118,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLHOMINGPIGEON() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLHOMINGPIGEON() {
+      return new FuncInfo(
          "CDLHOMINGPIGEON", "Pattern Recognition", "Homing Pigeon", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1130,8 +1130,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLIDENTICAL3CROWS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLIDENTICAL3CROWS() {
+      return new FuncInfo(
          "CDLIDENTICAL3CROWS", "Pattern Recognition", "Identical Three Crows", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1142,8 +1142,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLINNECK() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLINNECK() {
+      return new FuncInfo(
          "CDLINNECK", "Pattern Recognition", "In-Neck Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1154,8 +1154,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLINVERTEDHAMMER() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLINVERTEDHAMMER() {
+      return new FuncInfo(
          "CDLINVERTEDHAMMER", "Pattern Recognition", "Inverted Hammer", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1166,8 +1166,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLKICKING() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLKICKING() {
+      return new FuncInfo(
          "CDLKICKING", "Pattern Recognition", "Kicking", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1178,8 +1178,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLKICKINGBYLENGTH() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLKICKINGBYLENGTH() {
+      return new FuncInfo(
          "CDLKICKINGBYLENGTH", "Pattern Recognition", "Kicking - bull/bear determined by the longer marubozu", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1190,8 +1190,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLLADDERBOTTOM() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLLADDERBOTTOM() {
+      return new FuncInfo(
          "CDLLADDERBOTTOM", "Pattern Recognition", "Ladder Bottom", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1202,8 +1202,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLLONGLEGGEDDOJI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLLONGLEGGEDDOJI() {
+      return new FuncInfo(
          "CDLLONGLEGGEDDOJI", "Pattern Recognition", "Long Legged Doji", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1214,8 +1214,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLLONGLINE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLLONGLINE() {
+      return new FuncInfo(
          "CDLLONGLINE", "Pattern Recognition", "Long Line Candle", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1226,8 +1226,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLMARUBOZU() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLMARUBOZU() {
+      return new FuncInfo(
          "CDLMARUBOZU", "Pattern Recognition", "Marubozu", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1238,8 +1238,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLMATCHINGLOW() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLMATCHINGLOW() {
+      return new FuncInfo(
          "CDLMATCHINGLOW", "Pattern Recognition", "Matching Low", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1250,8 +1250,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLMATHOLD() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLMATHOLD() {
+      return new FuncInfo(
          "CDLMATHOLD", "Pattern Recognition", "Mat Hold", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1268,8 +1268,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLMORNINGDOJISTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLMORNINGDOJISTAR() {
+      return new FuncInfo(
          "CDLMORNINGDOJISTAR", "Pattern Recognition", "Morning Doji Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1286,8 +1286,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLMORNINGSTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLMORNINGSTAR() {
+      return new FuncInfo(
          "CDLMORNINGSTAR", "Pattern Recognition", "Morning Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1304,8 +1304,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLONNECK() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLONNECK() {
+      return new FuncInfo(
          "CDLONNECK", "Pattern Recognition", "On-Neck Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1316,8 +1316,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLPIERCING() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLPIERCING() {
+      return new FuncInfo(
          "CDLPIERCING", "Pattern Recognition", "Piercing Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1328,8 +1328,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLRICKSHAWMAN() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLRICKSHAWMAN() {
+      return new FuncInfo(
          "CDLRICKSHAWMAN", "Pattern Recognition", "Rickshaw Man", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1340,8 +1340,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLRISEFALL3METHODS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLRISEFALL3METHODS() {
+      return new FuncInfo(
          "CDLRISEFALL3METHODS", "Pattern Recognition", "Rising/Falling Three Methods", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1352,8 +1352,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSEPARATINGLINES() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSEPARATINGLINES() {
+      return new FuncInfo(
          "CDLSEPARATINGLINES", "Pattern Recognition", "Separating Lines", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1364,8 +1364,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSHOOTINGSTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSHOOTINGSTAR() {
+      return new FuncInfo(
          "CDLSHOOTINGSTAR", "Pattern Recognition", "Shooting Star", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1376,8 +1376,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSHORTLINE() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSHORTLINE() {
+      return new FuncInfo(
          "CDLSHORTLINE", "Pattern Recognition", "Short Line Candle", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1388,8 +1388,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSPINNINGTOP() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSPINNINGTOP() {
+      return new FuncInfo(
          "CDLSPINNINGTOP", "Pattern Recognition", "Spinning Top", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1400,8 +1400,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSTALLEDPATTERN() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSTALLEDPATTERN() {
+      return new FuncInfo(
          "CDLSTALLEDPATTERN", "Pattern Recognition", "Stalled Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1412,8 +1412,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLSTICKSANDWICH() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLSTICKSANDWICH() {
+      return new FuncInfo(
          "CDLSTICKSANDWICH", "Pattern Recognition", "Stick Sandwich", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1424,8 +1424,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLTAKURI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLTAKURI() {
+      return new FuncInfo(
          "CDLTAKURI", "Pattern Recognition", "Takuri (Dragonfly Doji with very long lower shadow)", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1436,8 +1436,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLTASUKIGAP() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLTASUKIGAP() {
+      return new FuncInfo(
          "CDLTASUKIGAP", "Pattern Recognition", "Tasuki Gap", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1448,8 +1448,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLTHRUSTING() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLTHRUSTING() {
+      return new FuncInfo(
          "CDLTHRUSTING", "Pattern Recognition", "Thrusting Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1460,8 +1460,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLTRISTAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLTRISTAR() {
+      return new FuncInfo(
          "CDLTRISTAR", "Pattern Recognition", "Tristar Pattern", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1472,8 +1472,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLUNIQUE3RIVER() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLUNIQUE3RIVER() {
+      return new FuncInfo(
          "CDLUNIQUE3RIVER", "Pattern Recognition", "Unique 3 River", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1484,8 +1484,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLUPSIDEGAP2CROWS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLUPSIDEGAP2CROWS() {
+      return new FuncInfo(
          "CDLUPSIDEGAP2CROWS", "Pattern Recognition", "Upside Gap Two Crows", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1496,8 +1496,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CDLXSIDEGAP3METHODS() {
-      return new FunctionInfo(
+   private static FuncInfo f_CDLXSIDEGAP3METHODS() {
+      return new FuncInfo(
          "CDLXSIDEGAP3METHODS", "Pattern Recognition", "Upside/Downside Gap Three Methods", 0x12000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1508,8 +1508,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CEIL() {
-      return new FunctionInfo(
+   private static FuncInfo f_CEIL() {
+      return new FuncInfo(
          "CEIL", "Math Transform", "Vector Ceil", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1520,8 +1520,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CMF() {
-      return new FunctionInfo(
+   private static FuncInfo f_CMF() {
+      return new FuncInfo(
          "CMF", "Volume Indicators", "Chaikin Money Flow", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
@@ -1538,8 +1538,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CMO() {
-      return new FunctionInfo(
+   private static FuncInfo f_CMO() {
+      return new FuncInfo(
          "CMO", "Momentum Indicators", "Chande Momentum Oscillator", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1556,8 +1556,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CMOU() {
-      return new FunctionInfo(
+   private static FuncInfo f_CMOU() {
+      return new FuncInfo(
          "CMOU", "Momentum Indicators", "Chande Momentum Oscillator (Unsmoothed)", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1574,8 +1574,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_COPPOCK() {
-      return new FunctionInfo(
+   private static FuncInfo f_COPPOCK() {
+      return new FuncInfo(
          "COPPOCK", "Momentum Indicators", "Coppock Curve", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1602,8 +1602,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CORREL() {
-      return new FunctionInfo(
+   private static FuncInfo f_CORREL() {
+      return new FuncInfo(
          "CORREL", "Statistic Functions", "Pearson's Correlation Coefficient (r)", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -1621,8 +1621,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_COS() {
-      return new FunctionInfo(
+   private static FuncInfo f_COS() {
+      return new FuncInfo(
          "COS", "Math Transform", "Vector Trigonometric Cos", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1633,8 +1633,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_COSH() {
-      return new FunctionInfo(
+   private static FuncInfo f_COSH() {
+      return new FuncInfo(
          "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1645,8 +1645,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CUMSUM() {
-      return new FunctionInfo(
+   private static FuncInfo f_CUMSUM() {
+      return new FuncInfo(
          "CUMSUM", "Math Operators", "Cumulative Sum", 0x22000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1657,8 +1657,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CVI() {
-      return new FunctionInfo(
+   private static FuncInfo f_CVI() {
+      return new FuncInfo(
          "CVI", "Volatility Indicators", "Chaikin's Volatility", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -1680,8 +1680,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_DEMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_DEMA() {
+      return new FuncInfo(
          "DEMA", "Overlap Studies", "Double Exponential Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1698,8 +1698,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_DIV() {
-      return new FunctionInfo(
+   private static FuncInfo f_DIV() {
+      return new FuncInfo(
          "DIV", "Math Operators", "Vector Arithmetic Div", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -1711,8 +1711,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_DONCHIAN() {
-      return new FunctionInfo(
+   private static FuncInfo f_DONCHIAN() {
+      return new FuncInfo(
          "DONCHIAN", "Overlap Studies", "Donchian Channels", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -1731,8 +1731,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_DPO() {
-      return new FunctionInfo(
+   private static FuncInfo f_DPO() {
+      return new FuncInfo(
          "DPO", "Momentum Indicators", "Detrended Price Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1749,8 +1749,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_DX() {
-      return new FunctionInfo(
+   private static FuncInfo f_DX() {
+      return new FuncInfo(
          "DX", "Momentum Indicators", "Directional Movement Index", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -1767,8 +1767,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_EFI() {
-      return new FunctionInfo(
+   private static FuncInfo f_EFI() {
+      return new FuncInfo(
          "EFI", "Volume Indicators", "Elder's Force Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
@@ -1785,8 +1785,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_EMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_EMA() {
+      return new FuncInfo(
          "EMA", "Overlap Studies", "Exponential Moving Average", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1803,8 +1803,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ER() {
-      return new FunctionInfo(
+   private static FuncInfo f_ER() {
+      return new FuncInfo(
          "ER", "Momentum Indicators", "Kaufman Efficiency Ratio", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1821,8 +1821,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ERI() {
-      return new FunctionInfo(
+   private static FuncInfo f_ERI() {
+      return new FuncInfo(
          "ERI", "Momentum Indicators", "Elder Ray Index (Bull Power / Bear Power)", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -1840,8 +1840,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_EXP() {
-      return new FunctionInfo(
+   private static FuncInfo f_EXP() {
+      return new FuncInfo(
          "EXP", "Math Transform", "Vector Arithmetic Exp", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1852,8 +1852,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_FLOOR() {
-      return new FunctionInfo(
+   private static FuncInfo f_FLOOR() {
+      return new FuncInfo(
          "FLOOR", "Math Transform", "Vector Floor", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1864,8 +1864,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_FOSC() {
-      return new FunctionInfo(
+   private static FuncInfo f_FOSC() {
+      return new FuncInfo(
          "FOSC", "Momentum Indicators", "Forecast Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1882,8 +1882,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_FRACTAL() {
-      return new FunctionInfo(
+   private static FuncInfo f_FRACTAL() {
+      return new FuncInfo(
          "FRACTAL", "Momentum Indicators", "Williams Fractal", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -1906,8 +1906,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HA() {
-      return new FunctionInfo(
+   private static FuncInfo f_HA() {
+      return new FuncInfo(
          "HA", "Price Transform", "Heikin-Ashi Candles", 0x0B000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOHLC", 0x0000000F)
@@ -1921,8 +1921,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_HMA() {
+      return new FuncInfo(
          "HMA", "Overlap Studies", "Hull Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1939,8 +1939,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_DCPERIOD() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_DCPERIOD() {
+      return new FuncInfo(
          "HT_DCPERIOD", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Period", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1951,8 +1951,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_DCPHASE() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_DCPHASE() {
+      return new FuncInfo(
          "HT_DCPHASE", "Cycle Indicators", "Hilbert Transform - Dominant Cycle Phase", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1963,8 +1963,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_PHASOR() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_PHASOR() {
+      return new FuncInfo(
          "HT_PHASOR", "Cycle Indicators", "Hilbert Transform - Phasor Components", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1976,8 +1976,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_SINE() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_SINE() {
+      return new FuncInfo(
          "HT_SINE", "Cycle Indicators", "Hilbert Transform - SineWave", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -1989,8 +1989,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_TRENDLINE() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_TRENDLINE() {
+      return new FuncInfo(
          "HT_TRENDLINE", "Overlap Studies", "Hilbert Transform - Instantaneous Trendline", 0x0B000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2001,8 +2001,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_HT_TRENDMODE() {
-      return new FunctionInfo(
+   private static FuncInfo f_HT_TRENDMODE() {
+      return new FuncInfo(
          "HT_TRENDMODE", "Cycle Indicators", "Hilbert Transform - Trend vs Cycle Mode", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2013,8 +2013,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_IMI() {
-      return new FunctionInfo(
+   private static FuncInfo f_IMI() {
+      return new FuncInfo(
          "IMI", "Momentum Indicators", "Intraday Momentum Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOC", 0x00000009)
@@ -2031,8 +2031,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_KAMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_KAMA() {
+      return new FuncInfo(
          "KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2049,8 +2049,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_KC() {
-      return new FunctionInfo(
+   private static FuncInfo f_KC() {
+      return new FuncInfo(
          "KC", "Overlap Studies", "Keltner Channels", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -2079,8 +2079,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_KDJ() {
-      return new FunctionInfo(
+   private static FuncInfo f_KDJ() {
+      return new FuncInfo(
          "KDJ", "Momentum Indicators", "KDJ Stochastic", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -2119,8 +2119,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LINEARREG() {
-      return new FunctionInfo(
+   private static FuncInfo f_LINEARREG() {
+      return new FuncInfo(
          "LINEARREG", "Statistic Functions", "Linear Regression", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2137,8 +2137,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LINEARREG_ANGLE() {
-      return new FunctionInfo(
+   private static FuncInfo f_LINEARREG_ANGLE() {
+      return new FuncInfo(
          "LINEARREG_ANGLE", "Statistic Functions", "Linear Regression Angle", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2155,8 +2155,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LINEARREG_INTERCEPT() {
-      return new FunctionInfo(
+   private static FuncInfo f_LINEARREG_INTERCEPT() {
+      return new FuncInfo(
          "LINEARREG_INTERCEPT", "Statistic Functions", "Linear Regression Intercept", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2173,8 +2173,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LINEARREG_SLOPE() {
-      return new FunctionInfo(
+   private static FuncInfo f_LINEARREG_SLOPE() {
+      return new FuncInfo(
          "LINEARREG_SLOPE", "Statistic Functions", "Linear Regression Slope", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2191,8 +2191,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LN() {
-      return new FunctionInfo(
+   private static FuncInfo f_LN() {
+      return new FuncInfo(
          "LN", "Math Transform", "Vector Log Natural", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2203,8 +2203,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_LOG10() {
-      return new FunctionInfo(
+   private static FuncInfo f_LOG10() {
+      return new FuncInfo(
          "LOG10", "Math Transform", "Vector Log10", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2215,8 +2215,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MA() {
-      return new FunctionInfo(
+   private static FuncInfo f_MA() {
+      return new FuncInfo(
          "MA", "Overlap Studies", "Moving average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2238,8 +2238,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MACD() {
-      return new FunctionInfo(
+   private static FuncInfo f_MACD() {
+      return new FuncInfo(
          "MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2268,8 +2268,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MACDEXT() {
-      return new FunctionInfo(
+   private static FuncInfo f_MACDEXT() {
+      return new FuncInfo(
          "MACDEXT", "Momentum Indicators", "MACD with controllable MA type", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2313,8 +2313,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MACDFIX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MACDFIX() {
+      return new FuncInfo(
          "MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2333,8 +2333,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MAMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_MAMA() {
+      return new FuncInfo(
          "MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 0x0B000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2357,8 +2357,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MARKETFI() {
-      return new FunctionInfo(
+   private static FuncInfo f_MARKETFI() {
+      return new FuncInfo(
          "MARKETFI", "Volume Indicators", "Market Facilitation Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLV", 0x00000016)
@@ -2369,8 +2369,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MASSI() {
-      return new FunctionInfo(
+   private static FuncInfo f_MASSI() {
+      return new FuncInfo(
          "MASSI", "Volatility Indicators", "Mass Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -2392,8 +2392,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MAVP() {
-      return new FunctionInfo(
+   private static FuncInfo f_MAVP() {
+      return new FuncInfo(
          "MAVP", "Overlap Studies", "Moving average with variable period", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000),
@@ -2421,8 +2421,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MAX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MAX() {
+      return new FuncInfo(
          "MAX", "Math Operators", "Highest value over a specified period", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2439,8 +2439,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MAXINDEX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MAXINDEX() {
+      return new FuncInfo(
          "MAXINDEX", "Math Operators", "Index of highest value over a specified period", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2457,8 +2457,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MEDPRICE() {
-      return new FunctionInfo(
+   private static FuncInfo f_MEDPRICE() {
+      return new FuncInfo(
          "MEDPRICE", "Price Transform", "Median Price", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -2469,8 +2469,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MFI() {
-      return new FunctionInfo(
+   private static FuncInfo f_MFI() {
+      return new FuncInfo(
          "MFI", "Momentum Indicators", "Money Flow Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
@@ -2487,8 +2487,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MIDPOINT() {
-      return new FunctionInfo(
+   private static FuncInfo f_MIDPOINT() {
+      return new FuncInfo(
          "MIDPOINT", "Overlap Studies", "MidPoint over period", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2505,8 +2505,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MIDPRICE() {
-      return new FunctionInfo(
+   private static FuncInfo f_MIDPRICE() {
+      return new FuncInfo(
          "MIDPRICE", "Overlap Studies", "Midpoint Price over period", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -2523,8 +2523,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MIN() {
-      return new FunctionInfo(
+   private static FuncInfo f_MIN() {
+      return new FuncInfo(
          "MIN", "Math Operators", "Lowest value over a specified period", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2541,8 +2541,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MININDEX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MININDEX() {
+      return new FuncInfo(
          "MININDEX", "Math Operators", "Index of lowest value over a specified period", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2559,8 +2559,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MINMAX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MINMAX() {
+      return new FuncInfo(
          "MINMAX", "Math Operators", "Lowest and highest values over a specified period", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2578,8 +2578,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MINMAXINDEX() {
-      return new FunctionInfo(
+   private static FuncInfo f_MINMAXINDEX() {
+      return new FuncInfo(
          "MINMAXINDEX", "Math Operators", "Indexes of lowest and highest values over a specified period", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2597,8 +2597,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MINUS_DI() {
-      return new FunctionInfo(
+   private static FuncInfo f_MINUS_DI() {
+      return new FuncInfo(
          "MINUS_DI", "Momentum Indicators", "Minus Directional Indicator", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -2615,8 +2615,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MINUS_DM() {
-      return new FunctionInfo(
+   private static FuncInfo f_MINUS_DM() {
+      return new FuncInfo(
          "MINUS_DM", "Momentum Indicators", "Minus Directional Movement", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -2633,8 +2633,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MOM() {
-      return new FunctionInfo(
+   private static FuncInfo f_MOM() {
+      return new FuncInfo(
          "MOM", "Momentum Indicators", "Momentum", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2651,8 +2651,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MULT() {
-      return new FunctionInfo(
+   private static FuncInfo f_MULT() {
+      return new FuncInfo(
          "MULT", "Math Operators", "Vector Arithmetic Mult", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -2664,8 +2664,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_NATR() {
-      return new FunctionInfo(
+   private static FuncInfo f_NATR() {
+      return new FuncInfo(
          "NATR", "Volatility Indicators", "Normalized Average True Range", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -2682,8 +2682,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_NVI() {
-      return new FunctionInfo(
+   private static FuncInfo f_NVI() {
+      return new FuncInfo(
          "NVI", "Volume Indicators", "Negative Volume Index", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
@@ -2694,8 +2694,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_OBV() {
-      return new FunctionInfo(
+   private static FuncInfo f_OBV() {
+      return new FuncInfo(
          "OBV", "Volume Indicators", "On Balance Volume", 0x22000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000),
@@ -2707,8 +2707,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PERCENTILE() {
-      return new FunctionInfo(
+   private static FuncInfo f_PERCENTILE() {
+      return new FuncInfo(
          "PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2730,8 +2730,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PERCENTRANK() {
-      return new FunctionInfo(
+   private static FuncInfo f_PERCENTRANK() {
+      return new FuncInfo(
          "PERCENTRANK", "Statistic Functions", "Percent Rank", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2748,8 +2748,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PLUS_DI() {
-      return new FunctionInfo(
+   private static FuncInfo f_PLUS_DI() {
+      return new FuncInfo(
          "PLUS_DI", "Momentum Indicators", "Plus Directional Indicator", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -2766,8 +2766,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PLUS_DM() {
-      return new FunctionInfo(
+   private static FuncInfo f_PLUS_DM() {
+      return new FuncInfo(
          "PLUS_DM", "Momentum Indicators", "Plus Directional Movement", 0x0A000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -2784,8 +2784,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PPO() {
-      return new FunctionInfo(
+   private static FuncInfo f_PPO() {
+      return new FuncInfo(
          "PPO", "Momentum Indicators", "Percentage Price Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2812,8 +2812,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PVI() {
-      return new FunctionInfo(
+   private static FuncInfo f_PVI() {
+      return new FuncInfo(
          "PVI", "Volume Indicators", "Positive Volume Index", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
@@ -2824,8 +2824,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PVO() {
-      return new FunctionInfo(
+   private static FuncInfo f_PVO() {
+      return new FuncInfo(
          "PVO", "Volume Indicators", "Percentage Volume Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
@@ -2852,8 +2852,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_PVT() {
-      return new FunctionInfo(
+   private static FuncInfo f_PVT() {
+      return new FuncInfo(
          "PVT", "Volume Indicators", "Price Volume Trend", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
@@ -2864,8 +2864,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_QSTICK() {
-      return new FunctionInfo(
+   private static FuncInfo f_QSTICK() {
+      return new FuncInfo(
          "QSTICK", "Momentum Indicators", "Qstick", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceOC", 0x00000009)
@@ -2882,8 +2882,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_RMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_RMA() {
+      return new FuncInfo(
          "RMA", "Overlap Studies", "Wilder's Smoothed Moving Average", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2900,8 +2900,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ROC() {
-      return new FunctionInfo(
+   private static FuncInfo f_ROC() {
+      return new FuncInfo(
          "ROC", "Momentum Indicators", "Rate of change : ((price/prevPrice)-1)*100", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2918,8 +2918,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ROCP() {
-      return new FunctionInfo(
+   private static FuncInfo f_ROCP() {
+      return new FuncInfo(
          "ROCP", "Momentum Indicators", "Rate of change Percentage: (price-prevPrice)/prevPrice", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2936,8 +2936,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ROCR() {
-      return new FunctionInfo(
+   private static FuncInfo f_ROCR() {
+      return new FuncInfo(
          "ROCR", "Momentum Indicators", "Rate of change ratio: (price/prevPrice)", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2954,8 +2954,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ROCR100() {
-      return new FunctionInfo(
+   private static FuncInfo f_ROCR100() {
+      return new FuncInfo(
          "ROCR100", "Momentum Indicators", "Rate of change ratio 100 scale: (price/prevPrice)*100", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2972,8 +2972,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_RSI() {
-      return new FunctionInfo(
+   private static FuncInfo f_RSI() {
+      return new FuncInfo(
          "RSI", "Momentum Indicators", "Relative Strength Index", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -2990,8 +2990,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_RVI() {
-      return new FunctionInfo(
+   private static FuncInfo f_RVI() {
+      return new FuncInfo(
          "RVI", "Volatility Indicators", "Relative Volatility Index", 0x0A000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3013,8 +3013,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_RVOL() {
-      return new FunctionInfo(
+   private static FuncInfo f_RVOL() {
+      return new FuncInfo(
          "RVOL", "Volume Indicators", "Relative Volume", 0x42000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
@@ -3031,8 +3031,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_SAR() {
+      return new FuncInfo(
          "SAR", "Overlap Studies", "Parabolic SAR", 0x23000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -3054,8 +3054,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SAREXT() {
-      return new FunctionInfo(
+   private static FuncInfo f_SAREXT() {
+      return new FuncInfo(
          "SAREXT", "Overlap Studies", "Parabolic SAR - Extended", 0x23000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
@@ -3107,8 +3107,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SIN() {
-      return new FunctionInfo(
+   private static FuncInfo f_SIN() {
+      return new FuncInfo(
          "SIN", "Math Transform", "Vector Trigonometric Sin", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3119,8 +3119,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SINH() {
-      return new FunctionInfo(
+   private static FuncInfo f_SINH() {
+      return new FuncInfo(
          "SINH", "Math Transform", "Vector Trigonometric Sinh", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3131,8 +3131,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_SMA() {
+      return new FuncInfo(
          "SMA", "Overlap Studies", "Simple Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3149,8 +3149,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SMI() {
-      return new FunctionInfo(
+   private static FuncInfo f_SMI() {
+      return new FuncInfo(
          "SMI", "Momentum Indicators", "Stochastic Momentum Index", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3183,8 +3183,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SQRT() {
-      return new FunctionInfo(
+   private static FuncInfo f_SQRT() {
+      return new FuncInfo(
          "SQRT", "Math Transform", "Vector Square Root", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3195,8 +3195,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_STDDEV() {
-      return new FunctionInfo(
+   private static FuncInfo f_STDDEV() {
+      return new FuncInfo(
          "STDDEV", "Statistic Functions", "Standard Deviation", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3218,8 +3218,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_STOCH() {
-      return new FunctionInfo(
+   private static FuncInfo f_STOCH() {
+      return new FuncInfo(
          "STOCH", "Momentum Indicators", "Stochastic", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3257,8 +3257,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_STOCHF() {
-      return new FunctionInfo(
+   private static FuncInfo f_STOCHF() {
+      return new FuncInfo(
          "STOCHF", "Momentum Indicators", "Stochastic Fast", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3286,8 +3286,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_STOCHRSI() {
-      return new FunctionInfo(
+   private static FuncInfo f_STOCHRSI() {
+      return new FuncInfo(
          "STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3320,8 +3320,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SUB() {
-      return new FunctionInfo(
+   private static FuncInfo f_SUB() {
+      return new FuncInfo(
          "SUB", "Math Operators", "Vector Arithmetic Subtraction", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
@@ -3333,8 +3333,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SUM() {
-      return new FunctionInfo(
+   private static FuncInfo f_SUM() {
+      return new FuncInfo(
          "SUM", "Math Operators", "Summation", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3351,8 +3351,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_SUPERTREND() {
-      return new FunctionInfo(
+   private static FuncInfo f_SUPERTREND() {
+      return new FuncInfo(
          "SUPERTREND", "Overlap Studies", "SuperTrend", 0x23000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3375,8 +3375,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_T3() {
-      return new FunctionInfo(
+   private static FuncInfo f_T3() {
+      return new FuncInfo(
          "T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3398,8 +3398,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TAN() {
-      return new FunctionInfo(
+   private static FuncInfo f_TAN() {
+      return new FuncInfo(
          "TAN", "Math Transform", "Vector Trigonometric Tan", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3410,8 +3410,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TANH() {
-      return new FunctionInfo(
+   private static FuncInfo f_TANH() {
+      return new FuncInfo(
          "TANH", "Math Transform", "Vector Trigonometric Tanh", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3422,8 +3422,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TEMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_TEMA() {
+      return new FuncInfo(
          "TEMA", "Overlap Studies", "Triple Exponential Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3440,8 +3440,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TRANGE() {
-      return new FunctionInfo(
+   private static FuncInfo f_TRANGE() {
+      return new FuncInfo(
          "TRANGE", "Volatility Indicators", "True Range", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3452,8 +3452,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TRIMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_TRIMA() {
+      return new FuncInfo(
          "TRIMA", "Overlap Studies", "Triangular Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3470,8 +3470,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TRIX() {
-      return new FunctionInfo(
+   private static FuncInfo f_TRIX() {
+      return new FuncInfo(
          "TRIX", "Momentum Indicators", "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3488,8 +3488,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TSF() {
-      return new FunctionInfo(
+   private static FuncInfo f_TSF() {
+      return new FuncInfo(
          "TSF", "Statistic Functions", "Time Series Forecast", 0x03000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3506,8 +3506,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TSI() {
-      return new FunctionInfo(
+   private static FuncInfo f_TSI() {
+      return new FuncInfo(
          "TSI", "Momentum Indicators", "True Strength Index", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3529,8 +3529,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_TYPPRICE() {
-      return new FunctionInfo(
+   private static FuncInfo f_TYPPRICE() {
+      return new FuncInfo(
          "TYPPRICE", "Price Transform", "Typical Price", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3541,8 +3541,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ULTOSC() {
-      return new FunctionInfo(
+   private static FuncInfo f_ULTOSC() {
+      return new FuncInfo(
          "ULTOSC", "Momentum Indicators", "Ultimate Oscillator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3569,8 +3569,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_VAR() {
-      return new FunctionInfo(
+   private static FuncInfo f_VAR() {
+      return new FuncInfo(
          "VAR", "Statistic Functions", "Variance", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3592,8 +3592,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_VHF() {
-      return new FunctionInfo(
+   private static FuncInfo f_VHF() {
+      return new FuncInfo(
          "VHF", "Momentum Indicators", "Vertical Horizontal Filter", 0x02000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3610,8 +3610,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_VORTEX() {
-      return new FunctionInfo(
+   private static FuncInfo f_VORTEX() {
+      return new FuncInfo(
          "VORTEX", "Momentum Indicators", "Vortex Indicator", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3629,8 +3629,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_VWAP() {
-      return new FunctionInfo(
+   private static FuncInfo f_VWAP() {
+      return new FuncInfo(
          "VWAP", "Volume Indicators", "Volume Weighted Average Price", 0x23000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLCV", 0x0000001E)
@@ -3641,8 +3641,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_VWMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_VWMA() {
+      return new FuncInfo(
          "VWMA", "Overlap Studies", "Volume Weighted Moving Average", 0x43000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000),
@@ -3660,8 +3660,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_WAD() {
-      return new FunctionInfo(
+   private static FuncInfo f_WAD() {
+      return new FuncInfo(
          "WAD", "Momentum Indicators", "Williams' Accumulation/Distribution", 0x22000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3672,8 +3672,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_WCLPRICE() {
-      return new FunctionInfo(
+   private static FuncInfo f_WCLPRICE() {
+      return new FuncInfo(
          "WCLPRICE", "Price Transform", "Weighted Close Price", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3684,8 +3684,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_WILLR() {
-      return new FunctionInfo(
+   private static FuncInfo f_WILLR() {
+      return new FuncInfo(
          "WILLR", "Momentum Indicators", "Williams' %R", 0x02000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
@@ -3702,8 +3702,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_WMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_WMA() {
+      return new FuncInfo(
          "WMA", "Overlap Studies", "Weighted Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
@@ -3720,8 +3720,8 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_ZLEMA() {
-      return new FunctionInfo(
+   private static FuncInfo f_ZLEMA() {
+      return new FuncInfo(
          "ZLEMA", "Overlap Studies", "Zero-Lag Exponential Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)

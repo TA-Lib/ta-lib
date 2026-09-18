@@ -845,7 +845,7 @@ public class TaCodegenServe {
         _ => throw new InvalidOperationException("unhandled OptInputDomain"),
     };
 
-    static FunctionInfo? AbsLookup(JsonElement p) =>
+    static FuncInfo? AbsLookup(JsonElement p) =>
         FunctionCatalog.Default.TryGet(p.GetProperty("funcName").GetString()!, out var f) ? f : null;
 
     static string AbsFuncInfo(JsonElement p) {
@@ -940,7 +940,7 @@ public class TaCodegenServe {
        sent one component per set bit; a lone real input keeps its own name,
        and several become inReal0/inReal1/... by rank (test_abstract.c's
        abstract_verify_server_call and expand_input_names agree on this). */
-    static string AbsRealInputKey(FunctionInfo f, int slot) {
+    static string AbsRealInputKey(FuncInfo f, int slot) {
         int totalReal = 0, rank = 0;
         for (int i = 0; i < f.Inputs.Length; i++) {
             if (f.Inputs[i].Kind != InputKind.Real) continue;
@@ -960,7 +960,7 @@ public class TaCodegenServe {
         _ => throw new ArgumentException($"not a single component: {c}"),
     };
 
-    /* abstract_call — the fully generic path, bound through FunctionCall. This
+    /* abstract_call — the fully generic path, bound through ParamHolder. This
        is a genuinely independent second implementation rather than a reroute to
        the per-function handler (which is what the Rust and Java servers do), so
        a wrong slot index or a transposed price component shows up as diverging
@@ -1005,9 +1005,9 @@ public class TaCodegenServe {
         for (int i = 0; i < f.OptInputs.Length; i++) {
             var o = f.OptInputs[i];
             if (o.Domain is OptInputDomain.RealRange or OptInputDomain.RealList) {
-                call.SetOption(i, GetDouble(p, o.ParamName, o.DefaultValue));
+                call.SetOptInput(i, GetDouble(p, o.ParamName, o.DefaultValue));
             } else {
-                call.SetOption(i, GetInt(p, o.ParamName, (int)o.DefaultValue));
+                call.SetOptInput(i, GetInt(p, o.ParamName, (int)o.DefaultValue));
             }
         }
 
@@ -1024,7 +1024,7 @@ public class TaCodegenServe {
         }
 
         int lookback = call.Lookback();
-        RetCode rc = call.TryInvoke(startIdx, endIdx, out OutRange range);
+        RetCode rc = call.TryCall(startIdx, endIdx, out OutRange range);
 
         var b = new System.Text.StringBuilder();
         b.Append($"{{\"lookback\":{lookback},\"retCode\":{(int)rc}")

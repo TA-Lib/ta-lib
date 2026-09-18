@@ -853,7 +853,7 @@ public static class StreamApiTest
     private static void CatalogueAgreesWithTheEmittedSurface()
     {
         var advertised = FunctionCatalog.Default
-            .Where(f => (f.Flags & FunctionFlags.Stream) != 0)
+            .Where(f => (f.Flags & FuncFlags.Stream) != 0)
             .Select(f => f.Name)
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();

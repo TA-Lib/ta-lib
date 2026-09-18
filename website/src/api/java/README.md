@@ -149,10 +149,10 @@ Array lengths are checked before anything is written, so a rejected call leaves 
 The `io.github.talib.metadata` package describes every function at run time and calls it without naming it at compile time — the Java equivalent of C's [abstraction layer](/api/#abstract). Useful for a UI, a scripting bridge, or anything that enumerates indicators.
 
 ```java
-import io.github.talib.metadata.FunctionInfo;
+import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
 
-FunctionInfo f = Functions.byName("SMA");
+FuncInfo f = Functions.byName("SMA");
 
 f.name();       // "SMA"
 f.group();      // "Overlap Studies"
@@ -164,10 +164,10 @@ f.outputs();    // List<OutputInfo>   -- one entry per output
 Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
 ```
 
-Binding arguments at run time goes through a `ParamHolder`, obtained from `FunctionInfo#newCall()`:
+Binding arguments at run time goes through a `ParamHolder`, obtained from `FuncInfo#newCall()`:
 
 ```java
-FunctionInfo f = Functions.byName("SMA");
+FuncInfo f = Functions.byName("SMA");
 OutRange r = f.newCall()
     .setInput(0, close)
     .setOptInput(0, 30)
@@ -175,9 +175,9 @@ OutRange r = f.newCall()
     .call(0, close.length - 1);
 ```
 
-Everything is validated against the `FunctionInfo` row: an index out of bounds, a type that does not match the declared parameter, or an unset parameter at `call()` time throws `IllegalArgumentException`. The call itself then behaves exactly like the typed method, including throwing on misuse and returning an empty `OutRange` when the range is shorter than the lookback. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call.
+Everything is validated against the `FuncInfo` row: an index out of bounds, a type that does not match the declared parameter, or an unset parameter at `call()` time throws `IllegalArgumentException`. The call itself then behaves exactly like the typed method, including throwing on misuse and returning an empty `OutRange` when the range is shorter than the lookback. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call.
 
-Streamable functions carry the `FuncFlags.STREAMING` bit in `FunctionInfo#flags()` — check it with `f.hasFlags(FuncFlags.STREAMING)`.
+Streamable functions carry the `FuncFlags.STREAMING` bit in `FuncInfo#flags()` — check it with `f.hasFlags(FuncFlags.STREAMING)`.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

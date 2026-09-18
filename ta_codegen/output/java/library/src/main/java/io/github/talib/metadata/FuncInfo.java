@@ -53,7 +53,7 @@ import java.util.List;
  * @param optInputs     optional parameters in call order
  * @param outputs       outputs in call order
  */
-public record FunctionInfo(
+public record FuncInfo(
        String name,
        String group,
        String hint,

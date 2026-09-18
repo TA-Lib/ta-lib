@@ -65,7 +65,7 @@ namespace TALib.Test;
 /// <para>What this file does NOT do is re-assert what a cross-language gate
 /// already proves. <c>ta_regtest --codegen --language=csharp</c> compares every
 /// row of this catalogue against the C library's <c>ta_abstract</c>, and drives
-/// <see cref="FunctionCall"/> for all 168 functions with the output values
+/// <see cref="ParamHolder"/> for all 168 functions with the output values
 /// compared to C. So the numbers and the dispatch are covered from outside;
 /// what is covered here is the surface a C# caller touches and no server ever
 /// sees, plus the two shapes an external oracle structurally cannot check:
@@ -178,7 +178,7 @@ public static class MetadataTest
         var names = new HashSet<string>(StringComparer.Ordinal);
         for (int i = 0; i < c.Count; i++)
         {
-            FunctionInfo f = c[i];
+            FuncInfo f = c[i];
             Check(names.Add(f.Name), $"{f.Name}: appears once");
             Check(ReferenceEquals(c[f.Name], f), $"{f.Name}: name lookup round-trips");
             Check(f.Outputs.Length > 0, $"{f.Name}: has at least one output");
@@ -188,14 +188,14 @@ public static class MetadataTest
         Check(string.CompareOrdinal(c[0].Name, c[c.Count - 1].Name) < 0, "catalogue is name-ordered");
         CheckThrows<KeyNotFoundException>(() => _ = c["NOSUCHFUNCTION"], "unknown name throws");
         Check(!c.TryGet("NOSUCHFUNCTION", out _), "TryGet reports an unknown name");
-        Check(c.TryGet("SMA", out FunctionInfo? sma) && sma.Name == "SMA", "TryGet finds a known name");
+        Check(c.TryGet("SMA", out FuncInfo? sma) && sma.Name == "SMA", "TryGet finds a known name");
 
         // Case-insensitivity is a contract, not an accident (issue #278): once
         // each backend spells the streaming API in its own idiom, "SMA" is the
         // only spelling a caller can rely on across all four, so the catalogue
         // folds ASCII case (StringComparer.OrdinalIgnoreCase) the way C's
         // TA_GetFuncHandle now does too.
-        Check(c.TryGet("sma", out FunctionInfo? smaLower) && smaLower.Name == "SMA",
+        Check(c.TryGet("sma", out FuncInfo? smaLower) && smaLower.Name == "SMA",
               "lookup is case-insensitive, matching C, and still reports the canonical name");
 
         int inGroups = FunctionCatalog.Groups.Sum(g => c.InGroup(g).Count());
@@ -223,11 +223,11 @@ public static class MetadataTest
         // stands in for those. Between the all-lower and the alternating
         // spelling every letter position is presented in both cases.
         int canonical = 0;
-        foreach (FunctionInfo f in c)
+        foreach (FuncInfo f in c)
         {
-            Check(c.TryGet(AsciiLower(f.Name), out FunctionInfo? lower) && ReferenceEquals(lower, f),
+            Check(c.TryGet(AsciiLower(f.Name), out FuncInfo? lower) && ReferenceEquals(lower, f),
                   $"{f.Name}: lower-case lookup finds it");
-            Check(c.TryGet(Alternating(f.Name), out FunctionInfo? mixed) && ReferenceEquals(mixed, f),
+            Check(c.TryGet(Alternating(f.Name), out FuncInfo? mixed) && ReferenceEquals(mixed, f),
                   $"{f.Name}: mixed-case lookup finds it");
 
             // "Canonical" has to name something for a fold to fold onto it.
@@ -284,7 +284,7 @@ public static class MetadataTest
         FieldInfo? byName = typeof(FunctionCatalog)
             .GetField("_byName", BindingFlags.Instance | BindingFlags.NonPublic);
         Check(byName is not null, "the catalogue still keeps its by-name index in _byName");
-        var index = byName?.GetValue(c) as FrozenDictionary<string, FunctionInfo>;
+        var index = byName?.GetValue(c) as FrozenDictionary<string, FuncInfo>;
         Check(index is not null, "the by-name index is a FrozenDictionary");
         Check(ReferenceEquals(index?.Comparer, StringComparer.OrdinalIgnoreCase),
               "the by-name index folds with StringComparer.OrdinalIgnoreCase, not a culture-aware comparer");
@@ -361,7 +361,7 @@ public static class MetadataTest
     {
         int ranges = 0;
         int lists = 0;
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
             foreach (OptInputInfo o in f.OptInputs)
             {
@@ -448,7 +448,7 @@ public static class MetadataTest
     private static void FlagsAreExact()
     {
         uint func = 0, price = 0, opt = 0, output = 0;
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
             func |= (uint)f.Flags;
             foreach (InputInfo i in f.Inputs)
@@ -481,12 +481,12 @@ public static class MetadataTest
         // these the change is announced rather than absorbed.
         Check(CatalogFacts.DeadFlags.Length == CatalogFacts.DeadFlagCount,
             $"{CatalogFacts.DeadFlagCount} flag members are set by no function");
-        Check(CatalogFacts.DeadFlags.Contains("FunctionFlags.VolumeUsed"),
+        Check(CatalogFacts.DeadFlags.Contains("FuncFlags.VolumeUsed"),
             "VolumeUsed is still set by no function (AD and OBV consume volume without the bit)");
 
         // And a spot check that the census is not vacuously zero.
-        Check(FunctionCatalog.Default["CDLDOJI"].Flags.HasFlag(FunctionFlags.Candlestick), "CDLDOJI is a candlestick");
-        Check(!FunctionCatalog.Default["SMA"].Flags.HasFlag(FunctionFlags.Candlestick), "SMA is not");
+        Check(FunctionCatalog.Default["CDLDOJI"].Flags.HasFlag(FuncFlags.Candlestick), "CDLDOJI is a candlestick");
+        Check(!FunctionCatalog.Default["SMA"].Flags.HasFlag(FuncFlags.Candlestick), "SMA is not");
     }
 
     /* ------------------------------------------- unstable period, structurally */
@@ -494,9 +494,9 @@ public static class MetadataTest
     private static void UnstableIdAgreesWithTheFlag()
     {
         int withId = 0;
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
-            bool flagged = f.Flags.HasFlag(FunctionFlags.UnstablePeriod);
+            bool flagged = f.Flags.HasFlag(FuncFlags.UnstablePeriod);
             Check(flagged == (f.UnstableId is not null),
                 $"{f.Name}: the UnstablePeriod flag and UnstableId agree (flag={flagged}, id={f.UnstableId})");
             if (f.UnstableId is not null)
@@ -515,7 +515,7 @@ public static class MetadataTest
 
     private static void PriceBundlesAreOneInput()
     {
-        FunctionInfo adx = FunctionCatalog.Default["ADX"];
+        FuncInfo adx = FunctionCatalog.Default["ADX"];
         Check(adx.Inputs.Length == 1, $"ADX declares one input, not three (got {adx.Inputs.Length})");
         InputInfo price = adx.Inputs[0];
         Check(price.Kind == InputKind.Price, "ADX's input is a price bundle");
@@ -530,7 +530,7 @@ public static class MetadataTest
                 new[] { PriceComponents.High, PriceComponents.Low, PriceComponents.Close }),
             "ADX's signature order is high, low, close");
 
-        FunctionInfo sma = FunctionCatalog.Default["SMA"];
+        FuncInfo sma = FunctionCatalog.Default["SMA"];
         Check(sma.Inputs[0].Kind == InputKind.Real, "SMA takes a plain real series");
         Check(sma.Inputs[0].Components == PriceComponents.None, "a real input carries no components");
         Check(sma.Inputs[0].SignatureOrder.IsEmpty, "a real input has an empty signature order");
@@ -540,26 +540,26 @@ public static class MetadataTest
 
     private static void BinderRejectsMisuse()
     {
-        FunctionInfo sma = FunctionCatalog.Default["SMA"];
-        FunctionInfo stoch = FunctionCatalog.Default["STOCH"];
-        FunctionInfo doji = FunctionCatalog.Default["CDLDOJI"];
+        FuncInfo sma = FunctionCatalog.Default["SMA"];
+        FuncInfo stoch = FunctionCatalog.Default["STOCH"];
+        FuncInfo doji = FunctionCatalog.Default["CDLDOJI"];
         var buf = new double[N];
 
         CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetInput(5, Close), "input index out of range");
-        CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetOption(9, 30), "parameter index out of range");
+        CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetOptInput(9, 30), "parameter index out of range");
         CheckThrows<ArgumentOutOfRangeException>(() => sma.CreateCall().SetOutput(9, buf), "output index out of range");
-        CheckThrows<ArgumentException>(() => sma.CreateCall().SetOption(0, 1.5), "a real value on an integer parameter");
+        CheckThrows<ArgumentException>(() => sma.CreateCall().SetOptInput(0, 1.5), "a real value on an integer parameter");
         // The mirror of the line above, and the one that was missing: SMA's
         // optInTimePeriod is an IntegerRange, so a MAType must not bind to it.
-        // Delegating this overload to SetOption(int, int) accepted it and bound
+        // Delegating this overload to SetOptInput(int, int) accepted it and bound
         // a period of 1.
         CheckThrows<ArgumentException>(
-            () => sma.CreateCall().SetOption(0, MAType.EMA), "a MAType on a non-choice-list parameter");
-        FunctionInfo ma = FunctionCatalog.Default["MA"];
+            () => sma.CreateCall().SetOptInput(0, MAType.EMA), "a MAType on a non-choice-list parameter");
+        FuncInfo ma = FunctionCatalog.Default["MA"];
         CheckThrows<ArgumentException>(
-            () => ma.CreateCall().SetOption(1, 1.5), "a real value on a choice-list parameter");
+            () => ma.CreateCall().SetOptInput(1, 1.5), "a real value on a choice-list parameter");
         // ...and the choice-list parameter still accepts what it should.
-        Check(ma.CreateCall().SetOption(1, MAType.EMA) is not null, "a MAType binds to a choice list");
+        Check(ma.CreateCall().SetOptInput(1, MAType.EMA) is not null, "a MAType binds to a choice list");
         CheckThrows<ArgumentException>(() => stoch.CreateCall().SetInput(0, Close), "a real series on a price input");
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetPriceInput(0, PriceComponents.High, High), "a price component on a real input");
@@ -578,21 +578,21 @@ public static class MetadataTest
             "and a full OHLCV bundle binds against a function that consumes three of it");
         CheckThrows<ArgumentException>(() => doji.CreateCall().SetOutput(0, buf), "a real buffer on an integer output");
         CheckThrows<ArgumentException>(
-            () => sma.CreateCall().SetOutput(0, buf).Invoke(0, N - 1), "an unbound input");
+            () => sma.CreateCall().SetOutput(0, buf).Call(0, N - 1), "an unbound input");
         CheckThrows<ArgumentException>(
-            () => sma.CreateCall().SetInput(0, Close).Invoke(0, N - 1), "an unbound output");
+            () => sma.CreateCall().SetInput(0, Close).Call(0, N - 1), "an unbound output");
 
-        /* TryInvoke advertises "failure as a code rather than an exception" and
+        /* TryCall advertises "failure as a code rather than an exception" and
            then threw from the binding it performs. It now reports the codes C
            returns for the same condition. This is load-bearing rather than
            cosmetic: the C# JSON-RPC server has no exception handling, so the first
            reject vector driven through the binder would terminate the process. */
-        RetCode noInput = sma.CreateCall().SetOutput(0, new double[N]).TryInvoke(0, N - 1, out OutRange rNoIn);
+        RetCode noInput = sma.CreateCall().SetOutput(0, new double[N]).TryCall(0, N - 1, out OutRange rNoIn);
         Check(noInput == RetCode.InputNotAllInitialize && rNoIn.Count == 0,
-            $"TryInvoke reports an unbound input as a code ({noInput}), and does not throw");
-        RetCode noOutput = sma.CreateCall().SetInput(0, Close).TryInvoke(0, N - 1, out OutRange rNoOut);
+            $"TryCall reports an unbound input as a code ({noInput}), and does not throw");
+        RetCode noOutput = sma.CreateCall().SetInput(0, Close).TryCall(0, N - 1, out OutRange rNoOut);
         Check(noOutput == RetCode.OutputNotAllInitialize && rNoOut.Count == 0,
-            $"TryInvoke reports an unbound output as a code ({noOutput})");
+            $"TryCall reports an unbound output as a code ({noOutput})");
 
         /* A leg bound to a buffer SHORTER than the requested range -- absent is
            covered above, too short was covered nowhere until #265. The thunk
@@ -602,21 +602,21 @@ public static class MetadataTest
            overload now, as C's frames and Java's Dispatch always have, so it is
            BadParam in all three; C cannot express the case, its setters taking a
            bare pointer with no length. */
-        RetCode shortIn = sma.CreateCall().SetInput(0, Close[..(N / 2)]).SetOption(0, 30)
-            .SetOutput(0, new double[N]).TryInvoke(0, N - 1, out OutRange rShortIn);
+        RetCode shortIn = sma.CreateCall().SetInput(0, Close[..(N / 2)]).SetOptInput(0, 30)
+            .SetOutput(0, new double[N]).TryCall(0, N - 1, out OutRange rShortIn);
         Check(shortIn == RetCode.BadParam && rShortIn.Count == 0,
-            $"TryInvoke reports an input shorter than the range as BadParam ({shortIn})");
-        RetCode shortOut = sma.CreateCall().SetInput(0, Close).SetOption(0, 30)
-            .SetOutput(0, new double[4]).TryInvoke(0, N - 1, out OutRange rShortOut);
+            $"TryCall reports an input shorter than the range as BadParam ({shortIn})");
+        RetCode shortOut = sma.CreateCall().SetInput(0, Close).SetOptInput(0, 30)
+            .SetOutput(0, new double[4]).TryCall(0, N - 1, out OutRange rShortOut);
         Check(shortOut == RetCode.BadParam && rShortOut.Count == 0,
-            $"TryInvoke reports an output shorter than the produced count as BadParam ({shortOut})");
+            $"TryCall reports an output shorter than the produced count as BadParam ({shortOut})");
         /* Control: an output sized to the count actually produced is enough. The
            bound is B5's -- endIdx - max(startIdx, lookback) + 1 -- not the width
            of the requested range, so a caller who allocated by the published
            formula must not be rejected. */
-        int lookback = sma.CreateCall().SetOption(0, 30).Lookback();
-        RetCode exact = sma.CreateCall().SetInput(0, Close).SetOption(0, 30)
-            .SetOutput(0, new double[N - lookback]).TryInvoke(0, N - 1, out OutRange rExact);
+        int lookback = sma.CreateCall().SetOptInput(0, 30).Lookback();
+        RetCode exact = sma.CreateCall().SetInput(0, Close).SetOptInput(0, 30)
+            .SetOutput(0, new double[N - lookback]).TryCall(0, N - 1, out OutRange rExact);
         Check(exact == RetCode.Success && rExact.Count == N - lookback,
             $"an output sized to the produced count is accepted ({exact}, {rExact.Count})");
 
@@ -630,28 +630,28 @@ public static class MetadataTest
            request (issue #162). */
         OptInputInfo smaPeriod = sma.OptInputs[0];
         CheckThrows<ArgumentOutOfRangeException>(
-            () => sma.CreateCall().SetParam(smaPeriod, 1e18),
-            "SetParam rejects a magnitude no integer parameter can hold");
+            () => sma.CreateCall().SetOptInput(smaPeriod, 1e18),
+            "SetOptInput rejects a magnitude no integer parameter can hold");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => sma.CreateCall().SetParam(smaPeriod, -1e18),
-            "SetParam rejects the negative magnitude that saturates ONTO the sentinel");
+            () => sma.CreateCall().SetOptInput(smaPeriod, -1e18),
+            "SetOptInput rejects the negative magnitude that saturates ONTO the sentinel");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => sma.CreateCall().SetParam(smaPeriod, double.NaN), "SetParam rejects NaN");
-        Check(sma.CreateCall().SetParam(smaPeriod, int.MinValue) is not null,
+            () => sma.CreateCall().SetOptInput(smaPeriod, double.NaN), "SetOptInput rejects NaN");
+        Check(sma.CreateCall().SetOptInput(smaPeriod, int.MinValue) is not null,
             "but the integer default sentinel is still a legal request");
         CheckThrows<ArgumentException>(
-            () => stoch.CreateCall().SetPriceInput(0, high: High, low: Low).Invoke(0, N - 1),
+            () => stoch.CreateCall().SetPriceInput(0, high: High, low: Low).Call(0, N - 1),
             "a price bundle missing a required component");
 
         // A row belonging to another function must not bind here.
         CheckThrows<ArgumentException>(
-            () => sma.CreateCall().SetParam(stoch.OptInputs[0], 5), "a parameter row from another function");
+            () => sma.CreateCall().SetOptInput(stoch.OptInputs[0], 5), "a parameter row from another function");
     }
 
     /* --------------------------------------- the two call paths must agree, bitwise */
 
     /// <summary>
-    /// Every function driven both through <see cref="FunctionCall"/> and through
+    /// Every function driven both through <see cref="ParamHolder"/> and through
     /// its typed method, with the outputs compared bit for bit.
     /// </summary>
     /// <remarks>The typed arm is reached reflectively and reads nothing from the
@@ -666,7 +666,7 @@ public static class MetadataTest
         int withValues = 0;
         int named = 0;
 
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
             int nout = f.Outputs.Length;
             var realA = new double[nout][];
@@ -682,7 +682,7 @@ public static class MetadataTest
             // green. Parity of the index is deterministic, so a failure names a
             // fixed function.
             bool useNamedArgs = named % 2 == 0;
-            FunctionCall call = f.CreateCall();
+            ParamHolder call = f.CreateCall();
             for (int i = 0; i < f.Inputs.Length; i++)
             {
                 InputInfo info = f.Inputs[i];
@@ -737,13 +737,13 @@ public static class MetadataTest
                 switch (f.OptInputs[i].Domain)
                 {
                     case OptInputDomain.IntegerRange r:
-                        call.SetOption(i, r.Default);
+                        call.SetOptInput(i, r.Default);
                         break;
                     case OptInputDomain.IntegerList l:
-                        call.SetOption(i, (MAType)(int)l.Default);
+                        call.SetOptInput(i, (MAType)(int)l.Default);
                         break;
                     default:
-                        call.SetOption(i, f.OptInputs[i].DefaultValue);
+                        call.SetOptInput(i, f.OptInputs[i].DefaultValue);
                         break;
                 }
             }
@@ -762,7 +762,7 @@ public static class MetadataTest
                 }
             }
 
-            RetCode rcA = call.TryInvoke(0, N - 1, out OutRange a);
+            RetCode rcA = call.TryCall(0, N - 1, out OutRange a);
             OutRange? b = TypedCall(f, realB, intB);
             if (b is null)
             {
@@ -814,7 +814,7 @@ public static class MetadataTest
     /// Binder-thunk-versus-typed-wrapper agreement is covered instead by <c>abstract_call</c> in
     /// the JSON-RPC server, which <c>test_abstract.c</c> compares against C per function.</para>
     /// </remarks>
-    private static OutRange? TypedCall(FunctionInfo f, double[][] realOut, int[][] intOut)
+    private static OutRange? TypedCall(FuncInfo f, double[][] realOut, int[][] intOut)
     {
         // The catalogue's declared shapes must name a real typed overload. This
         // is a LOOKUP only: a span is a ref struct, so it cannot be boxed into
@@ -879,9 +879,9 @@ public static class MetadataTest
         // thunk, but with every optional parameter set to its SENTINEL rather
         // than its declared default. Path A binds the defaults explicitly, so
         // agreeing here is what proves the sentinel resolves to the documented
-        // default through the typed API — the #162/#182 property. SetOption
+        // default through the typed API — the #162/#182 property. SetOptInput
         // checks the domain kind but not the range, so the sentinels pass.
-        FunctionCall call = f.CreateCall();
+        ParamHolder call = f.CreateCall();
         for (int i = 0; i < f.Inputs.Length; i++)
         {
             InputInfo info = f.Inputs[i];
@@ -912,13 +912,13 @@ public static class MetadataTest
             switch (f.OptInputs[i].Domain)
             {
                 case OptInputDomain.RealRange or OptInputDomain.RealList:
-                    call.SetOption(i, -4e37);
+                    call.SetOptInput(i, -4e37);
                     break;
                 case OptInputDomain.IntegerRange:
-                    call.SetOption(i, int.MinValue);
+                    call.SetOptInput(i, int.MinValue);
                     break;
                 default:
-                    call.SetOption(i, (MAType)int.MinValue);
+                    call.SetOptInput(i, (MAType)int.MinValue);
                     break;
             }
         }
@@ -937,7 +937,7 @@ public static class MetadataTest
             }
         }
 
-        return call.TryInvoke(0, N - 1, out OutRange r) == RetCode.Success ? r : null;
+        return call.TryCall(0, N - 1, out OutRange r) == RetCode.Success ? r : null;
     }
 
     /* ------------------------------------ the binder's defaults ARE the sentinels */
@@ -956,7 +956,7 @@ public static class MetadataTest
     private static void UnboundParametersTakeTheDocumentedDefault()
     {
         int covered = 0;
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
             if (f.OptInputs.Length == 0 || f.Inputs.Any(i => i.Kind == InputKind.Integer))
             {
@@ -968,27 +968,27 @@ public static class MetadataTest
             var explicitly = new double[f.Outputs.Length][];
             var explicitlyInt = new int[f.Outputs.Length][];
 
-            FunctionCall a = Bind(f, unbound, unboundInt);
-            FunctionCall b = Bind(f, explicitly, explicitlyInt);
+            ParamHolder a = Bind(f, unbound, unboundInt);
+            ParamHolder b = Bind(f, explicitly, explicitlyInt);
             for (int i = 0; i < f.OptInputs.Length; i++)
             {
                 OptInputInfo o = f.OptInputs[i];
                 switch (o.Domain)
                 {
                     case OptInputDomain.IntegerRange r:
-                        b.SetOption(i, r.Default);
+                        b.SetOptInput(i, r.Default);
                         break;
                     case OptInputDomain.IntegerList l:
-                        b.SetOption(i, (int)l.Default);
+                        b.SetOptInput(i, (int)l.Default);
                         break;
                     default:
-                        b.SetOption(i, o.DefaultValue);
+                        b.SetOptInput(i, o.DefaultValue);
                         break;
                 }
             }
 
-            RetCode rcA = a.TryInvoke(0, N - 1, out OutRange ra);
-            RetCode rcB = b.TryInvoke(0, N - 1, out OutRange rb);
+            RetCode rcA = a.TryCall(0, N - 1, out OutRange ra);
+            RetCode rcB = b.TryCall(0, N - 1, out OutRange rb);
             covered++;
 
             Check(rcA == rcB && ra.Equals(rb),
@@ -1012,9 +1012,9 @@ public static class MetadataTest
         Check(covered > 60, $"covered {covered} functions with optional parameters");
     }
 
-    private static FunctionCall Bind(FunctionInfo f, double[][] realOut, int[][] intOut)
+    private static ParamHolder Bind(FuncInfo f, double[][] realOut, int[][] intOut)
     {
-        FunctionCall call = f.CreateCall();
+        ParamHolder call = f.CreateCall();
         for (int i = 0; i < f.Inputs.Length; i++)
         {
             InputInfo info = f.Inputs[i];
@@ -1062,7 +1062,7 @@ public static class MetadataTest
     {
         Type[] closed =
         [
-            typeof(FunctionInfo), typeof(InputInfo), typeof(OptInputInfo), typeof(OutputInfo),
+            typeof(FuncInfo), typeof(InputInfo), typeof(OptInputInfo), typeof(OutputInfo),
             typeof(NamedValue), typeof(NamedRealValue),
             typeof(OptInputDomain.RealRange), typeof(OptInputDomain.IntegerRange),
             typeof(OptInputDomain.IntegerList), typeof(OptInputDomain.RealList),
@@ -1075,7 +1075,7 @@ public static class MetadataTest
         }
 
         // And every collection the catalogue hands out is actually initialised.
-        foreach (FunctionInfo f in FunctionCatalog.Default)
+        foreach (FuncInfo f in FunctionCatalog.Default)
         {
             Check(!f.Inputs.IsDefault && !f.OptInputs.IsDefault && !f.Outputs.IsDefault,
                 $"{f.Name}: no default(ImmutableArray) reached a row");
@@ -1121,13 +1121,13 @@ public static class MetadataTest
     /// that checks and writes one component at a time commits the ones ahead of
     /// the offending one and leaves the rest holding the previous bundle — and
     /// <c>AllPriceComponentsBound</c> only looks at the <i>required</i>
-    /// components, so <c>TryInvoke</c> then returned <c>Success</c> over a
+    /// components, so <c>TryCall</c> then returned <c>Success</c> over a
     /// mixture of the two. No code, no exception, wrong numbers (issue #266).</remarks>
     private static void ARejectedSetterLeavesTheCallAsItFoundIt()
     {
         // WILLR consumes High|Low|Close, so Close is the last required component
         // and the natural place to trip the setter.
-        FunctionInfo willr = FunctionCatalog.Default["WILLR"];
+        FuncInfo willr = FunctionCatalog.Default["WILLR"];
         // A different PHASE, not a shift: WILLR is (hh - c) / (hh - ll), which a
         // uniform offset leaves unchanged -- the control below would then pass on
         // a setter that did nothing at all.
@@ -1143,18 +1143,18 @@ public static class MetadataTest
         var reference = new double[N];
         OutRange want = willr.CreateCall()
             .SetPriceInput(0, high: High, low: Low, close: Close)
-            .SetOption(0, 14).SetOutput(0, reference).Invoke(0, N - 1);
+            .SetOptInput(0, 14).SetOutput(0, reference).Call(0, N - 1);
         Check(want.Count > 0, "the reference call produced values");
 
         var afterReject = new double[N];
-        FunctionCall call = willr.CreateCall()
+        ParamHolder call = willr.CreateCall()
             .SetPriceInput(0, high: High, low: Low, close: Close)
-            .SetOption(0, 14).SetOutput(0, afterReject);
-        call.Invoke(0, N - 1);
+            .SetOptInput(0, 14).SetOutput(0, afterReject);
+        call.Call(0, N - 1);
         CheckThrows<ArgumentException>(
             () => call.SetPriceInput(0, high: high2, low: low2),
             "close is consumed and was not supplied");
-        RetCode rc = call.TryInvoke(0, N - 1, out OutRange got);
+        RetCode rc = call.TryCall(0, N - 1, out OutRange got);
         Check(rc == RetCode.Success && got.BegIdx == want.BegIdx && got.Count == want.Count,
             $"the call still reports the same range after a rejected setter ({rc})");
         bool same = true;
@@ -1168,12 +1168,12 @@ public static class MetadataTest
         // Control: a CORRECT rebind must reach the output, or the check above
         // passes for a setter that stopped working altogether.
         var afterRebind = new double[N];
-        FunctionCall again = willr.CreateCall()
+        ParamHolder again = willr.CreateCall()
             .SetPriceInput(0, high: High, low: Low, close: Close)
-            .SetOption(0, 14).SetOutput(0, afterRebind);
-        again.Invoke(0, N - 1);
+            .SetOptInput(0, 14).SetOutput(0, afterRebind);
+        again.Call(0, N - 1);
         again.SetPriceInput(0, high: high2, low: low2, close: close2);
-        again.Invoke(0, N - 1);
+        again.Call(0, N - 1);
         bool moved = false;
         for (int i = 0; i < want.Count; i++)
         {

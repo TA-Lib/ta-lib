@@ -52,12 +52,12 @@ public enum RetCode
     /// <summary>An internal allocation failed (<c>TA_ALLOC_ERR</c> = 3). C parity only, never
     /// returned here: an allocation failure terminates the process (#178).</summary>
     AllocErr = 3,
-    /// <summary>A <see cref="TALib.Metadata.FunctionCall"/> was invoked with an
+    /// <summary>A <see cref="TALib.Metadata.ParamHolder"/> was invoked with an
     /// input left unbound (<c>TA_INPUT_NOT_ALL_INITIALIZE</c> = 10). Reachable only
     /// from the dynamic binder — the typed API takes its inputs as
     /// arguments.</summary>
     InputNotAllInitialize = 10,
-    /// <summary>A <see cref="TALib.Metadata.FunctionCall"/> was invoked with an
+    /// <summary>A <see cref="TALib.Metadata.ParamHolder"/> was invoked with an
     /// output left unbound (<c>TA_OUTPUT_NOT_ALL_INITIALIZE</c> = 11). Reachable
     /// only from the dynamic binder.</summary>
     OutputNotAllInitialize = 11,

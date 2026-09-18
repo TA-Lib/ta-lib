@@ -214558,7 +214558,7 @@ public class TaCodegenServe {
     }
 
     static int computeLookback(String funcName, String json) {
-        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(funcName);
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(funcName);
         if (f == null) return -1;
         try {
             return absBind(f, json, null).lookback();
@@ -214571,7 +214571,7 @@ public class TaCodegenServe {
        output arrays when the caller needs them back; pass null for the lookback
        tier, which binds none. */
     static io.github.talib.metadata.ParamHolder absBind(
-            io.github.talib.metadata.FunctionInfo f, String json, Object[] outs) {
+            io.github.talib.metadata.FuncInfo f, String json, Object[] outs) {
         io.github.talib.metadata.ParamHolder h = f.newCall();
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -214620,7 +214620,7 @@ public class TaCodegenServe {
     }
 
     /* inReal / inReal0 / inReal1, matching the driver's key scheme. */
-    static double[] absRealInput(String json, io.github.talib.metadata.FunctionInfo f, int slot) {
+    static double[] absRealInput(String json, io.github.talib.metadata.FuncInfo f, int slot) {
         int generic = 0;
         for (int i = 0; i < slot; i++) {
             if (f.inputs().get(i).type() != io.github.talib.metadata.InputType.PRICE) generic++;
@@ -214634,7 +214634,7 @@ public class TaCodegenServe {
 
     static String handleAbstractCall(String json) {
         String fn = jsonString(json, "funcName");
-        io.github.talib.metadata.FunctionInfo f = io.github.talib.metadata.Functions.byName(fn);
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(fn);
         if (f == null) return "{\"error\":\"Unknown function\"}";
 
         Object[] outs = new Object[f.outputs().size()];

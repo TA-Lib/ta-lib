@@ -59,7 +59,7 @@ namespace TALib.Metadata;
 /// <para>Implements <see cref="IReadOnlyList{T}"/>, so it is directly
 /// enumerable and LINQ-able:</para>
 /// <code>
-/// foreach (var f in FunctionCatalog.Default.Where(f => f.Flags.HasFlag(FunctionFlags.Candlestick)))
+/// foreach (var f in FunctionCatalog.Default.Where(f => f.Flags.HasFlag(FuncFlags.Candlestick)))
 ///     Console.WriteLine($"{f.Name}: {f.Hint}");
 /// </code>
 /// <para>Generated from the same definitions as the indicators themselves, so it
@@ -68,7 +68,7 @@ namespace TALib.Metadata;
 /// <c>ta_abstract</c> and Rust's <c>abstract_api</c> describe. Streaming handles,
 /// <c>float[]</c> overloads are not catalogued.</para>
 /// </remarks>
-public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
+public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
 {
     private static readonly ImmutableArray<NamedValue> MATypeValues =
     [
@@ -106,8 +106,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         FunctionGroup.VolumeIndicators,
     ];
 
-    private readonly ImmutableArray<FunctionInfo> _all;
-    private readonly FrozenDictionary<string, FunctionInfo> _byName;
+    private readonly ImmutableArray<FuncInfo> _all;
+    private readonly FrozenDictionary<string, FuncInfo> _byName;
 
     private FunctionCatalog()
     {
@@ -324,43 +324,43 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
     /// <summary>The function at an index, in canonical name order.</summary>
     /// <param name="index">A zero-based index below <see cref="Count"/>.</param>
     /// <returns>The function's metadata.</returns>
-    public FunctionInfo this[int index] => _all[index];
+    public FuncInfo this[int index] => _all[index];
 
     /// <summary>The function with a given name.</summary>
     /// <param name="name">The function name, for example <c>"SMA"</c> or <c>"sma"</c> —
     /// matched ASCII case-insensitively (<see cref="StringComparer.OrdinalIgnoreCase"/>,
     /// matching C's <c>TA_GetFuncHandle</c>), never culture-aware. The returned metadata's
-    /// own <see cref="FunctionInfo.Name"/> always stays the canonical upper-case spelling.</param>
+    /// own <see cref="FuncInfo.Name"/> always stays the canonical upper-case spelling.</param>
     /// <returns>The function's metadata.</returns>
     /// <exception cref="KeyNotFoundException">No function has that name.</exception>
-    public FunctionInfo this[string name] => _byName[name];
+    public FuncInfo this[string name] => _byName[name];
 
     /// <summary>Looks a function up without throwing.</summary>
     /// <param name="name">The function name, matched ASCII case-insensitively — see
     /// <see cref="this[string]"/>.</param>
     /// <param name="info">The metadata, when the name is known.</param>
     /// <returns><see langword="true"/> when the name is known.</returns>
-    public bool TryGet(string name, [NotNullWhen(true)] out FunctionInfo? info)
+    public bool TryGet(string name, [NotNullWhen(true)] out FuncInfo? info)
         => _byName.TryGetValue(name, out info);
 
     /// <summary>The functions in one group, in canonical name order.</summary>
     /// <param name="group">The group to filter by.</param>
     /// <returns>A lazily filtered sequence.</returns>
-    public IEnumerable<FunctionInfo> InGroup(FunctionGroup group)
+    public IEnumerable<FuncInfo> InGroup(FunctionGroup group)
         => _all.Where(f => f.Group == group);
 
     /// <summary>Enumerates every function, in canonical name order.</summary>
     /// <returns>An enumerator over the catalogue.</returns>
-    public IEnumerator<FunctionInfo> GetEnumerator()
-        => ((IEnumerable<FunctionInfo>)_all).GetEnumerator();
+    public IEnumerator<FuncInfo> GetEnumerator()
+        => ((IEnumerable<FuncInfo>)_all).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    private static FunctionInfo MakeAc() => new(
+    private static FuncInfo MakeAc() => new(
         name: "AC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Accelerator/Decelerator Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -381,11 +381,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakeAccbands() => new(
+    private static FuncInfo MakeAccbands() => new(
         name: "ACCBANDS",
         group: FunctionGroup.OverlapStudies,
         hint: "Acceleration Bands",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -406,11 +406,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ACCBANDS(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeAcos() => new(
+    private static FuncInfo MakeAcos() => new(
         name: "ACOS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ACos",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -426,11 +426,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ACOS(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAd() => new(
+    private static FuncInfo MakeAd() => new(
         name: "AD",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin A/D Line",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -446,11 +446,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AD(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeAdd() => new(
+    private static FuncInfo MakeAdd() => new(
         name: "ADD",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Add",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -467,11 +467,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ADD(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeAdosc() => new(
+    private static FuncInfo MakeAdosc() => new(
         name: "ADOSC",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin A/D Oscillator",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -491,11 +491,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ADOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeAdr() => new(
+    private static FuncInfo MakeAdr() => new(
         name: "ADR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Average Day Range",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -514,11 +514,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ADR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAdx() => new(
+    private static FuncInfo MakeAdx() => new(
         name: "ADX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Average Directional Movement Index",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.ADX,
         inputs:
         [
@@ -537,11 +537,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ADX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAdxr() => new(
+    private static FuncInfo MakeAdxr() => new(
         name: "ADXR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Average Directional Movement Index Rating",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -560,11 +560,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ADXR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAo() => new(
+    private static FuncInfo MakeAo() => new(
         name: "AO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Awesome Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -584,11 +584,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AO(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeApo() => new(
+    private static FuncInfo MakeApo() => new(
         name: "APO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Absolute Price Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -609,11 +609,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.APO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakeAroon() => new(
+    private static FuncInfo MakeAroon() => new(
         name: "AROON",
         group: FunctionGroup.MomentumIndicators,
         hint: "Aroon",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -633,11 +633,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AROON(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeAroonosc() => new(
+    private static FuncInfo MakeAroonosc() => new(
         name: "AROONOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Aroon Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -656,11 +656,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AROONOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAsin() => new(
+    private static FuncInfo MakeAsin() => new(
         name: "ASIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ASin",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -676,11 +676,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ASIN(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAtan() => new(
+    private static FuncInfo MakeAtan() => new(
         name: "ATAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ATan",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -696,11 +696,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ATAN(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAtr() => new(
+    private static FuncInfo MakeAtr() => new(
         name: "ATR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Average True Range",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.ATR,
         inputs:
         [
@@ -719,11 +719,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ATR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAvgdev() => new(
+    private static FuncInfo MakeAvgdev() => new(
         name: "AVGDEV",
         group: FunctionGroup.PriceTransform,
         hint: "Average Deviation",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -742,11 +742,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AVGDEV(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeAvgprice() => new(
+    private static FuncInfo MakeAvgprice() => new(
         name: "AVGPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Average Price",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -762,11 +762,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.AVGPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeBbands() => new(
+    private static FuncInfo MakeBbands() => new(
         name: "BBANDS",
         group: FunctionGroup.OverlapStudies,
         hint: "Bollinger Bands",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -790,11 +790,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.BBANDS(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeBeta() => new(
+    private static FuncInfo MakeBeta() => new(
         name: "BETA",
         group: FunctionGroup.StatisticFunctions,
         hint: "Beta",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -814,11 +814,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.BETA(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeBop() => new(
+    private static FuncInfo MakeBop() => new(
         name: "BOP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Balance Of Power",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -834,11 +834,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.BOP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeCci() => new(
+    private static FuncInfo MakeCci() => new(
         name: "CCI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Commodity Channel Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -857,11 +857,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CCI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCdl2crows() => new(
+    private static FuncInfo MakeCdl2crows() => new(
         name: "CDL2CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Two Crows",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -877,11 +877,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL2CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3blackcrows() => new(
+    private static FuncInfo MakeCdl3blackcrows() => new(
         name: "CDL3BLACKCROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Black Crows",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -897,11 +897,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3BLACKCROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3inside() => new(
+    private static FuncInfo MakeCdl3inside() => new(
         name: "CDL3INSIDE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Inside Up/Down",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -917,11 +917,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3INSIDE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3linestrike() => new(
+    private static FuncInfo MakeCdl3linestrike() => new(
         name: "CDL3LINESTRIKE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three-Line Strike",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -937,11 +937,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3LINESTRIKE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3outside() => new(
+    private static FuncInfo MakeCdl3outside() => new(
         name: "CDL3OUTSIDE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Outside Up/Down",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -957,11 +957,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3OUTSIDE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3starsinsouth() => new(
+    private static FuncInfo MakeCdl3starsinsouth() => new(
         name: "CDL3STARSINSOUTH",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Stars In The South",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -977,11 +977,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3STARSINSOUTH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdl3whitesoldiers() => new(
+    private static FuncInfo MakeCdl3whitesoldiers() => new(
         name: "CDL3WHITESOLDIERS",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Advancing White Soldiers",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -997,11 +997,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDL3WHITESOLDIERS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlabandonedbaby() => new(
+    private static FuncInfo MakeCdlabandonedbaby() => new(
         name: "CDLABANDONEDBABY",
         group: FunctionGroup.PatternRecognition,
         hint: "Abandoned Baby",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1020,11 +1020,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLABANDONEDBABY(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdladvanceblock() => new(
+    private static FuncInfo MakeCdladvanceblock() => new(
         name: "CDLADVANCEBLOCK",
         group: FunctionGroup.PatternRecognition,
         hint: "Advance Block",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1040,11 +1040,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLADVANCEBLOCK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlbelthold() => new(
+    private static FuncInfo MakeCdlbelthold() => new(
         name: "CDLBELTHOLD",
         group: FunctionGroup.PatternRecognition,
         hint: "Belt-hold",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1060,11 +1060,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLBELTHOLD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlbreakaway() => new(
+    private static FuncInfo MakeCdlbreakaway() => new(
         name: "CDLBREAKAWAY",
         group: FunctionGroup.PatternRecognition,
         hint: "Breakaway",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1080,11 +1080,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLBREAKAWAY(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlclosingmarubozu() => new(
+    private static FuncInfo MakeCdlclosingmarubozu() => new(
         name: "CDLCLOSINGMARUBOZU",
         group: FunctionGroup.PatternRecognition,
         hint: "Closing Marubozu",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1100,11 +1100,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLCLOSINGMARUBOZU(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlconcealbabyswall() => new(
+    private static FuncInfo MakeCdlconcealbabyswall() => new(
         name: "CDLCONCEALBABYSWALL",
         group: FunctionGroup.PatternRecognition,
         hint: "Concealing Baby Swallow",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1120,11 +1120,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLCONCEALBABYSWALL(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlcounterattack() => new(
+    private static FuncInfo MakeCdlcounterattack() => new(
         name: "CDLCOUNTERATTACK",
         group: FunctionGroup.PatternRecognition,
         hint: "Counterattack",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1140,11 +1140,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLCOUNTERATTACK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdldarkcloudcover() => new(
+    private static FuncInfo MakeCdldarkcloudcover() => new(
         name: "CDLDARKCLOUDCOVER",
         group: FunctionGroup.PatternRecognition,
         hint: "Dark Cloud Cover",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1163,11 +1163,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLDARKCLOUDCOVER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdldoji() => new(
+    private static FuncInfo MakeCdldoji() => new(
         name: "CDLDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Doji",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1183,11 +1183,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdldojistar() => new(
+    private static FuncInfo MakeCdldojistar() => new(
         name: "CDLDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Doji Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1203,11 +1203,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdldragonflydoji() => new(
+    private static FuncInfo MakeCdldragonflydoji() => new(
         name: "CDLDRAGONFLYDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Dragonfly Doji",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1223,11 +1223,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLDRAGONFLYDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlengulfing() => new(
+    private static FuncInfo MakeCdlengulfing() => new(
         name: "CDLENGULFING",
         group: FunctionGroup.PatternRecognition,
         hint: "Engulfing Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1243,11 +1243,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLENGULFING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdleveningdojistar() => new(
+    private static FuncInfo MakeCdleveningdojistar() => new(
         name: "CDLEVENINGDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Evening Doji Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1266,11 +1266,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLEVENINGDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdleveningstar() => new(
+    private static FuncInfo MakeCdleveningstar() => new(
         name: "CDLEVENINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Evening Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1289,11 +1289,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLEVENINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlgapsidesidewhite() => new(
+    private static FuncInfo MakeCdlgapsidesidewhite() => new(
         name: "CDLGAPSIDESIDEWHITE",
         group: FunctionGroup.PatternRecognition,
         hint: "Up/Down-gap side-by-side white lines",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1309,11 +1309,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLGAPSIDESIDEWHITE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlgravestonedoji() => new(
+    private static FuncInfo MakeCdlgravestonedoji() => new(
         name: "CDLGRAVESTONEDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Gravestone Doji",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1329,11 +1329,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLGRAVESTONEDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhammer() => new(
+    private static FuncInfo MakeCdlhammer() => new(
         name: "CDLHAMMER",
         group: FunctionGroup.PatternRecognition,
         hint: "Hammer",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1349,11 +1349,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHAMMER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhangingman() => new(
+    private static FuncInfo MakeCdlhangingman() => new(
         name: "CDLHANGINGMAN",
         group: FunctionGroup.PatternRecognition,
         hint: "Hanging Man",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1369,11 +1369,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHANGINGMAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlharami() => new(
+    private static FuncInfo MakeCdlharami() => new(
         name: "CDLHARAMI",
         group: FunctionGroup.PatternRecognition,
         hint: "Harami Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1389,11 +1389,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHARAMI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlharamicross() => new(
+    private static FuncInfo MakeCdlharamicross() => new(
         name: "CDLHARAMICROSS",
         group: FunctionGroup.PatternRecognition,
         hint: "Harami Cross Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1409,11 +1409,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHARAMICROSS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhighwave() => new(
+    private static FuncInfo MakeCdlhighwave() => new(
         name: "CDLHIGHWAVE",
         group: FunctionGroup.PatternRecognition,
         hint: "High-Wave Candle",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1429,11 +1429,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHIGHWAVE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhikkake() => new(
+    private static FuncInfo MakeCdlhikkake() => new(
         name: "CDLHIKKAKE",
         group: FunctionGroup.PatternRecognition,
         hint: "Hikkake Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1449,11 +1449,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHIKKAKE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhikkakemod() => new(
+    private static FuncInfo MakeCdlhikkakemod() => new(
         name: "CDLHIKKAKEMOD",
         group: FunctionGroup.PatternRecognition,
         hint: "Modified Hikkake Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1469,11 +1469,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHIKKAKEMOD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlhomingpigeon() => new(
+    private static FuncInfo MakeCdlhomingpigeon() => new(
         name: "CDLHOMINGPIGEON",
         group: FunctionGroup.PatternRecognition,
         hint: "Homing Pigeon",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1489,11 +1489,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLHOMINGPIGEON(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlidentical3crows() => new(
+    private static FuncInfo MakeCdlidentical3crows() => new(
         name: "CDLIDENTICAL3CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Identical Three Crows",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1509,11 +1509,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLIDENTICAL3CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlinneck() => new(
+    private static FuncInfo MakeCdlinneck() => new(
         name: "CDLINNECK",
         group: FunctionGroup.PatternRecognition,
         hint: "In-Neck Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1529,11 +1529,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLINNECK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlinvertedhammer() => new(
+    private static FuncInfo MakeCdlinvertedhammer() => new(
         name: "CDLINVERTEDHAMMER",
         group: FunctionGroup.PatternRecognition,
         hint: "Inverted Hammer",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1549,11 +1549,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLINVERTEDHAMMER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlkicking() => new(
+    private static FuncInfo MakeCdlkicking() => new(
         name: "CDLKICKING",
         group: FunctionGroup.PatternRecognition,
         hint: "Kicking",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1569,11 +1569,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLKICKING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlkickingbylength() => new(
+    private static FuncInfo MakeCdlkickingbylength() => new(
         name: "CDLKICKINGBYLENGTH",
         group: FunctionGroup.PatternRecognition,
         hint: "Kicking - bull/bear determined by the longer marubozu",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1589,11 +1589,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLKICKINGBYLENGTH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlladderbottom() => new(
+    private static FuncInfo MakeCdlladderbottom() => new(
         name: "CDLLADDERBOTTOM",
         group: FunctionGroup.PatternRecognition,
         hint: "Ladder Bottom",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1609,11 +1609,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLLADDERBOTTOM(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdllongleggeddoji() => new(
+    private static FuncInfo MakeCdllongleggeddoji() => new(
         name: "CDLLONGLEGGEDDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Long Legged Doji",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1629,11 +1629,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLLONGLEGGEDDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdllongline() => new(
+    private static FuncInfo MakeCdllongline() => new(
         name: "CDLLONGLINE",
         group: FunctionGroup.PatternRecognition,
         hint: "Long Line Candle",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1649,11 +1649,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLLONGLINE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlmarubozu() => new(
+    private static FuncInfo MakeCdlmarubozu() => new(
         name: "CDLMARUBOZU",
         group: FunctionGroup.PatternRecognition,
         hint: "Marubozu",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1669,11 +1669,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLMARUBOZU(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlmatchinglow() => new(
+    private static FuncInfo MakeCdlmatchinglow() => new(
         name: "CDLMATCHINGLOW",
         group: FunctionGroup.PatternRecognition,
         hint: "Matching Low",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1689,11 +1689,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLMATCHINGLOW(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlmathold() => new(
+    private static FuncInfo MakeCdlmathold() => new(
         name: "CDLMATHOLD",
         group: FunctionGroup.PatternRecognition,
         hint: "Mat Hold",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1712,11 +1712,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLMATHOLD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlmorningdojistar() => new(
+    private static FuncInfo MakeCdlmorningdojistar() => new(
         name: "CDLMORNINGDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Morning Doji Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1735,11 +1735,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLMORNINGDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlmorningstar() => new(
+    private static FuncInfo MakeCdlmorningstar() => new(
         name: "CDLMORNINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Morning Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1758,11 +1758,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLMORNINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlonneck() => new(
+    private static FuncInfo MakeCdlonneck() => new(
         name: "CDLONNECK",
         group: FunctionGroup.PatternRecognition,
         hint: "On-Neck Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1778,11 +1778,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLONNECK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlpiercing() => new(
+    private static FuncInfo MakeCdlpiercing() => new(
         name: "CDLPIERCING",
         group: FunctionGroup.PatternRecognition,
         hint: "Piercing Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1798,11 +1798,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLPIERCING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlrickshawman() => new(
+    private static FuncInfo MakeCdlrickshawman() => new(
         name: "CDLRICKSHAWMAN",
         group: FunctionGroup.PatternRecognition,
         hint: "Rickshaw Man",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1818,11 +1818,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLRICKSHAWMAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlrisefall3methods() => new(
+    private static FuncInfo MakeCdlrisefall3methods() => new(
         name: "CDLRISEFALL3METHODS",
         group: FunctionGroup.PatternRecognition,
         hint: "Rising/Falling Three Methods",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1838,11 +1838,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLRISEFALL3METHODS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlseparatinglines() => new(
+    private static FuncInfo MakeCdlseparatinglines() => new(
         name: "CDLSEPARATINGLINES",
         group: FunctionGroup.PatternRecognition,
         hint: "Separating Lines",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1858,11 +1858,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSEPARATINGLINES(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlshootingstar() => new(
+    private static FuncInfo MakeCdlshootingstar() => new(
         name: "CDLSHOOTINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Shooting Star",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1878,11 +1878,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSHOOTINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlshortline() => new(
+    private static FuncInfo MakeCdlshortline() => new(
         name: "CDLSHORTLINE",
         group: FunctionGroup.PatternRecognition,
         hint: "Short Line Candle",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1898,11 +1898,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSHORTLINE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlspinningtop() => new(
+    private static FuncInfo MakeCdlspinningtop() => new(
         name: "CDLSPINNINGTOP",
         group: FunctionGroup.PatternRecognition,
         hint: "Spinning Top",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1918,11 +1918,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSPINNINGTOP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlstalledpattern() => new(
+    private static FuncInfo MakeCdlstalledpattern() => new(
         name: "CDLSTALLEDPATTERN",
         group: FunctionGroup.PatternRecognition,
         hint: "Stalled Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1938,11 +1938,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSTALLEDPATTERN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlsticksandwich() => new(
+    private static FuncInfo MakeCdlsticksandwich() => new(
         name: "CDLSTICKSANDWICH",
         group: FunctionGroup.PatternRecognition,
         hint: "Stick Sandwich",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1958,11 +1958,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLSTICKSANDWICH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdltakuri() => new(
+    private static FuncInfo MakeCdltakuri() => new(
         name: "CDLTAKURI",
         group: FunctionGroup.PatternRecognition,
         hint: "Takuri (Dragonfly Doji with very long lower shadow)",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1978,11 +1978,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLTAKURI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdltasukigap() => new(
+    private static FuncInfo MakeCdltasukigap() => new(
         name: "CDLTASUKIGAP",
         group: FunctionGroup.PatternRecognition,
         hint: "Tasuki Gap",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -1998,11 +1998,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLTASUKIGAP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlthrusting() => new(
+    private static FuncInfo MakeCdlthrusting() => new(
         name: "CDLTHRUSTING",
         group: FunctionGroup.PatternRecognition,
         hint: "Thrusting Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -2018,11 +2018,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLTHRUSTING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdltristar() => new(
+    private static FuncInfo MakeCdltristar() => new(
         name: "CDLTRISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Tristar Pattern",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -2038,11 +2038,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLTRISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlunique3river() => new(
+    private static FuncInfo MakeCdlunique3river() => new(
         name: "CDLUNIQUE3RIVER",
         group: FunctionGroup.PatternRecognition,
         hint: "Unique 3 River",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -2058,11 +2058,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLUNIQUE3RIVER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlupsidegap2crows() => new(
+    private static FuncInfo MakeCdlupsidegap2crows() => new(
         name: "CDLUPSIDEGAP2CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Upside Gap Two Crows",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -2078,11 +2078,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLUPSIDEGAP2CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCdlxsidegap3methods() => new(
+    private static FuncInfo MakeCdlxsidegap3methods() => new(
         name: "CDLXSIDEGAP3METHODS",
         group: FunctionGroup.PatternRecognition,
         hint: "Upside/Downside Gap Three Methods",
-        flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
+        flags: FuncFlags.Stream | FuncFlags.Candlestick,
         unstableId: null,
         inputs:
         [
@@ -2098,11 +2098,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CDLXSIDEGAP3METHODS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
 
-    private static FunctionInfo MakeCeil() => new(
+    private static FuncInfo MakeCeil() => new(
         name: "CEIL",
         group: FunctionGroup.MathTransform,
         hint: "Vector Ceil",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2118,11 +2118,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CEIL(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCmf() => new(
+    private static FuncInfo MakeCmf() => new(
         name: "CMF",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin Money Flow",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2141,11 +2141,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CMF(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCmo() => new(
+    private static FuncInfo MakeCmo() => new(
         name: "CMO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Chande Momentum Oscillator",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.CMO,
         inputs:
         [
@@ -2164,11 +2164,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CMO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCmou() => new(
+    private static FuncInfo MakeCmou() => new(
         name: "CMOU",
         group: FunctionGroup.MomentumIndicators,
         hint: "Chande Momentum Oscillator (Unsmoothed)",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2187,11 +2187,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CMOU(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCoppock() => new(
+    private static FuncInfo MakeCoppock() => new(
         name: "COPPOCK",
         group: FunctionGroup.MomentumIndicators,
         hint: "Coppock Curve",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2212,11 +2212,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.COPPOCK(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakeCorrel() => new(
+    private static FuncInfo MakeCorrel() => new(
         name: "CORREL",
         group: FunctionGroup.StatisticFunctions,
         hint: "Pearson's Correlation Coefficient (r)",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2236,11 +2236,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CORREL(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCos() => new(
+    private static FuncInfo MakeCos() => new(
         name: "COS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cos",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2256,11 +2256,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.COS(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCosh() => new(
+    private static FuncInfo MakeCosh() => new(
         name: "COSH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cosh",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2276,11 +2276,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.COSH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCumsum() => new(
+    private static FuncInfo MakeCumsum() => new(
         name: "CUMSUM",
         group: FunctionGroup.MathOperators,
         hint: "Cumulative Sum",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -2296,11 +2296,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CUMSUM(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCvi() => new(
+    private static FuncInfo MakeCvi() => new(
         name: "CVI",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Chaikin's Volatility",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2320,11 +2320,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CVI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeDema() => new(
+    private static FuncInfo MakeDema() => new(
         name: "DEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Double Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -2343,11 +2343,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.DEMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeDiv() => new(
+    private static FuncInfo MakeDiv() => new(
         name: "DIV",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Div",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2364,11 +2364,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.DIV(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeDonchian() => new(
+    private static FuncInfo MakeDonchian() => new(
         name: "DONCHIAN",
         group: FunctionGroup.OverlapStudies,
         hint: "Donchian Channels",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2389,11 +2389,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.DONCHIAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeDpo() => new(
+    private static FuncInfo MakeDpo() => new(
         name: "DPO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Detrended Price Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2412,11 +2412,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.DPO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeDx() => new(
+    private static FuncInfo MakeDx() => new(
         name: "DX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Directional Movement Index",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.DX,
         inputs:
         [
@@ -2435,11 +2435,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.DX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeEfi() => new(
+    private static FuncInfo MakeEfi() => new(
         name: "EFI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Elder's Force Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2458,11 +2458,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.EFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeEma() => new(
+    private static FuncInfo MakeEma() => new(
         name: "EMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity,
         unstableId: FuncUnstId.EMA,
         inputs:
         [
@@ -2481,11 +2481,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.EMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeEr() => new(
+    private static FuncInfo MakeEr() => new(
         name: "ER",
         group: FunctionGroup.MomentumIndicators,
         hint: "Kaufman Efficiency Ratio",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2504,11 +2504,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ER(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeEri() => new(
+    private static FuncInfo MakeEri() => new(
         name: "ERI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Elder Ray Index (Bull Power / Bear Power)",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2528,11 +2528,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ERI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeExp() => new(
+    private static FuncInfo MakeExp() => new(
         name: "EXP",
         group: FunctionGroup.MathTransform,
         hint: "Vector Arithmetic Exp",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2548,11 +2548,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.EXP(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeFloor() => new(
+    private static FuncInfo MakeFloor() => new(
         name: "FLOOR",
         group: FunctionGroup.MathTransform,
         hint: "Vector Floor",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2568,11 +2568,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.FLOOR(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeFosc() => new(
+    private static FuncInfo MakeFosc() => new(
         name: "FOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Forecast Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2591,11 +2591,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.FOSC(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeFractal() => new(
+    private static FuncInfo MakeFractal() => new(
         name: "FRACTAL",
         group: FunctionGroup.MomentumIndicators,
         hint: "Williams Fractal",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2616,11 +2616,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.FRACTAL(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOut(0), c.IntOut(1)));
 
-    private static FunctionInfo MakeHa() => new(
+    private static FuncInfo MakeHa() => new(
         name: "HA",
         group: FunctionGroup.PriceTransform,
         hint: "Heikin-Ashi Candles",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HA,
         inputs:
         [
@@ -2639,11 +2639,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HA(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0), c.RealOut(1), c.RealOut(2), c.RealOut(3)));
 
-    private static FunctionInfo MakeHma() => new(
+    private static FuncInfo MakeHma() => new(
         name: "HMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Hull Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -2662,11 +2662,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeHtDcperiod() => new(
+    private static FuncInfo MakeHtDcperiod() => new(
         name: "HT_DCPERIOD",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Period",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_DCPERIOD,
         inputs:
         [
@@ -2682,11 +2682,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_DCPERIOD(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeHtDcphase() => new(
+    private static FuncInfo MakeHtDcphase() => new(
         name: "HT_DCPHASE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Phase",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_DCPHASE,
         inputs:
         [
@@ -2702,11 +2702,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_DCPHASE(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeHtPhasor() => new(
+    private static FuncInfo MakeHtPhasor() => new(
         name: "HT_PHASOR",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Phasor Components",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_PHASOR,
         inputs:
         [
@@ -2723,11 +2723,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_PHASOR(
                 startIdx, endIdx, c.Series(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeHtSine() => new(
+    private static FuncInfo MakeHtSine() => new(
         name: "HT_SINE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - SineWave",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_SINE,
         inputs:
         [
@@ -2744,11 +2744,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_SINE(
                 startIdx, endIdx, c.Series(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeHtTrendline() => new(
+    private static FuncInfo MakeHtTrendline() => new(
         name: "HT_TRENDLINE",
         group: FunctionGroup.OverlapStudies,
         hint: "Hilbert Transform - Instantaneous Trendline",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_TRENDLINE,
         inputs:
         [
@@ -2764,11 +2764,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_TRENDLINE(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeHtTrendmode() => new(
+    private static FuncInfo MakeHtTrendmode() => new(
         name: "HT_TRENDMODE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Trend vs Cycle Mode",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.HT_TRENDMODE,
         inputs:
         [
@@ -2784,11 +2784,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.HT_TRENDMODE(
                 startIdx, endIdx, c.Series(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeImi() => new(
+    private static FuncInfo MakeImi() => new(
         name: "IMI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Intraday Momentum Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2807,11 +2807,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.IMI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeKama() => new(
+    private static FuncInfo MakeKama() => new(
         name: "KAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Kaufman Adaptive Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity,
         unstableId: FuncUnstId.KAMA,
         inputs:
         [
@@ -2830,11 +2830,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.KAMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeKc() => new(
+    private static FuncInfo MakeKc() => new(
         name: "KC",
         group: FunctionGroup.OverlapStudies,
         hint: "Keltner Channels",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2857,11 +2857,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.KC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeKdj() => new(
+    private static FuncInfo MakeKdj() => new(
         name: "KDJ",
         group: FunctionGroup.MomentumIndicators,
         hint: "KDJ Stochastic",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2886,11 +2886,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.KDJ(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeLinearreg() => new(
+    private static FuncInfo MakeLinearreg() => new(
         name: "LINEARREG",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2909,11 +2909,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LINEARREG(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeLinearregAngle() => new(
+    private static FuncInfo MakeLinearregAngle() => new(
         name: "LINEARREG_ANGLE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Angle",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2932,11 +2932,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LINEARREG_ANGLE(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeLinearregIntercept() => new(
+    private static FuncInfo MakeLinearregIntercept() => new(
         name: "LINEARREG_INTERCEPT",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Intercept",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2955,11 +2955,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LINEARREG_INTERCEPT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeLinearregSlope() => new(
+    private static FuncInfo MakeLinearregSlope() => new(
         name: "LINEARREG_SLOPE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Slope",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2978,11 +2978,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LINEARREG_SLOPE(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeLn() => new(
+    private static FuncInfo MakeLn() => new(
         name: "LN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log Natural",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2998,11 +2998,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LN(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeLog10() => new(
+    private static FuncInfo MakeLog10() => new(
         name: "LOG10",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log10",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -3018,11 +3018,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.LOG10(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMa() => new(
+    private static FuncInfo MakeMa() => new(
         name: "MA",
         group: FunctionGroup.OverlapStudies,
         hint: "Moving average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -3042,11 +3042,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeMacd() => new(
+    private static FuncInfo MakeMacd() => new(
         name: "MACD",
         group: FunctionGroup.MomentumIndicators,
         hint: "Moving Average Convergence/Divergence",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3069,11 +3069,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MACD(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeMacdext() => new(
+    private static FuncInfo MakeMacdext() => new(
         name: "MACDEXT",
         group: FunctionGroup.MomentumIndicators,
         hint: "MACD with controllable MA type",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3099,11 +3099,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MACDEXT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeMacdfix() => new(
+    private static FuncInfo MakeMacdfix() => new(
         name: "MACDFIX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Moving Average Convergence/Divergence Fix 12/26",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3124,11 +3124,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MACDFIX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
-    private static FunctionInfo MakeMama() => new(
+    private static FuncInfo MakeMama() => new(
         name: "MAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "MESA Adaptive Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.MAMA,
         inputs:
         [
@@ -3149,11 +3149,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MAMA(
                 startIdx, endIdx, c.Series(0), c.RealOpt(0), c.RealOpt(1), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeMarketfi() => new(
+    private static FuncInfo MakeMarketfi() => new(
         name: "MARKETFI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Market Facilitation Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3169,11 +3169,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MARKETFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeMassi() => new(
+    private static FuncInfo MakeMassi() => new(
         name: "MASSI",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Mass Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3193,11 +3193,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MASSI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeMavp() => new(
+    private static FuncInfo MakeMavp() => new(
         name: "MAVP",
         group: FunctionGroup.OverlapStudies,
         hint: "Moving average with variable period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3219,11 +3219,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MAVP(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakeMax() => new(
+    private static FuncInfo MakeMax() => new(
         name: "MAX",
         group: FunctionGroup.MathOperators,
         hint: "Highest value over a specified period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3242,11 +3242,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MAX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMaxindex() => new(
+    private static FuncInfo MakeMaxindex() => new(
         name: "MAXINDEX",
         group: FunctionGroup.MathOperators,
         hint: "Index of highest value over a specified period",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3265,11 +3265,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MAXINDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeMedprice() => new(
+    private static FuncInfo MakeMedprice() => new(
         name: "MEDPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Median Price",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3285,11 +3285,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MEDPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOut(0)));
 
-    private static FunctionInfo MakeMfi() => new(
+    private static FuncInfo MakeMfi() => new(
         name: "MFI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Money Flow Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3308,11 +3308,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMidpoint() => new(
+    private static FuncInfo MakeMidpoint() => new(
         name: "MIDPOINT",
         group: FunctionGroup.OverlapStudies,
         hint: "MidPoint over period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3331,11 +3331,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MIDPOINT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMidprice() => new(
+    private static FuncInfo MakeMidprice() => new(
         name: "MIDPRICE",
         group: FunctionGroup.OverlapStudies,
         hint: "Midpoint Price over period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3354,11 +3354,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MIDPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMin() => new(
+    private static FuncInfo MakeMin() => new(
         name: "MIN",
         group: FunctionGroup.MathOperators,
         hint: "Lowest value over a specified period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3377,11 +3377,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MIN(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMinindex() => new(
+    private static FuncInfo MakeMinindex() => new(
         name: "MININDEX",
         group: FunctionGroup.MathOperators,
         hint: "Index of lowest value over a specified period",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3400,11 +3400,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MININDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOut(0)));
 
-    private static FunctionInfo MakeMinmax() => new(
+    private static FuncInfo MakeMinmax() => new(
         name: "MINMAX",
         group: FunctionGroup.MathOperators,
         hint: "Lowest and highest values over a specified period",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3424,11 +3424,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MINMAX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeMinmaxindex() => new(
+    private static FuncInfo MakeMinmaxindex() => new(
         name: "MINMAXINDEX",
         group: FunctionGroup.MathOperators,
         hint: "Indexes of lowest and highest values over a specified period",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3448,11 +3448,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MINMAXINDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOut(0), c.IntOut(1)));
 
-    private static FunctionInfo MakeMinusDi() => new(
+    private static FuncInfo MakeMinusDi() => new(
         name: "MINUS_DI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Minus Directional Indicator",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.MINUS_DI,
         inputs:
         [
@@ -3471,11 +3471,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MINUS_DI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMinusDm() => new(
+    private static FuncInfo MakeMinusDm() => new(
         name: "MINUS_DM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Minus Directional Movement",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.MINUS_DM,
         inputs:
         [
@@ -3494,11 +3494,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MINUS_DM(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMom() => new(
+    private static FuncInfo MakeMom() => new(
         name: "MOM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Momentum",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3517,11 +3517,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MOM(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeMult() => new(
+    private static FuncInfo MakeMult() => new(
         name: "MULT",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Mult",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3538,11 +3538,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MULT(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeNatr() => new(
+    private static FuncInfo MakeNatr() => new(
         name: "NATR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Normalized Average True Range",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.NATR,
         inputs:
         [
@@ -3561,11 +3561,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.NATR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeNvi() => new(
+    private static FuncInfo MakeNvi() => new(
         name: "NVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Negative Volume Index",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -3581,11 +3581,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.NVI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeObv() => new(
+    private static FuncInfo MakeObv() => new(
         name: "OBV",
         group: FunctionGroup.VolumeIndicators,
         hint: "On Balance Volume",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -3602,11 +3602,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.OBV(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakePercentile() => new(
+    private static FuncInfo MakePercentile() => new(
         name: "PERCENTILE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Percentile (nearest rank)",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3626,11 +3626,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PERCENTILE(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakePercentrank() => new(
+    private static FuncInfo MakePercentrank() => new(
         name: "PERCENTRANK",
         group: FunctionGroup.StatisticFunctions,
         hint: "Percent Rank",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3649,11 +3649,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PERCENTRANK(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakePlusDi() => new(
+    private static FuncInfo MakePlusDi() => new(
         name: "PLUS_DI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Plus Directional Indicator",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.PLUS_DI,
         inputs:
         [
@@ -3672,11 +3672,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PLUS_DI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakePlusDm() => new(
+    private static FuncInfo MakePlusDm() => new(
         name: "PLUS_DM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Plus Directional Movement",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.PLUS_DM,
         inputs:
         [
@@ -3695,11 +3695,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PLUS_DM(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakePpo() => new(
+    private static FuncInfo MakePpo() => new(
         name: "PPO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Percentage Price Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3720,11 +3720,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PPO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakePvi() => new(
+    private static FuncInfo MakePvi() => new(
         name: "PVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Positive Volume Index",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -3740,11 +3740,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PVI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakePvo() => new(
+    private static FuncInfo MakePvo() => new(
         name: "PVO",
         group: FunctionGroup.VolumeIndicators,
         hint: "Percentage Volume Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3765,11 +3765,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PVO(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakePvt() => new(
+    private static FuncInfo MakePvt() => new(
         name: "PVT",
         group: FunctionGroup.VolumeIndicators,
         hint: "Price Volume Trend",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -3785,11 +3785,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PVT(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeQstick() => new(
+    private static FuncInfo MakeQstick() => new(
         name: "QSTICK",
         group: FunctionGroup.MomentumIndicators,
         hint: "Qstick",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3808,11 +3808,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.QSTICK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRma() => new(
+    private static FuncInfo MakeRma() => new(
         name: "RMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Wilder's Smoothed Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity,
         unstableId: FuncUnstId.RMA,
         inputs:
         [
@@ -3831,11 +3831,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.RMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRoc() => new(
+    private static FuncInfo MakeRoc() => new(
         name: "ROC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change : ((price/prevPrice)-1)*100",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3854,11 +3854,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ROC(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRocp() => new(
+    private static FuncInfo MakeRocp() => new(
         name: "ROCP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change Percentage: (price-prevPrice)/prevPrice",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3877,11 +3877,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ROCP(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRocr() => new(
+    private static FuncInfo MakeRocr() => new(
         name: "ROCR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio: (price/prevPrice)",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3900,11 +3900,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ROCR(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRocr100() => new(
+    private static FuncInfo MakeRocr100() => new(
         name: "ROCR100",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio 100 scale: (price/prevPrice)*100",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -3923,11 +3923,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ROCR100(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRsi() => new(
+    private static FuncInfo MakeRsi() => new(
         name: "RSI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Relative Strength Index",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.RSI,
         inputs:
         [
@@ -3946,11 +3946,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.RSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeRvi() => new(
+    private static FuncInfo MakeRvi() => new(
         name: "RVI",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Relative Volatility Index",
-        flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FuncFlags.Stream | FuncFlags.UnstablePeriod,
         unstableId: FuncUnstId.RVI,
         inputs:
         [
@@ -3970,11 +3970,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.RVI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeRvol() => new(
+    private static FuncInfo MakeRvol() => new(
         name: "RVOL",
         group: FunctionGroup.VolumeIndicators,
         hint: "Relative Volume",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -3993,11 +3993,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.RVOL(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeSar() => new(
+    private static FuncInfo MakeSar() => new(
         name: "SAR",
         group: FunctionGroup.OverlapStudies,
         hint: "Parabolic SAR",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -4017,11 +4017,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeSarext() => new(
+    private static FuncInfo MakeSarext() => new(
         name: "SAREXT",
         group: FunctionGroup.OverlapStudies,
         hint: "Parabolic SAR - Extended",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -4047,11 +4047,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SAREXT(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), c.RealOut(0)));
 
-    private static FunctionInfo MakeSin() => new(
+    private static FuncInfo MakeSin() => new(
         name: "SIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sin",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4067,11 +4067,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SIN(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeSinh() => new(
+    private static FuncInfo MakeSinh() => new(
         name: "SINH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sinh",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4087,11 +4087,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SINH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeSma() => new(
+    private static FuncInfo MakeSma() => new(
         name: "SMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Simple Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4110,11 +4110,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeSmi() => new(
+    private static FuncInfo MakeSmi() => new(
         name: "SMI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic Momentum Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4137,11 +4137,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SMI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeSqrt() => new(
+    private static FuncInfo MakeSqrt() => new(
         name: "SQRT",
         group: FunctionGroup.MathTransform,
         hint: "Vector Square Root",
-        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -4157,11 +4157,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SQRT(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeStddev() => new(
+    private static FuncInfo MakeStddev() => new(
         name: "STDDEV",
         group: FunctionGroup.StatisticFunctions,
         hint: "Standard Deviation",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4181,11 +4181,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.STDDEV(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeStoch() => new(
+    private static FuncInfo MakeStoch() => new(
         name: "STOCH",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4209,11 +4209,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.STOCH(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeStochf() => new(
+    private static FuncInfo MakeStochf() => new(
         name: "STOCHF",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic Fast",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4235,11 +4235,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.STOCHF(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeStochrsi() => new(
+    private static FuncInfo MakeStochrsi() => new(
         name: "STOCHRSI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic Relative Strength Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4262,11 +4262,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.STOCHRSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeSub() => new(
+    private static FuncInfo MakeSub() => new(
         name: "SUB",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Subtraction",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4283,11 +4283,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SUB(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeSum() => new(
+    private static FuncInfo MakeSum() => new(
         name: "SUM",
         group: FunctionGroup.MathOperators,
         hint: "Summation",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4306,11 +4306,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SUM(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeSupertrend() => new(
+    private static FuncInfo MakeSupertrend() => new(
         name: "SUPERTREND",
         group: FunctionGroup.OverlapStudies,
         hint: "SuperTrend",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -4331,11 +4331,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.SUPERTREND(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.RealOut(0), c.IntOut(1)));
 
-    private static FunctionInfo MakeT3() => new(
+    private static FuncInfo MakeT3() => new(
         name: "T3",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average (T3)",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.UnstablePeriod | FuncFlags.Period1Identity,
         unstableId: FuncUnstId.T3,
         inputs:
         [
@@ -4355,11 +4355,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.T3(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeTan() => new(
+    private static FuncInfo MakeTan() => new(
         name: "TAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tan",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4375,11 +4375,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TAN(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTanh() => new(
+    private static FuncInfo MakeTanh() => new(
         name: "TANH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tanh",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4395,11 +4395,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TANH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTema() => new(
+    private static FuncInfo MakeTema() => new(
         name: "TEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4418,11 +4418,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TEMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTrange() => new(
+    private static FuncInfo MakeTrange() => new(
         name: "TRANGE",
         group: FunctionGroup.VolatilityIndicators,
         hint: "True Range",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4438,11 +4438,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TRANGE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeTrima() => new(
+    private static FuncInfo MakeTrima() => new(
         name: "TRIMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triangular Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4461,11 +4461,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TRIMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTrix() => new(
+    private static FuncInfo MakeTrix() => new(
         name: "TRIX",
         group: FunctionGroup.MomentumIndicators,
         hint: "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4484,11 +4484,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TRIX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTsf() => new(
+    private static FuncInfo MakeTsf() => new(
         name: "TSF",
         group: FunctionGroup.StatisticFunctions,
         hint: "Time Series Forecast",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4507,11 +4507,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TSF(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeTsi() => new(
+    private static FuncInfo MakeTsi() => new(
         name: "TSI",
         group: FunctionGroup.MomentumIndicators,
         hint: "True Strength Index",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4531,11 +4531,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeTypprice() => new(
+    private static FuncInfo MakeTypprice() => new(
         name: "TYPPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Typical Price",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4551,11 +4551,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.TYPPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeUltosc() => new(
+    private static FuncInfo MakeUltosc() => new(
         name: "ULTOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Ultimate Oscillator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4576,11 +4576,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.ULTOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
 
-    private static FunctionInfo MakeVar() => new(
+    private static FuncInfo MakeVar() => new(
         name: "VAR",
         group: FunctionGroup.StatisticFunctions,
         hint: "Variance",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4600,11 +4600,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.VAR(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
 
-    private static FunctionInfo MakeVhf() => new(
+    private static FuncInfo MakeVhf() => new(
         name: "VHF",
         group: FunctionGroup.MomentumIndicators,
         hint: "Vertical Horizontal Filter",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4623,11 +4623,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.VHF(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeVortex() => new(
+    private static FuncInfo MakeVortex() => new(
         name: "VORTEX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Vortex Indicator",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4647,11 +4647,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.VORTEX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
-    private static FunctionInfo MakeVwap() => new(
+    private static FuncInfo MakeVwap() => new(
         name: "VWAP",
         group: FunctionGroup.VolumeIndicators,
         hint: "Volume Weighted Average Price",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -4667,11 +4667,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.VWAP(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeVwma() => new(
+    private static FuncInfo MakeVwma() => new(
         name: "VWMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Volume Weighted Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.NanInfOutput | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.NanInfOutput | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4691,11 +4691,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.VWMA(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeWad() => new(
+    private static FuncInfo MakeWad() => new(
         name: "WAD",
         group: FunctionGroup.MomentumIndicators,
         hint: "Williams' Accumulation/Distribution",
-        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        flags: FuncFlags.Stream | FuncFlags.PathDependent,
         unstableId: null,
         inputs:
         [
@@ -4711,11 +4711,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.WAD(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeWclprice() => new(
+    private static FuncInfo MakeWclprice() => new(
         name: "WCLPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Weighted Close Price",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4731,11 +4731,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.WCLPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOut(0)));
 
-    private static FunctionInfo MakeWillr() => new(
+    private static FuncInfo MakeWillr() => new(
         name: "WILLR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Williams' %R",
-        flags: FunctionFlags.Stream,
+        flags: FuncFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -4754,11 +4754,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.WILLR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeWma() => new(
+    private static FuncInfo MakeWma() => new(
         name: "WMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Weighted Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4777,11 +4777,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.WMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeZlema() => new(
+    private static FuncInfo MakeZlema() => new(
         name: "ZLEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Zero-Lag Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        flags: FuncFlags.Overlap | FuncFlags.Stream | FuncFlags.Period1Identity,
         unstableId: null,
         inputs:
         [

@@ -48,7 +48,7 @@
 
 package io.github.talib;
 
-import io.github.talib.metadata.FunctionInfo;
+import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
 import io.github.talib.metadata.InputFlags;
 import io.github.talib.metadata.InputInfo;
@@ -204,7 +204,7 @@ public class NoPhantomIoTest {
         final String name;
         final Method core;
         final Method lookback;
-        final FunctionInfo info;
+        final FuncInfo info;
         /** The settings this signature's lookbacks and calls are resolved against. */
         final Core on;
         /** Parameter index of each input array, in call order. */
@@ -220,7 +220,7 @@ public class NoPhantomIoTest {
         /** The parameter vectors to probe at; see {@link #vectors}. Never empty. */
         List<Vector> vectors;
 
-        Sig(String name, Method core, Method lookback, FunctionInfo info, Core on) {
+        Sig(String name, Method core, Method lookback, FuncInfo info, Core on) {
             this.name = name;
             this.core = core;
             this.lookback = lookback;
@@ -258,7 +258,7 @@ public class NoPhantomIoTest {
      * {@code inPriceHLC} is three. The order is C's, low bit first, which is the
      * order {@code ta_abstract} and every backend emit them in.
      */
-    private static String[] legNames(FunctionInfo info) {
+    private static String[] legNames(FuncInfo info) {
         List<String> legs = new ArrayList<>();
         for (InputInfo in : info.inputs()) {
             if (in.type() != InputType.PRICE) {
@@ -314,7 +314,7 @@ public class NoPhantomIoTest {
             String name = e.getKey();
             Method lb = lookbacks.get(name);
             check(lb != null, name + " has a lookback method");
-            FunctionInfo info = Functions.byName(name);
+            FuncInfo info = Functions.byName(name);
             check(info != null, name + " has a metadata row");
             if (lb == null || info == null) {
                 continue;
@@ -943,7 +943,7 @@ public class NoPhantomIoTest {
         // Checked before the sweep so an empty discovery cannot pass.
         java.util.Set<String> streamingCores = new TreeSet<>();
         for (String name : cores.keySet()) {
-            FunctionInfo sInfo = Functions.byName(name);
+            FuncInfo sInfo = Functions.byName(name);
             if (sInfo != null && sInfo.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
                 streamingCores.add(name);
             }
@@ -1249,7 +1249,7 @@ public class NoPhantomIoTest {
             // from. A new indicator lands in both or in neither; if it lands in one,
             // this is red.
             List<String> registry = new ArrayList<>();
-            for (FunctionInfo f : Functions.all()) {
+            for (FuncInfo f : Functions.all()) {
                 registry.add(f.name());
             }
             java.util.Collections.sort(registry);

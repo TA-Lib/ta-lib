@@ -119,7 +119,7 @@ key on rather than a name list.
 A cross-call inside a body calls the callee's *public* tier, in all four
 backends, and lets its rejection surface: a throw in Java and C#, an
 `Err(RetCode)` in Rust, a returned code in C. The callers that need a code back
-convert it themselves: the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`
+convert it themselves: the JSON-RPC servers, and C#'s `ParamHolder.TryCall`
 (whose conversion is the direct path's too — its thunk calls the function's own
 public overload, like C's frames and Java's `Dispatch`).
 

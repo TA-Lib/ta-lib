@@ -154,26 +154,26 @@ Computing wholly in place is allowed and stays supported — passing the same bu
 ```csharp
 using TALib.Metadata;
 
-foreach (var f in Core.Functions.Where(f => f.Flags.HasFlag(FunctionFlags.Candlestick)))
+foreach (var f in Core.Functions.Where(f => f.Flags.HasFlag(FuncFlags.Candlestick)))
 {
     Console.WriteLine($"{f.Name}: {f.Hint}");
 }
 ```
 
-`Core.Functions` (an alias for `FunctionCatalog.Default`) implements `IReadOnlyList<FunctionInfo>`, so it is directly enumerable and LINQ-able, and is indexable by position or by name (`Core.Functions["SMA"]`). The name is matched with `StringComparer.OrdinalIgnoreCase`, so `"SMA"`, `"sma"` and `"Sma"` all resolve to the same function; `FunctionInfo.Name` stays the canonical `"SMA"`. Streamable functions carry `FunctionFlags.Stream`.
+`Core.Functions` (an alias for `FunctionCatalog.Default`) implements `IReadOnlyList<FuncInfo>`, so it is directly enumerable and LINQ-able, and is indexable by position or by name (`Core.Functions["SMA"]`). The name is matched with `StringComparer.OrdinalIgnoreCase`, so `"SMA"`, `"sma"` and `"Sma"` all resolve to the same function; `FuncInfo.Name` stays the canonical `"SMA"`. Streamable functions carry `FuncFlags.Stream`.
 
-Binding arguments at run time goes through a `FunctionCall`, obtained from `FunctionInfo.CreateCall()`:
+Binding arguments at run time goes through a `ParamHolder`, obtained from `FuncInfo.CreateCall()`:
 
 ```csharp
 var f = Core.Functions["SMA"];
 var range = f.CreateCall()
     .SetInput(0, close)
-    .SetOption(0, 30)
+    .SetOptInput(0, 30)
     .SetOutput(0, outReal)
     .Invoke(0, close.Length - 1);
 ```
 
-An index out of range, a type that does not match the declared parameter, or an unbound input or output at call time throws `ArgumentException`. Optional parameters left unbound take their documented defaults. A `FunctionCall` is not thread-safe: confine one to one thread, or build one per call. The `FunctionCatalog` it comes from is immutable and shared freely.
+An index out of range, a type that does not match the declared parameter, or an unbound input or output at call time throws `ArgumentException`. Optional parameters left unbound take their documented defaults. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call. The `FunctionCatalog` it comes from is immutable and shared freely.
 
 ### 4.2 Numerical Stability {#numerical_stability}
 

@@ -142,4 +142,4 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Discovering streamable functions
 
-When driving TA-Lib through the [abstraction layer](/api/java/#abstract), streamable functions carry the `FuncFlags.STREAMING` bit in `FunctionInfo#flags()`.
+When driving TA-Lib through the [abstraction layer](/api/java/#abstract), streamable functions carry the `FuncFlags.STREAMING` bit in `FuncInfo#flags()`.

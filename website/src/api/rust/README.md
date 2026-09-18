@@ -206,7 +206,7 @@ let mut out = vec![0.0; close.len()];
 
 let mut call = id.new_call(&core);
 call.set_input(0, &close)?;          // set_price_input / set_int_input also exist
-call.set_opt(0, 30)?;                // takes i32 or f64
+call.set_opt_input(0, 30)?;                // takes i32 or f64
 call.set_output(0, &mut out)?;
 
 let range = call.call(0, close.len() - 1)?;

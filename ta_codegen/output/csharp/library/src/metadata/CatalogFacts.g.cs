@@ -64,7 +64,7 @@ internal static class CatalogFacts
     internal const int DeadFlagCount = 13;
     internal static readonly string[] DeadFlags =
     [
-        "FunctionFlags.VolumeUsed",
+        "FuncFlags.VolumeUsed",
         "PriceComponents.OpenInterest",
         "OptInputFlags.IsDegree",
         "OptInputFlags.IsCurrency",

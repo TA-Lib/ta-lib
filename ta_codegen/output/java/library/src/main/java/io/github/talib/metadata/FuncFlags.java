@@ -39,7 +39,7 @@
 package io.github.talib.metadata;
 
 /**
- * Bit flags on a {@link FunctionInfo}. Values match C's {@code TA_FUNC_FLG_*}.
+ * Bit flags on a {@link FuncInfo}. Values match C's {@code TA_FUNC_FLG_*}.
  */
 public final class FuncFlags {
 
