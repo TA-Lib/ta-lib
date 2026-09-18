@@ -325,7 +325,6 @@ impl Core {
     #[doc(alias = "PercentileNearestRank")]
     #[doc(alias = "RollingPercentile")]
     #[doc(alias = "RollingQuantile")]
-    #[doc(alias = "RollingMedian")]
     pub fn percentile(
         &self,
         startIdx: usize,

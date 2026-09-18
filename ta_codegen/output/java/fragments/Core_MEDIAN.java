@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MEDIAN} consumes before it can
+    * Number of leading input bars {@link Core#median} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *        30; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MEDIAN_Lookback( int optInTimePeriod )
+   public int medianLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -32,13 +32,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MEDIAN_Impl( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode medianImpl( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double newValue = 0;
       double oldValue = 0;
@@ -60,15 +60,15 @@
       int sorted_Idx = 0;
       int maxIdx_sorted = (30)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* The window is carried twice: "ring" by age, "sorted" by value. Both are
        * hand-written here as they are in percentile.c, which is the precedent for
@@ -81,13 +81,13 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ring = new double[optInTimePeriod];
       maxIdx_ring = (optInTimePeriod)-1;
       ring_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
@@ -201,15 +201,15 @@
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
-   RetCode MEDIAN_Impl( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode medianImpl( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double newValue = 0;
       double oldValue = 0;
@@ -231,15 +231,15 @@
       int sorted_Idx = 0;
       int maxIdx_sorted = (30)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
@@ -248,13 +248,13 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ring = new double[optInTimePeriod];
       maxIdx_ring = (optInTimePeriod)-1;
       ring_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
@@ -326,7 +326,7 @@
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * The middle order statistic of the trailing window: the central value when
@@ -351,7 +351,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MEDIAN_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#medianLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -375,26 +375,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#PERCENTILE
-    * @see Core#SMA
-    * @see Core#MEDPRICE
+    * @see Core#percentile
+    * @see Core#sma
+    * @see Core#medprice
     */
-   public OutRange MEDIAN( int startIdx,
+   public OutRange median( int startIdx,
                            int endIdx,
                            double inReal[],
                            int optInTimePeriod,
                            double outReal[] )
    {
       requireIndexRange("MEDIAN", startIdx, endIdx);
-      int guardStart = clampedStart("MEDIAN", startIdx, MEDIAN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MEDIAN", startIdx, medianLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDIAN", "inReal", inReal, guardInLen);
       requireLength("MEDIAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDIAN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      RetCode retCode = medianImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MEDIAN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -425,7 +425,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MEDIAN_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#medianLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -449,26 +449,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#PERCENTILE
-    * @see Core#SMA
-    * @see Core#MEDPRICE
+    * @see Core#percentile
+    * @see Core#sma
+    * @see Core#medprice
     */
-   public OutRange MEDIAN( int startIdx,
+   public OutRange median( int startIdx,
                            int endIdx,
                            float inReal[],
                            int optInTimePeriod,
                            double outReal[] )
    {
       requireIndexRange("MEDIAN", startIdx, endIdx);
-      int guardStart = clampedStart("MEDIAN", startIdx, MEDIAN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MEDIAN", startIdx, medianLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDIAN", "inReal", inReal, guardInLen);
       requireLength("MEDIAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDIAN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      RetCode retCode = medianImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MEDIAN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -477,7 +477,7 @@
 
    /**
     * A live MEDIAN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MEDIAN} over the same series.
+    * closed bar, bit-identical to {@link Core#median} over the same series.
     * Open with {@link Core#medianOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -512,7 +512,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MEDIAN} reports over the same bars: the
+       * <p>It is what {@link Core#median} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -539,7 +539,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MEDIAN advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MEDIAN advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -582,9 +582,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MEDIAN update", RetCode.OutOfRangeEndIndex);
+            throw failure("MEDIAN update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MEDIAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDIAN update: BAD_PARAM", RetCode.BAD_PARAM);
          core.medianStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -602,7 +602,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MEDIAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDIAN peek: BAD_PARAM", RetCode.BAD_PARAM);
          MedianStream sp = this;
          double newValue = 0.0;
          double result = 0.0;
@@ -792,20 +792,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* The window is carried twice: "ring" by age, "sorted" by value. Both are
        * hand-written here as they are in percentile.c, which is the precedent for
@@ -818,13 +818,13 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ring = new double[optInTimePeriod];
       maxIdx_ring = (optInTimePeriod)-1;
       ring_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
@@ -941,11 +941,11 @@
       /* Capture the live batch state into the handle. */
       int capCb_ring = maxIdx_ring + 1;
       if( capCb_ring > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int capCb_sorted = maxIdx_sorted + 1;
       if( capCb_sorted > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.lookbackTotal = lookbackTotal;
@@ -960,7 +960,7 @@
       sp.cbSize_sorted = capCb_sorted;
       sp.cb_sorted = sorted;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* medianOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MedianStream medianOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -969,16 +969,16 @@
       RetCode retCode = medianOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MEDIAN openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDIAN openAndFill: internal error", retCode);
+      if( retCode == RetCode.INTERNAL_ERROR ) {
+         throw new TALibStateException("MEDIAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDIAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MEDIAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind medianOpen (composition seam). */
    MedianStream medianOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -990,22 +990,22 @@
       RetCode retCode = medianOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MEDIAN open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDIAN open: internal error", retCode);
+      if( retCode == RetCode.INTERNAL_ERROR ) {
+         throw new TALibStateException("MEDIAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDIAN open: " + retCode, retCode);
+      throw new TALibArgumentException("MEDIAN open: " + retCode, retCode);
    }
    /**
     * Open a live MEDIAN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MEDIAN} at that bar.
-    * <p>The history must hold at least {@code MEDIAN_Lookback(...) + 1} bars
+    * to {@link Core#median} at that bar.
+    * <p>The history must hold at least {@code medianLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1022,7 +1022,7 @@
    }
    /**
     * {@link Core#medianOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MEDIAN} over the whole history in the same single pass
+    * to {@link Core#median} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1035,10 +1035,10 @@
    {
       requireArgument("MEDIAN openAndFill", "inReal", inReal);
       requireHistory("MEDIAN openAndFill", inReal.length);
-      int guardOutLen = openFillCount("MEDIAN openAndFill", inReal.length, MEDIAN_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MEDIAN openAndFill", inReal.length, medianLookback(optInTimePeriod));
       requireLength("MEDIAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MEDIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MEDIAN openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

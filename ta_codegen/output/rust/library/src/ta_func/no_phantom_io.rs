@@ -12272,13 +12272,13 @@ const V_MEDIAN: &[(&str, i32)] = &[
 fn sub_MEDIAN(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_MEDIAN {
-        let Ok(lb) = core.MEDIAN_Lookback(optInTimePeriod) else { continue; };
+        let Ok(lb) = core.median_lookback(optInTimePeriod) else { continue; };
         r.control("MEDIAN", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.MEDIAN_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.median_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("MEDIAN", label); continue; }
@@ -12287,7 +12287,7 @@ fn sub_MEDIAN(r: &mut Report) {
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.MEDIAN_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.median_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -12296,7 +12296,7 @@ fn sub_MEDIAN(r: &mut Report) {
 fn legs_MEDIAN(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let Ok(lb) = core.MEDIAN_Lookback(optInTimePeriod) else { r.no_legs("MEDIAN"); return; };
+    let Ok(lb) = core.median_lookback(optInTimePeriod) else { r.no_legs("MEDIAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = series("real", endIdx + 1);
@@ -12304,7 +12304,7 @@ fn legs_MEDIAN(r: &mut Report) {
         r.legs_control("MEDIAN", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.MEDIAN_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.median_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -12314,7 +12314,7 @@ fn legs_MEDIAN(r: &mut Report) {
         r.leg("MEDIAN", "inReal", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.MEDIAN_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.median_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }

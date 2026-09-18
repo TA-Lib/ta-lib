@@ -909,7 +909,7 @@ internal static class NoPhantomIoBinder
         },
         ["MEDIAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MEDIAN_Impl(
+            RetCode rc = core.MedianImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },

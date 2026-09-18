@@ -254,6 +254,7 @@ public final class Functions {
       put(m, f_MAVP());
       put(m, f_MAX());
       put(m, f_MAXINDEX());
+      put(m, f_MEDIAN());
       put(m, f_MEDPRICE());
       put(m, f_MFI());
       put(m, f_MIDPOINT());
@@ -2454,6 +2455,24 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_MEDIAN() {
+      return new FuncInfo(
+         "MEDIAN", "Statistic Functions", "Rolling Median", 0x03000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the window", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 
