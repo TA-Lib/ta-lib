@@ -265,7 +265,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COS update: BadParam", RetCode.BadParam);
          core.cosStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -283,7 +283,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COS peek: BadParam", RetCode.BadParam);
          CosStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cos(inReal);
@@ -360,9 +360,9 @@
          throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS openAndFill: internal error", retCode);
+         throw new TALibStateException("COS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cosOpen (composition seam). */
    CosStream cosOpenInternal( double inReal[], int startIdx )
@@ -381,9 +381,9 @@
          throw new InsufficientHistoryException("COS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS open: internal error", retCode);
+         throw new TALibStateException("COS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COS open: " + retCode, retCode);
+      throw new TALibArgumentException("COS open: " + retCode, retCode);
    }
    /**
     * Open a live COS stream over the warm-up history; the handle's
@@ -420,7 +420,7 @@
       int guardOutLen = openFillCount("COS openAndFill", inReal.length, COS_Lookback());
       requireLength("COS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

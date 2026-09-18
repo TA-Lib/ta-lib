@@ -856,7 +856,7 @@
             throw failure("BBANDS update", RetCode.OutOfRangeEndIndex);
          requireArgument("BBANDS update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
          core.bbandsStepImpl(this, inReal);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -877,7 +877,7 @@
       public void peek( double inReal, BbandsOut out ) {
          requireArgument("BBANDS peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
          BbandsStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -1134,9 +1134,9 @@
          throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BBANDS openAndFill: internal error", retCode);
+         throw new TALibStateException("BBANDS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BBANDS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BBANDS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind bbandsOpen (composition seam). */
    BbandsStream bbandsOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -1157,9 +1157,9 @@
          throw new InsufficientHistoryException("BBANDS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BBANDS open: internal error", retCode);
+         throw new TALibStateException("BBANDS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BBANDS open: " + retCode, retCode);
+      throw new TALibArgumentException("BBANDS open: " + retCode, retCode);
    }
    /**
     * Open a live BBANDS stream over the warm-up history; the handle's
@@ -1203,7 +1203,7 @@
       requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

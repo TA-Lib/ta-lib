@@ -930,7 +930,7 @@
             throw failure("SMI update", RetCode.OutOfRangeEndIndex);
          requireArgument("SMI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMI update: BadParam", RetCode.BadParam);
          core.smiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.smi = this.cur_outSMI;
@@ -950,7 +950,7 @@
       public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
          requireArgument("SMI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMI peek: BadParam", RetCode.BadParam);
          SmiStream sp = this;
          double tmp = 0.0;
          double num = 0.0;
@@ -1514,9 +1514,9 @@
          throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI openAndFill: internal error", retCode);
+         throw new TALibStateException("SMI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SMI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind smiOpen (composition seam). */
    SmiStream smiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1536,9 +1536,9 @@
          throw new InsufficientHistoryException("SMI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI open: internal error", retCode);
+         throw new TALibStateException("SMI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMI open: " + retCode, retCode);
+      throw new TALibArgumentException("SMI open: " + retCode, retCode);
    }
    /**
     * Open a live SMI stream over the warm-up history; the handle's
@@ -1586,7 +1586,7 @@
       requireLength("SMI openAndFill", "outSMI", outSMI, guardOutLen);
       requireLength("SMI openAndFill", "outSMISignal", outSMISignal, guardOutLen);
       if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
-         throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

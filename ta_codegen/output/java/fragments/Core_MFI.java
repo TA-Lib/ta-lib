@@ -611,7 +611,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI update: BadParam", RetCode.BadParam);
          core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -629,7 +629,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI peek: BadParam", RetCode.BadParam);
          MfiStream sp = this;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
@@ -960,9 +960,9 @@
          throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MFI openAndFill: internal error", retCode);
+         throw new TALibStateException("MFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind mfiOpen (composition seam). */
    MfiStream mfiOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -981,9 +981,9 @@
          throw new InsufficientHistoryException("MFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MFI open: internal error", retCode);
+         throw new TALibStateException("MFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MFI open: " + retCode, retCode);
+      throw new TALibArgumentException("MFI open: " + retCode, retCode);
    }
    /**
     * Open a live MFI stream over the warm-up history; the handle's
@@ -1034,7 +1034,7 @@
       requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

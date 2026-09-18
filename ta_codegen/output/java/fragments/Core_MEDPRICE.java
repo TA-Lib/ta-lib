@@ -287,7 +287,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MEDPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
          core.medpriceStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -305,7 +305,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
          MedpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow) / 2.0;
@@ -392,9 +392,9 @@
          throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("MEDPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind medpriceOpen (composition seam). */
    MedpriceStream medpriceOpenInternal( double inHigh[], double inLow[], int startIdx )
@@ -413,9 +413,9 @@
          throw new InsufficientHistoryException("MEDPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE open: internal error", retCode);
+         throw new TALibStateException("MEDPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("MEDPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live MEDPRICE stream over the warm-up history; the handle's
@@ -456,7 +456,7 @@
       requireHistoryLength("MEDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MEDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1127,7 +1127,7 @@
             throw failure("MAMA update", RetCode.OutOfRangeEndIndex);
          requireArgument("MAMA update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          core.mamaStepImpl(this, inReal);
          this.outRangeCount++;
          out.mama = this.cur_outMAMA;
@@ -1147,7 +1147,7 @@
       public void peek( double inReal, MamaOut out ) {
          requireArgument("MAMA peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
          MamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -2017,9 +2017,9 @@
          throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
+         throw new TALibStateException("MAMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind mamaOpen (composition seam). */
    MamaStream mamaOpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
@@ -2039,9 +2039,9 @@
          throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA open: internal error", retCode);
+         throw new TALibStateException("MAMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAMA open: " + retCode, retCode);
+      throw new TALibArgumentException("MAMA open: " + retCode, retCode);
    }
    /**
     * Open a live MAMA stream over the warm-up history; the handle's
@@ -2083,7 +2083,7 @@
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
       if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
-         throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

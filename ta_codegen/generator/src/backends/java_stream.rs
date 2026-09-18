@@ -929,7 +929,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let conds: Vec<String> = bars.iter().map(|b| format!("!Double.isFinite({b})")).collect();
     let cond = conds.join(" || ");
     let throw =
-        format!("throw new TaLibArgumentException(\"{n} {what}: BadParam\", RetCode.BadParam);");
+        format!("throw new TALibArgumentException(\"{n} {what}: BadParam\", RetCode.BadParam);");
     format!("{indent}if( {cond} )\n{indent}   {throw}\n")
 }
 
@@ -2320,12 +2320,12 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.InternalError ) {{");
-    let _ = writeln!(o, "         throw new TaLibStateException(\"{n} {what}: internal error\", retCode);");
+    let _ = writeln!(o, "         throw new TALibStateException(\"{n} {what}: internal error\", retCode);");
     let _ = writeln!(o, "      }}");
     // Carrying, like every other failure the library raises: the code has to be
     // recoverable from the thrown object on THIS ladder too, or "total" is a
     // claim about the batch tier wearing the name of the whole library (#236).
-    let _ = writeln!(o, "      throw new TaLibArgumentException(\"{n} {what}: \" + retCode, retCode);");
+    let _ = writeln!(o, "      throw new TALibArgumentException(\"{n} {what}: \" + retCode, retCode);");
 }
 
 /// `<base>OpenInternal`: the `startIdx`-anchored plain open, package-private.
@@ -2684,7 +2684,7 @@ fn emit_open_wrappers(
             let _ = writeln!(o, "      if( {cond} ) {{");
             let _ = writeln!(
                 o,
-                "         throw new TaLibArgumentException(\"{n} openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"
+                "         throw new TALibArgumentException(\"{n} openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"
             );
             let _ = writeln!(o, "      }}");
         }

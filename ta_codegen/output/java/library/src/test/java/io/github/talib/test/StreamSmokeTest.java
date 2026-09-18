@@ -746,15 +746,15 @@ public class StreamSmokeTest {
     }
 
     /* The code as well as the type: {@code failure} maps BOTH index codes to
-     * {@link io.github.talib.TaLibIndexException}, so a type test alone would
+     * {@link io.github.talib.TALibIndexException}, so a type test alone would
      * accept U4 answering rule S1's code. */
     private static boolean refusesPastTheCeiling(Runnable r) {
         try {
             r.run();
             return false;
         } catch (IndexOutOfBoundsException e) {
-            return e instanceof io.github.talib.TaLibFailure
-                && ((io.github.talib.TaLibFailure) e).retCode() == RetCode.OutOfRangeEndIndex;
+            return e instanceof io.github.talib.TALibFailure
+                && ((io.github.talib.TALibFailure) e).retCode() == RetCode.OutOfRangeEndIndex;
         }
     }
 

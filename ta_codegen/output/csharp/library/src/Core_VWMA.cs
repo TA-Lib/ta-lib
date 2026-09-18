@@ -852,9 +852,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public VwmaStream VwmaOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWMA open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VWMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("VWMA open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("VWMA", "open", "inVolume", inVolume.Length, inReal.Length);
       return VwmaOpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
@@ -890,9 +890,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public VwmaStream VwmaOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("VWMA openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VWMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("VWMA openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("VWMA", "openAndFill", inReal.Length, VWMA_Lookback(optInTimePeriod));
       RequireHistoryLength("VWMA", "openAndFill", "inVolume", inVolume.Length, inReal.Length);
       RequireFillLength("VWMA", "openAndFill", "outReal", outReal.Length, guardOutLen);

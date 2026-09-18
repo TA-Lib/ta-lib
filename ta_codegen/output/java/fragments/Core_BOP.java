@@ -310,7 +310,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("BOP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BOP update: BadParam", RetCode.BadParam);
          core.bopStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -328,7 +328,7 @@
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BOP peek: BadParam", RetCode.BadParam);
          BopStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -446,9 +446,9 @@
          throw new InsufficientHistoryException("BOP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BOP openAndFill: internal error", retCode);
+         throw new TALibStateException("BOP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BOP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BOP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind bopOpen (composition seam). */
    BopStream bopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -467,9 +467,9 @@
          throw new InsufficientHistoryException("BOP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BOP open: internal error", retCode);
+         throw new TALibStateException("BOP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BOP open: " + retCode, retCode);
+      throw new TALibArgumentException("BOP open: " + retCode, retCode);
    }
    /**
     * Open a live BOP stream over the warm-up history; the handle's
@@ -518,7 +518,7 @@
       requireHistoryLength("BOP openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("BOP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

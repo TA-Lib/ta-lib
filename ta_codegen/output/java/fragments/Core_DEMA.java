@@ -490,7 +490,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DEMA update: BadParam", RetCode.BadParam);
          core.demaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -508,7 +508,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
          DemaStream sp = this;
          double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
@@ -732,9 +732,9 @@
          throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("DEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind demaOpen (composition seam). */
    DemaStream demaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -753,9 +753,9 @@
          throw new InsufficientHistoryException("DEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DEMA open: internal error", retCode);
+         throw new TALibStateException("DEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("DEMA open: " + retCode, retCode);
    }
    /**
     * Open a live DEMA stream over the warm-up history; the handle's
@@ -794,7 +794,7 @@
       int guardOutLen = openFillCount("DEMA openAndFill", inReal.length, DEMA_Lookback(optInTimePeriod));
       requireLength("DEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

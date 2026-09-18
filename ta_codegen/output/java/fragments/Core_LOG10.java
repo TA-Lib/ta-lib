@@ -269,7 +269,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LOG10 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
          core.log10StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -287,7 +287,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
          Log10Stream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log10(inReal);
@@ -364,9 +364,9 @@
          throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
+         throw new TALibStateException("LOG10 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LOG10 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind log10Open (composition seam). */
    Log10Stream log10OpenInternal( double inReal[], int startIdx )
@@ -385,9 +385,9 @@
          throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 open: internal error", retCode);
+         throw new TALibStateException("LOG10 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LOG10 open: " + retCode, retCode);
+      throw new TALibArgumentException("LOG10 open: " + retCode, retCode);
    }
    /**
     * Open a live LOG10 stream over the warm-up history; the handle's
@@ -424,7 +424,7 @@
       int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
       requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

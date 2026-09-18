@@ -271,7 +271,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LN update: BadParam", RetCode.BadParam);
          core.lnStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -289,7 +289,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LN peek: BadParam", RetCode.BadParam);
          LnStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log(inReal);
@@ -366,9 +366,9 @@
          throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN openAndFill: internal error", retCode);
+         throw new TALibStateException("LN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind lnOpen (composition seam). */
    LnStream lnOpenInternal( double inReal[], int startIdx )
@@ -387,9 +387,9 @@
          throw new InsufficientHistoryException("LN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN open: internal error", retCode);
+         throw new TALibStateException("LN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LN open: " + retCode, retCode);
+      throw new TALibArgumentException("LN open: " + retCode, retCode);
    }
    /**
     * Open a live LN stream over the warm-up history; the handle's
@@ -426,7 +426,7 @@
       int guardOutLen = openFillCount("LN openAndFill", inReal.length, LN_Lookback());
       requireLength("LN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

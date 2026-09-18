@@ -405,7 +405,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WAD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WAD update: BadParam", RetCode.BadParam);
          core.wadStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -423,7 +423,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WAD peek: BadParam", RetCode.BadParam);
          WadStream sp = this;
          double close = 0.0;
          double trueExtreme = 0.0;
@@ -600,9 +600,9 @@
          throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WAD openAndFill: internal error", retCode);
+         throw new TALibStateException("WAD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WAD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wadOpen (composition seam). */
    WadStream wadOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -621,9 +621,9 @@
          throw new InsufficientHistoryException("WAD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WAD open: internal error", retCode);
+         throw new TALibStateException("WAD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WAD open: " + retCode, retCode);
+      throw new TALibArgumentException("WAD open: " + retCode, retCode);
    }
    /**
     * Open a live WAD stream over the warm-up history; the handle's
@@ -668,7 +668,7 @@
       requireHistoryLength("WAD openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WAD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

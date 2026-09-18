@@ -368,7 +368,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MOM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MOM update: BadParam", RetCode.BadParam);
          core.momStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -386,7 +386,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MOM peek: BadParam", RetCode.BadParam);
          MomStream sp = this;
          double cur_outReal = 0.0;
          int pkSlot0 = -1;
@@ -545,9 +545,9 @@
          throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MOM openAndFill: internal error", retCode);
+         throw new TALibStateException("MOM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MOM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind momOpen (composition seam). */
    MomStream momOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -566,9 +566,9 @@
          throw new InsufficientHistoryException("MOM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MOM open: internal error", retCode);
+         throw new TALibStateException("MOM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MOM open: " + retCode, retCode);
+      throw new TALibArgumentException("MOM open: " + retCode, retCode);
    }
    /**
     * Open a live MOM stream over the warm-up history; the handle's
@@ -607,7 +607,7 @@
       int guardOutLen = openFillCount("MOM openAndFill", inReal.length, MOM_Lookback(optInTimePeriod));
       requireLength("MOM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

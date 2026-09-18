@@ -563,7 +563,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_INTERCEPT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
          core.linearregInterceptStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -581,7 +581,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
          LinearregInterceptStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -1039,9 +1039,9 @@
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregInterceptOpen (composition seam). */
    LinearregInterceptStream linearregInterceptOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1060,9 +1060,9 @@
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_INTERCEPT open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_INTERCEPT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_INTERCEPT open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_INTERCEPT open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_INTERCEPT stream over the warm-up history; the handle's
@@ -1101,7 +1101,7 @@
       int guardOutLen = openFillCount("LINEARREG_INTERCEPT openAndFill", inReal.length, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
       requireLength("LINEARREG_INTERCEPT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

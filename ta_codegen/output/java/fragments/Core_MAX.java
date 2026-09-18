@@ -512,7 +512,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAX update: BadParam", RetCode.BadParam);
          core.maxStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -530,7 +530,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAX peek: BadParam", RetCode.BadParam);
          MaxStream sp = this;
          double tmp = 0.0;
          double cur_outReal = 0.0;
@@ -739,9 +739,9 @@
          throw new InsufficientHistoryException("MAX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAX openAndFill: internal error", retCode);
+         throw new TALibStateException("MAX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind maxOpen (composition seam). */
    MaxStream maxOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -760,9 +760,9 @@
          throw new InsufficientHistoryException("MAX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAX open: internal error", retCode);
+         throw new TALibStateException("MAX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAX open: " + retCode, retCode);
+      throw new TALibArgumentException("MAX open: " + retCode, retCode);
    }
    /**
     * Open a live MAX stream over the warm-up history; the handle's
@@ -801,7 +801,7 @@
       int guardOutLen = openFillCount("MAX openAndFill", inReal.length, MAX_Lookback(optInTimePeriod));
       requireLength("MAX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

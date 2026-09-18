@@ -126,7 +126,7 @@ fn spellings(lang: &str) -> (&'static str, &'static str) {
     match lang {
         "c" => ("outRangeCount++", "return TA_BAD_PARAM;"),
         "rust" => ("out.count += 1", "return Err(RetCode::BadParam);"),
-        "java" => ("outRangeCount++", "throw new TaLibArgumentException("),
+        "java" => ("outRangeCount++", "throw new TALibArgumentException("),
         "csharp" => ("outRangeCount++", "throw Core.StreamFailure("),
         other => panic!("unknown backend {other}"),
     }

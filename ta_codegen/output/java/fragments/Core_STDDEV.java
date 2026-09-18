@@ -386,7 +386,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("STDDEV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
          core.stddevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -404,7 +404,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
          StddevStream sp = this;
          double cur_outReal = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -555,9 +555,9 @@
          throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
+         throw new TALibStateException("STDDEV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STDDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stddevOpen (composition seam). */
    StddevStream stddevOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -576,9 +576,9 @@
          throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV open: internal error", retCode);
+         throw new TALibStateException("STDDEV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STDDEV open: " + retCode, retCode);
+      throw new TALibArgumentException("STDDEV open: " + retCode, retCode);
    }
    /**
     * Open a live STDDEV stream over the warm-up history; the handle's
@@ -617,7 +617,7 @@
       int guardOutLen = openFillCount("STDDEV openAndFill", inReal.length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       requireLength("STDDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

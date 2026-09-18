@@ -4,15 +4,15 @@
  * (#236 step 4), so the spliced fragment text has to compile, and it has to
  * compile against the SAME types the library ships, or the identity that splice exists to preserve would be an
  * identity of text only. */
-interface TaLibFailure {
+interface TALibFailure {
    RetCode retCode();
 }
 
-class TaLibArgumentException extends IllegalArgumentException implements TaLibFailure {
+class TALibArgumentException extends IllegalArgumentException implements TALibFailure {
    private static final long serialVersionUID = 1L;
    private final RetCode retCode;
 
-   TaLibArgumentException(String message, RetCode retCode) {
+   TALibArgumentException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }
@@ -23,11 +23,11 @@ class TaLibArgumentException extends IllegalArgumentException implements TaLibFa
    }
 }
 
-class TaLibIndexException extends IndexOutOfBoundsException implements TaLibFailure {
+class TALibIndexException extends IndexOutOfBoundsException implements TALibFailure {
    private static final long serialVersionUID = 1L;
    private final RetCode retCode;
 
-   TaLibIndexException(String message, RetCode retCode) {
+   TALibIndexException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }
@@ -38,11 +38,11 @@ class TaLibIndexException extends IndexOutOfBoundsException implements TaLibFail
    }
 }
 
-class TaLibStateException extends IllegalStateException implements TaLibFailure {
+class TALibStateException extends IllegalStateException implements TALibFailure {
    private static final long serialVersionUID = 1L;
    private final RetCode retCode;
 
-   TaLibStateException(String message, RetCode retCode) {
+   TALibStateException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }

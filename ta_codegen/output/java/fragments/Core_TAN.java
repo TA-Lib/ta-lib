@@ -265,7 +265,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TAN update: BadParam", RetCode.BadParam);
          core.tanStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -283,7 +283,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TAN peek: BadParam", RetCode.BadParam);
          TanStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.tan(inReal);
@@ -360,9 +360,9 @@
          throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN openAndFill: internal error", retCode);
+         throw new TALibStateException("TAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tanOpen (composition seam). */
    TanStream tanOpenInternal( double inReal[], int startIdx )
@@ -381,9 +381,9 @@
          throw new InsufficientHistoryException("TAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN open: internal error", retCode);
+         throw new TALibStateException("TAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TAN open: " + retCode, retCode);
+      throw new TALibArgumentException("TAN open: " + retCode, retCode);
    }
    /**
     * Open a live TAN stream over the warm-up history; the handle's
@@ -420,7 +420,7 @@
       int guardOutLen = openFillCount("TAN openAndFill", inReal.length, TAN_Lookback());
       requireLength("TAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

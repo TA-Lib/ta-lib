@@ -953,7 +953,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_DCPERIOD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
          core.htDcperiodStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -971,7 +971,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
          HtDcperiodStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -1744,9 +1744,9 @@
          throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htDcperiodOpen (composition seam). */
    HtDcperiodStream htDcperiodOpenInternal( double inReal[], int startIdx )
@@ -1765,9 +1765,9 @@
          throw new InsufficientHistoryException("HT_DCPERIOD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD open: internal error", retCode);
+         throw new TALibStateException("HT_DCPERIOD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPERIOD open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPERIOD open: " + retCode, retCode);
    }
    /**
     * Open a live HT_DCPERIOD stream over the warm-up history; the handle's
@@ -1804,7 +1804,7 @@
       int guardOutLen = openFillCount("HT_DCPERIOD openAndFill", inReal.length, HT_DCPERIOD_Lookback());
       requireLength("HT_DCPERIOD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

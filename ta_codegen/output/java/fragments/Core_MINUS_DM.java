@@ -603,7 +603,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MINUS_DM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
          core.minusDmStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -621,7 +621,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
          MinusDmStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1071,9 +1071,9 @@
          throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM openAndFill: internal error", retCode);
+         throw new TALibStateException("MINUS_DM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minusDmOpen (composition seam). */
    MinusDmStream minusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -1092,9 +1092,9 @@
          throw new InsufficientHistoryException("MINUS_DM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM open: internal error", retCode);
+         throw new TALibStateException("MINUS_DM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DM open: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DM open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DM stream over the warm-up history; the handle's
@@ -1137,7 +1137,7 @@
       requireHistoryLength("MINUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MINUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

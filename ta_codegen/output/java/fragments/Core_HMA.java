@@ -990,7 +990,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HMA update: BadParam", RetCode.BadParam);
          core.hmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -1008,7 +1008,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HMA peek: BadParam", RetCode.BadParam);
          HmaStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -1991,9 +1991,9 @@
          throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HMA openAndFill: internal error", retCode);
+         throw new TALibStateException("HMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind hmaOpen (composition seam). */
    HmaStream hmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -2012,9 +2012,9 @@
          throw new InsufficientHistoryException("HMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HMA open: internal error", retCode);
+         throw new TALibStateException("HMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HMA open: " + retCode, retCode);
+      throw new TALibArgumentException("HMA open: " + retCode, retCode);
    }
    /**
     * Open a live HMA stream over the warm-up history; the handle's
@@ -2053,7 +2053,7 @@
       int guardOutLen = openFillCount("HMA openAndFill", inReal.length, HMA_Lookback(optInTimePeriod));
       requireLength("HMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

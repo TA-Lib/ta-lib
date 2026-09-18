@@ -460,7 +460,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VWAP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWAP update: BadParam", RetCode.BadParam);
          core.vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -478,7 +478,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
          VwapStream sp = this;
          double typPrice = 0.0;
          double volume = 0.0;
@@ -844,9 +844,9 @@
          throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
+         throw new TALibStateException("VWAP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VWAP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vwapOpen (composition seam). */
    VwapStream vwapOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -865,9 +865,9 @@
          throw new InsufficientHistoryException("VWAP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP open: internal error", retCode);
+         throw new TALibStateException("VWAP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWAP open: " + retCode, retCode);
+      throw new TALibArgumentException("VWAP open: " + retCode, retCode);
    }
    /**
     * Open a live VWAP stream over the warm-up history; the handle's
@@ -916,7 +916,7 @@
       requireHistoryLength("VWAP openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("VWAP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

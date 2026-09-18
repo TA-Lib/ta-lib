@@ -456,7 +456,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RMA update: BadParam", RetCode.BadParam);
          core.rmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -474,7 +474,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RMA peek: BadParam", RetCode.BadParam);
          RmaStream sp = this;
          double cur_outReal = 0.0;
          double prevRMA = sp.prevRMA;
@@ -623,9 +623,9 @@
          throw new InsufficientHistoryException("RMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RMA openAndFill: internal error", retCode);
+         throw new TALibStateException("RMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rmaOpen (composition seam). */
    RmaStream rmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -644,9 +644,9 @@
          throw new InsufficientHistoryException("RMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RMA open: internal error", retCode);
+         throw new TALibStateException("RMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RMA open: " + retCode, retCode);
+      throw new TALibArgumentException("RMA open: " + retCode, retCode);
    }
    /**
     * Open a live RMA stream over the warm-up history; the handle's
@@ -685,7 +685,7 @@
       int guardOutLen = openFillCount("RMA openAndFill", inReal.length, RMA_Lookback(optInTimePeriod));
       requireLength("RMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

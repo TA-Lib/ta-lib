@@ -648,7 +648,7 @@
             throw failure("VORTEX update", RetCode.OutOfRangeEndIndex);
          requireArgument("VORTEX update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
          core.vortexStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.plusVI = this.cur_outPlusVI;
@@ -668,7 +668,7 @@
       public void peek( double inHigh, double inLow, double inClose, VortexOut out ) {
          requireArgument("VORTEX peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("VORTEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VORTEX peek: BadParam", RetCode.BadParam);
          VortexStream sp = this;
          double curTR = 0.0;
          double curVMP = 0.0;
@@ -1186,9 +1186,9 @@
          throw new InsufficientHistoryException("VORTEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VORTEX openAndFill: internal error", retCode);
+         throw new TALibStateException("VORTEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VORTEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VORTEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vortexOpen (composition seam). */
    VortexStream vortexOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1208,9 +1208,9 @@
          throw new InsufficientHistoryException("VORTEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VORTEX open: internal error", retCode);
+         throw new TALibStateException("VORTEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VORTEX open: " + retCode, retCode);
+      throw new TALibArgumentException("VORTEX open: " + retCode, retCode);
    }
    /**
     * Open a live VORTEX stream over the warm-up history; the handle's
@@ -1258,7 +1258,7 @@
       requireLength("VORTEX openAndFill", "outPlusVI", outPlusVI, guardOutLen);
       requireLength("VORTEX openAndFill", "outMinusVI", outMinusVI, guardOutLen);
       if( (Object)outPlusVI == (Object)inHigh || (Object)outPlusVI == (Object)inLow || (Object)outPlusVI == (Object)inClose || (Object)outMinusVI == (Object)inHigh || (Object)outMinusVI == (Object)inLow || (Object)outMinusVI == (Object)inClose || (Object)outPlusVI == (Object)outMinusVI ) {
-         throw new TaLibArgumentException("VORTEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VORTEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

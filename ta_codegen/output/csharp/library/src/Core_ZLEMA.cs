@@ -789,8 +789,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public ZlemaStream ZlemaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ZLEMA open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ZLEMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ZLEMA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ZLEMA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return ZlemaOpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -824,8 +824,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public ZlemaStream ZlemaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ZLEMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "ZLEMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ZLEMA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ZLEMA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("ZLEMA", "openAndFill", inReal.Length, ZLEMA_Lookback(optInTimePeriod));
       RequireFillLength("ZLEMA", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

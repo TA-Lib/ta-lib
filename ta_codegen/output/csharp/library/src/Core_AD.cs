@@ -614,11 +614,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AdStream AdOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AD open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("AD open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("AD open: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("AD open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AD open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("AD open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("AD open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("AD open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("AD", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("AD", "open", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("AD", "open", "inVolume", inVolume.Length, inHigh.Length);
@@ -655,11 +655,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AdStream AdOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("AD openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("AD openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("AD openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("AD openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("AD openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("AD openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("AD", "openAndFill", inHigh.Length, AD_Lookback());
       RequireHistoryLength("AD", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("AD", "openAndFill", "inClose", inClose.Length, inHigh.Length);

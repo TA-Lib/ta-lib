@@ -834,7 +834,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MINUS_DI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
          core.minusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -852,7 +852,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
          MinusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1541,9 +1541,9 @@
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
+         throw new TALibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minusDiOpen (composition seam). */
    MinusDiStream minusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1562,9 +1562,9 @@
          throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DI open: internal error", retCode);
+         throw new TALibStateException("MINUS_DI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DI open: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -1611,7 +1611,7 @@
       requireHistoryLength("MINUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("MINUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

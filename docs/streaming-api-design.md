@@ -238,8 +238,8 @@ Shape rules that are not visible in those lines:
   the JSON-RPC server with no new build plumbing.
 - Java rejections are unchecked and typed: `InsufficientHistoryException` for
   short history (an `IllegalArgumentException` subclass, so it is catchable
-  separately), and the `TaLibArgumentException` / `TaLibIndexException` /
-  `TaLibStateException` family — each carrying its `RetCode` — for everything
+  separately), and the `TALibArgumentException` / `TALibIndexException` /
+  `TALibStateException` family — each carrying its `RetCode` — for everything
   else. Messages carry the stable prefix `"<NAME> open:"` / `"<NAME> update:"` /
   `"<NAME> peek:"`. `docs/error-handling-spec.md` §2.3–2.5 is the rule-by-rule
   source.

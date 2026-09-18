@@ -932,9 +932,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AroonoscStream AroonoscOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("AROONOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("AROONOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("AROONOSC", "open", "inLow", inLow.Length, inHigh.Length);
       return AroonoscOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -969,9 +969,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AroonoscStream AroonoscOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("AROONOSC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROONOSC openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("AROONOSC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       int guardOutLen = OpenFillCount("AROONOSC", "openAndFill", inHigh.Length, AROONOSC_Lookback(optInTimePeriod));
       RequireHistoryLength("AROONOSC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AROONOSC", "openAndFill", "outReal", outReal.Length, guardOutLen);

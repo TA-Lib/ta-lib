@@ -933,11 +933,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CmfStream CmfOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "CMF open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "CMF open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CMF open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CMF open: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("CMF open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CMF open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CMF open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CMF open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CMF open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("CMF open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("CMF", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CMF", "open", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("CMF", "open", "inVolume", inVolume.Length, inHigh.Length);
@@ -976,11 +976,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CmfStream CmfOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "CMF openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "CMF openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CMF openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CMF openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("CMF openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CMF openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CMF openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CMF openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CMF openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("CMF openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CMF", "openAndFill", inHigh.Length, CMF_Lookback(optInTimePeriod));
       RequireHistoryLength("CMF", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CMF", "openAndFill", "inClose", inClose.Length, inHigh.Length);

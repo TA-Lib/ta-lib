@@ -531,7 +531,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TEMA update: BadParam", RetCode.BadParam);
          core.temaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -549,7 +549,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
          TemaStream sp = this;
          double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
@@ -802,9 +802,9 @@
          throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("TEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind temaOpen (composition seam). */
    TemaStream temaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -823,9 +823,9 @@
          throw new InsufficientHistoryException("TEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TEMA open: internal error", retCode);
+         throw new TALibStateException("TEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("TEMA open: " + retCode, retCode);
    }
    /**
     * Open a live TEMA stream over the warm-up history; the handle's
@@ -864,7 +864,7 @@
       int guardOutLen = openFillCount("TEMA openAndFill", inReal.length, TEMA_Lookback(optInTimePeriod));
       requireLength("TEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

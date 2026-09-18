@@ -842,7 +842,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI update: BadParam", RetCode.BadParam);
          core.rviStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -860,7 +860,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI peek: BadParam", RetCode.BadParam);
          RviStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -1343,9 +1343,9 @@
          throw new InsufficientHistoryException("RVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVI openAndFill: internal error", retCode);
+         throw new TALibStateException("RVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rviOpen (composition seam). */
    RviStream rviOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
@@ -1364,9 +1364,9 @@
          throw new InsufficientHistoryException("RVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVI open: internal error", retCode);
+         throw new TALibStateException("RVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVI open: " + retCode, retCode);
+      throw new TALibArgumentException("RVI open: " + retCode, retCode);
    }
    /**
     * Open a live RVI stream over the warm-up history; the handle's
@@ -1405,7 +1405,7 @@
       int guardOutLen = openFillCount("RVI openAndFill", inReal.length, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
       requireLength("RVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

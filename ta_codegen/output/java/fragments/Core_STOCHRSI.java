@@ -518,7 +518,7 @@
             throw failure("STOCHRSI update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCHRSI update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
          core.stochrsiStepImpl(this, inReal);
          this.outRangeCount++;
          out.fastK = this.cur_outFastK;
@@ -538,7 +538,7 @@
       public void peek( double inReal, StochrsiOut out ) {
          requireArgument("STOCHRSI peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
          StochrsiStream sp = this;
          double cur_tempRSIBuffer = 0.0;
          double cur_outFastK = 0.0;
@@ -754,9 +754,9 @@
          throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCHRSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochrsiOpen (composition seam). */
    StochrsiStream stochrsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -776,9 +776,9 @@
          throw new InsufficientHistoryException("STOCHRSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI open: internal error", retCode);
+         throw new TALibStateException("STOCHRSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHRSI open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHRSI open: " + retCode, retCode);
    }
    /**
     * Open a live STOCHRSI stream over the warm-up history; the handle's
@@ -820,7 +820,7 @@
       requireLength("STOCHRSI openAndFill", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
-         throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -553,7 +553,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PERCENTILE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTILE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTILE update: BadParam", RetCode.BadParam);
          core.percentileStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -571,7 +571,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTILE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTILE peek: BadParam", RetCode.BadParam);
          PercentileStream sp = this;
          double newValue = 0.0;
          double result = 0.0;
@@ -838,9 +838,9 @@
          throw new InsufficientHistoryException("PERCENTILE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTILE openAndFill: internal error", retCode);
+         throw new TALibStateException("PERCENTILE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTILE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTILE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind percentileOpen (composition seam). */
    PercentileStream percentileOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInPercentile )
@@ -859,9 +859,9 @@
          throw new InsufficientHistoryException("PERCENTILE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTILE open: internal error", retCode);
+         throw new TALibStateException("PERCENTILE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTILE open: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTILE open: " + retCode, retCode);
    }
    /**
     * Open a live PERCENTILE stream over the warm-up history; the handle's
@@ -900,7 +900,7 @@
       int guardOutLen = openFillCount("PERCENTILE openAndFill", inReal.length, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
       requireLength("PERCENTILE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PERCENTILE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PERCENTILE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

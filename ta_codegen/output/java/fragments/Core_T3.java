@@ -615,7 +615,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("T3 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("T3 update: BadParam", RetCode.BadParam);
          core.t3StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -633,7 +633,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("T3 peek: BadParam", RetCode.BadParam);
          T3Stream sp = this;
          double cur_outReal = 0.0;
          double e1 = sp.e1;
@@ -916,9 +916,9 @@
          throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("T3 openAndFill: internal error", retCode);
+         throw new TALibStateException("T3 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("T3 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind t3Open (composition seam). */
    T3Stream t3OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
@@ -937,9 +937,9 @@
          throw new InsufficientHistoryException("T3 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("T3 open: internal error", retCode);
+         throw new TALibStateException("T3 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("T3 open: " + retCode, retCode);
+      throw new TALibArgumentException("T3 open: " + retCode, retCode);
    }
    /**
     * Open a live T3 stream over the warm-up history; the handle's
@@ -978,7 +978,7 @@
       int guardOutLen = openFillCount("T3 openAndFill", inReal.length, T3_Lookback(optInTimePeriod, optInVFactor));
       requireLength("T3 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1335,8 +1335,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MaStream MaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return MaOpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
@@ -1371,8 +1371,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MaStream MaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MA", "openAndFill", inReal.Length, MA_Lookback(optInTimePeriod, optInMAType));
       RequireFillLength("MA", "openAndFill", "outReal", outReal.Length, guardOutLen);
       MaStream sp = new MaStream(this);

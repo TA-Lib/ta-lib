@@ -701,7 +701,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CORREL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CORREL update: BadParam", RetCode.BadParam);
          core.correlStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -719,7 +719,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
          CorrelStream sp = this;
          double x = 0.0;
          double y = 0.0;
@@ -1367,9 +1367,9 @@
          throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL openAndFill: internal error", retCode);
+         throw new TALibStateException("CORREL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CORREL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CORREL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind correlOpen (composition seam). */
    CorrelStream correlOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -1388,9 +1388,9 @@
          throw new InsufficientHistoryException("CORREL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL open: internal error", retCode);
+         throw new TALibStateException("CORREL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CORREL open: " + retCode, retCode);
+      throw new TALibArgumentException("CORREL open: " + retCode, retCode);
    }
    /**
     * Open a live CORREL stream over the warm-up history; the handle's
@@ -1433,7 +1433,7 @@
       requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

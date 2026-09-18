@@ -1019,8 +1019,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MinmaxStream MinmaxOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return MinmaxOpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1056,8 +1056,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MinmaxStream MinmaxOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MINMAX", "openAndFill", inReal.Length, MINMAX_Lookback(optInTimePeriod));
       RequireFillLength("MINMAX", "openAndFill", "outMin", outMin.Length, guardOutLen);
       RequireFillLength("MINMAX", "openAndFill", "outMax", outMax.Length, guardOutLen);

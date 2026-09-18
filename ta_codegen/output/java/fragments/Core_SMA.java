@@ -386,7 +386,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMA update: BadParam", RetCode.BadParam);
          core.smaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -404,7 +404,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMA peek: BadParam", RetCode.BadParam);
          SmaStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -564,9 +564,9 @@
          throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMA openAndFill: internal error", retCode);
+         throw new TALibStateException("SMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind smaOpen (composition seam). */
    SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -585,9 +585,9 @@
          throw new InsufficientHistoryException("SMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMA open: internal error", retCode);
+         throw new TALibStateException("SMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMA open: " + retCode, retCode);
+      throw new TALibArgumentException("SMA open: " + retCode, retCode);
    }
    /**
     * Open a live SMA stream over the warm-up history; the handle's
@@ -626,7 +626,7 @@
       int guardOutLen = openFillCount("SMA openAndFill", inReal.length, SMA_Lookback(optInTimePeriod));
       requireLength("SMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

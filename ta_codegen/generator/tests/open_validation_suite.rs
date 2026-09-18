@@ -248,14 +248,14 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
             let body = &src[at..];
             let history = &inputs[0];
             let s1 = format!(
-                "if( {history}.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof({history}), \"{base} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
+                "if( {history}.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof({history}), \"{base} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
             );
             let at_s1 = body.find(&s1).unwrap_or_else(|| {
                 panic!("{}: {verb} does not answer S1 on the history", func.name)
             });
             for extra in &inputs[1..] {
                 let other = format!(
-                    "if( {extra}.IsEmpty ) throw new TaLibArgumentException(\"{base} {verb}: {extra} is empty\", nameof({extra}), RetCode.BadParam);"
+                    "if( {extra}.IsEmpty ) throw new TALibArgumentException(\"{base} {verb}: {extra} is empty\", nameof({extra}), RetCode.BadParam);"
                 );
                 let at_other = body.find(&other).unwrap_or_else(|| {
                     panic!("{}: {verb} does not check `{extra}`", func.name)

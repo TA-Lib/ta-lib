@@ -440,7 +440,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLLONGLINE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
          core.cdllonglineStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -458,7 +458,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
          CdllonglineStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -675,9 +675,9 @@
          throw new InsufficientHistoryException("CDLLONGLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLINE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLLONGLINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdllonglineOpen (composition seam). */
    CdllonglineStream cdllonglineOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -696,9 +696,9 @@
          throw new InsufficientHistoryException("CDLLONGLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLINE open: internal error", retCode);
+         throw new TALibStateException("CDLLONGLINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLINE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLINE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLLONGLINE stream over the warm-up history; the handle's
@@ -747,7 +747,7 @@
       requireHistoryLength("CDLLONGLINE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLLONGLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -516,7 +516,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO update: BadParam", RetCode.BadParam);
          core.aoStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -534,7 +534,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO peek: BadParam", RetCode.BadParam);
          AoStream sp = this;
          double medianPrice = 0.0;
          double tempReal = 0.0;
@@ -814,9 +814,9 @@
          throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AO openAndFill: internal error", retCode);
+         throw new TALibStateException("AO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind aoOpen (composition seam). */
    AoStream aoOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -835,9 +835,9 @@
          throw new InsufficientHistoryException("AO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AO open: internal error", retCode);
+         throw new TALibStateException("AO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AO open: " + retCode, retCode);
+      throw new TALibArgumentException("AO open: " + retCode, retCode);
    }
    /**
     * Open a live AO stream over the warm-up history; the handle's
@@ -880,7 +880,7 @@
       requireHistoryLength("AO openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

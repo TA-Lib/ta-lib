@@ -978,8 +978,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MacdfixStream MacdfixOpen( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return MacdfixOpenInternal(inReal, 0, optInSignalPeriod);
    }
 
@@ -1016,8 +1016,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MacdfixStream MacdfixOpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MACDFIX", "openAndFill", inReal.Length, MACDFIX_Lookback(optInSignalPeriod));
       RequireFillLength("MACDFIX", "openAndFill", "outMACD", outMACD.Length, guardOutLen);
       RequireFillLength("MACDFIX", "openAndFill", "outMACDSignal", outMACDSignal.Length, guardOutLen);

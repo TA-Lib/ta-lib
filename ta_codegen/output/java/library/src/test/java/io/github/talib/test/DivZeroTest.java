@@ -51,7 +51,7 @@ package io.github.talib.test;
 import io.github.talib.Core;
 import io.github.talib.OutRange;
 import io.github.talib.RetCode;
-import io.github.talib.TaLibArgumentException;
+import io.github.talib.TALibArgumentException;
 
 /**
  * DIV's documented zero-divisor result (issue #249).
@@ -264,7 +264,7 @@ public class DivZeroTest {
             body.run();
             failures++;
             System.out.println("  FAIL: " + what + " accepted a non-finite bar (" + bad + ")");
-        } catch (TaLibArgumentException e) {
+        } catch (TALibArgumentException e) {
             if (e.retCode() != RetCode.BadParam) {
                 failures++;
                 System.out.println("  FAIL: " + what + " on " + bad + " gave " + e.retCode());

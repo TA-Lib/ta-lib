@@ -605,7 +605,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PLUS_DM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
          core.plusDmStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -623,7 +623,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
          PlusDmStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1073,9 +1073,9 @@
          throw new InsufficientHistoryException("PLUS_DM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DM openAndFill: internal error", retCode);
+         throw new TALibStateException("PLUS_DM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind plusDmOpen (composition seam). */
    PlusDmStream plusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -1094,9 +1094,9 @@
          throw new InsufficientHistoryException("PLUS_DM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DM open: internal error", retCode);
+         throw new TALibStateException("PLUS_DM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DM open: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DM open: " + retCode, retCode);
    }
    /**
     * Open a live PLUS_DM stream over the warm-up history; the handle's
@@ -1139,7 +1139,7 @@
       requireHistoryLength("PLUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("PLUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

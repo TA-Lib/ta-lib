@@ -384,7 +384,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ROCR100 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
          core.rocr100StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -402,7 +402,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
          Rocr100Stream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -577,9 +577,9 @@
          throw new InsufficientHistoryException("ROCR100 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR100 openAndFill: internal error", retCode);
+         throw new TALibStateException("ROCR100 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rocr100Open (composition seam). */
    Rocr100Stream rocr100OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -598,9 +598,9 @@
          throw new InsufficientHistoryException("ROCR100 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR100 open: internal error", retCode);
+         throw new TALibStateException("ROCR100 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR100 open: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR100 open: " + retCode, retCode);
    }
    /**
     * Open a live ROCR100 stream over the warm-up history; the handle's
@@ -639,7 +639,7 @@
       int guardOutLen = openFillCount("ROCR100 openAndFill", inReal.length, ROCR100_Lookback(optInTimePeriod));
       requireLength("ROCR100 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -609,7 +609,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIDPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
          core.midpriceStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -627,7 +627,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
          MidpriceStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -918,9 +918,9 @@
          throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("MIDPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind midpriceOpen (composition seam). */
    MidpriceStream midpriceOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -939,9 +939,9 @@
          throw new InsufficientHistoryException("MIDPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPRICE open: internal error", retCode);
+         throw new TALibStateException("MIDPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPRICE stream over the warm-up history; the handle's
@@ -984,7 +984,7 @@
       requireHistoryLength("MIDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MIDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

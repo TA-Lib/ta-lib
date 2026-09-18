@@ -525,7 +525,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("FOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FOSC update: BadParam", RetCode.BadParam);
          core.foscStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -543,7 +543,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FOSC peek: BadParam", RetCode.BadParam);
          FoscStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -839,9 +839,9 @@
          throw new InsufficientHistoryException("FOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("FOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind foscOpen (composition seam). */
    FoscStream foscOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -860,9 +860,9 @@
          throw new InsufficientHistoryException("FOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FOSC open: internal error", retCode);
+         throw new TALibStateException("FOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("FOSC open: " + retCode, retCode);
    }
    /**
     * Open a live FOSC stream over the warm-up history; the handle's
@@ -901,7 +901,7 @@
       int guardOutLen = openFillCount("FOSC openAndFill", inReal.length, FOSC_Lookback(optInTimePeriod));
       requireLength("FOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("FOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

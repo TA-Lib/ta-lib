@@ -534,7 +534,7 @@
             throw failure("KC update", RetCode.OutOfRangeEndIndex);
          requireArgument("KC update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC update: BadParam", RetCode.BadParam);
          core.kcStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -555,7 +555,7 @@
       public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
          requireArgument("KC peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC peek: BadParam", RetCode.BadParam);
          KcStream sp = this;
          double middle = 0.0;
          double tempReal = 0.0;
@@ -784,9 +784,9 @@
          throw new InsufficientHistoryException("KC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KC openAndFill: internal error", retCode);
+         throw new TALibStateException("KC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kcOpen (composition seam). */
    KcStream kcOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -807,9 +807,9 @@
          throw new InsufficientHistoryException("KC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KC open: internal error", retCode);
+         throw new TALibStateException("KC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KC open: " + retCode, retCode);
+      throw new TALibArgumentException("KC open: " + retCode, retCode);
    }
    /**
     * Open a live KC stream over the warm-up history; the handle's
@@ -858,7 +858,7 @@
       requireLength("KC openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("KC openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

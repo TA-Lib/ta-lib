@@ -618,7 +618,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MASSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MASSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI update: BadParam", RetCode.BadParam);
          core.massiStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -636,7 +636,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MASSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI peek: BadParam", RetCode.BadParam);
          MassiStream sp = this;
          double hl = 0.0;
          double ratio = 0.0;
@@ -916,9 +916,9 @@
          throw new InsufficientHistoryException("MASSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MASSI openAndFill: internal error", retCode);
+         throw new TALibStateException("MASSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MASSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MASSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind massiOpen (composition seam). */
    MassiStream massiOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -937,9 +937,9 @@
          throw new InsufficientHistoryException("MASSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MASSI open: internal error", retCode);
+         throw new TALibStateException("MASSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MASSI open: " + retCode, retCode);
+      throw new TALibArgumentException("MASSI open: " + retCode, retCode);
    }
    /**
     * Open a live MASSI stream over the warm-up history; the handle's
@@ -982,7 +982,7 @@
       requireHistoryLength("MASSI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MASSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MASSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MASSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -453,7 +453,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHIGHWAVE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
          core.cdlhighwaveStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -471,7 +471,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
          CdlhighwaveStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -689,9 +689,9 @@
          throw new InsufficientHistoryException("CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIGHWAVE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHIGHWAVE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhighwaveOpen (composition seam). */
    CdlhighwaveStream cdlhighwaveOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -710,9 +710,9 @@
          throw new InsufficientHistoryException("CDLHIGHWAVE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIGHWAVE open: internal error", retCode);
+         throw new TALibStateException("CDLHIGHWAVE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIGHWAVE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIGHWAVE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIGHWAVE stream over the warm-up history; the handle's
@@ -761,7 +761,7 @@
       requireHistoryLength("CDLHIGHWAVE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHIGHWAVE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -350,7 +350,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AD update: BadParam", RetCode.BadParam);
          core.adStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -368,7 +368,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AD peek: BadParam", RetCode.BadParam);
          AdStream sp = this;
          double high = 0.0;
          double low = 0.0;
@@ -506,9 +506,9 @@
          throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD openAndFill: internal error", retCode);
+         throw new TALibStateException("AD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adOpen (composition seam). */
    AdStream adOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -527,9 +527,9 @@
          throw new InsufficientHistoryException("AD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD open: internal error", retCode);
+         throw new TALibStateException("AD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AD open: " + retCode, retCode);
+      throw new TALibArgumentException("AD open: " + retCode, retCode);
    }
    /**
     * Open a live AD stream over the warm-up history; the handle's
@@ -578,7 +578,7 @@
       requireHistoryLength("AD openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("AD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

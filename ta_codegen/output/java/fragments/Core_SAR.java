@@ -695,7 +695,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAR update: BadParam", RetCode.BadParam);
          core.sarStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -713,7 +713,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAR peek: BadParam", RetCode.BadParam);
          SarStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -1263,9 +1263,9 @@
          throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAR openAndFill: internal error", retCode);
+         throw new TALibStateException("SAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sarOpen (composition seam). */
    SarStream sarOpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
@@ -1284,9 +1284,9 @@
          throw new InsufficientHistoryException("SAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAR open: internal error", retCode);
+         throw new TALibStateException("SAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAR open: " + retCode, retCode);
+      throw new TALibArgumentException("SAR open: " + retCode, retCode);
    }
    /**
     * Open a live SAR stream over the warm-up history; the handle's
@@ -1329,7 +1329,7 @@
       requireHistoryLength("SAR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

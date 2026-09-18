@@ -272,7 +272,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SUB update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("SUB update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUB update: BadParam", RetCode.BadParam);
          core.subStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -290,7 +290,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUB peek: BadParam", RetCode.BadParam);
          SubStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 - inReal1;
@@ -371,9 +371,9 @@
          throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB openAndFill: internal error", retCode);
+         throw new TALibStateException("SUB openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUB openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUB openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind subOpen (composition seam). */
    SubStream subOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -392,9 +392,9 @@
          throw new InsufficientHistoryException("SUB open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB open: internal error", retCode);
+         throw new TALibStateException("SUB open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUB open: " + retCode, retCode);
+      throw new TALibArgumentException("SUB open: " + retCode, retCode);
    }
    /**
     * Open a live SUB stream over the warm-up history; the handle's
@@ -435,7 +435,7 @@
       requireHistoryLength("SUB openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("SUB openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

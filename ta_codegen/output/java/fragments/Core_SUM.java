@@ -361,7 +361,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SUM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUM update: BadParam", RetCode.BadParam);
          core.sumStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -379,7 +379,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUM peek: BadParam", RetCode.BadParam);
          SumStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -535,9 +535,9 @@
          throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUM openAndFill: internal error", retCode);
+         throw new TALibStateException("SUM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sumOpen (composition seam). */
    SumStream sumOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -556,9 +556,9 @@
          throw new InsufficientHistoryException("SUM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUM open: internal error", retCode);
+         throw new TALibStateException("SUM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUM open: " + retCode, retCode);
+      throw new TALibArgumentException("SUM open: " + retCode, retCode);
    }
    /**
     * Open a live SUM stream over the warm-up history; the handle's
@@ -597,7 +597,7 @@
       int guardOutLen = openFillCount("SUM openAndFill", inReal.length, SUM_Lookback(optInTimePeriod));
       requireLength("SUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

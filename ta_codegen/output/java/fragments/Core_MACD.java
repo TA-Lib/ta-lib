@@ -683,7 +683,7 @@
             throw failure("MACD update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACD update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACD update: BadParam", RetCode.BadParam);
          core.macdStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -704,7 +704,7 @@
       public void peek( double inReal, MacdOut out ) {
          requireArgument("MACD peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACD peek: BadParam", RetCode.BadParam);
          MacdStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -1023,9 +1023,9 @@
          throw new InsufficientHistoryException("MACD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACD openAndFill: internal error", retCode);
+         throw new TALibStateException("MACD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdOpen (composition seam). */
    MacdStream macdOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1046,9 +1046,9 @@
          throw new InsufficientHistoryException("MACD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACD open: internal error", retCode);
+         throw new TALibStateException("MACD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACD open: " + retCode, retCode);
+      throw new TALibArgumentException("MACD open: " + retCode, retCode);
    }
    /**
     * Open a live MACD stream over the warm-up history; the handle's
@@ -1089,7 +1089,7 @@
       requireLength("MACD openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACD openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

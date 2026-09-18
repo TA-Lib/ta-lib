@@ -536,7 +536,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI update: BadParam", RetCode.BadParam);
          core.rsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -554,7 +554,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI peek: BadParam", RetCode.BadParam);
          RsiStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -827,9 +827,9 @@
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
+         throw new TALibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rsiOpen (composition seam). */
    RsiStream rsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -848,9 +848,9 @@
          throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RSI open: internal error", retCode);
+         throw new TALibStateException("RSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RSI open: " + retCode, retCode);
+      throw new TALibArgumentException("RSI open: " + retCode, retCode);
    }
    /**
     * Open a live RSI stream over the warm-up history; the handle's
@@ -889,7 +889,7 @@
       int guardOutLen = openFillCount("RSI openAndFill", inReal.length, RSI_Lookback(optInTimePeriod));
       requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

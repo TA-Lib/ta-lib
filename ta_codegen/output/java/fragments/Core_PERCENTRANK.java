@@ -388,7 +388,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PERCENTRANK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTRANK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTRANK update: BadParam", RetCode.BadParam);
          core.percentrankStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -406,7 +406,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTRANK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTRANK peek: BadParam", RetCode.BadParam);
          PercentrankStream sp = this;
          int i = 0;
          int count = 0;
@@ -561,9 +561,9 @@
          throw new InsufficientHistoryException("PERCENTRANK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTRANK openAndFill: internal error", retCode);
+         throw new TALibStateException("PERCENTRANK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTRANK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTRANK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind percentrankOpen (composition seam). */
    PercentrankStream percentrankOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -582,9 +582,9 @@
          throw new InsufficientHistoryException("PERCENTRANK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTRANK open: internal error", retCode);
+         throw new TALibStateException("PERCENTRANK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTRANK open: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTRANK open: " + retCode, retCode);
    }
    /**
     * Open a live PERCENTRANK stream over the warm-up history; the handle's
@@ -623,7 +623,7 @@
       int guardOutLen = openFillCount("PERCENTRANK openAndFill", inReal.length, PERCENTRANK_Lookback(optInTimePeriod));
       requireLength("PERCENTRANK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PERCENTRANK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PERCENTRANK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

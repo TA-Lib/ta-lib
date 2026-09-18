@@ -834,7 +834,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PLUS_DI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
          core.plusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -852,7 +852,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
          PlusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1541,9 +1541,9 @@
          throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DI openAndFill: internal error", retCode);
+         throw new TALibStateException("PLUS_DI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind plusDiOpen (composition seam). */
    PlusDiStream plusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1562,9 +1562,9 @@
          throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DI open: internal error", retCode);
+         throw new TALibStateException("PLUS_DI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DI open: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live PLUS_DI stream over the warm-up history; the handle's
@@ -1611,7 +1611,7 @@
       requireHistoryLength("PLUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("PLUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

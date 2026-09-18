@@ -910,11 +910,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlinvertedhammerStream CdlinvertedhammerOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLINVERTEDHAMMER", "open", "inClose", inClose.Length, inOpen.Length);
@@ -955,11 +955,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlinvertedhammerStream CdlinvertedhammerOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLINVERTEDHAMMER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDLINVERTEDHAMMER", "openAndFill", inOpen.Length, CDLINVERTEDHAMMER_Lookback());
       RequireHistoryLength("CDLINVERTEDHAMMER", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLINVERTEDHAMMER", "openAndFill", "inLow", inLow.Length, inOpen.Length);

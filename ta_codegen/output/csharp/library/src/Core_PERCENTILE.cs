@@ -939,8 +939,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PercentileStream PercentileOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInPercentile )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return PercentileOpenInternal(inReal, 0, optInTimePeriod, optInPercentile);
    }
 
@@ -978,8 +978,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PercentileStream PercentileOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInPercentile, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PERCENTILE", "openAndFill", inReal.Length, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
       RequireFillLength("PERCENTILE", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

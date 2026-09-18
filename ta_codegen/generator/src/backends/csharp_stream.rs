@@ -2574,16 +2574,16 @@ fn public_open_empty_guards(n: &str, verb: &str, inputs: &[String]) -> String {
     let first = &inputs[0];
     let _ = writeln!(
         s,
-        "      if( {first}.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
+        "      if( {first}.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
     );
     let _ = writeln!(
         s,
-        "      if( {first}.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is longer than MAX_INDEX + 1\", RetCode.OutOfRangeEndIndex);"
+        "      if( {first}.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is longer than MAX_INDEX + 1\", RetCode.OutOfRangeEndIndex);"
     );
     for input in &inputs[1..] {
         let _ = writeln!(
             s,
-            "      if( {input}.IsEmpty ) throw new TaLibArgumentException(\"{n} {verb}: {input} is empty\", nameof({input}), RetCode.BadParam);"
+            "      if( {input}.IsEmpty ) throw new TALibArgumentException(\"{n} {verb}: {input} is empty\", nameof({input}), RetCode.BadParam);"
         );
     }
     s

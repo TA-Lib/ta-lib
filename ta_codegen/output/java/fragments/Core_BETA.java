@@ -877,7 +877,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("BETA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BETA update: BadParam", RetCode.BadParam);
          core.betaStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -895,7 +895,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("BETA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BETA peek: BadParam", RetCode.BadParam);
          BetaStream sp = this;
          double tmp_real = 0.0;
          double denom = 0.0;
@@ -1716,9 +1716,9 @@
          throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
+         throw new TALibStateException("BETA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BETA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind betaOpen (composition seam). */
    BetaStream betaOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -1737,9 +1737,9 @@
          throw new InsufficientHistoryException("BETA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA open: internal error", retCode);
+         throw new TALibStateException("BETA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BETA open: " + retCode, retCode);
+      throw new TALibArgumentException("BETA open: " + retCode, retCode);
    }
    /**
     * Open a live BETA stream over the warm-up history; the handle's
@@ -1782,7 +1782,7 @@
       requireHistoryLength("BETA openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("BETA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

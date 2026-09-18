@@ -1098,7 +1098,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_DCPHASE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
          core.htDcphaseStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -1116,7 +1116,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
          HtDcphaseStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -2073,9 +2073,9 @@
          throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_DCPHASE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htDcphaseOpen (composition seam). */
    HtDcphaseStream htDcphaseOpenInternal( double inReal[], int startIdx )
@@ -2094,9 +2094,9 @@
          throw new InsufficientHistoryException("HT_DCPHASE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE open: internal error", retCode);
+         throw new TALibStateException("HT_DCPHASE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPHASE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPHASE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_DCPHASE stream over the warm-up history; the handle's
@@ -2133,7 +2133,7 @@
       int guardOutLen = openFillCount("HT_DCPHASE openAndFill", inReal.length, HT_DCPHASE_Lookback());
       requireLength("HT_DCPHASE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

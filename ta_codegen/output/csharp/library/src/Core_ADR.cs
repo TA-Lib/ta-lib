@@ -740,9 +740,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AdrStream AdrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADR open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("ADR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADR open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("ADR open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("ADR", "open", "inLow", inLow.Length, inHigh.Length);
       return AdrOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -777,9 +777,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public AdrStream AdrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "ADR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("ADR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("ADR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       int guardOutLen = OpenFillCount("ADR", "openAndFill", inHigh.Length, ADR_Lookback(optInTimePeriod));
       RequireHistoryLength("ADR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("ADR", "openAndFill", "outReal", outReal.Length, guardOutLen);

@@ -41,20 +41,19 @@
 package io.github.talib;
 
 /**
- * {@code startIdx} or {@code endIdx} is outside {@code [0, }{@link
- * Core#MAX_INDEX}{@code ]}, or {@code endIdx} precedes {@code startIdx}.
+ * An argument was rejected: an optional parameter outside its documented range,
+ * two outputs sharing one array, or an array too short for the values the call
+ * would read or write.
  *
- * <p>An {@link IndexOutOfBoundsException}, which is what the API documents and
- * what a caller catches; {@link #retCode()} distinguishes
- * {@link RetCode#OutOfRangeStartIndex} from {@link RetCode#OutOfRangeEndIndex},
- * which the type alone cannot.
+ * <p>An {@link IllegalArgumentException}, which is what the API documents and
+ * what a caller catches; the {@link RetCode} says which condition it was.
  */
-public final class TaLibIndexException extends IndexOutOfBoundsException implements TaLibFailure {
+public class TALibArgumentException extends IllegalArgumentException implements TALibFailure {
    private static final long serialVersionUID = 1L;
 
    private final RetCode retCode;
 
-   TaLibIndexException(String message, RetCode retCode) {
+   TALibArgumentException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }

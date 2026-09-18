@@ -536,7 +536,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ER update: BadParam", RetCode.BadParam);
          core.erStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -554,7 +554,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ER peek: BadParam", RetCode.BadParam);
          ErStream sp = this;
          double periodROC = 0.0;
          double tempReal = 0.0;
@@ -868,9 +868,9 @@
          throw new InsufficientHistoryException("ER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ER openAndFill: internal error", retCode);
+         throw new TALibStateException("ER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind erOpen (composition seam). */
    ErStream erOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -889,9 +889,9 @@
          throw new InsufficientHistoryException("ER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ER open: internal error", retCode);
+         throw new TALibStateException("ER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ER open: " + retCode, retCode);
+      throw new TALibArgumentException("ER open: " + retCode, retCode);
    }
    /**
     * Open a live ER stream over the warm-up history; the handle's
@@ -930,7 +930,7 @@
       int guardOutLen = openFillCount("ER openAndFill", inReal.length, ER_Lookback(optInTimePeriod));
       requireLength("ER openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

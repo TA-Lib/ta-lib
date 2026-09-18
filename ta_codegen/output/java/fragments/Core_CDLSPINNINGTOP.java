@@ -392,7 +392,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSPINNINGTOP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
          core.cdlspinningtopStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -410,7 +410,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
          CdlspinningtopStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -583,9 +583,9 @@
          throw new InsufficientHistoryException("CDLSPINNINGTOP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSPINNINGTOP openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSPINNINGTOP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlspinningtopOpen (composition seam). */
    CdlspinningtopStream cdlspinningtopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -604,9 +604,9 @@
          throw new InsufficientHistoryException("CDLSPINNINGTOP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSPINNINGTOP open: internal error", retCode);
+         throw new TALibStateException("CDLSPINNINGTOP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSPINNINGTOP open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSPINNINGTOP open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSPINNINGTOP stream over the warm-up history; the handle's
@@ -655,7 +655,7 @@
       requireHistoryLength("CDLSPINNINGTOP openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSPINNINGTOP openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -261,7 +261,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CEIL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CEIL update: BadParam", RetCode.BadParam);
          core.ceilStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -279,7 +279,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
          CeilStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.ceil(inReal);
@@ -356,9 +356,9 @@
          throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
+         throw new TALibStateException("CEIL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CEIL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ceilOpen (composition seam). */
    CeilStream ceilOpenInternal( double inReal[], int startIdx )
@@ -377,9 +377,9 @@
          throw new InsufficientHistoryException("CEIL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL open: internal error", retCode);
+         throw new TALibStateException("CEIL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CEIL open: " + retCode, retCode);
+      throw new TALibArgumentException("CEIL open: " + retCode, retCode);
    }
    /**
     * Open a live CEIL stream over the warm-up history; the handle's
@@ -416,7 +416,7 @@
       int guardOutLen = openFillCount("CEIL openAndFill", inReal.length, CEIL_Lookback());
       requireLength("CEIL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

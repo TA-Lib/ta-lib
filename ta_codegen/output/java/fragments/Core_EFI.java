@@ -493,7 +493,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI update: BadParam", RetCode.BadParam);
          core.efiStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -511,7 +511,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI peek: BadParam", RetCode.BadParam);
          EfiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -786,9 +786,9 @@
          throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
+         throw new TALibStateException("EFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind efiOpen (composition seam). */
    EfiStream efiOpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -807,9 +807,9 @@
          throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI open: internal error", retCode);
+         throw new TALibStateException("EFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EFI open: " + retCode, retCode);
+      throw new TALibArgumentException("EFI open: " + retCode, retCode);
    }
    /**
     * Open a live EFI stream over the warm-up history; the handle's
@@ -852,7 +852,7 @@
       requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

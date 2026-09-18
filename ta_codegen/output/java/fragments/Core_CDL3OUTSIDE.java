@@ -379,7 +379,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3OUTSIDE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
          core.cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -397,7 +397,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
          Cdl3outsideStream sp = this;
          int cur_outInteger = 0;
          if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
@@ -559,9 +559,9 @@
          throw new InsufficientHistoryException("CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3outsideOpen (composition seam). */
    Cdl3outsideStream cdl3outsideOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -580,9 +580,9 @@
          throw new InsufficientHistoryException("CDL3OUTSIDE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3OUTSIDE open: internal error", retCode);
+         throw new TALibStateException("CDL3OUTSIDE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3OUTSIDE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3OUTSIDE open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3OUTSIDE stream over the warm-up history; the handle's
@@ -631,7 +631,7 @@
       requireHistoryLength("CDL3OUTSIDE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3OUTSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

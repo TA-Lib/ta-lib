@@ -594,10 +594,10 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MarketfiStream MarketfiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("MARKETFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("MARKETFI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "open", "inVolume", inVolume.Length, inHigh.Length);
       return MarketfiOpenInternal(inHigh, inLow, inVolume, 0);
@@ -632,10 +632,10 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MarketfiStream MarketfiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("MARKETFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("MARKETFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("MARKETFI", "openAndFill", inHigh.Length, MARKETFI_Lookback());
       RequireHistoryLength("MARKETFI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);

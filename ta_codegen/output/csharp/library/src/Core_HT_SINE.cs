@@ -2220,8 +2220,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtSineStream HtSineOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return HtSineOpenInternal(inReal, 0);
    }
 
@@ -2254,8 +2254,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtSineStream HtSineOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_SINE", "openAndFill", inReal.Length, HT_SINE_Lookback());
       RequireFillLength("HT_SINE", "openAndFill", "outSine", outSine.Length, guardOutLen);
       RequireFillLength("HT_SINE", "openAndFill", "outLeadSine", outLeadSine.Length, guardOutLen);

@@ -263,7 +263,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COSH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH update: BadParam", RetCode.BadParam);
          core.coshStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH peek: BadParam", RetCode.BadParam);
          CoshStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cosh(inReal);
@@ -358,9 +358,9 @@
          throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
+         throw new TALibStateException("COSH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COSH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind coshOpen (composition seam). */
    CoshStream coshOpenInternal( double inReal[], int startIdx )
@@ -379,9 +379,9 @@
          throw new InsufficientHistoryException("COSH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH open: internal error", retCode);
+         throw new TALibStateException("COSH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COSH open: " + retCode, retCode);
+      throw new TALibArgumentException("COSH open: " + retCode, retCode);
    }
    /**
     * Open a live COSH stream over the warm-up history; the handle's
@@ -418,7 +418,7 @@
       int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
       requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

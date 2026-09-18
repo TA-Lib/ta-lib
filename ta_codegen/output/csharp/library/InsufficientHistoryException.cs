@@ -48,7 +48,7 @@ namespace TALib;
 /// one array) that arrive as a plain <see cref="ArgumentException"/>. It stays an
 /// <see cref="ArgumentException"/> by inheritance, so an existing <c>catch</c>
 /// keeps working, and it reports <see cref="RetCode.InsufficientHistory"/>
-/// through <see cref="ITaLibFailure.RetCode"/>.</para>
+/// through <see cref="ITALibFailure.RetCode"/>.</para>
 /// <para>It is knowable in advance: query the matching <c>*_Lookback</c> method
 /// and feed one more bar than it returns.</para>
 /// <para>Deliberately not serializable. Stream handles are not serializable
@@ -57,7 +57,7 @@ namespace TALib;
 /// <c>SerializationInfo</c> constructor here would be an obsolete API
 /// (SYSLIB0051) that this project builds as an error.</para>
 /// </remarks>
-public sealed class InsufficientHistoryException : TaLibArgumentException
+public sealed class InsufficientHistoryException : TALibArgumentException
 {
     /// <summary>Create the exception with a message.</summary>
     /// <param name="message">What was too short, carrying the

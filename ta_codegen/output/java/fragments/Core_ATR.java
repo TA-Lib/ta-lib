@@ -550,7 +550,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ATR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ATR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATR update: BadParam", RetCode.BadParam);
          core.atrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -568,7 +568,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATR peek: BadParam", RetCode.BadParam);
          AtrStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -837,9 +837,9 @@
          throw new InsufficientHistoryException("ATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATR openAndFill: internal error", retCode);
+         throw new TALibStateException("ATR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ATR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind atrOpen (composition seam). */
    AtrStream atrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -858,9 +858,9 @@
          throw new InsufficientHistoryException("ATR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATR open: internal error", retCode);
+         throw new TALibStateException("ATR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATR open: " + retCode, retCode);
+      throw new TALibArgumentException("ATR open: " + retCode, retCode);
    }
    /**
     * Open a live ATR stream over the warm-up history; the handle's
@@ -907,7 +907,7 @@
       requireHistoryLength("ATR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

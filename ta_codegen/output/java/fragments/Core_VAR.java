@@ -590,7 +590,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VAR update: BadParam", RetCode.BadParam);
          core.varStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -608,7 +608,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VAR peek: BadParam", RetCode.BadParam);
          VarStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -1106,9 +1106,9 @@
          throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VAR openAndFill: internal error", retCode);
+         throw new TALibStateException("VAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind varOpen (composition seam). */
    VarStream varOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -1127,9 +1127,9 @@
          throw new InsufficientHistoryException("VAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VAR open: internal error", retCode);
+         throw new TALibStateException("VAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VAR open: " + retCode, retCode);
+      throw new TALibArgumentException("VAR open: " + retCode, retCode);
    }
    /**
     * Open a live VAR stream over the warm-up history; the handle's
@@ -1168,7 +1168,7 @@
       int guardOutLen = openFillCount("VAR openAndFill", inReal.length, VAR_Lookback(optInTimePeriod, optInNbDev));
       requireLength("VAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

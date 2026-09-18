@@ -447,7 +447,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("APO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("APO update: BadParam", RetCode.BadParam);
          core.apoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -465,7 +465,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("APO peek: BadParam", RetCode.BadParam);
          ApoStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outReal = 0.0;
@@ -626,9 +626,9 @@
          throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("APO openAndFill: internal error", retCode);
+         throw new TALibStateException("APO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("APO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind apoOpen (composition seam). */
    ApoStream apoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -647,9 +647,9 @@
          throw new InsufficientHistoryException("APO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("APO open: internal error", retCode);
+         throw new TALibStateException("APO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("APO open: " + retCode, retCode);
+      throw new TALibArgumentException("APO open: " + retCode, retCode);
    }
    /**
     * Open a live APO stream over the warm-up history; the handle's
@@ -690,7 +690,7 @@
       int guardOutLen = openFillCount("APO openAndFill", inReal.length, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("APO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

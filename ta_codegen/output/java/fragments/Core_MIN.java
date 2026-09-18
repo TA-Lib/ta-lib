@@ -509,7 +509,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIN update: BadParam", RetCode.BadParam);
          core.minStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -527,7 +527,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIN peek: BadParam", RetCode.BadParam);
          MinStream sp = this;
          double tmp = 0.0;
          double cur_outReal = 0.0;
@@ -734,9 +734,9 @@
          throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIN openAndFill: internal error", retCode);
+         throw new TALibStateException("MIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minOpen (composition seam). */
    MinStream minOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -755,9 +755,9 @@
          throw new InsufficientHistoryException("MIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIN open: internal error", retCode);
+         throw new TALibStateException("MIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIN open: " + retCode, retCode);
+      throw new TALibArgumentException("MIN open: " + retCode, retCode);
    }
    /**
     * Open a live MIN stream over the warm-up history; the handle's
@@ -796,7 +796,7 @@
       int guardOutLen = openFillCount("MIN openAndFill", inReal.length, MIN_Lookback(optInTimePeriod));
       requireLength("MIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

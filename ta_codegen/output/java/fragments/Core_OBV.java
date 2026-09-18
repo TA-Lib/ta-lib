@@ -302,7 +302,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("OBV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV update: BadParam", RetCode.BadParam);
          core.obvStepImpl(this, inReal, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -320,7 +320,7 @@
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV peek: BadParam", RetCode.BadParam);
          ObvStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -431,9 +431,9 @@
          throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
+         throw new TALibStateException("OBV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("OBV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind obvOpen (composition seam). */
    ObvStream obvOpenInternal( double inReal[], double inVolume[], int startIdx )
@@ -452,9 +452,9 @@
          throw new InsufficientHistoryException("OBV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV open: internal error", retCode);
+         throw new TALibStateException("OBV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("OBV open: " + retCode, retCode);
+      throw new TALibArgumentException("OBV open: " + retCode, retCode);
    }
    /**
     * Open a live OBV stream over the warm-up history; the handle's
@@ -495,7 +495,7 @@
       requireHistoryLength("OBV openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("OBV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

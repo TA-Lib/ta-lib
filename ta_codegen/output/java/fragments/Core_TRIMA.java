@@ -683,7 +683,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRIMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
          core.trimaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -701,7 +701,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
          TrimaStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod % 2 == 1 ) {
@@ -1329,9 +1329,9 @@
          throw new InsufficientHistoryException("TRIMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIMA openAndFill: internal error", retCode);
+         throw new TALibStateException("TRIMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRIMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trimaOpen (composition seam). */
    TrimaStream trimaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1350,9 +1350,9 @@
          throw new InsufficientHistoryException("TRIMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIMA open: internal error", retCode);
+         throw new TALibStateException("TRIMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIMA open: " + retCode, retCode);
+      throw new TALibArgumentException("TRIMA open: " + retCode, retCode);
    }
    /**
     * Open a live TRIMA stream over the warm-up history; the handle's
@@ -1391,7 +1391,7 @@
       int guardOutLen = openFillCount("TRIMA openAndFill", inReal.length, TRIMA_Lookback(optInTimePeriod));
       requireLength("TRIMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

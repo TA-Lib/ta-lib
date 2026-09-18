@@ -298,7 +298,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AVGPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
          core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -316,7 +316,7 @@
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
          AvgpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
@@ -398,9 +398,9 @@
          throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("AVGPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind avgpriceOpen (composition seam). */
    AvgpriceStream avgpriceOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -419,9 +419,9 @@
          throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGPRICE open: internal error", retCode);
+         throw new TALibStateException("AVGPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("AVGPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live AVGPRICE stream over the warm-up history; the handle's
@@ -470,7 +470,7 @@
       requireHistoryLength("AVGPRICE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("AVGPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

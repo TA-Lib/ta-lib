@@ -980,11 +980,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public Cdlrisefall3methodsStream Cdlrisefall3methodsOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDLRISEFALL3METHODS", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLRISEFALL3METHODS", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLRISEFALL3METHODS", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1026,11 +1026,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public Cdlrisefall3methodsStream Cdlrisefall3methodsOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLRISEFALL3METHODS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDLRISEFALL3METHODS", "openAndFill", inOpen.Length, CDLRISEFALL3METHODS_Lookback());
       RequireHistoryLength("CDLRISEFALL3METHODS", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLRISEFALL3METHODS", "openAndFill", "inLow", inLow.Length, inOpen.Length);

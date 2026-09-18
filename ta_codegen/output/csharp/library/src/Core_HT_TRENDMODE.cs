@@ -2570,8 +2570,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtTrendmodeStream HtTrendmodeOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return HtTrendmodeOpenInternal(inReal, 0);
    }
 
@@ -2604,8 +2604,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtTrendmodeStream HtTrendmodeOpenAndFill( ReadOnlySpan<double> inReal, Span<int> outInteger )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDMODE", "openAndFill", inReal.Length, HT_TRENDMODE_Lookback());
       RequireFillLength("HT_TRENDMODE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {

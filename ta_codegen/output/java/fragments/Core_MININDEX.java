@@ -412,7 +412,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MININDEX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
          core.minindexStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -430,7 +430,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
          MinindexStream sp = this;
          double tmp = 0.0;
          int cur_outInteger = 0;
@@ -629,9 +629,9 @@
          throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MININDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MININDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MININDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minindexOpen (composition seam). */
    MinindexStream minindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -650,9 +650,9 @@
          throw new InsufficientHistoryException("MININDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX open: internal error", retCode);
+         throw new TALibStateException("MININDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MININDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MININDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MININDEX stream over the warm-up history; the handle's
@@ -691,7 +691,7 @@
       int guardOutLen = openFillCount("MININDEX openAndFill", inReal.length, MININDEX_Lookback(optInTimePeriod));
       requireLength("MININDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

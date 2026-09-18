@@ -489,7 +489,7 @@
             throw failure("ERI update", RetCode.OutOfRangeEndIndex);
          requireArgument("ERI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ERI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI update: BadParam", RetCode.BadParam);
          core.eriStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.bullPower = this.cur_outBullPower;
@@ -509,7 +509,7 @@
       public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
          requireArgument("ERI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ERI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI peek: BadParam", RetCode.BadParam);
          EriStream sp = this;
          double cur_outBullPower = 0.0;
          double cur_outBearPower = 0.0;
@@ -788,9 +788,9 @@
          throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ERI openAndFill: internal error", retCode);
+         throw new TALibStateException("ERI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ERI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ERI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind eriOpen (composition seam). */
    EriStream eriOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -810,9 +810,9 @@
          throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ERI open: internal error", retCode);
+         throw new TALibStateException("ERI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ERI open: " + retCode, retCode);
+      throw new TALibArgumentException("ERI open: " + retCode, retCode);
    }
    /**
     * Open a live ERI stream over the warm-up history; the handle's
@@ -860,7 +860,7 @@
       requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
       requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
       if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
-         throw new TaLibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

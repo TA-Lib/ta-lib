@@ -1845,8 +1845,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtDcperiodStream HtDcperiodOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return HtDcperiodOpenInternal(inReal, 0);
    }
 
@@ -1879,8 +1879,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtDcperiodStream HtDcperiodOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_DCPERIOD", "openAndFill", inReal.Length, HT_DCPERIOD_Lookback());
       RequireFillLength("HT_DCPERIOD", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

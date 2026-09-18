@@ -1009,11 +1009,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlhammerStream CdlhammerOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLHAMMER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLHAMMER open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLHAMMER open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDLHAMMER", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1052,11 +1052,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlhammerStream CdlhammerOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHAMMER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHAMMER openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLHAMMER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLHAMMER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLHAMMER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDLHAMMER", "openAndFill", inOpen.Length, CDLHAMMER_Lookback());
       RequireHistoryLength("CDLHAMMER", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHAMMER", "openAndFill", "inLow", inLow.Length, inOpen.Length);

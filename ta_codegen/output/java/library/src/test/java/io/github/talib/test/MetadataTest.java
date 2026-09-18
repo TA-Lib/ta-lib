@@ -51,7 +51,7 @@ import io.github.talib.Core;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RetCode;
-import io.github.talib.TaLibFailure;
+import io.github.talib.TALibFailure;
 import io.github.talib.metadata.FuncFlags;
 import io.github.talib.metadata.FunctionDescription;
 import io.github.talib.metadata.FunctionInfo;
@@ -669,7 +669,7 @@ public class MetadataTest {
             failures++;
             System.out.println("  FAIL: " + what + " (no exception thrown)");
         } catch (RuntimeException e) {
-            if (!(e instanceof TaLibFailure f) || f.retCode() != expected) {
+            if (!(e instanceof TALibFailure f) || f.retCode() != expected) {
                 failures++;
                 System.out.println("  FAIL: " + what + " (threw " + e.getClass().getName() + ")");
             }

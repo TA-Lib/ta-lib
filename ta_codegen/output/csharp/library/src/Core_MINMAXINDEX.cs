@@ -872,8 +872,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MinmaxindexStream MinmaxindexOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return MinmaxindexOpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -910,8 +910,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MinmaxindexStream MinmaxindexOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outMinIdx, Span<int> outMaxIdx )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MINMAXINDEX", "openAndFill", inReal.Length, MINMAXINDEX_Lookback(optInTimePeriod));
       RequireFillLength("MINMAXINDEX", "openAndFill", "outMinIdx", outMinIdx.Length, guardOutLen);
       RequireFillLength("MINMAXINDEX", "openAndFill", "outMaxIdx", outMaxIdx.Length, guardOutLen);

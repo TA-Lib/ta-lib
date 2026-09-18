@@ -273,7 +273,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ASIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ASIN update: BadParam", RetCode.BadParam);
          core.asinStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -291,7 +291,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
          AsinStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.asin(inReal);
@@ -368,9 +368,9 @@
          throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
+         throw new TALibStateException("ASIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ASIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind asinOpen (composition seam). */
    AsinStream asinOpenInternal( double inReal[], int startIdx )
@@ -389,9 +389,9 @@
          throw new InsufficientHistoryException("ASIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN open: internal error", retCode);
+         throw new TALibStateException("ASIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ASIN open: " + retCode, retCode);
+      throw new TALibArgumentException("ASIN open: " + retCode, retCode);
    }
    /**
     * Open a live ASIN stream over the warm-up history; the handle's
@@ -428,7 +428,7 @@
       int guardOutLen = openFillCount("ASIN openAndFill", inReal.length, ASIN_Lookback());
       requireLength("ASIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

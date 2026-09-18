@@ -516,7 +516,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CMO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMO update: BadParam", RetCode.BadParam);
          core.cmoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -534,7 +534,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CmoStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -787,9 +787,9 @@
          throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMO openAndFill: internal error", retCode);
+         throw new TALibStateException("CMO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CMO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cmoOpen (composition seam). */
    CmoStream cmoOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -808,9 +808,9 @@
          throw new InsufficientHistoryException("CMO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMO open: internal error", retCode);
+         throw new TALibStateException("CMO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMO open: " + retCode, retCode);
+      throw new TALibArgumentException("CMO open: " + retCode, retCode);
    }
    /**
     * Open a live CMO stream over the warm-up history; the handle's
@@ -849,7 +849,7 @@
       int guardOutLen = openFillCount("CMO openAndFill", inReal.length, CMO_Lookback(optInTimePeriod));
       requireLength("CMO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

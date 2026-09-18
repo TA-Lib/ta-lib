@@ -481,9 +481,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MultStream MultOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("MULT open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "MULT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("MULT open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("MULT", "open", "inReal1", inReal1.Length, inReal0.Length);
       return MultOpenInternal(inReal0, inReal1, 0);
    }
@@ -516,9 +516,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MultStream MultOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("MULT openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "MULT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("MULT openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       int guardOutLen = OpenFillCount("MULT", "openAndFill", inReal0.Length, MULT_Lookback());
       RequireHistoryLength("MULT", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("MULT", "openAndFill", "outReal", outReal.Length, guardOutLen);

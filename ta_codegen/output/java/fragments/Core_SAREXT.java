@@ -955,7 +955,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SAREXT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
          core.sarextStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -973,7 +973,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
          SarextStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -1631,9 +1631,9 @@
          throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAREXT openAndFill: internal error", retCode);
+         throw new TALibStateException("SAREXT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SAREXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sarextOpen (composition seam). */
    SarextStream sarextOpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -1652,9 +1652,9 @@
          throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAREXT open: internal error", retCode);
+         throw new TALibStateException("SAREXT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAREXT open: " + retCode, retCode);
+      throw new TALibArgumentException("SAREXT open: " + retCode, retCode);
    }
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
@@ -1697,7 +1697,7 @@
       requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

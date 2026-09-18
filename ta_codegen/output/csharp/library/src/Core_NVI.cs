@@ -651,9 +651,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public NviStream NviOpen( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "NVI open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "NVI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("NVI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "NVI open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inClose.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "NVI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("NVI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("NVI", "open", "inVolume", inVolume.Length, inClose.Length);
       return NviOpenInternal(inClose, inVolume, 0);
    }
@@ -686,9 +686,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public NviStream NviOpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "NVI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "NVI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("NVI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "NVI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inClose.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "NVI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("NVI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("NVI", "openAndFill", inClose.Length, NVI_Lookback());
       RequireHistoryLength("NVI", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("NVI", "openAndFill", "outReal", outReal.Length, guardOutLen);

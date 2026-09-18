@@ -569,7 +569,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TSF update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSF update: BadParam", RetCode.BadParam);
          core.tsfStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -587,7 +587,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSF peek: BadParam", RetCode.BadParam);
          TsfStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -1052,9 +1052,9 @@
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
+         throw new TALibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TSF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tsfOpen (composition seam). */
    TsfStream tsfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1073,9 +1073,9 @@
          throw new InsufficientHistoryException("TSF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSF open: internal error", retCode);
+         throw new TALibStateException("TSF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSF open: " + retCode, retCode);
+      throw new TALibArgumentException("TSF open: " + retCode, retCode);
    }
    /**
     * Open a live TSF stream over the warm-up history; the handle's
@@ -1114,7 +1114,7 @@
       int guardOutLen = openFillCount("TSF openAndFill", inReal.length, TSF_Lookback(optInTimePeriod));
       requireLength("TSF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

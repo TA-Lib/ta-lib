@@ -1121,7 +1121,7 @@
             throw failure("HT_SINE update", RetCode.OutOfRangeEndIndex);
          requireArgument("HT_SINE update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
          core.htSineStepImpl(this, inReal);
          this.outRangeCount++;
          out.sine = this.cur_outSine;
@@ -1141,7 +1141,7 @@
       public void peek( double inReal, HtSineOut out ) {
          requireArgument("HT_SINE peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
          HtSineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -2131,9 +2131,9 @@
          throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_SINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htSineOpen (composition seam). */
    HtSineStream htSineOpenInternal( double inReal[], int startIdx )
@@ -2153,9 +2153,9 @@
          throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE open: internal error", retCode);
+         throw new TALibStateException("HT_SINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_SINE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_SINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_SINE stream over the warm-up history; the handle's
@@ -2193,7 +2193,7 @@
       requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

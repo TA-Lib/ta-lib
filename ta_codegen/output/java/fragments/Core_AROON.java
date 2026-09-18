@@ -498,7 +498,7 @@
             throw failure("AROON update", RetCode.OutOfRangeEndIndex);
          requireArgument("AROON update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON update: BadParam", RetCode.BadParam);
          core.aroonStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.aroonDown = this.cur_outAroonDown;
@@ -518,7 +518,7 @@
       public void peek( double inHigh, double inLow, AroonOut out ) {
          requireArgument("AROON peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON peek: BadParam", RetCode.BadParam);
          AroonStream sp = this;
          double tmp = 0.0;
          double cur_outAroonDown = 0.0;
@@ -833,9 +833,9 @@
          throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROON openAndFill: internal error", retCode);
+         throw new TALibStateException("AROON openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROON openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AROON openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind aroonOpen (composition seam). */
    AroonStream aroonOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -855,9 +855,9 @@
          throw new InsufficientHistoryException("AROON open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROON open: internal error", retCode);
+         throw new TALibStateException("AROON open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROON open: " + retCode, retCode);
+      throw new TALibArgumentException("AROON open: " + retCode, retCode);
    }
    /**
     * Open a live AROON stream over the warm-up history; the handle's
@@ -901,7 +901,7 @@
       requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
       requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
-         throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

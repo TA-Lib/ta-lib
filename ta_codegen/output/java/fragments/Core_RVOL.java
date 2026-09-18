@@ -396,7 +396,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RVOL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("RVOL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL update: BadParam", RetCode.BadParam);
          core.rvolStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -414,7 +414,7 @@
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("RVOL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL peek: BadParam", RetCode.BadParam);
          RvolStream sp = this;
          double baseline = 0.0;
          double todayVolume = 0.0;
@@ -582,9 +582,9 @@
          throw new InsufficientHistoryException("RVOL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVOL openAndFill: internal error", retCode);
+         throw new TALibStateException("RVOL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVOL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RVOL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rvolOpen (composition seam). */
    RvolStream rvolOpenInternal( double inVolume[], int startIdx, int optInTimePeriod )
@@ -603,9 +603,9 @@
          throw new InsufficientHistoryException("RVOL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVOL open: internal error", retCode);
+         throw new TALibStateException("RVOL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVOL open: " + retCode, retCode);
+      throw new TALibArgumentException("RVOL open: " + retCode, retCode);
    }
    /**
     * Open a live RVOL stream over the warm-up history; the handle's
@@ -644,7 +644,7 @@
       int guardOutLen = openFillCount("RVOL openAndFill", inVolume.length, RVOL_Lookback(optInTimePeriod));
       requireLength("RVOL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("RVOL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVOL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

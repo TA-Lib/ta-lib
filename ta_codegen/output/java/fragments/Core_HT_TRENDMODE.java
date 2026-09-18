@@ -1262,7 +1262,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_TRENDMODE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
          core.htTrendmodeStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -1280,7 +1280,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
          HtTrendmodeStream sp = this;
          int i = 0;
          int j = 0;
@@ -2465,9 +2465,9 @@
          throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htTrendmodeOpen (composition seam). */
    HtTrendmodeStream htTrendmodeOpenInternal( double inReal[], int startIdx )
@@ -2486,9 +2486,9 @@
          throw new InsufficientHistoryException("HT_TRENDMODE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE open: internal error", retCode);
+         throw new TALibStateException("HT_TRENDMODE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDMODE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDMODE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDMODE stream over the warm-up history; the handle's
@@ -2525,7 +2525,7 @@
       int guardOutLen = openFillCount("HT_TRENDMODE openAndFill", inReal.length, HT_TRENDMODE_Lookback());
       requireLength("HT_TRENDMODE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

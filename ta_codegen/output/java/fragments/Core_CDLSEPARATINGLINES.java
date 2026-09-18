@@ -509,7 +509,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSEPARATINGLINES update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
          core.cdlseparatinglinesStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -527,7 +527,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
          CdlseparatinglinesStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -823,9 +823,9 @@
          throw new InsufficientHistoryException("CDLSEPARATINGLINES openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSEPARATINGLINES openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSEPARATINGLINES openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlseparatinglinesOpen (composition seam). */
    CdlseparatinglinesStream cdlseparatinglinesOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -844,9 +844,9 @@
          throw new InsufficientHistoryException("CDLSEPARATINGLINES open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSEPARATINGLINES open: internal error", retCode);
+         throw new TALibStateException("CDLSEPARATINGLINES open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSEPARATINGLINES open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSEPARATINGLINES open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSEPARATINGLINES stream over the warm-up history; the handle's
@@ -895,7 +895,7 @@
       requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

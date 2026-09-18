@@ -996,11 +996,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlhikkakemodStream CdlhikkakemodOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDLHIKKAKEMOD", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKEMOD", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKEMOD", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1040,11 +1040,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdlhikkakemodStream CdlhikkakemodOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLHIKKAKEMOD openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLHIKKAKEMOD openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDLHIKKAKEMOD", "openAndFill", inOpen.Length, CDLHIKKAKEMOD_Lookback());
       RequireHistoryLength("CDLHIKKAKEMOD", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKEMOD", "openAndFill", "inLow", inLow.Length, inOpen.Length);

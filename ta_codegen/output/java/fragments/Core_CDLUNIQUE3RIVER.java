@@ -478,7 +478,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLUNIQUE3RIVER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
          core.cdlunique3riverStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -496,7 +496,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
          Cdlunique3riverStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -760,9 +760,9 @@
          throw new InsufficientHistoryException("CDLUNIQUE3RIVER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUNIQUE3RIVER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLUNIQUE3RIVER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlunique3riverOpen (composition seam). */
    Cdlunique3riverStream cdlunique3riverOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -781,9 +781,9 @@
          throw new InsufficientHistoryException("CDLUNIQUE3RIVER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUNIQUE3RIVER open: internal error", retCode);
+         throw new TALibStateException("CDLUNIQUE3RIVER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUNIQUE3RIVER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUNIQUE3RIVER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLUNIQUE3RIVER stream over the warm-up history; the handle's
@@ -832,7 +832,7 @@
       requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

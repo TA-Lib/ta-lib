@@ -568,7 +568,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_ANGLE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
          core.linearregAngleStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -586,7 +586,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
          LinearregAngleStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -1044,9 +1044,9 @@
          throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregAngleOpen (composition seam). */
    LinearregAngleStream linearregAngleOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1065,9 +1065,9 @@
          throw new InsufficientHistoryException("LINEARREG_ANGLE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_ANGLE open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_ANGLE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_ANGLE stream over the warm-up history; the handle's
@@ -1106,7 +1106,7 @@
       int guardOutLen = openFillCount("LINEARREG_ANGLE openAndFill", inReal.length, LINEARREG_ANGLE_Lookback(optInTimePeriod));
       requireLength("LINEARREG_ANGLE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

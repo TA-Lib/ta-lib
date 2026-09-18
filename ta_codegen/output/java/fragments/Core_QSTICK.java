@@ -412,7 +412,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("QSTICK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
          core.qstickStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -430,7 +430,7 @@
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
          QstickStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -613,9 +613,9 @@
          throw new InsufficientHistoryException("QSTICK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("QSTICK openAndFill: internal error", retCode);
+         throw new TALibStateException("QSTICK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("QSTICK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind qstickOpen (composition seam). */
    QstickStream qstickOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
@@ -634,9 +634,9 @@
          throw new InsufficientHistoryException("QSTICK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("QSTICK open: internal error", retCode);
+         throw new TALibStateException("QSTICK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("QSTICK open: " + retCode, retCode);
+      throw new TALibArgumentException("QSTICK open: " + retCode, retCode);
    }
    /**
     * Open a live QSTICK stream over the warm-up history; the handle's
@@ -679,7 +679,7 @@
       requireHistoryLength("QSTICK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("QSTICK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

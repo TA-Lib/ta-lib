@@ -794,11 +794,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdltristarStream CdltristarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDLTRISTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLTRISTAR", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLTRISTAR", "open", "inClose", inClose.Length, inOpen.Length);
@@ -838,11 +838,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CdltristarStream CdltristarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDLTRISTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTRISTAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTRISTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDLTRISTAR", "openAndFill", inOpen.Length, CDLTRISTAR_Lookback());
       RequireHistoryLength("CDLTRISTAR", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLTRISTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);

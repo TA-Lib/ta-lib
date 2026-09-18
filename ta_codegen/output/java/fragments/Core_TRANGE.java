@@ -372,7 +372,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRANGE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
          core.trangeStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -390,7 +390,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
          TrangeStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -560,9 +560,9 @@
          throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRANGE openAndFill: internal error", retCode);
+         throw new TALibStateException("TRANGE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRANGE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trangeOpen (composition seam). */
    TrangeStream trangeOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -581,9 +581,9 @@
          throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRANGE open: internal error", retCode);
+         throw new TALibStateException("TRANGE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRANGE open: " + retCode, retCode);
+      throw new TALibArgumentException("TRANGE open: " + retCode, retCode);
    }
    /**
     * Open a live TRANGE stream over the warm-up history; the handle's
@@ -628,7 +628,7 @@
       requireHistoryLength("TRANGE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TRANGE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

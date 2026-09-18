@@ -613,7 +613,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3WHITESOLDIERS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
          core.cdl3whitesoldiersStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -631,7 +631,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
          Cdl3whitesoldiersStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -1023,9 +1023,9 @@
          throw new InsufficientHistoryException("CDL3WHITESOLDIERS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3WHITESOLDIERS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3WHITESOLDIERS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3whitesoldiersOpen (composition seam). */
    Cdl3whitesoldiersStream cdl3whitesoldiersOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -1044,9 +1044,9 @@
          throw new InsufficientHistoryException("CDL3WHITESOLDIERS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3WHITESOLDIERS open: internal error", retCode);
+         throw new TALibStateException("CDL3WHITESOLDIERS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3WHITESOLDIERS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3WHITESOLDIERS open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3WHITESOLDIERS stream over the warm-up history; the handle's
@@ -1095,7 +1095,7 @@
       requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3WHITESOLDIERS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -526,7 +526,7 @@
             throw failure("DONCHIAN update", RetCode.OutOfRangeEndIndex);
          requireArgument("DONCHIAN update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
          core.donchianStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -547,7 +547,7 @@
       public void peek( double inHigh, double inLow, DonchianOut out ) {
          requireArgument("DONCHIAN peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
          DonchianStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -874,9 +874,9 @@
          throw new InsufficientHistoryException("DONCHIAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DONCHIAN openAndFill: internal error", retCode);
+         throw new TALibStateException("DONCHIAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind donchianOpen (composition seam). */
    DonchianStream donchianOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -897,9 +897,9 @@
          throw new InsufficientHistoryException("DONCHIAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DONCHIAN open: internal error", retCode);
+         throw new TALibStateException("DONCHIAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DONCHIAN open: " + retCode, retCode);
+      throw new TALibArgumentException("DONCHIAN open: " + retCode, retCode);
    }
    /**
     * Open a live DONCHIAN stream over the warm-up history; the handle's
@@ -944,7 +944,7 @@
       requireLength("DONCHIAN openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("DONCHIAN openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

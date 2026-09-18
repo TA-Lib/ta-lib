@@ -348,7 +348,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("NVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NVI update: BadParam", RetCode.BadParam);
          core.nviStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -366,7 +366,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NVI peek: BadParam", RetCode.BadParam);
          NviStream sp = this;
          double tempClose = 0.0;
          double tempVolume = 0.0;
@@ -545,9 +545,9 @@
          throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
+         throw new TALibStateException("NVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("NVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind nviOpen (composition seam). */
    NviStream nviOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -566,9 +566,9 @@
          throw new InsufficientHistoryException("NVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI open: internal error", retCode);
+         throw new TALibStateException("NVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("NVI open: " + retCode, retCode);
+      throw new TALibArgumentException("NVI open: " + retCode, retCode);
    }
    /**
     * Open a live NVI stream over the warm-up history; the handle's
@@ -609,7 +609,7 @@
       requireHistoryLength("NVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("NVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

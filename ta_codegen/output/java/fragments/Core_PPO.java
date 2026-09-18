@@ -456,7 +456,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PPO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PPO update: BadParam", RetCode.BadParam);
          core.ppoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -474,7 +474,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PPO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PPO peek: BadParam", RetCode.BadParam);
          PpoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -653,9 +653,9 @@
          throw new InsufficientHistoryException("PPO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PPO openAndFill: internal error", retCode);
+         throw new TALibStateException("PPO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PPO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PPO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ppoOpen (composition seam). */
    PpoStream ppoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -674,9 +674,9 @@
          throw new InsufficientHistoryException("PPO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PPO open: internal error", retCode);
+         throw new TALibStateException("PPO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PPO open: " + retCode, retCode);
+      throw new TALibArgumentException("PPO open: " + retCode, retCode);
    }
    /**
     * Open a live PPO stream over the warm-up history; the handle's
@@ -717,7 +717,7 @@
       int guardOutLen = openFillCount("PPO openAndFill", inReal.length, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

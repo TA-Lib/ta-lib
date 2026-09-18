@@ -559,7 +559,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_SLOPE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
          core.linearregSlopeStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -577,7 +577,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
          LinearregSlopeStream sp = this;
          int windowStart = 0;
          double tempValue1 = 0.0;
@@ -1028,9 +1028,9 @@
          throw new InsufficientHistoryException("LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_SLOPE openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_SLOPE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregSlopeOpen (composition seam). */
    LinearregSlopeStream linearregSlopeOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1049,9 +1049,9 @@
          throw new InsufficientHistoryException("LINEARREG_SLOPE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_SLOPE open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_SLOPE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_SLOPE open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_SLOPE open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_SLOPE stream over the warm-up history; the handle's
@@ -1090,7 +1090,7 @@
       int guardOutLen = openFillCount("LINEARREG_SLOPE openAndFill", inReal.length, LINEARREG_SLOPE_Lookback(optInTimePeriod));
       requireLength("LINEARREG_SLOPE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

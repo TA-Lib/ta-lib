@@ -537,7 +537,7 @@
             throw failure("ACCBANDS update", RetCode.OutOfRangeEndIndex);
          requireArgument("ACCBANDS update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -558,7 +558,7 @@
       public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          requireArgument("ACCBANDS peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
          AccbandsStream sp = this;
          double tempUpper = 0.0;
          double tempMiddle = 0.0;
@@ -895,9 +895,9 @@
          throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACCBANDS openAndFill: internal error", retCode);
+         throw new TALibStateException("ACCBANDS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind accbandsOpen (composition seam). */
    AccbandsStream accbandsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -918,9 +918,9 @@
          throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACCBANDS open: internal error", retCode);
+         throw new TALibStateException("ACCBANDS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACCBANDS open: " + retCode, retCode);
+      throw new TALibArgumentException("ACCBANDS open: " + retCode, retCode);
    }
    /**
     * Open a live ACCBANDS stream over the warm-up history; the handle's
@@ -969,7 +969,7 @@
       requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

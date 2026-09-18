@@ -473,7 +473,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHIKKAKE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
          core.cdlhikkakeStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -491,7 +491,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
          CdlhikkakeStream sp = this;
          int cd = sp.cd;
          int cur_outInteger = 0;
@@ -731,9 +731,9 @@
          throw new InsufficientHistoryException("CDLHIKKAKE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhikkakeOpen (composition seam). */
    CdlhikkakeStream cdlhikkakeOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -752,9 +752,9 @@
          throw new InsufficientHistoryException("CDLHIKKAKE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKE open: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIKKAKE stream over the warm-up history; the handle's
@@ -803,7 +803,7 @@
       requireHistoryLength("CDLHIKKAKE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHIKKAKE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

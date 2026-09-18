@@ -335,7 +335,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT update: BadParam", RetCode.BadParam);
          core.pvtStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -353,7 +353,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT peek: BadParam", RetCode.BadParam);
          PvtStream sp = this;
          double tempClose = 0.0;
          double cur_outReal = 0.0;
@@ -470,9 +470,9 @@
          throw new InsufficientHistoryException("PVT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVT openAndFill: internal error", retCode);
+         throw new TALibStateException("PVT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pvtOpen (composition seam). */
    PvtStream pvtOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -491,9 +491,9 @@
          throw new InsufficientHistoryException("PVT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVT open: internal error", retCode);
+         throw new TALibStateException("PVT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVT open: " + retCode, retCode);
+      throw new TALibArgumentException("PVT open: " + retCode, retCode);
    }
    /**
     * Open a live PVT stream over the warm-up history; the handle's
@@ -534,7 +534,7 @@
       requireHistoryLength("PVT openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

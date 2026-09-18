@@ -849,7 +849,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ULTOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
          core.ultoscStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -867,7 +867,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
          UltoscStream sp = this;
          double trueLow = 0.0;
          double trueRange = 0.0;
@@ -1439,9 +1439,9 @@
          throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ULTOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("ULTOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ultoscOpen (composition seam). */
    UltoscStream ultoscOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -1460,9 +1460,9 @@
          throw new InsufficientHistoryException("ULTOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ULTOSC open: internal error", retCode);
+         throw new TALibStateException("ULTOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ULTOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("ULTOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ULTOSC stream over the warm-up history; the handle's
@@ -1509,7 +1509,7 @@
       requireHistoryLength("ULTOSC openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ULTOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

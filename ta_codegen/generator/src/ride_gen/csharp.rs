@@ -41,7 +41,7 @@ const RIDE_CSHARP_SUPPORT: &str = r#"
      * returned for the same condition, so the three entry points are comparable
      * without narrowing the catch types; -1 is an exception the library does
      * not own, which is itself a divergence. */
-    static int RideCode(Exception e) => e is ITaLibFailure f ? (int) f.RetCode : -1;
+    static int RideCode(Exception e) => e is ITALibFailure f ? (int) f.RetCode : -1;
 
     static bool RideFinite(double[] a, int n)
     {

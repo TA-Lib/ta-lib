@@ -706,7 +706,7 @@
             throw failure("STOCHF update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCHF update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
          core.stochfStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.fastK = this.cur_outFastK;
@@ -726,7 +726,7 @@
       public void peek( double inHigh, double inLow, double inClose, StochfOut out ) {
          requireArgument("STOCHF peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
          StochfStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outFastD = 0.0;
@@ -1192,9 +1192,9 @@
          throw new InsufficientHistoryException("STOCHF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHF openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCHF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochfOpen (composition seam). */
    StochfStream stochfOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -1214,9 +1214,9 @@
          throw new InsufficientHistoryException("STOCHF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHF open: internal error", retCode);
+         throw new TALibStateException("STOCHF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHF open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHF open: " + retCode, retCode);
    }
    /**
     * Open a live STOCHF stream over the warm-up history; the handle's
@@ -1266,7 +1266,7 @@
       requireLength("STOCHF openAndFill", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHF openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
-         throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

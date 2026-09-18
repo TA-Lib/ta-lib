@@ -1171,9 +1171,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PlusDmStream PlusDmOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("PLUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("PLUS_DM open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("PLUS_DM", "open", "inLow", inLow.Length, inHigh.Length);
       return PlusDmOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -1208,9 +1208,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PlusDmStream PlusDmOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("PLUS_DM openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PLUS_DM openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("PLUS_DM openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       int guardOutLen = OpenFillCount("PLUS_DM", "openAndFill", inHigh.Length, PLUS_DM_Lookback(optInTimePeriod));
       RequireHistoryLength("PLUS_DM", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("PLUS_DM", "openAndFill", "outReal", outReal.Length, guardOutLen);

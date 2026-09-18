@@ -675,7 +675,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WILLR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR update: BadParam", RetCode.BadParam);
          core.willrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -693,7 +693,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
          double tempReal = 0.0;
@@ -1026,9 +1026,9 @@
          throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WILLR openAndFill: internal error", retCode);
+         throw new TALibStateException("WILLR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WILLR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind willrOpen (composition seam). */
    WillrStream willrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1047,9 +1047,9 @@
          throw new InsufficientHistoryException("WILLR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WILLR open: internal error", retCode);
+         throw new TALibStateException("WILLR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WILLR open: " + retCode, retCode);
+      throw new TALibArgumentException("WILLR open: " + retCode, retCode);
    }
    /**
     * Open a live WILLR stream over the warm-up history; the handle's
@@ -1096,7 +1096,7 @@
       requireHistoryLength("WILLR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WILLR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

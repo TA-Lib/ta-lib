@@ -676,7 +676,7 @@
             throw failure("MACDEXT update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACDEXT update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
          core.macdextStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -697,7 +697,7 @@
       public void peek( double inReal, MacdextOut out ) {
          requireArgument("MACDEXT peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
          MacdextStream sp = this;
          double cur_slowMABuffer = 0.0;
          double cur_fastMABuffer = 0.0;
@@ -961,9 +961,9 @@
          throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDEXT openAndFill: internal error", retCode);
+         throw new TALibStateException("MACDEXT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdextOpen (composition seam). */
    MacdextStream macdextOpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -984,9 +984,9 @@
          throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDEXT open: internal error", retCode);
+         throw new TALibStateException("MACDEXT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDEXT open: " + retCode, retCode);
+      throw new TALibArgumentException("MACDEXT open: " + retCode, retCode);
    }
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -1033,7 +1033,7 @@
       requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

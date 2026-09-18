@@ -542,7 +542,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
          core.adoscStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -560,7 +560,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
          AdoscStream sp = this;
          double high = 0.0;
          double low = 0.0;
@@ -795,9 +795,9 @@
          throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("ADOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adoscOpen (composition seam). */
    AdoscStream adoscOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -816,9 +816,9 @@
          throw new InsufficientHistoryException("ADOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADOSC open: internal error", retCode);
+         throw new TALibStateException("ADOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("ADOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ADOSC stream over the warm-up history; the handle's
@@ -869,7 +869,7 @@
       requireHistoryLength("ADOSC openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("ADOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

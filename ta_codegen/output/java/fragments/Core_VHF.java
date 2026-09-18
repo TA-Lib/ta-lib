@@ -417,7 +417,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VHF update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VHF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VHF update: BadParam", RetCode.BadParam);
          core.vhfStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -435,7 +435,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VHF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VHF peek: BadParam", RetCode.BadParam);
          VhfStream sp = this;
          int i = 0;
          double highest = 0.0;
@@ -662,9 +662,9 @@
          throw new InsufficientHistoryException("VHF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VHF openAndFill: internal error", retCode);
+         throw new TALibStateException("VHF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VHF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VHF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vhfOpen (composition seam). */
    VhfStream vhfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -683,9 +683,9 @@
          throw new InsufficientHistoryException("VHF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VHF open: internal error", retCode);
+         throw new TALibStateException("VHF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VHF open: " + retCode, retCode);
+      throw new TALibArgumentException("VHF open: " + retCode, retCode);
    }
    /**
     * Open a live VHF stream over the warm-up history; the handle's
@@ -724,7 +724,7 @@
       int guardOutLen = openFillCount("VHF openAndFill", inReal.length, VHF_Lookback(optInTimePeriod));
       requireLength("VHF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("VHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

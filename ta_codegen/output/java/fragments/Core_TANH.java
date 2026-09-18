@@ -263,7 +263,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TANH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TANH update: BadParam", RetCode.BadParam);
          core.tanhStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TANH peek: BadParam", RetCode.BadParam);
          TanhStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.tanh(inReal);
@@ -358,9 +358,9 @@
          throw new InsufficientHistoryException("TANH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TANH openAndFill: internal error", retCode);
+         throw new TALibStateException("TANH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TANH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TANH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tanhOpen (composition seam). */
    TanhStream tanhOpenInternal( double inReal[], int startIdx )
@@ -379,9 +379,9 @@
          throw new InsufficientHistoryException("TANH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TANH open: internal error", retCode);
+         throw new TALibStateException("TANH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TANH open: " + retCode, retCode);
+      throw new TALibArgumentException("TANH open: " + retCode, retCode);
    }
    /**
     * Open a live TANH stream over the warm-up history; the handle's
@@ -418,7 +418,7 @@
       int guardOutLen = openFillCount("TANH openAndFill", inReal.length, TANH_Lookback());
       requireLength("TANH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

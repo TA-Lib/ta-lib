@@ -1832,8 +1832,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtPhasorStream HtPhasorOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return HtPhasorOpenInternal(inReal, 0);
    }
 
@@ -1867,8 +1867,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public HtPhasorStream HtPhasorOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_PHASOR", "openAndFill", inReal.Length, HT_PHASOR_Lookback());
       RequireFillLength("HT_PHASOR", "openAndFill", "outInPhase", outInPhase.Length, guardOutLen);
       RequireFillLength("HT_PHASOR", "openAndFill", "outQuadrature", outQuadrature.Length, guardOutLen);

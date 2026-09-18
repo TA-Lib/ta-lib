@@ -484,7 +484,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLKICKING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
          core.cdlkickingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -502,7 +502,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
          CdlkickingStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -770,9 +770,9 @@
          throw new InsufficientHistoryException("CDLKICKING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLKICKING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlkickingOpen (composition seam). */
    CdlkickingStream cdlkickingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -791,9 +791,9 @@
          throw new InsufficientHistoryException("CDLKICKING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKING open: internal error", retCode);
+         throw new TALibStateException("CDLKICKING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLKICKING stream over the warm-up history; the handle's
@@ -842,7 +842,7 @@
       requireHistoryLength("CDLKICKING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLKICKING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

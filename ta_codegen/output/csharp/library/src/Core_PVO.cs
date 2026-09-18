@@ -760,8 +760,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PvoStream PvoOpen( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return PvoOpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -798,8 +798,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PvoStream PvoOpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PVO", "openAndFill", inVolume.Length, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       RequireFillLength("PVO", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inVolume) ) {

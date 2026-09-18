@@ -354,7 +354,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AVGDEV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
          core.avgdevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -372,7 +372,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
          AvgdevStream sp = this;
          double todaySum = 0.0;
          double todayDev = 0.0;
@@ -522,9 +522,9 @@
          throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGDEV openAndFill: internal error", retCode);
+         throw new TALibStateException("AVGDEV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind avgdevOpen (composition seam). */
    AvgdevStream avgdevOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -543,9 +543,9 @@
          throw new InsufficientHistoryException("AVGDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGDEV open: internal error", retCode);
+         throw new TALibStateException("AVGDEV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGDEV open: " + retCode, retCode);
+      throw new TALibArgumentException("AVGDEV open: " + retCode, retCode);
    }
    /**
     * Open a live AVGDEV stream over the warm-up history; the handle's
@@ -584,7 +584,7 @@
       int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
       requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

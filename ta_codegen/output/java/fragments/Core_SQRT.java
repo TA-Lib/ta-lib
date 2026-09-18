@@ -263,7 +263,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SQRT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SQRT update: BadParam", RetCode.BadParam);
          core.sqrtStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
          SqrtStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sqrt(inReal);
@@ -358,9 +358,9 @@
          throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SQRT openAndFill: internal error", retCode);
+         throw new TALibStateException("SQRT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SQRT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sqrtOpen (composition seam). */
    SqrtStream sqrtOpenInternal( double inReal[], int startIdx )
@@ -379,9 +379,9 @@
          throw new InsufficientHistoryException("SQRT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SQRT open: internal error", retCode);
+         throw new TALibStateException("SQRT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SQRT open: " + retCode, retCode);
+      throw new TALibArgumentException("SQRT open: " + retCode, retCode);
    }
    /**
     * Open a live SQRT stream over the warm-up history; the handle's
@@ -418,7 +418,7 @@
       int guardOutLen = openFillCount("SQRT openAndFill", inReal.length, SQRT_Lookback());
       requireLength("SQRT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

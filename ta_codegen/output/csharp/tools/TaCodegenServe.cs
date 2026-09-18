@@ -1176,7 +1176,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AC_Impl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1309,7 +1309,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AC_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AcStream stA = c2.AcOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1368,7 +1368,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ACCBANDS_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ACCBANDS_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1560,7 +1560,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ACCBANDS_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AccbandsStream stA = c2.AccbandsOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -1616,7 +1616,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ACOS_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ACOS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1740,7 +1740,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ACOS_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AcosStream stA = c2.AcosOpenInternal(fz_c[..svN], Sidx);
@@ -1796,7 +1796,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AD_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1926,7 +1926,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AD_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AdStream stA = c2.AdOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], fz_v[..svN], Sidx);
@@ -1982,7 +1982,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ADD_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2108,7 +2108,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ADD_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AddStream stA = c2.AddOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -2167,7 +2167,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ADOSC_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2304,7 +2304,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ADOSC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AdoscStream stA = c2.AdoscOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], fz_v[..svN], Sidx, optInFastPeriod, optInSlowPeriod);
@@ -2361,7 +2361,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ADR_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2494,7 +2494,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ADR_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AdrStream stA = c2.AdrOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -2552,7 +2552,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ADX_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2687,7 +2687,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ADX_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AdxStream stA = c2.AdxOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -2745,7 +2745,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ADXR_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADXR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2880,7 +2880,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ADXR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AdxrStream stA = c2.AdxrOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -2938,7 +2938,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AO_Impl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3071,7 +3071,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AO_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AoStream stA = c2.AoOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInFastPeriod, optInSlowPeriod);
@@ -3148,7 +3148,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.APO_Impl(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3279,7 +3279,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.APO_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ApoStream stA = c2.ApoOpenInternal(fz_c[..svN], Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -3337,7 +3337,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AROON_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AROON_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3494,7 +3494,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AROON_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AroonStream stA = c2.AroonOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -3551,7 +3551,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AROONOSC_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AROONOSC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3684,7 +3684,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AROONOSC_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AroonoscStream stA = c2.AroonoscOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -3740,7 +3740,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ASIN_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ASIN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3864,7 +3864,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ASIN_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AsinStream stA = c2.AsinOpenInternal(fz_c[..svN], Sidx);
@@ -3920,7 +3920,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ATAN_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ATAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4044,7 +4044,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ATAN_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AtanStream stA = c2.AtanOpenInternal(fz_c[..svN], Sidx);
@@ -4102,7 +4102,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ATR_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4237,7 +4237,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ATR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AtrStream stA = c2.AtrOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -4294,7 +4294,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AVGDEV_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AVGDEV_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4425,7 +4425,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AVGDEV_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AvgdevStream stA = c2.AvgdevOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -4481,7 +4481,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.AVGPRICE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AVGPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4611,7 +4611,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.AVGPRICE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.AvgpriceStream stA = c2.AvgpriceOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -4695,7 +4695,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.BBANDS_Impl(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4875,7 +4875,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.BBANDS_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.BbandsStream stA = c2.BbandsOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -4932,7 +4932,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.BETA_Impl(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BETA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5065,7 +5065,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.BETA_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.BetaStream stA = c2.BetaOpenInternal(fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -5121,7 +5121,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.BOP_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BOP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5251,7 +5251,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.BOP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.BopStream stA = c2.BopOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -5308,7 +5308,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CCI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CCI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5443,7 +5443,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CCI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CciStream stA = c2.CciOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -5504,7 +5504,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL2CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL2CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5625,7 +5625,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL2CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5650,7 +5650,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL2CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl2crowsStream stA = c2.Cdl2crowsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -5712,7 +5712,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3BLACKCROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3BLACKCROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5833,7 +5833,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3BLACKCROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5858,7 +5858,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3BLACKCROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3blackcrowsStream stA = c2.Cdl3blackcrowsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -5920,7 +5920,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3INSIDE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3INSIDE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6041,7 +6041,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3INSIDE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6066,7 +6066,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3INSIDE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3insideStream stA = c2.Cdl3insideOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -6128,7 +6128,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3LINESTRIKE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3LINESTRIKE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6249,7 +6249,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3LINESTRIKE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6274,7 +6274,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3LINESTRIKE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3linestrikeStream stA = c2.Cdl3linestrikeOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -6336,7 +6336,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3OUTSIDE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3OUTSIDE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6457,7 +6457,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3OUTSIDE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6482,7 +6482,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3OUTSIDE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3outsideStream stA = c2.Cdl3outsideOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -6544,7 +6544,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3STARSINSOUTH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3STARSINSOUTH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6665,7 +6665,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3STARSINSOUTH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6690,7 +6690,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3STARSINSOUTH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3starsinsouthStream stA = c2.Cdl3starsinsouthOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -6752,7 +6752,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDL3WHITESOLDIERS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3WHITESOLDIERS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6873,7 +6873,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDL3WHITESOLDIERS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6898,7 +6898,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDL3WHITESOLDIERS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdl3whitesoldiersStream stA = c2.Cdl3whitesoldiersOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -6961,7 +6961,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLABANDONEDBABY_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7082,7 +7082,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLABANDONEDBABY_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7107,7 +7107,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLABANDONEDBABY_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlabandonedbabyStream stA = c2.CdlabandonedbabyOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -7169,7 +7169,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLADVANCEBLOCK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLADVANCEBLOCK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7290,7 +7290,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLADVANCEBLOCK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7315,7 +7315,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLADVANCEBLOCK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdladvanceblockStream stA = c2.CdladvanceblockOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -7377,7 +7377,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLBELTHOLD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLBELTHOLD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7498,7 +7498,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLBELTHOLD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7523,7 +7523,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLBELTHOLD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlbeltholdStream stA = c2.CdlbeltholdOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -7585,7 +7585,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLBREAKAWAY_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLBREAKAWAY_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7706,7 +7706,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLBREAKAWAY_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7731,7 +7731,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLBREAKAWAY_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlbreakawayStream stA = c2.CdlbreakawayOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -7793,7 +7793,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLCLOSINGMARUBOZU_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCLOSINGMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7914,7 +7914,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLCLOSINGMARUBOZU_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7939,7 +7939,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLCLOSINGMARUBOZU_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlclosingmarubozuStream stA = c2.CdlclosingmarubozuOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -8001,7 +8001,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLCONCEALBABYSWALL_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCONCEALBABYSWALL_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8122,7 +8122,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLCONCEALBABYSWALL_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8147,7 +8147,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLCONCEALBABYSWALL_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlconcealbabyswallStream stA = c2.CdlconcealbabyswallOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -8209,7 +8209,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLCOUNTERATTACK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCOUNTERATTACK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8330,7 +8330,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLCOUNTERATTACK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8355,7 +8355,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLCOUNTERATTACK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlcounterattackStream stA = c2.CdlcounterattackOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -8418,7 +8418,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLDARKCLOUDCOVER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8539,7 +8539,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLDARKCLOUDCOVER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8564,7 +8564,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLDARKCLOUDCOVER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdldarkcloudcoverStream stA = c2.CdldarkcloudcoverOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -8626,7 +8626,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8747,7 +8747,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8772,7 +8772,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdldojiStream stA = c2.CdldojiOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -8834,7 +8834,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDOJISTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8955,7 +8955,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8980,7 +8980,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdldojistarStream stA = c2.CdldojistarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -9042,7 +9042,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLDRAGONFLYDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDRAGONFLYDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9163,7 +9163,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLDRAGONFLYDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9188,7 +9188,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLDRAGONFLYDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdldragonflydojiStream stA = c2.CdldragonflydojiOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -9250,7 +9250,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLENGULFING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLENGULFING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9371,7 +9371,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLENGULFING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9396,7 +9396,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLENGULFING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlengulfingStream stA = c2.CdlengulfingOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -9459,7 +9459,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLEVENINGDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9580,7 +9580,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLEVENINGDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9605,7 +9605,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLEVENINGDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdleveningdojistarStream stA = c2.CdleveningdojistarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -9668,7 +9668,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLEVENINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9789,7 +9789,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLEVENINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9814,7 +9814,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLEVENINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdleveningstarStream stA = c2.CdleveningstarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -9876,7 +9876,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLGAPSIDESIDEWHITE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9997,7 +9997,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLGAPSIDESIDEWHITE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10022,7 +10022,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLGAPSIDESIDEWHITE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlgapsidesidewhiteStream stA = c2.CdlgapsidesidewhiteOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -10084,7 +10084,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLGRAVESTONEDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLGRAVESTONEDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10205,7 +10205,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLGRAVESTONEDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10230,7 +10230,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLGRAVESTONEDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlgravestonedojiStream stA = c2.CdlgravestonedojiOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -10292,7 +10292,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHAMMER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHAMMER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10413,7 +10413,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHAMMER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10438,7 +10438,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHAMMER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhammerStream stA = c2.CdlhammerOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -10500,7 +10500,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHANGINGMAN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHANGINGMAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10621,7 +10621,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHANGINGMAN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10646,7 +10646,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHANGINGMAN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhangingmanStream stA = c2.CdlhangingmanOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -10708,7 +10708,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHARAMI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHARAMI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10829,7 +10829,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHARAMI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10854,7 +10854,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHARAMI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlharamiStream stA = c2.CdlharamiOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -10916,7 +10916,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHARAMICROSS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHARAMICROSS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11037,7 +11037,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHARAMICROSS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11062,7 +11062,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHARAMICROSS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlharamicrossStream stA = c2.CdlharamicrossOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -11124,7 +11124,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHIGHWAVE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIGHWAVE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11245,7 +11245,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHIGHWAVE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11270,7 +11270,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHIGHWAVE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhighwaveStream stA = c2.CdlhighwaveOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -11332,7 +11332,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHIKKAKE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIKKAKE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11453,7 +11453,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHIKKAKE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11478,7 +11478,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHIKKAKE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhikkakeStream stA = c2.CdlhikkakeOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -11540,7 +11540,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHIKKAKEMOD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIKKAKEMOD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11661,7 +11661,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHIKKAKEMOD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11686,7 +11686,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHIKKAKEMOD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhikkakemodStream stA = c2.CdlhikkakemodOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -11748,7 +11748,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLHOMINGPIGEON_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHOMINGPIGEON_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11869,7 +11869,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLHOMINGPIGEON_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11894,7 +11894,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLHOMINGPIGEON_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlhomingpigeonStream stA = c2.CdlhomingpigeonOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -11956,7 +11956,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLIDENTICAL3CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLIDENTICAL3CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12077,7 +12077,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLIDENTICAL3CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12102,7 +12102,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLIDENTICAL3CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdlidentical3crowsStream stA = c2.Cdlidentical3crowsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -12164,7 +12164,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLINNECK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLINNECK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12285,7 +12285,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLINNECK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12310,7 +12310,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLINNECK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlinneckStream stA = c2.CdlinneckOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -12372,7 +12372,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLINVERTEDHAMMER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLINVERTEDHAMMER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12493,7 +12493,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLINVERTEDHAMMER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12518,7 +12518,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLINVERTEDHAMMER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlinvertedhammerStream stA = c2.CdlinvertedhammerOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -12580,7 +12580,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLKICKING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLKICKING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12701,7 +12701,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLKICKING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12726,7 +12726,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLKICKING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlkickingStream stA = c2.CdlkickingOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -12788,7 +12788,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLKICKINGBYLENGTH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLKICKINGBYLENGTH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12909,7 +12909,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLKICKINGBYLENGTH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12934,7 +12934,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLKICKINGBYLENGTH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlkickingbylengthStream stA = c2.CdlkickingbylengthOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -12996,7 +12996,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLLADDERBOTTOM_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLADDERBOTTOM_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13117,7 +13117,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLLADDERBOTTOM_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13142,7 +13142,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLLADDERBOTTOM_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlladderbottomStream stA = c2.CdlladderbottomOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -13204,7 +13204,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLLONGLEGGEDDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLONGLEGGEDDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13325,7 +13325,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLLONGLEGGEDDOJI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13350,7 +13350,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLLONGLEGGEDDOJI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdllongleggeddojiStream stA = c2.CdllongleggeddojiOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -13412,7 +13412,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLLONGLINE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLONGLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13533,7 +13533,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLLONGLINE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13558,7 +13558,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLLONGLINE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdllonglineStream stA = c2.CdllonglineOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -13620,7 +13620,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLMARUBOZU_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13741,7 +13741,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLMARUBOZU_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13766,7 +13766,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLMARUBOZU_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlmarubozuStream stA = c2.CdlmarubozuOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -13828,7 +13828,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLMATCHINGLOW_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMATCHINGLOW_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13949,7 +13949,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLMATCHINGLOW_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13974,7 +13974,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLMATCHINGLOW_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlmatchinglowStream stA = c2.CdlmatchinglowOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -14037,7 +14037,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLMATHOLD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMATHOLD_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14158,7 +14158,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLMATHOLD_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14183,7 +14183,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLMATHOLD_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlmatholdStream stA = c2.CdlmatholdOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -14246,7 +14246,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLMORNINGDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14367,7 +14367,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLMORNINGDOJISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14392,7 +14392,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLMORNINGDOJISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlmorningdojistarStream stA = c2.CdlmorningdojistarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -14455,7 +14455,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLMORNINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14576,7 +14576,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLMORNINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14601,7 +14601,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLMORNINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlmorningstarStream stA = c2.CdlmorningstarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInPenetration);
@@ -14663,7 +14663,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLONNECK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLONNECK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14784,7 +14784,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLONNECK_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14809,7 +14809,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLONNECK_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlonneckStream stA = c2.CdlonneckOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -14871,7 +14871,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLPIERCING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLPIERCING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14992,7 +14992,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLPIERCING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -15017,7 +15017,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLPIERCING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlpiercingStream stA = c2.CdlpiercingOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -15079,7 +15079,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLRICKSHAWMAN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLRICKSHAWMAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15200,7 +15200,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLRICKSHAWMAN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -15225,7 +15225,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLRICKSHAWMAN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlrickshawmanStream stA = c2.CdlrickshawmanOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -15287,7 +15287,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLRISEFALL3METHODS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLRISEFALL3METHODS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15408,7 +15408,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLRISEFALL3METHODS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -15433,7 +15433,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLRISEFALL3METHODS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdlrisefall3methodsStream stA = c2.Cdlrisefall3methodsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -15495,7 +15495,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSEPARATINGLINES_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSEPARATINGLINES_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15616,7 +15616,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSEPARATINGLINES_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -15641,7 +15641,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSEPARATINGLINES_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlseparatinglinesStream stA = c2.CdlseparatinglinesOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -15703,7 +15703,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSHOOTINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSHOOTINGSTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15824,7 +15824,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSHOOTINGSTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -15849,7 +15849,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSHOOTINGSTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlshootingstarStream stA = c2.CdlshootingstarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -15911,7 +15911,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSHORTLINE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSHORTLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16032,7 +16032,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSHORTLINE_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -16057,7 +16057,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSHORTLINE_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlshortlineStream stA = c2.CdlshortlineOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -16119,7 +16119,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSPINNINGTOP_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSPINNINGTOP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16240,7 +16240,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSPINNINGTOP_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -16265,7 +16265,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSPINNINGTOP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlspinningtopStream stA = c2.CdlspinningtopOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -16327,7 +16327,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSTALLEDPATTERN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSTALLEDPATTERN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16448,7 +16448,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSTALLEDPATTERN_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -16473,7 +16473,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSTALLEDPATTERN_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlstalledpatternStream stA = c2.CdlstalledpatternOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -16535,7 +16535,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLSTICKSANDWICH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSTICKSANDWICH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16656,7 +16656,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLSTICKSANDWICH_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -16681,7 +16681,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLSTICKSANDWICH_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlsticksandwichStream stA = c2.CdlsticksandwichOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -16743,7 +16743,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLTAKURI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTAKURI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16864,7 +16864,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLTAKURI_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -16889,7 +16889,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLTAKURI_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdltakuriStream stA = c2.CdltakuriOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -16951,7 +16951,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLTASUKIGAP_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTASUKIGAP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17072,7 +17072,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLTASUKIGAP_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -17097,7 +17097,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLTASUKIGAP_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdltasukigapStream stA = c2.CdltasukigapOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -17159,7 +17159,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLTHRUSTING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTHRUSTING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17280,7 +17280,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLTHRUSTING_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -17305,7 +17305,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLTHRUSTING_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdlthrustingStream stA = c2.CdlthrustingOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -17367,7 +17367,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLTRISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTRISTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17488,7 +17488,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLTRISTAR_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -17513,7 +17513,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLTRISTAR_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CdltristarStream stA = c2.CdltristarOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -17575,7 +17575,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLUNIQUE3RIVER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLUNIQUE3RIVER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17696,7 +17696,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLUNIQUE3RIVER_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -17721,7 +17721,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLUNIQUE3RIVER_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdlunique3riverStream stA = c2.Cdlunique3riverOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -17783,7 +17783,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLUPSIDEGAP2CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17904,7 +17904,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLUPSIDEGAP2CROWS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -17929,7 +17929,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLUPSIDEGAP2CROWS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdlupsidegap2crowsStream stA = c2.Cdlupsidegap2crowsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -17991,7 +17991,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CDLXSIDEGAP3METHODS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLXSIDEGAP3METHODS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18112,7 +18112,7 @@ public class TaCodegenServe {
                         int mBeg = 0, mNb = 0;
                         RetCode mrc;
                         try { mrc = c2.CDLXSIDEGAP3METHODS_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
-                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
+                        catch (Exception _mve) when (_mve is ITALibFailure) { mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -18137,7 +18137,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CDLXSIDEGAP3METHODS_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Cdlxsidegap3methodsStream stA = c2.Cdlxsidegap3methodsOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -18194,7 +18194,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CEIL_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CEIL_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18318,7 +18318,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CEIL_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CeilStream stA = c2.CeilOpenInternal(fz_c[..svN], Sidx);
@@ -18375,7 +18375,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CMF_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18512,7 +18512,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CMF_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CmfStream stA = c2.CmfOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -18570,7 +18570,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CMO_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMO_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18701,7 +18701,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CMO_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CmoStream stA = c2.CmoOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -18758,7 +18758,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CMOU_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMOU_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18889,7 +18889,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CMOU_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CmouStream stA = c2.CmouOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -18948,7 +18948,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.COPPOCK_Impl(0, svN - 1, fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19079,7 +19079,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.COPPOCK_Impl(Sidx, svN - 1, fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CoppockStream stA = c2.CoppockOpenInternal(fz_c[..svN], Sidx, optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -19136,7 +19136,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CORREL_Impl(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CORREL_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19269,7 +19269,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CORREL_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CorrelStream stA = c2.CorrelOpenInternal(fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -19325,7 +19325,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.COS_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.COS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19449,7 +19449,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.COS_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CosStream stA = c2.CosOpenInternal(fz_c[..svN], Sidx);
@@ -19505,7 +19505,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.COSH_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.COSH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19629,7 +19629,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.COSH_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CoshStream stA = c2.CoshOpenInternal(fz_c[..svN], Sidx);
@@ -19685,7 +19685,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CUMSUM_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CUMSUM_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19809,7 +19809,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CUMSUM_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CumsumStream stA = c2.CumsumOpenInternal(fz_c[..svN], Sidx);
@@ -19868,7 +19868,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.CVI_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CVI_Lookback(optInTimePeriod, optInROCPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20001,7 +20001,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.CVI_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.CviStream stA = c2.CviOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod, optInROCPeriod);
@@ -20059,7 +20059,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.DEMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20190,7 +20190,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.DEMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DemaStream stA = c2.DemaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -20246,7 +20246,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.DIV_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DIV_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20372,7 +20372,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.DIV_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DivStream stA = c2.DivOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -20431,7 +20431,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.DONCHIAN_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DONCHIAN_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20617,7 +20617,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.DONCHIAN_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DonchianStream stA = c2.DonchianOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -20674,7 +20674,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.DPO_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DPO_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20805,7 +20805,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.DPO_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DpoStream stA = c2.DpoOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -20863,7 +20863,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.DX_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20998,7 +20998,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.DX_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DxStream stA = c2.DxOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -21055,7 +21055,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.EFI_Impl(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21188,7 +21188,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.EFI_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.EfiStream stA = c2.EfiOpenInternal(fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -21246,7 +21246,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.EMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21377,7 +21377,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.EMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.EmaStream stA = c2.EmaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -21434,7 +21434,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ER_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ER_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21565,7 +21565,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ER_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ErStream stA = c2.ErOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -21624,7 +21624,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ERI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ERI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21785,7 +21785,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ERI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.EriStream stA = c2.EriOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -21841,7 +21841,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.EXP_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EXP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21965,7 +21965,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.EXP_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ExpStream stA = c2.ExpOpenInternal(fz_c[..svN], Sidx);
@@ -22021,7 +22021,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.FLOOR_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.FLOOR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22145,7 +22145,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.FLOOR_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.FloorStream stA = c2.FloorOpenInternal(fz_c[..svN], Sidx);
@@ -22202,7 +22202,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.FOSC_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.FOSC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22333,7 +22333,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.FOSC_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.FoscStream stA = c2.FoscOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -22392,7 +22392,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.FRACTAL_Impl(0, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.FRACTAL_Lookback(optInLeftBars, optInRightBars);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22535,7 +22535,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.FRACTAL_Impl(Sidx, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.FractalStream stA = c2.FractalOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInLeftBars, optInRightBars);
@@ -22595,7 +22595,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HA_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0, b1, b2, b3); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HA_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22822,7 +22822,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HA_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, out begS, out nbS, b0, b1, b2, b3); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HaStream stA = c2.HaOpenInternal(fz_o[..svN], fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -22879,7 +22879,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23010,7 +23010,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HmaStream stA = c2.HmaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -23067,7 +23067,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_DCPERIOD_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_DCPERIOD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23191,7 +23191,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_DCPERIOD_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtDcperiodStream stA = c2.HtDcperiodOpenInternal(fz_c[..svN], Sidx);
@@ -23248,7 +23248,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_DCPHASE_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_DCPHASE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23372,7 +23372,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_DCPHASE_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtDcphaseStream stA = c2.HtDcphaseOpenInternal(fz_c[..svN], Sidx);
@@ -23430,7 +23430,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_PHASOR_Impl(0, svN - 1, fz_c, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_PHASOR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23575,7 +23575,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_PHASOR_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtPhasorStream stA = c2.HtPhasorOpenInternal(fz_c[..svN], Sidx);
@@ -23633,7 +23633,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_SINE_Impl(0, svN - 1, fz_c, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_SINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23778,7 +23778,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_SINE_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtSineStream stA = c2.HtSineOpenInternal(fz_c[..svN], Sidx);
@@ -23835,7 +23835,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_TRENDLINE_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_TRENDLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23959,7 +23959,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_TRENDLINE_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtTrendlineStream stA = c2.HtTrendlineOpenInternal(fz_c[..svN], Sidx);
@@ -24016,7 +24016,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.HT_TRENDMODE_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_TRENDMODE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24134,7 +24134,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.HT_TRENDMODE_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.HtTrendmodeStream stA = c2.HtTrendmodeOpenInternal(fz_c[..svN], Sidx);
@@ -24191,7 +24191,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.IMI_Impl(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.IMI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24324,7 +24324,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.IMI_Impl(Sidx, svN - 1, fz_o, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ImiStream stA = c2.ImiOpenInternal(fz_o[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -24382,7 +24382,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.KAMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.KAMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24513,7 +24513,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.KAMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.KamaStream stA = c2.KamaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -24576,7 +24576,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.KC_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24768,7 +24768,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.KC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.KcStream stA = c2.KcOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -24854,7 +24854,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.KDJ_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25046,7 +25046,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.KDJ_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.KdjStream stA = c2.KdjOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -25103,7 +25103,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LINEARREG_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25234,7 +25234,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LINEARREG_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.LinearregStream stA = c2.LinearregOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -25291,7 +25291,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LINEARREG_ANGLE_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25422,7 +25422,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LINEARREG_ANGLE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.LinearregAngleStream stA = c2.LinearregAngleOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -25479,7 +25479,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LINEARREG_INTERCEPT_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25610,7 +25610,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LINEARREG_INTERCEPT_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.LinearregInterceptStream stA = c2.LinearregInterceptOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -25667,7 +25667,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LINEARREG_SLOPE_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25798,7 +25798,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LINEARREG_SLOPE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.LinearregSlopeStream stA = c2.LinearregSlopeOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -25854,7 +25854,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LN_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25978,7 +25978,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LN_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.LnStream stA = c2.LnOpenInternal(fz_c[..svN], Sidx);
@@ -26034,7 +26034,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.LOG10_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LOG10_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26158,7 +26158,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.LOG10_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Log10Stream stA = c2.Log10OpenInternal(fz_c[..svN], Sidx);
@@ -26234,7 +26234,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MA_Impl(0, svN - 1, fz_c, optInTimePeriod, optInMAType, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26365,7 +26365,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInMAType, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MaStream stA = c2.MaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInMAType);
@@ -26427,7 +26427,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MACD_Impl(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26607,7 +26607,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MACD_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MacdStream stA = c2.MacdOpenInternal(fz_c[..svN], Sidx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -26695,7 +26695,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MACDEXT_Impl(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26875,7 +26875,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MACDEXT_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MacdextStream stA = c2.MacdextOpenInternal(fz_c[..svN], Sidx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -26935,7 +26935,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MACDFIX_Impl(0, svN - 1, fz_c, optInSignalPeriod, out beg, out nb, b0, b1, b2); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACDFIX_Lookback(optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27115,7 +27115,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MACDFIX_Impl(Sidx, svN - 1, fz_c, optInSignalPeriod, out begS, out nbS, b0, b1, b2); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MacdfixStream stA = c2.MacdfixOpenInternal(fz_c[..svN], Sidx, optInSignalPeriod);
@@ -27175,7 +27175,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MAMA_Impl(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27320,7 +27320,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MAMA_Impl(Sidx, svN - 1, fz_c, optInFastLimit, optInSlowLimit, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MamaStream stA = c2.MamaOpenInternal(fz_c[..svN], Sidx, optInFastLimit, optInSlowLimit);
@@ -27376,7 +27376,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MARKETFI_Impl(0, svN - 1, fz_h, fz_l, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MARKETFI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27504,7 +27504,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MARKETFI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MarketfiStream stA = c2.MarketfiOpenInternal(fz_h[..svN], fz_l[..svN], fz_v[..svN], Sidx);
@@ -27563,7 +27563,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MASSI_Impl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27696,7 +27696,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MASSI_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MassiStream stA = c2.MassiOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInFastPeriod, optInSlowPeriod);
@@ -27774,7 +27774,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MAVP_Impl(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27907,7 +27907,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MAVP_Impl(Sidx, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MavpStream stA = c2.MavpOpenInternal(fz_c[..svN], fz_v[..svN], Sidx, optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -27964,7 +27964,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MAX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28095,7 +28095,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MAX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MaxStream stA = c2.MaxOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -28152,7 +28152,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MAXINDEX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28277,7 +28277,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MAXINDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MaxindexStream stA = c2.MaxindexOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -28333,7 +28333,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MEDPRICE_Impl(0, svN - 1, fz_h, fz_l, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MEDPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28459,7 +28459,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MEDPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MedpriceStream stA = c2.MedpriceOpenInternal(fz_h[..svN], fz_l[..svN], Sidx);
@@ -28516,7 +28516,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MFI_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28653,7 +28653,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MFI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MfiStream stA = c2.MfiOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -28710,7 +28710,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MIDPOINT_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIDPOINT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28841,7 +28841,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MIDPOINT_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MidpointStream stA = c2.MidpointOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -28898,7 +28898,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MIDPRICE_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIDPRICE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -29031,7 +29031,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MIDPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MidpriceStream stA = c2.MidpriceOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -29088,7 +29088,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MIN_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIN_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -29219,7 +29219,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MIN_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinStream stA = c2.MinOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -29276,7 +29276,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MININDEX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MININDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -29401,7 +29401,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MININDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinindexStream stA = c2.MinindexOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -29459,7 +29459,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MINMAX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINMAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -29612,7 +29612,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MINMAX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinmaxStream stA = c2.MinmaxOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -29670,7 +29670,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MINMAXINDEX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -29813,7 +29813,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MINMAXINDEX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinmaxindexStream stA = c2.MinmaxindexOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -29871,7 +29871,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MINUS_DI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30006,7 +30006,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MINUS_DI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinusDiStream stA = c2.MinusDiOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -30064,7 +30064,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MINUS_DM_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30197,7 +30197,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MINUS_DM_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MinusDmStream stA = c2.MinusDmOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -30254,7 +30254,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MOM_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MOM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30385,7 +30385,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MOM_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MomStream stA = c2.MomOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -30441,7 +30441,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.MULT_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MULT_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30567,7 +30567,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.MULT_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.MultStream stA = c2.MultOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -30625,7 +30625,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.NATR_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.NATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30760,7 +30760,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.NATR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.NatrStream stA = c2.NatrOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -30816,7 +30816,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.NVI_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.NVI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -30942,7 +30942,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.NVI_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.NviStream stA = c2.NviOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -30998,7 +30998,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.OBV_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.OBV_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -31124,7 +31124,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.OBV_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ObvStream stA = c2.ObvOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -31182,7 +31182,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PERCENTILE_Impl(0, svN - 1, fz_c, optInTimePeriod, optInPercentile, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -31313,7 +31313,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PERCENTILE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInPercentile, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PercentileStream stA = c2.PercentileOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInPercentile);
@@ -31370,7 +31370,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PERCENTRANK_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PERCENTRANK_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -31501,7 +31501,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PERCENTRANK_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PercentrankStream stA = c2.PercentrankOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -31559,7 +31559,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PLUS_DI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PLUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -31694,7 +31694,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PLUS_DI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PlusDiStream stA = c2.PlusDiOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -31752,7 +31752,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PLUS_DM_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PLUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -31885,7 +31885,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PLUS_DM_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PlusDmStream stA = c2.PlusDmOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
@@ -31962,7 +31962,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PPO_Impl(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -32093,7 +32093,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PPO_Impl(Sidx, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PpoStream stA = c2.PpoOpenInternal(fz_c[..svN], Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -32149,7 +32149,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PVI_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PVI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -32275,7 +32275,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PVI_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PviStream stA = c2.PviOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -32352,7 +32352,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PVO_Impl(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -32483,7 +32483,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PVO_Impl(Sidx, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PvoStream stA = c2.PvoOpenInternal(fz_v[..svN], Sidx, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -32539,7 +32539,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.PVT_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PVT_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -32665,7 +32665,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.PVT_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.PvtStream stA = c2.PvtOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -32722,7 +32722,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.QSTICK_Impl(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.QSTICK_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -32855,7 +32855,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.QSTICK_Impl(Sidx, svN - 1, fz_o, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.QstickStream stA = c2.QstickOpenInternal(fz_o[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -32913,7 +32913,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.RMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.RMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33044,7 +33044,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.RMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RmaStream stA = c2.RmaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -33101,7 +33101,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ROC_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33232,7 +33232,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ROC_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RocStream stA = c2.RocOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -33289,7 +33289,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ROCP_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCP_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33420,7 +33420,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ROCP_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RocpStream stA = c2.RocpOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -33477,7 +33477,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ROCR_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33608,7 +33608,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ROCR_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RocrStream stA = c2.RocrOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -33665,7 +33665,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ROCR100_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCR100_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33796,7 +33796,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ROCR100_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.Rocr100Stream stA = c2.Rocr100OpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -33854,7 +33854,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.RSI_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.RSI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -33985,7 +33985,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.RSI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RsiStream stA = c2.RsiOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -34044,7 +34044,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.RVI_Impl(0, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -34175,7 +34175,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.RVI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RviStream stA = c2.RviOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInStdDevPeriod);
@@ -34232,7 +34232,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.RVOL_Impl(0, svN - 1, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.RVOL_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -34363,7 +34363,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.RVOL_Impl(Sidx, svN - 1, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.RvolStream stA = c2.RvolOpenInternal(fz_v[..svN], Sidx, optInTimePeriod);
@@ -34421,7 +34421,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SAR_Impl(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -34547,7 +34547,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SAR_Impl(Sidx, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SarStream stA = c2.SarOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInAcceleration, optInMaximum);
@@ -34611,7 +34611,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SAREXT_Impl(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -34737,7 +34737,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SAREXT_Impl(Sidx, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SarextStream stA = c2.SarextOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -34793,7 +34793,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SIN_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SIN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -34917,7 +34917,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SIN_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SinStream stA = c2.SinOpenInternal(fz_c[..svN], Sidx);
@@ -34973,7 +34973,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SINH_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SINH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -35097,7 +35097,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SINH_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SinhStream stA = c2.SinhOpenInternal(fz_c[..svN], Sidx);
@@ -35154,7 +35154,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -35285,7 +35285,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SmaStream stA = c2.SmaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -35347,7 +35347,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SMI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -35508,7 +35508,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SMI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SmiStream stA = c2.SmiOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -35564,7 +35564,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SQRT_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SQRT_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -35688,7 +35688,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SQRT_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SqrtStream stA = c2.SqrtOpenInternal(fz_c[..svN], Sidx);
@@ -35746,7 +35746,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.STDDEV_Impl(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -35877,7 +35877,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.STDDEV_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDev, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.StddevStream stA = c2.StddevOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInNbDev);
@@ -35960,7 +35960,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.STOCH_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -36121,7 +36121,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.STOCH_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.StochStream stA = c2.StochOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -36201,7 +36201,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.STOCHF_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -36362,7 +36362,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.STOCHF_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.StochfStream stA = c2.StochfOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -36444,7 +36444,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.STOCHRSI_Impl(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -36597,7 +36597,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.STOCHRSI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.StochrsiStream stA = c2.StochrsiOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -36653,7 +36653,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SUB_Impl(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SUB_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -36779,7 +36779,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SUB_Impl(Sidx, svN - 1, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SubStream stA = c2.SubOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
@@ -36836,7 +36836,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SUM_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SUM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -36967,7 +36967,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SUM_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SumStream stA = c2.SumOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -37027,7 +37027,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.SUPERTREND_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -37173,7 +37173,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.SUPERTREND_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.SupertrendStream stA = c2.SupertrendOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod, optInMultiplier);
@@ -37232,7 +37232,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.T3_Impl(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -37363,7 +37363,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.T3_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInVFactor, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.T3Stream stA = c2.T3OpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInVFactor);
@@ -37419,7 +37419,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TAN_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -37543,7 +37543,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TAN_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TanStream stA = c2.TanOpenInternal(fz_c[..svN], Sidx);
@@ -37599,7 +37599,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TANH_Impl(0, svN - 1, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TANH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -37723,7 +37723,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TANH_Impl(Sidx, svN - 1, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TanhStream stA = c2.TanhOpenInternal(fz_c[..svN], Sidx);
@@ -37781,7 +37781,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TEMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -37912,7 +37912,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TEMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TemaStream stA = c2.TemaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -37968,7 +37968,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TRANGE_Impl(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRANGE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -38096,7 +38096,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TRANGE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TrangeStream stA = c2.TrangeOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -38153,7 +38153,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TRIMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRIMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -38284,7 +38284,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TRIMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TrimaStream stA = c2.TrimaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -38342,7 +38342,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TRIX_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRIX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -38473,7 +38473,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TRIX_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TrixStream stA = c2.TrixOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -38530,7 +38530,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TSF_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TSF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -38661,7 +38661,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TSF_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TsfStream stA = c2.TsfOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -38720,7 +38720,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TSI_Impl(0, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -38851,7 +38851,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TSI_Impl(Sidx, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TsiStream stA = c2.TsiOpenInternal(fz_c[..svN], Sidx, optInFirstPeriod, optInSecondPeriod);
@@ -38907,7 +38907,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.TYPPRICE_Impl(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TYPPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -39035,7 +39035,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.TYPPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.TyppriceStream stA = c2.TyppriceOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -39094,7 +39094,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ULTOSC_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -39229,7 +39229,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ULTOSC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.UltoscStream stA = c2.UltoscOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -39287,7 +39287,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.VAR_Impl(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -39418,7 +39418,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.VAR_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInNbDev, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.VarStream stA = c2.VarOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInNbDev);
@@ -39475,7 +39475,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.VHF_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VHF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -39606,7 +39606,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.VHF_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.VhfStream stA = c2.VhfOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -39664,7 +39664,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.VORTEX_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VORTEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -39825,7 +39825,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.VORTEX_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0, b1); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.VortexStream stA = c2.VortexOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -39881,7 +39881,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.VWAP_Impl(0, svN - 1, fz_h, fz_l, fz_c, fz_v, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VWAP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40011,7 +40011,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.VWAP_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, fz_v, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.VwapStream stA = c2.VwapOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], fz_v[..svN], Sidx);
@@ -40068,7 +40068,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.VWMA_Impl(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VWMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40201,7 +40201,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.VWMA_Impl(Sidx, svN - 1, fz_c, fz_v, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.VwmaStream stA = c2.VwmaOpenInternal(fz_c[..svN], fz_v[..svN], Sidx, optInTimePeriod);
@@ -40257,7 +40257,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.WAD_Impl(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WAD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40385,7 +40385,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.WAD_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.WadStream stA = c2.WadOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -40441,7 +40441,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.WCLPRICE_Impl(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WCLPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40569,7 +40569,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.WCLPRICE_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.WclpriceStream stA = c2.WclpriceOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx);
@@ -40626,7 +40626,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.WILLR_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WILLR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40761,7 +40761,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.WILLR_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.WillrStream stA = c2.WillrOpenInternal(fz_h[..svN], fz_l[..svN], fz_c[..svN], Sidx, optInTimePeriod);
@@ -40818,7 +40818,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.WMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -40949,7 +40949,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.WMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.WmaStream stA = c2.WmaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -41007,7 +41007,7 @@ public class TaCodegenServe {
             }
             RetCode rc;
             try { rc = c2.ZLEMA_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            catch (Exception _sve) when (_sve is ITALibFailure) { rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ZLEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -41138,7 +41138,7 @@ public class TaCodegenServe {
                     int begS = 0, nbS = 0;
                     RetCode rcS;
                     try { rcS = c2.ZLEMA_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    catch (Exception _sve) when (_sve is ITALibFailure) { rcS = ((ITALibFailure)_sve).RetCode; }
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ZlemaStream stA = c2.ZlemaOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
@@ -41404,7 +41404,7 @@ public class TaCodegenServe {
      * returned for the same condition, so the three entry points are comparable
      * without narrowing the catch types; -1 is an exception the library does
      * not own, which is itself a divergence. */
-    static int RideCode(Exception e) => e is ITaLibFailure f ? (int) f.RetCode : -1;
+    static int RideCode(Exception e) => e is ITALibFailure f ? (int) f.RetCode : -1;
 
     static bool RideFinite(double[] a, int n)
     {
@@ -64742,8 +64742,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64753,8 +64753,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64763,8 +64763,8 @@ public class TaCodegenServe {
                 try {
                     core.AcOpen(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -64772,8 +64772,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64791,8 +64791,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -64882,8 +64882,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ACCBANDS_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64893,8 +64893,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64903,8 +64903,8 @@ public class TaCodegenServe {
                 try {
                     core.AccbandsOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -64912,8 +64912,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -64933,8 +64933,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65017,8 +65017,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ACOS_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65028,8 +65028,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65038,8 +65038,8 @@ public class TaCodegenServe {
                 try {
                     core.AcosOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65047,8 +65047,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65064,8 +65064,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65156,8 +65156,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AD_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65167,8 +65167,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65177,8 +65177,8 @@ public class TaCodegenServe {
                 try {
                     core.AdOpen(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65186,8 +65186,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65209,8 +65209,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65293,8 +65293,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ADD_Impl(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65304,8 +65304,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65314,8 +65314,8 @@ public class TaCodegenServe {
                 try {
                     core.AddOpen(_warm_inReal0, _warm_inReal1);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65323,8 +65323,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65342,8 +65342,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65436,8 +65436,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ADOSC_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65447,8 +65447,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65457,8 +65457,8 @@ public class TaCodegenServe {
                 try {
                     core.AdoscOpen(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65466,8 +65466,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65489,8 +65489,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65574,8 +65574,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ADR_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65585,8 +65585,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65595,8 +65595,8 @@ public class TaCodegenServe {
                 try {
                     core.AdrOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65604,8 +65604,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65623,8 +65623,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65713,8 +65713,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ADX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65724,8 +65724,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65734,8 +65734,8 @@ public class TaCodegenServe {
                 try {
                     core.AdxOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65743,8 +65743,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65764,8 +65764,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65853,8 +65853,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ADXR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65864,8 +65864,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65874,8 +65874,8 @@ public class TaCodegenServe {
                 try {
                     core.AdxrOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -65883,8 +65883,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -65904,8 +65904,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -65990,8 +65990,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66001,8 +66001,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66011,8 +66011,8 @@ public class TaCodegenServe {
                 try {
                     core.AoOpen(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66020,8 +66020,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66039,8 +66039,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66122,8 +66122,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.APO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66133,8 +66133,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66143,8 +66143,8 @@ public class TaCodegenServe {
                 try {
                     core.ApoOpen(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66152,8 +66152,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66169,8 +66169,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66255,8 +66255,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66266,8 +66266,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66276,8 +66276,8 @@ public class TaCodegenServe {
                 try {
                     core.AroonOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66285,8 +66285,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66304,8 +66304,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66391,8 +66391,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66402,8 +66402,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66412,8 +66412,8 @@ public class TaCodegenServe {
                 try {
                     core.AroonoscOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66421,8 +66421,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66440,8 +66440,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66520,8 +66520,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ASIN_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66531,8 +66531,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66541,8 +66541,8 @@ public class TaCodegenServe {
                 try {
                     core.AsinOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66550,8 +66550,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66567,8 +66567,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66647,8 +66647,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ATAN_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66658,8 +66658,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66668,8 +66668,8 @@ public class TaCodegenServe {
                 try {
                     core.AtanOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66677,8 +66677,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66694,8 +66694,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66784,8 +66784,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66795,8 +66795,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66805,8 +66805,8 @@ public class TaCodegenServe {
                 try {
                     core.AtrOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66814,8 +66814,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66835,8 +66835,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -66916,8 +66916,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66927,8 +66927,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66937,8 +66937,8 @@ public class TaCodegenServe {
                 try {
                     core.AvgdevOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -66946,8 +66946,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -66963,8 +66963,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67055,8 +67055,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.AVGPRICE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67066,8 +67066,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67076,8 +67076,8 @@ public class TaCodegenServe {
                 try {
                     core.AvgpriceOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67085,8 +67085,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67108,8 +67108,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67194,8 +67194,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.BBANDS_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67205,8 +67205,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67215,8 +67215,8 @@ public class TaCodegenServe {
                 try {
                     core.BbandsOpen(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67224,8 +67224,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67241,8 +67241,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67330,8 +67330,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.BETA_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67341,8 +67341,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67351,8 +67351,8 @@ public class TaCodegenServe {
                 try {
                     core.BetaOpen(_warm_inReal0, _warm_inReal1, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67360,8 +67360,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67379,8 +67379,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67471,8 +67471,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.BOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67482,8 +67482,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67492,8 +67492,8 @@ public class TaCodegenServe {
                 try {
                     core.BopOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67501,8 +67501,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67524,8 +67524,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67613,8 +67613,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CCI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67624,8 +67624,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67634,8 +67634,8 @@ public class TaCodegenServe {
                 try {
                     core.CciOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67643,8 +67643,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67664,8 +67664,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67756,8 +67756,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL2CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67767,8 +67767,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67777,8 +67777,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl2crowsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67786,8 +67786,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67809,8 +67809,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -67901,8 +67901,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3BLACKCROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67912,8 +67912,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67922,8 +67922,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3blackcrowsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -67931,8 +67931,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -67954,8 +67954,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68046,8 +68046,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3INSIDE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68057,8 +68057,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68067,8 +68067,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3insideOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68076,8 +68076,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68099,8 +68099,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68191,8 +68191,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68202,8 +68202,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68212,8 +68212,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3linestrikeOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68221,8 +68221,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68244,8 +68244,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68336,8 +68336,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3OUTSIDE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68347,8 +68347,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68357,8 +68357,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3outsideOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68366,8 +68366,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68389,8 +68389,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68481,8 +68481,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3STARSINSOUTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68492,8 +68492,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68502,8 +68502,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3starsinsouthOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68511,8 +68511,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68534,8 +68534,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68626,8 +68626,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDL3WHITESOLDIERS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68637,8 +68637,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68647,8 +68647,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdl3whitesoldiersOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68656,8 +68656,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68679,8 +68679,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68772,8 +68772,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLABANDONEDBABY_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68783,8 +68783,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68793,8 +68793,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlabandonedbabyOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68802,8 +68802,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68825,8 +68825,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -68917,8 +68917,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68928,8 +68928,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68938,8 +68938,8 @@ public class TaCodegenServe {
                 try {
                     core.CdladvanceblockOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -68947,8 +68947,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -68970,8 +68970,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69062,8 +69062,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLBELTHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69073,8 +69073,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69083,8 +69083,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlbeltholdOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69092,8 +69092,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69115,8 +69115,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69207,8 +69207,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLBREAKAWAY_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69218,8 +69218,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69228,8 +69228,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlbreakawayOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69237,8 +69237,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69260,8 +69260,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69352,8 +69352,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69363,8 +69363,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69373,8 +69373,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlclosingmarubozuOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69382,8 +69382,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69405,8 +69405,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69497,8 +69497,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69508,8 +69508,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69518,8 +69518,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlconcealbabyswallOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69527,8 +69527,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69550,8 +69550,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69642,8 +69642,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLCOUNTERATTACK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69653,8 +69653,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69663,8 +69663,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlcounterattackOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69672,8 +69672,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69695,8 +69695,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69788,8 +69788,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLDARKCLOUDCOVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69799,8 +69799,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69809,8 +69809,8 @@ public class TaCodegenServe {
                 try {
                     core.CdldarkcloudcoverOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69818,8 +69818,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69841,8 +69841,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -69933,8 +69933,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69944,8 +69944,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69954,8 +69954,8 @@ public class TaCodegenServe {
                 try {
                     core.CdldojiOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -69963,8 +69963,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -69986,8 +69986,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70078,8 +70078,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70089,8 +70089,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70099,8 +70099,8 @@ public class TaCodegenServe {
                 try {
                     core.CdldojistarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70108,8 +70108,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70131,8 +70131,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70223,8 +70223,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLDRAGONFLYDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70234,8 +70234,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70244,8 +70244,8 @@ public class TaCodegenServe {
                 try {
                     core.CdldragonflydojiOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70253,8 +70253,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70276,8 +70276,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70368,8 +70368,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLENGULFING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70379,8 +70379,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70389,8 +70389,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlengulfingOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70398,8 +70398,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70421,8 +70421,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70514,8 +70514,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLEVENINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70525,8 +70525,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70535,8 +70535,8 @@ public class TaCodegenServe {
                 try {
                     core.CdleveningdojistarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70544,8 +70544,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70567,8 +70567,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70660,8 +70660,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70671,8 +70671,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70681,8 +70681,8 @@ public class TaCodegenServe {
                 try {
                     core.CdleveningstarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70690,8 +70690,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70713,8 +70713,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70805,8 +70805,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLGAPSIDESIDEWHITE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70816,8 +70816,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70826,8 +70826,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlgapsidesidewhiteOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70835,8 +70835,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70858,8 +70858,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -70950,8 +70950,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLGRAVESTONEDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70961,8 +70961,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -70971,8 +70971,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlgravestonedojiOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -70980,8 +70980,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71003,8 +71003,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71095,8 +71095,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHAMMER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71106,8 +71106,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71116,8 +71116,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhammerOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71125,8 +71125,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71148,8 +71148,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71240,8 +71240,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHANGINGMAN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71251,8 +71251,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71261,8 +71261,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhangingmanOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71270,8 +71270,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71293,8 +71293,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71385,8 +71385,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHARAMI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71396,8 +71396,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71406,8 +71406,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlharamiOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71415,8 +71415,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71438,8 +71438,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71530,8 +71530,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHARAMICROSS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71541,8 +71541,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71551,8 +71551,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlharamicrossOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71560,8 +71560,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71583,8 +71583,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71675,8 +71675,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHIGHWAVE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71686,8 +71686,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71696,8 +71696,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhighwaveOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71705,8 +71705,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71728,8 +71728,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71820,8 +71820,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHIKKAKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71831,8 +71831,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71841,8 +71841,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhikkakeOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71850,8 +71850,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71873,8 +71873,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -71965,8 +71965,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHIKKAKEMOD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71976,8 +71976,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -71986,8 +71986,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhikkakemodOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -71995,8 +71995,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72018,8 +72018,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72110,8 +72110,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLHOMINGPIGEON_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72121,8 +72121,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72131,8 +72131,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlhomingpigeonOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72140,8 +72140,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72163,8 +72163,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72255,8 +72255,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLIDENTICAL3CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72266,8 +72266,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72276,8 +72276,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdlidentical3crowsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72285,8 +72285,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72308,8 +72308,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72400,8 +72400,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLINNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72411,8 +72411,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72421,8 +72421,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlinneckOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72430,8 +72430,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72453,8 +72453,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72545,8 +72545,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLINVERTEDHAMMER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72556,8 +72556,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72566,8 +72566,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlinvertedhammerOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72575,8 +72575,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72598,8 +72598,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72690,8 +72690,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLKICKING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72701,8 +72701,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72711,8 +72711,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlkickingOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72720,8 +72720,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72743,8 +72743,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72835,8 +72835,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLKICKINGBYLENGTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72846,8 +72846,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72856,8 +72856,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlkickingbylengthOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -72865,8 +72865,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72888,8 +72888,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -72980,8 +72980,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLLADDERBOTTOM_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -72991,8 +72991,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73001,8 +73001,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlladderbottomOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73010,8 +73010,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73033,8 +73033,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73125,8 +73125,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLLONGLEGGEDDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73136,8 +73136,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73146,8 +73146,8 @@ public class TaCodegenServe {
                 try {
                     core.CdllongleggeddojiOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73155,8 +73155,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73178,8 +73178,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73270,8 +73270,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLLONGLINE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73281,8 +73281,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73291,8 +73291,8 @@ public class TaCodegenServe {
                 try {
                     core.CdllonglineOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73300,8 +73300,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73323,8 +73323,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73415,8 +73415,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73426,8 +73426,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73436,8 +73436,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlmarubozuOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73445,8 +73445,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73468,8 +73468,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73560,8 +73560,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73571,8 +73571,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73581,8 +73581,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlmatchinglowOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73590,8 +73590,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73613,8 +73613,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73706,8 +73706,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73717,8 +73717,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73727,8 +73727,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlmatholdOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73736,8 +73736,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73759,8 +73759,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73852,8 +73852,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLMORNINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73863,8 +73863,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73873,8 +73873,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlmorningdojistarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -73882,8 +73882,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -73905,8 +73905,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -73998,8 +73998,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLMORNINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74009,8 +74009,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74019,8 +74019,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlmorningstarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74028,8 +74028,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74051,8 +74051,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74143,8 +74143,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74154,8 +74154,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74164,8 +74164,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlonneckOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74173,8 +74173,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74196,8 +74196,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74288,8 +74288,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLPIERCING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74299,8 +74299,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74309,8 +74309,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlpiercingOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74318,8 +74318,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74341,8 +74341,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74433,8 +74433,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLRICKSHAWMAN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74444,8 +74444,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74454,8 +74454,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlrickshawmanOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74463,8 +74463,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74486,8 +74486,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74578,8 +74578,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLRISEFALL3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74589,8 +74589,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74599,8 +74599,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdlrisefall3methodsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74608,8 +74608,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74631,8 +74631,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74723,8 +74723,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSEPARATINGLINES_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74734,8 +74734,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74744,8 +74744,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlseparatinglinesOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74753,8 +74753,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74776,8 +74776,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -74868,8 +74868,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSHOOTINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74879,8 +74879,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74889,8 +74889,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlshootingstarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -74898,8 +74898,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -74921,8 +74921,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75013,8 +75013,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSHORTLINE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75024,8 +75024,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75034,8 +75034,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlshortlineOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75043,8 +75043,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75066,8 +75066,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75158,8 +75158,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75169,8 +75169,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75179,8 +75179,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlspinningtopOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75188,8 +75188,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75211,8 +75211,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75303,8 +75303,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSTALLEDPATTERN_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75314,8 +75314,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75324,8 +75324,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlstalledpatternOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75333,8 +75333,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75356,8 +75356,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75448,8 +75448,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLSTICKSANDWICH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75459,8 +75459,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75469,8 +75469,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlsticksandwichOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75478,8 +75478,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75501,8 +75501,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75593,8 +75593,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75604,8 +75604,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75614,8 +75614,8 @@ public class TaCodegenServe {
                 try {
                     core.CdltakuriOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75623,8 +75623,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75646,8 +75646,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75738,8 +75738,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLTASUKIGAP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75749,8 +75749,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75759,8 +75759,8 @@ public class TaCodegenServe {
                 try {
                     core.CdltasukigapOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75768,8 +75768,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75791,8 +75791,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -75883,8 +75883,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLTHRUSTING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75894,8 +75894,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75904,8 +75904,8 @@ public class TaCodegenServe {
                 try {
                     core.CdlthrustingOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -75913,8 +75913,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -75936,8 +75936,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76028,8 +76028,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76039,8 +76039,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76049,8 +76049,8 @@ public class TaCodegenServe {
                 try {
                     core.CdltristarOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76058,8 +76058,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76081,8 +76081,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76173,8 +76173,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLUNIQUE3RIVER_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76184,8 +76184,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76194,8 +76194,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdlunique3riverOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76203,8 +76203,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76226,8 +76226,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76318,8 +76318,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLUPSIDEGAP2CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76329,8 +76329,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76339,8 +76339,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdlupsidegap2crowsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76348,8 +76348,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76371,8 +76371,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76463,8 +76463,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CDLXSIDEGAP3METHODS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76474,8 +76474,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76484,8 +76484,8 @@ public class TaCodegenServe {
                 try {
                     core.Cdlxsidegap3methodsOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76493,8 +76493,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76516,8 +76516,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76596,8 +76596,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CEIL_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76607,8 +76607,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76617,8 +76617,8 @@ public class TaCodegenServe {
                 try {
                     core.CeilOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76626,8 +76626,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76643,8 +76643,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76736,8 +76736,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CMF_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76747,8 +76747,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76757,8 +76757,8 @@ public class TaCodegenServe {
                 try {
                     core.CmfOpen(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76766,8 +76766,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76789,8 +76789,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76871,8 +76871,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CMO_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76882,8 +76882,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76892,8 +76892,8 @@ public class TaCodegenServe {
                 try {
                     core.CmoOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -76901,8 +76901,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -76918,8 +76918,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -76999,8 +76999,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77010,8 +77010,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77020,8 +77020,8 @@ public class TaCodegenServe {
                 try {
                     core.CmouOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77029,8 +77029,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77046,8 +77046,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77129,8 +77129,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.COPPOCK_Impl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77140,8 +77140,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77150,8 +77150,8 @@ public class TaCodegenServe {
                 try {
                     core.CoppockOpen(_warm_inReal, optInWMAPeriod, optInROC1Period, optInROC2Period);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77159,8 +77159,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77176,8 +77176,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77261,8 +77261,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77272,8 +77272,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77282,8 +77282,8 @@ public class TaCodegenServe {
                 try {
                     core.CorrelOpen(_warm_inReal0, _warm_inReal1, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77291,8 +77291,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77310,8 +77310,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77390,8 +77390,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.COS_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77401,8 +77401,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77411,8 +77411,8 @@ public class TaCodegenServe {
                 try {
                     core.CosOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77420,8 +77420,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77437,8 +77437,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77517,8 +77517,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.COSH_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77528,8 +77528,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77538,8 +77538,8 @@ public class TaCodegenServe {
                 try {
                     core.CoshOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77547,8 +77547,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77564,8 +77564,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77644,8 +77644,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CUMSUM_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77655,8 +77655,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77665,8 +77665,8 @@ public class TaCodegenServe {
                 try {
                     core.CumsumOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77674,8 +77674,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77691,8 +77691,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77777,8 +77777,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.CVI_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77788,8 +77788,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77798,8 +77798,8 @@ public class TaCodegenServe {
                 try {
                     core.CviOpen(_warm_inHigh, _warm_inLow, optInTimePeriod, optInROCPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77807,8 +77807,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77826,8 +77826,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -77907,8 +77907,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77918,8 +77918,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77928,8 +77928,8 @@ public class TaCodegenServe {
                 try {
                     core.DemaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -77937,8 +77937,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -77954,8 +77954,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78038,8 +78038,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.DIV_Impl(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78049,8 +78049,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78059,8 +78059,8 @@ public class TaCodegenServe {
                 try {
                     core.DivOpen(_warm_inReal0, _warm_inReal1);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78068,8 +78068,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78087,8 +78087,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78174,8 +78174,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78185,8 +78185,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78195,8 +78195,8 @@ public class TaCodegenServe {
                 try {
                     core.DonchianOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78204,8 +78204,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78223,8 +78223,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78308,8 +78308,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.DPO_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78319,8 +78319,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78329,8 +78329,8 @@ public class TaCodegenServe {
                 try {
                     core.DpoOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78338,8 +78338,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78355,8 +78355,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78445,8 +78445,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.DX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78456,8 +78456,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78466,8 +78466,8 @@ public class TaCodegenServe {
                 try {
                     core.DxOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78475,8 +78475,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78496,8 +78496,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78581,8 +78581,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78592,8 +78592,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78602,8 +78602,8 @@ public class TaCodegenServe {
                 try {
                     core.EfiOpen(_warm_inClose, _warm_inVolume, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78611,8 +78611,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78630,8 +78630,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78712,8 +78712,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78723,8 +78723,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78733,8 +78733,8 @@ public class TaCodegenServe {
                 try {
                     core.EmaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78742,8 +78742,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78759,8 +78759,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78840,8 +78840,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ER_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78851,8 +78851,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78861,8 +78861,8 @@ public class TaCodegenServe {
                 try {
                     core.ErOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -78870,8 +78870,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78887,8 +78887,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -78977,8 +78977,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78988,8 +78988,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -78998,8 +78998,8 @@ public class TaCodegenServe {
                 try {
                     core.EriOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79007,8 +79007,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79028,8 +79028,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79110,8 +79110,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.EXP_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79121,8 +79121,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79131,8 +79131,8 @@ public class TaCodegenServe {
                 try {
                     core.ExpOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79140,8 +79140,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79157,8 +79157,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79237,8 +79237,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.FLOOR_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79248,8 +79248,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79258,8 +79258,8 @@ public class TaCodegenServe {
                 try {
                     core.FloorOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79267,8 +79267,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79284,8 +79284,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79365,8 +79365,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.FOSC_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79376,8 +79376,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79386,8 +79386,8 @@ public class TaCodegenServe {
                 try {
                     core.FoscOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79395,8 +79395,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79412,8 +79412,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79499,8 +79499,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79510,8 +79510,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79520,8 +79520,8 @@ public class TaCodegenServe {
                 try {
                     core.FractalOpen(_warm_inHigh, _warm_inLow, optInLeftBars, optInRightBars);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79529,8 +79529,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79548,8 +79548,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79646,8 +79646,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2, outArr3);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79657,8 +79657,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79667,8 +79667,8 @@ public class TaCodegenServe {
                 try {
                     core.HaOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79676,8 +79676,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79699,8 +79699,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79786,8 +79786,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79797,8 +79797,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79807,8 +79807,8 @@ public class TaCodegenServe {
                 try {
                     core.HmaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79816,8 +79816,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79833,8 +79833,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -79914,8 +79914,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_DCPERIOD_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79925,8 +79925,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79935,8 +79935,8 @@ public class TaCodegenServe {
                 try {
                     core.HtDcperiodOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -79944,8 +79944,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -79961,8 +79961,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80042,8 +80042,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_DCPHASE_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80053,8 +80053,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80063,8 +80063,8 @@ public class TaCodegenServe {
                 try {
                     core.HtDcphaseOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80072,8 +80072,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80089,8 +80089,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80171,8 +80171,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_PHASOR_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80182,8 +80182,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80192,8 +80192,8 @@ public class TaCodegenServe {
                 try {
                     core.HtPhasorOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80201,8 +80201,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80218,8 +80218,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80302,8 +80302,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_SINE_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80313,8 +80313,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80323,8 +80323,8 @@ public class TaCodegenServe {
                 try {
                     core.HtSineOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80332,8 +80332,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80349,8 +80349,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80432,8 +80432,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_TRENDLINE_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80443,8 +80443,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80453,8 +80453,8 @@ public class TaCodegenServe {
                 try {
                     core.HtTrendlineOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80462,8 +80462,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80479,8 +80479,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80560,8 +80560,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.HT_TRENDMODE_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80571,8 +80571,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80581,8 +80581,8 @@ public class TaCodegenServe {
                 try {
                     core.HtTrendmodeOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80590,8 +80590,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80607,8 +80607,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80692,8 +80692,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.IMI_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80703,8 +80703,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80713,8 +80713,8 @@ public class TaCodegenServe {
                 try {
                     core.ImiOpen(_warm_inOpen, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80722,8 +80722,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80741,8 +80741,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80823,8 +80823,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80834,8 +80834,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80844,8 +80844,8 @@ public class TaCodegenServe {
                 try {
                     core.KamaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80853,8 +80853,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80870,8 +80870,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -80963,8 +80963,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80974,8 +80974,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -80984,8 +80984,8 @@ public class TaCodegenServe {
                 try {
                     core.KcOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInATRPeriod, optInNbDev);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -80993,8 +80993,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81014,8 +81014,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81113,8 +81113,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81124,8 +81124,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81134,8 +81134,8 @@ public class TaCodegenServe {
                 try {
                     core.KdjOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81143,8 +81143,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81164,8 +81164,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81249,8 +81249,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LINEARREG_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81260,8 +81260,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81270,8 +81270,8 @@ public class TaCodegenServe {
                 try {
                     core.LinearregOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81279,8 +81279,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81296,8 +81296,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81377,8 +81377,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81388,8 +81388,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81398,8 +81398,8 @@ public class TaCodegenServe {
                 try {
                     core.LinearregAngleOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81407,8 +81407,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81424,8 +81424,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81505,8 +81505,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81516,8 +81516,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81526,8 +81526,8 @@ public class TaCodegenServe {
                 try {
                     core.LinearregInterceptOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81535,8 +81535,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81552,8 +81552,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81633,8 +81633,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LINEARREG_SLOPE_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81644,8 +81644,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81654,8 +81654,8 @@ public class TaCodegenServe {
                 try {
                     core.LinearregSlopeOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81663,8 +81663,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81680,8 +81680,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81760,8 +81760,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LN_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81771,8 +81771,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81781,8 +81781,8 @@ public class TaCodegenServe {
                 try {
                     core.LnOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81790,8 +81790,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81807,8 +81807,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -81887,8 +81887,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.LOG10_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81898,8 +81898,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81908,8 +81908,8 @@ public class TaCodegenServe {
                 try {
                     core.Log10Open(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -81917,8 +81917,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -81934,8 +81934,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82016,8 +82016,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82027,8 +82027,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82037,8 +82037,8 @@ public class TaCodegenServe {
                 try {
                     core.MaOpen(_warm_inReal, optInTimePeriod, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82046,8 +82046,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82063,8 +82063,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82148,8 +82148,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MACD_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82159,8 +82159,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82169,8 +82169,8 @@ public class TaCodegenServe {
                 try {
                     core.MacdOpen(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82178,8 +82178,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82195,8 +82195,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82287,8 +82287,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MACDEXT_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82298,8 +82298,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82308,8 +82308,8 @@ public class TaCodegenServe {
                 try {
                     core.MacdextOpen(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82317,8 +82317,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82334,8 +82334,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82421,8 +82421,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MACDFIX_Impl(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82432,8 +82432,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82442,8 +82442,8 @@ public class TaCodegenServe {
                 try {
                     core.MacdfixOpen(_warm_inReal, optInSignalPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82451,8 +82451,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82468,8 +82468,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82556,8 +82556,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82567,8 +82567,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82577,8 +82577,8 @@ public class TaCodegenServe {
                 try {
                     core.MamaOpen(_warm_inReal, optInFastLimit, optInSlowLimit);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82586,8 +82586,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82603,8 +82603,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82693,8 +82693,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82704,8 +82704,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82714,8 +82714,8 @@ public class TaCodegenServe {
                 try {
                     core.MarketfiOpen(_warm_inHigh, _warm_inLow, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82723,8 +82723,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82744,8 +82744,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82830,8 +82830,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82841,8 +82841,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82851,8 +82851,8 @@ public class TaCodegenServe {
                 try {
                     core.MassiOpen(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82860,8 +82860,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82879,8 +82879,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -82966,8 +82966,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MAVP_Impl(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82977,8 +82977,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -82987,8 +82987,8 @@ public class TaCodegenServe {
                 try {
                     core.MavpOpen(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -82996,8 +82996,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83015,8 +83015,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83096,8 +83096,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83107,8 +83107,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83117,8 +83117,8 @@ public class TaCodegenServe {
                 try {
                     core.MaxOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83126,8 +83126,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83143,8 +83143,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83224,8 +83224,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83235,8 +83235,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83245,8 +83245,8 @@ public class TaCodegenServe {
                 try {
                     core.MaxindexOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83254,8 +83254,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83271,8 +83271,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83355,8 +83355,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83366,8 +83366,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83376,8 +83376,8 @@ public class TaCodegenServe {
                 try {
                     core.MedpriceOpen(_warm_inHigh, _warm_inLow);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83385,8 +83385,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83404,8 +83404,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83497,8 +83497,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83508,8 +83508,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83518,8 +83518,8 @@ public class TaCodegenServe {
                 try {
                     core.MfiOpen(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83527,8 +83527,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83550,8 +83550,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83631,8 +83631,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83642,8 +83642,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83652,8 +83652,8 @@ public class TaCodegenServe {
                 try {
                     core.MidpointOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83661,8 +83661,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83678,8 +83678,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83763,8 +83763,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MIDPRICE_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83774,8 +83774,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83784,8 +83784,8 @@ public class TaCodegenServe {
                 try {
                     core.MidpriceOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83793,8 +83793,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83812,8 +83812,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -83893,8 +83893,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83904,8 +83904,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83914,8 +83914,8 @@ public class TaCodegenServe {
                 try {
                     core.MinOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -83923,8 +83923,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -83940,8 +83940,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84021,8 +84021,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MININDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84032,8 +84032,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84042,8 +84042,8 @@ public class TaCodegenServe {
                 try {
                     core.MinindexOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84051,8 +84051,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84068,8 +84068,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84150,8 +84150,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MINMAX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84161,8 +84161,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84171,8 +84171,8 @@ public class TaCodegenServe {
                 try {
                     core.MinmaxOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84180,8 +84180,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84197,8 +84197,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84281,8 +84281,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84292,8 +84292,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84302,8 +84302,8 @@ public class TaCodegenServe {
                 try {
                     core.MinmaxindexOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84311,8 +84311,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84328,8 +84328,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84420,8 +84420,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MINUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84431,8 +84431,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84441,8 +84441,8 @@ public class TaCodegenServe {
                 try {
                     core.MinusDiOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84450,8 +84450,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84471,8 +84471,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84557,8 +84557,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84568,8 +84568,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84578,8 +84578,8 @@ public class TaCodegenServe {
                 try {
                     core.MinusDmOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84587,8 +84587,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84606,8 +84606,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84687,8 +84687,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MOM_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84698,8 +84698,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84708,8 +84708,8 @@ public class TaCodegenServe {
                 try {
                     core.MomOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84717,8 +84717,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84734,8 +84734,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84818,8 +84818,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.MULT_Impl(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84829,8 +84829,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84839,8 +84839,8 @@ public class TaCodegenServe {
                 try {
                     core.MultOpen(_warm_inReal0, _warm_inReal1);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84848,8 +84848,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84867,8 +84867,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -84957,8 +84957,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.NATR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84968,8 +84968,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -84978,8 +84978,8 @@ public class TaCodegenServe {
                 try {
                     core.NatrOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -84987,8 +84987,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85008,8 +85008,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85092,8 +85092,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.NVI_Impl(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85103,8 +85103,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85113,8 +85113,8 @@ public class TaCodegenServe {
                 try {
                     core.NviOpen(_warm_inClose, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85122,8 +85122,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85141,8 +85141,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85225,8 +85225,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.OBV_Impl(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85236,8 +85236,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85246,8 +85246,8 @@ public class TaCodegenServe {
                 try {
                     core.ObvOpen(_warm_inReal, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85255,8 +85255,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85274,8 +85274,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85356,8 +85356,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PERCENTILE_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85367,8 +85367,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85377,8 +85377,8 @@ public class TaCodegenServe {
                 try {
                     core.PercentileOpen(_warm_inReal, optInTimePeriod, optInPercentile);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85386,8 +85386,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85403,8 +85403,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85484,8 +85484,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PERCENTRANK_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85495,8 +85495,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85505,8 +85505,8 @@ public class TaCodegenServe {
                 try {
                     core.PercentrankOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85514,8 +85514,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85531,8 +85531,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85621,8 +85621,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85632,8 +85632,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85642,8 +85642,8 @@ public class TaCodegenServe {
                 try {
                     core.PlusDiOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85651,8 +85651,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85672,8 +85672,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85758,8 +85758,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PLUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85769,8 +85769,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85779,8 +85779,8 @@ public class TaCodegenServe {
                 try {
                     core.PlusDmOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85788,8 +85788,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85807,8 +85807,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -85890,8 +85890,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PPO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85901,8 +85901,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85911,8 +85911,8 @@ public class TaCodegenServe {
                 try {
                     core.PpoOpen(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -85920,8 +85920,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -85937,8 +85937,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86021,8 +86021,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PVI_Impl(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86032,8 +86032,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86042,8 +86042,8 @@ public class TaCodegenServe {
                 try {
                     core.PviOpen(_warm_inClose, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86051,8 +86051,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86070,8 +86070,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86153,8 +86153,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86164,8 +86164,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86174,8 +86174,8 @@ public class TaCodegenServe {
                 try {
                     core.PvoOpen(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86183,8 +86183,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86200,8 +86200,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86284,8 +86284,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.PVT_Impl(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86295,8 +86295,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86305,8 +86305,8 @@ public class TaCodegenServe {
                 try {
                     core.PvtOpen(_warm_inClose, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86314,8 +86314,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86333,8 +86333,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86418,8 +86418,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.QSTICK_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86429,8 +86429,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86439,8 +86439,8 @@ public class TaCodegenServe {
                 try {
                     core.QstickOpen(_warm_inOpen, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86448,8 +86448,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86467,8 +86467,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86549,8 +86549,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.RMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86560,8 +86560,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86570,8 +86570,8 @@ public class TaCodegenServe {
                 try {
                     core.RmaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86579,8 +86579,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86596,8 +86596,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86677,8 +86677,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ROC_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86688,8 +86688,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86698,8 +86698,8 @@ public class TaCodegenServe {
                 try {
                     core.RocOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86707,8 +86707,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86724,8 +86724,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86805,8 +86805,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ROCP_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86816,8 +86816,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86826,8 +86826,8 @@ public class TaCodegenServe {
                 try {
                     core.RocpOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86835,8 +86835,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86852,8 +86852,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -86933,8 +86933,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86944,8 +86944,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86954,8 +86954,8 @@ public class TaCodegenServe {
                 try {
                     core.RocrOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -86963,8 +86963,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -86980,8 +86980,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87061,8 +87061,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ROCR100_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87072,8 +87072,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87082,8 +87082,8 @@ public class TaCodegenServe {
                 try {
                     core.Rocr100Open(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87091,8 +87091,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87108,8 +87108,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87190,8 +87190,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87201,8 +87201,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87211,8 +87211,8 @@ public class TaCodegenServe {
                 try {
                     core.RsiOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87220,8 +87220,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87237,8 +87237,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87320,8 +87320,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87331,8 +87331,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87341,8 +87341,8 @@ public class TaCodegenServe {
                 try {
                     core.RviOpen(_warm_inReal, optInTimePeriod, optInStdDevPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87350,8 +87350,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87367,8 +87367,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87448,8 +87448,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.RVOL_Impl(startIdx, endIdx, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87459,8 +87459,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87469,8 +87469,8 @@ public class TaCodegenServe {
                 try {
                     core.RvolOpen(_warm_inVolume, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87478,8 +87478,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87495,8 +87495,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87581,8 +87581,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87592,8 +87592,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87602,8 +87602,8 @@ public class TaCodegenServe {
                 try {
                     core.SarOpen(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87611,8 +87611,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87630,8 +87630,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87722,8 +87722,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87733,8 +87733,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87743,8 +87743,8 @@ public class TaCodegenServe {
                 try {
                     core.SarextOpen(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87752,8 +87752,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87771,8 +87771,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87851,8 +87851,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SIN_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87862,8 +87862,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87872,8 +87872,8 @@ public class TaCodegenServe {
                 try {
                     core.SinOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -87881,8 +87881,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87898,8 +87898,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -87978,8 +87978,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SINH_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87989,8 +87989,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -87999,8 +87999,8 @@ public class TaCodegenServe {
                 try {
                     core.SinhOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88008,8 +88008,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88025,8 +88025,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88106,8 +88106,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88117,8 +88117,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88127,8 +88127,8 @@ public class TaCodegenServe {
                 try {
                     core.SmaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88136,8 +88136,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88153,8 +88153,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88246,8 +88246,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SMI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88257,8 +88257,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88267,8 +88267,8 @@ public class TaCodegenServe {
                 try {
                     core.SmiOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88276,8 +88276,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88297,8 +88297,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88379,8 +88379,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SQRT_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88390,8 +88390,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88400,8 +88400,8 @@ public class TaCodegenServe {
                 try {
                     core.SqrtOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88409,8 +88409,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88426,8 +88426,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88508,8 +88508,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88519,8 +88519,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88529,8 +88529,8 @@ public class TaCodegenServe {
                 try {
                     core.StddevOpen(_warm_inReal, optInTimePeriod, optInNbDev);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88538,8 +88538,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88555,8 +88555,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88649,8 +88649,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.STOCH_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88660,8 +88660,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88670,8 +88670,8 @@ public class TaCodegenServe {
                 try {
                     core.StochOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88679,8 +88679,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88700,8 +88700,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88794,8 +88794,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88805,8 +88805,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88815,8 +88815,8 @@ public class TaCodegenServe {
                 try {
                     core.StochfOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88824,8 +88824,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88845,8 +88845,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -88932,8 +88932,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.STOCHRSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88943,8 +88943,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88953,8 +88953,8 @@ public class TaCodegenServe {
                 try {
                     core.StochrsiOpen(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -88962,8 +88962,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -88979,8 +88979,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89065,8 +89065,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SUB_Impl(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89076,8 +89076,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89086,8 +89086,8 @@ public class TaCodegenServe {
                 try {
                     core.SubOpen(_warm_inReal0, _warm_inReal1);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89095,8 +89095,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89114,8 +89114,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89195,8 +89195,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SUM_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89206,8 +89206,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89216,8 +89216,8 @@ public class TaCodegenServe {
                 try {
                     core.SumOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89225,8 +89225,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89242,8 +89242,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89333,8 +89333,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89344,8 +89344,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89354,8 +89354,8 @@ public class TaCodegenServe {
                 try {
                     core.SupertrendOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInMultiplier);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89363,8 +89363,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89384,8 +89384,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89469,8 +89469,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89480,8 +89480,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89490,8 +89490,8 @@ public class TaCodegenServe {
                 try {
                     core.T3Open(_warm_inReal, optInTimePeriod, optInVFactor);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89499,8 +89499,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89516,8 +89516,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89596,8 +89596,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TAN_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89607,8 +89607,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89617,8 +89617,8 @@ public class TaCodegenServe {
                 try {
                     core.TanOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89626,8 +89626,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89643,8 +89643,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89723,8 +89723,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TANH_Impl(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89734,8 +89734,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89744,8 +89744,8 @@ public class TaCodegenServe {
                 try {
                     core.TanhOpen(_warm_inReal);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89753,8 +89753,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89770,8 +89770,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89851,8 +89851,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89862,8 +89862,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89872,8 +89872,8 @@ public class TaCodegenServe {
                 try {
                     core.TemaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -89881,8 +89881,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89898,8 +89898,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -89986,8 +89986,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -89997,8 +89997,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90007,8 +90007,8 @@ public class TaCodegenServe {
                 try {
                     core.TrangeOpen(_warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90016,8 +90016,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90037,8 +90037,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90118,8 +90118,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TRIMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90129,8 +90129,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90139,8 +90139,8 @@ public class TaCodegenServe {
                 try {
                     core.TrimaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90148,8 +90148,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90165,8 +90165,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90246,8 +90246,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90257,8 +90257,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90267,8 +90267,8 @@ public class TaCodegenServe {
                 try {
                     core.TrixOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90276,8 +90276,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90293,8 +90293,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90374,8 +90374,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90385,8 +90385,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90395,8 +90395,8 @@ public class TaCodegenServe {
                 try {
                     core.TsfOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90404,8 +90404,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90421,8 +90421,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90503,8 +90503,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90514,8 +90514,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90524,8 +90524,8 @@ public class TaCodegenServe {
                 try {
                     core.TsiOpen(_warm_inReal, optInFirstPeriod, optInSecondPeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90533,8 +90533,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90550,8 +90550,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90638,8 +90638,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90649,8 +90649,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90659,8 +90659,8 @@ public class TaCodegenServe {
                 try {
                     core.TyppriceOpen(_warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90668,8 +90668,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90689,8 +90689,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90780,8 +90780,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ULTOSC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90791,8 +90791,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90801,8 +90801,8 @@ public class TaCodegenServe {
                 try {
                     core.UltoscOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90810,8 +90810,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90831,8 +90831,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -90913,8 +90913,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90924,8 +90924,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90934,8 +90934,8 @@ public class TaCodegenServe {
                 try {
                     core.VarOpen(_warm_inReal, optInTimePeriod, optInNbDev);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -90943,8 +90943,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -90960,8 +90960,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91041,8 +91041,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.VHF_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91052,8 +91052,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91062,8 +91062,8 @@ public class TaCodegenServe {
                 try {
                     core.VhfOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91071,8 +91071,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91088,8 +91088,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91178,8 +91178,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.VORTEX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91189,8 +91189,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91199,8 +91199,8 @@ public class TaCodegenServe {
                 try {
                     core.VortexOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91208,8 +91208,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91229,8 +91229,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91323,8 +91323,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.VWAP_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91334,8 +91334,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91344,8 +91344,8 @@ public class TaCodegenServe {
                 try {
                     core.VwapOpen(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91353,8 +91353,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91376,8 +91376,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91461,8 +91461,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.VWMA_Impl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91472,8 +91472,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91482,8 +91482,8 @@ public class TaCodegenServe {
                 try {
                     core.VwmaOpen(_warm_inReal, _warm_inVolume, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91491,8 +91491,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91510,8 +91510,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91598,8 +91598,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.WAD_Impl(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91609,8 +91609,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91619,8 +91619,8 @@ public class TaCodegenServe {
                 try {
                     core.WadOpen(_warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91628,8 +91628,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91649,8 +91649,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91737,8 +91737,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91748,8 +91748,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91758,8 +91758,8 @@ public class TaCodegenServe {
                 try {
                     core.WclpriceOpen(_warm_inHigh, _warm_inLow, _warm_inClose);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91767,8 +91767,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91788,8 +91788,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -91877,8 +91877,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91888,8 +91888,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91898,8 +91898,8 @@ public class TaCodegenServe {
                 try {
                     core.WillrOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -91907,8 +91907,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -91928,8 +91928,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -92009,8 +92009,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92020,8 +92020,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92030,8 +92030,8 @@ public class TaCodegenServe {
                 try {
                     core.WmaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -92039,8 +92039,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92056,8 +92056,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }
@@ -92137,8 +92137,8 @@ public class TaCodegenServe {
             if (GetInt(p, "timed", 0) != 0) {
                 try {
                     rc = core.ZLEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
+                } catch (Exception _e2) when (_e2 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e2).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92148,8 +92148,8 @@ public class TaCodegenServe {
                     outBegIdx = _pr.BegIdx;
                     outNBElement = _pr.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
+                } catch (Exception _e) when (_e is ITALibFailure) {
+                    rc = ((ITALibFailure)_e).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92158,8 +92158,8 @@ public class TaCodegenServe {
                 try {
                     core.ZlemaOpen(_warm_inReal, optInTimePeriod);
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                 }
             } else {
                 try {
@@ -92167,8 +92167,8 @@ public class TaCodegenServe {
                     outBegIdx = _wh.OutRange.BegIdx;
                     outNBElement = _wh.OutRange.Count;
                     rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
+                } catch (Exception _e3) when (_e3 is ITALibFailure) {
+                    rc = ((ITALibFailure)_e3).RetCode;
                     outBegIdx = 0;
                     outNBElement = 0;
                 }
@@ -92184,8 +92184,8 @@ public class TaCodegenServe {
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
+            } catch (Exception _e) when (_e is ITALibFailure) {
+                rc = ((ITALibFailure)_e).RetCode;
                 outBegIdx = 0;
                 outNBElement = 0;
             }

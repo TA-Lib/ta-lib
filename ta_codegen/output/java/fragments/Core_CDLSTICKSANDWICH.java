@@ -430,7 +430,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSTICKSANDWICH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
          core.cdlsticksandwichStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -448,7 +448,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
          CdlsticksandwichStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -657,9 +657,9 @@
          throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlsticksandwichOpen (composition seam). */
    CdlsticksandwichStream cdlsticksandwichOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -678,9 +678,9 @@
          throw new InsufficientHistoryException("CDLSTICKSANDWICH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTICKSANDWICH open: internal error", retCode);
+         throw new TALibStateException("CDLSTICKSANDWICH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTICKSANDWICH open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTICKSANDWICH open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
@@ -729,7 +729,7 @@
       requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

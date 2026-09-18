@@ -511,7 +511,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("CVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI update: BadParam", RetCode.BadParam);
          core.cviStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -529,7 +529,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("CVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI peek: BadParam", RetCode.BadParam);
          CviStream sp = this;
          double laggedEMA = 0.0;
          double tempReal = 0.0;
@@ -735,9 +735,9 @@
          throw new InsufficientHistoryException("CVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CVI openAndFill: internal error", retCode);
+         throw new TALibStateException("CVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cviOpen (composition seam). */
    CviStream cviOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInROCPeriod )
@@ -756,9 +756,9 @@
          throw new InsufficientHistoryException("CVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CVI open: internal error", retCode);
+         throw new TALibStateException("CVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CVI open: " + retCode, retCode);
+      throw new TALibArgumentException("CVI open: " + retCode, retCode);
    }
    /**
     * Open a live CVI stream over the warm-up history; the handle's
@@ -801,7 +801,7 @@
       requireHistoryLength("CVI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("CVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("CVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

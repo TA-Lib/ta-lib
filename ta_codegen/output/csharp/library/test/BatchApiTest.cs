@@ -854,7 +854,7 @@ public static class BatchApiTest
     /// mapping back is TOTAL and LOSSLESS.</summary>
     /// <remarks>
     /// <para>Total: every exception the public API raises implements
-    /// <see cref="ITaLibFailure"/>, including the condition C cannot detect (a
+    /// <see cref="ITALibFailure"/>, including the condition C cannot detect (a
     /// span too short). Anything not covered leaves a caller with a thrown
     /// object it cannot classify, which is the state this replaced.</para>
     /// <para>Lossless: no two codes share one thrown representation. That is the
@@ -946,7 +946,7 @@ public static class BatchApiTest
         }
         catch (Exception e)
         {
-            if (e is not ITaLibFailure f)
+            if (e is not ITALibFailure f)
             {
                 _failures++;
                 Console.WriteLine("  FAIL: " + what + " (" + e.GetType().FullName

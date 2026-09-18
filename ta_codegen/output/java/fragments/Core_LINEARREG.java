@@ -569,7 +569,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
          core.linearregStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -587,7 +587,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
          LinearregStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -1052,9 +1052,9 @@
          throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregOpen (composition seam). */
    LinearregStream linearregOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1073,9 +1073,9 @@
          throw new InsufficientHistoryException("LINEARREG open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG open: internal error", retCode);
+         throw new TALibStateException("LINEARREG open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG stream over the warm-up history; the handle's
@@ -1114,7 +1114,7 @@
       int guardOutLen = openFillCount("LINEARREG openAndFill", inReal.length, LINEARREG_Lookback(optInTimePeriod));
       requireLength("LINEARREG openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

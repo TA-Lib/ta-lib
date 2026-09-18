@@ -715,9 +715,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public QstickStream QstickOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("QSTICK open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "QSTICK open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("QSTICK open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("QSTICK", "open", "inClose", inClose.Length, inOpen.Length);
       return QstickOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
@@ -752,9 +752,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public QstickStream QstickOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("QSTICK openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "QSTICK openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("QSTICK openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("QSTICK", "openAndFill", inOpen.Length, QSTICK_Lookback(optInTimePeriod));
       RequireHistoryLength("QSTICK", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("QSTICK", "openAndFill", "outReal", outReal.Length, guardOutLen);

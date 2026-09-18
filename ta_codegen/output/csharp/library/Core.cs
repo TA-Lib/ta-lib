@@ -237,7 +237,7 @@ public sealed partial class Core
     {
         if (actual < required)
         {
-            throw new TaLibArgumentException(
+            throw new TALibArgumentException(
                 "TA_" + funcName + ": " + argName + " has length " + actual
                     + ", needs " + required,
                 argName, RetCode.BadParam);
@@ -280,7 +280,7 @@ public sealed partial class Core
     {
         if (actual != historyLen)
         {
-            throw new TaLibArgumentException(
+            throw new TALibArgumentException(
                 funcName + " " + verb + ": " + argName + " has length " + actual
                     + ", needs " + historyLen,
                 argName, RetCode.BadParam);
@@ -296,7 +296,7 @@ public sealed partial class Core
     {
         if (actual < required)
         {
-            throw new TaLibArgumentException(
+            throw new TALibArgumentException(
                 funcName + " " + verb + ": " + argName + " has length " + actual
                     + ", needs " + required,
                 argName, RetCode.BadParam);
@@ -322,9 +322,9 @@ public sealed partial class Core
         {
             RetCode.InsufficientHistory => new InsufficientHistoryException(
                 where + "history shorter than lookback + 1"),
-            RetCode.InternalError => new TaLibInvalidOperationException(where + "internal error", retCode),
-            RetCode.AllocErr => new TaLibInvalidOperationException(where + "allocation failed", retCode),
-            _ => new TaLibArgumentException(where + retCode, retCode),
+            RetCode.InternalError => new TALibInvalidOperationException(where + "internal error", retCode),
+            RetCode.AllocErr => new TALibInvalidOperationException(where + "allocation failed", retCode),
+            _ => new TALibArgumentException(where + retCode, retCode),
         };
     }
 
@@ -332,7 +332,7 @@ public sealed partial class Core
      * through. Returns (rather than throws) so the call sites read
      * `throw Failure(...)` and the compiler knows the path ends.
      *
-     * Every type returned here implements ITaLibFailure, so the code is
+     * Every type returned here implements ITALibFailure, so the code is
      * recoverable from the thrown object. The exception types are coarser than
      * the codes -- one InvalidOperationException serves both AllocErr and
      * InternalError -- and a caller that cannot tell them apart cannot respond
@@ -343,22 +343,22 @@ public sealed partial class Core
         switch (retCode)
         {
             case RetCode.OutOfRangeStartIndex:
-                return new TaLibArgumentOutOfRangeException("startIdx", where + "startIdx out of range", retCode);
+                return new TALibArgumentOutOfRangeException("startIdx", where + "startIdx out of range", retCode);
             case RetCode.OutOfRangeEndIndex:
-                return new TaLibArgumentOutOfRangeException("endIdx", where + "endIdx out of range", retCode);
+                return new TALibArgumentOutOfRangeException("endIdx", where + "endIdx out of range", retCode);
             case RetCode.BadParam:
-                return new TaLibArgumentException(where + "bad parameter", retCode);
+                return new TALibArgumentException(where + "bad parameter", retCode);
             case RetCode.AllocErr:
-                return new TaLibInvalidOperationException(where + "allocation failed", retCode);
+                return new TALibInvalidOperationException(where + "allocation failed", retCode);
             case RetCode.InternalError:
-                return new TaLibInvalidOperationException(where + "internal error", retCode);
+                return new TALibInvalidOperationException(where + "internal error", retCode);
             case RetCode.InsufficientHistory:
                 /* Streaming-only in practice: a batch range shorter than the
                  * lookback is Success with a zero count, never this. Mapped
                  * anyway so the code -> exception function stays total. */
                 return new InsufficientHistoryException(where + "history shorter than the lookback");
             default:
-                return new TaLibInvalidOperationException(where + retCode, retCode);
+                return new TALibInvalidOperationException(where + retCode, retCode);
         }
     }
 }

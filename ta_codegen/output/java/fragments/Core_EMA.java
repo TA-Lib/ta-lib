@@ -416,7 +416,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EMA update: BadParam", RetCode.BadParam);
          core.emaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -434,7 +434,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EMA peek: BadParam", RetCode.BadParam);
          EmaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -587,9 +587,9 @@
          throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
+         throw new TALibStateException("EMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind emaOpen (composition seam). */
    EmaStream emaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -608,9 +608,9 @@
          throw new InsufficientHistoryException("EMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA open: internal error", retCode);
+         throw new TALibStateException("EMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EMA open: " + retCode, retCode);
+      throw new TALibArgumentException("EMA open: " + retCode, retCode);
    }
    /**
     * Open a live EMA stream over the warm-up history; the handle's
@@ -649,7 +649,7 @@
       int guardOutLen = openFillCount("EMA openAndFill", inReal.length, EMA_Lookback(optInTimePeriod));
       requireLength("EMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

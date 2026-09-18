@@ -1218,10 +1218,10 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public SupertrendStream SupertrendOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("SUPERTREND open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("SUPERTREND open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("SUPERTREND open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("SUPERTREND open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("SUPERTREND", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SUPERTREND", "open", "inClose", inClose.Length, inHigh.Length);
       return SupertrendOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier);
@@ -1265,10 +1265,10 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public SupertrendStream SupertrendOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, Span<double> outSupertrend, Span<int> outTrend )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("SUPERTREND openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("SUPERTREND openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("SUPERTREND openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("SUPERTREND openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("SUPERTREND", "openAndFill", inHigh.Length, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
       RequireHistoryLength("SUPERTREND", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SUPERTREND", "openAndFill", "inClose", inClose.Length, inHigh.Length);

@@ -264,7 +264,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ATAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATAN update: BadParam", RetCode.BadParam);
          core.atanStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -282,7 +282,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
          AtanStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.atan(inReal);
@@ -360,9 +360,9 @@
          throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN openAndFill: internal error", retCode);
+         throw new TALibStateException("ATAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ATAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind atanOpen (composition seam). */
    AtanStream atanOpenInternal( double inReal[], int startIdx )
@@ -381,9 +381,9 @@
          throw new InsufficientHistoryException("ATAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN open: internal error", retCode);
+         throw new TALibStateException("ATAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATAN open: " + retCode, retCode);
+      throw new TALibArgumentException("ATAN open: " + retCode, retCode);
    }
    /**
     * Open a live ATAN stream over the warm-up history; the handle's
@@ -420,7 +420,7 @@
       int guardOutLen = openFillCount("ATAN openAndFill", inReal.length, ATAN_Lookback());
       requireLength("ATAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

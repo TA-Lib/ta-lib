@@ -564,9 +564,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PvtStream PvtOpen( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVT open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVT open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "PVT open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inClose.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "PVT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("PVT open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       RequireHistoryLength("PVT", "open", "inVolume", inVolume.Length, inClose.Length);
       return PvtOpenInternal(inClose, inVolume, 0);
    }
@@ -599,9 +599,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public PvtStream PvtOpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inClose.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inClose), "PVT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TaLibArgumentException("PVT openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "PVT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inClose.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "PVT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentException("PVT openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
       int guardOutLen = OpenFillCount("PVT", "openAndFill", inClose.Length, PVT_Lookback());
       RequireHistoryLength("PVT", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("PVT", "openAndFill", "outReal", outReal.Length, guardOutLen);

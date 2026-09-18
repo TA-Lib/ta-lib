@@ -234,7 +234,7 @@ public final class Core {
     * ({@code SMA}, {@code HT_TRENDLINE}) — not C's {@code TA_}-prefixed symbol,
     * which is C's namespacing and means nothing on a Java classpath.
     *
-    * <p>Every type returned here implements {@link TaLibFailure}, so the code is
+    * <p>Every type returned here implements {@link TALibFailure}, so the code is
     * recoverable from the thrown object. That matters because the exception
     * types are coarser than the codes: one {@link IndexOutOfBoundsException}
     * serves both out-of-range index codes and one {@link IllegalStateException}
@@ -245,24 +245,24 @@ public final class Core {
       String where = funcName + ": ";
       switch (retCode) {
          case OutOfRangeStartIndex:
-            return new TaLibIndexException(where + "startIdx out of range", retCode);
+            return new TALibIndexException(where + "startIdx out of range", retCode);
          case OutOfRangeEndIndex:
-            return new TaLibIndexException(where + "endIdx out of range", retCode);
+            return new TALibIndexException(where + "endIdx out of range", retCode);
          case BadParam:
-            return new TaLibArgumentException(
+            return new TALibArgumentException(
                where + "bad parameter (out-of-range optional parameter, or two "
                      + "outputs sharing one array)", retCode);
          case AllocErr:
-            return new TaLibStateException(where + "allocation failed", retCode);
+            return new TALibStateException(where + "allocation failed", retCode);
          case InternalError:
-            return new TaLibStateException(where + "internal error", retCode);
+            return new TALibStateException(where + "internal error", retCode);
          case InsufficientHistory:
             // Streaming-only in practice: a batch range shorter than the
             // lookback is Success with a zero count, never this. Mapped anyway
             // so the code -> exception function stays total.
             return new InsufficientHistoryException(where + "history shorter than the lookback");
          default:
-            return new TaLibStateException(where + retCode, retCode);
+            return new TALibStateException(where + retCode, retCode);
       }
    }
 
@@ -327,7 +327,7 @@ public final class Core {
     */
    static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {
       if (actual != historyLen) {
-         throw new TaLibArgumentException(funcName + ": " + argName + " has length " + actual
+         throw new TALibArgumentException(funcName + ": " + argName + " has length " + actual
                + ", needs " + historyLen, RetCode.BadParam);
       }
    }
@@ -373,7 +373,7 @@ public final class Core {
     */
    static void requireArgument(String funcName, String argName, Object argument) {
       if (argument == null) {
-         throw new TaLibArgumentException(funcName + ": " + argName + " is null",
+         throw new TALibArgumentException(funcName + ": " + argName + " is null",
                RetCode.BadParam);
       }
    }
@@ -454,11 +454,11 @@ public final class Core {
    /** {@code actual < 0} means the array was null. */
    private static void checkLength(String funcName, String argName, int actual, int required) {
       if (actual < 0) {
-         throw new TaLibArgumentException(funcName + ": " + argName + " is null",
+         throw new TALibArgumentException(funcName + ": " + argName + " is null",
                RetCode.BadParam);
       }
       if (actual < required) {
-         throw new TaLibArgumentException(funcName + ": " + argName + " has length "
+         throw new TALibArgumentException(funcName + ": " + argName + " has length "
                + actual + ", needs " + required, RetCode.BadParam);
       }
    }
@@ -1141,7 +1141,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC update: BadParam", RetCode.BadParam);
          core.acStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -1159,7 +1159,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC peek: BadParam", RetCode.BadParam);
          AcStream sp = this;
          double medianPrice = 0.0;
          double osc = 0.0;
@@ -1540,9 +1540,9 @@ public final class Core {
          throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AC openAndFill: internal error", retCode);
+         throw new TALibStateException("AC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind acOpen (composition seam). */
    AcStream acOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1561,9 +1561,9 @@ public final class Core {
          throw new InsufficientHistoryException("AC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AC open: internal error", retCode);
+         throw new TALibStateException("AC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AC open: " + retCode, retCode);
+      throw new TALibArgumentException("AC open: " + retCode, retCode);
    }
    /**
     * Open a live AC stream over the warm-up history; the handle's
@@ -1606,7 +1606,7 @@ public final class Core {
       requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -2151,7 +2151,7 @@ public final class Core {
             throw failure("ACCBANDS update", RetCode.OutOfRangeEndIndex);
          requireArgument("ACCBANDS update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -2172,7 +2172,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          requireArgument("ACCBANDS peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
          AccbandsStream sp = this;
          double tempUpper = 0.0;
          double tempMiddle = 0.0;
@@ -2509,9 +2509,9 @@ public final class Core {
          throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACCBANDS openAndFill: internal error", retCode);
+         throw new TALibStateException("ACCBANDS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind accbandsOpen (composition seam). */
    AccbandsStream accbandsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -2532,9 +2532,9 @@ public final class Core {
          throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACCBANDS open: internal error", retCode);
+         throw new TALibStateException("ACCBANDS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACCBANDS open: " + retCode, retCode);
+      throw new TALibArgumentException("ACCBANDS open: " + retCode, retCode);
    }
    /**
     * Open a live ACCBANDS stream over the warm-up history; the handle's
@@ -2583,7 +2583,7 @@ public final class Core {
       requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -2862,7 +2862,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ACOS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ACOS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACOS update: BadParam", RetCode.BadParam);
          core.acosStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -2880,7 +2880,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
          AcosStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.acos(inReal);
@@ -2957,9 +2957,9 @@ public final class Core {
          throw new InsufficientHistoryException("ACOS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACOS openAndFill: internal error", retCode);
+         throw new TALibStateException("ACOS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACOS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ACOS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind acosOpen (composition seam). */
    AcosStream acosOpenInternal( double inReal[], int startIdx )
@@ -2978,9 +2978,9 @@ public final class Core {
          throw new InsufficientHistoryException("ACOS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ACOS open: internal error", retCode);
+         throw new TALibStateException("ACOS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ACOS open: " + retCode, retCode);
+      throw new TALibArgumentException("ACOS open: " + retCode, retCode);
    }
    /**
     * Open a live ACOS stream over the warm-up history; the handle's
@@ -3017,7 +3017,7 @@ public final class Core {
       int guardOutLen = openFillCount("ACOS openAndFill", inReal.length, ACOS_Lookback());
       requireLength("ACOS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ACOS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ACOS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -3375,7 +3375,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AD update: BadParam", RetCode.BadParam);
          core.adStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -3393,7 +3393,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AD peek: BadParam", RetCode.BadParam);
          AdStream sp = this;
          double high = 0.0;
          double low = 0.0;
@@ -3531,9 +3531,9 @@ public final class Core {
          throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD openAndFill: internal error", retCode);
+         throw new TALibStateException("AD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adOpen (composition seam). */
    AdStream adOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -3552,9 +3552,9 @@ public final class Core {
          throw new InsufficientHistoryException("AD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AD open: internal error", retCode);
+         throw new TALibStateException("AD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AD open: " + retCode, retCode);
+      throw new TALibArgumentException("AD open: " + retCode, retCode);
    }
    /**
     * Open a live AD stream over the warm-up history; the handle's
@@ -3603,7 +3603,7 @@ public final class Core {
       requireHistoryLength("AD openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("AD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -3882,7 +3882,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADD update: BadParam", RetCode.BadParam);
          core.addStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -3900,7 +3900,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADD peek: BadParam", RetCode.BadParam);
          AddStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 + inReal1;
@@ -3980,9 +3980,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADD openAndFill: internal error", retCode);
+         throw new TALibStateException("ADD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind addOpen (composition seam). */
    AddStream addOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -4001,9 +4001,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADD open: internal error", retCode);
+         throw new TALibStateException("ADD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADD open: " + retCode, retCode);
+      throw new TALibArgumentException("ADD open: " + retCode, retCode);
    }
    /**
     * Open a live ADD stream over the warm-up history; the handle's
@@ -4044,7 +4044,7 @@ public final class Core {
       requireHistoryLength("ADD openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("ADD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("ADD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -4594,7 +4594,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
          core.adoscStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -4612,7 +4612,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
          AdoscStream sp = this;
          double high = 0.0;
          double low = 0.0;
@@ -4847,9 +4847,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("ADOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adoscOpen (composition seam). */
    AdoscStream adoscOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -4868,9 +4868,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADOSC open: internal error", retCode);
+         throw new TALibStateException("ADOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("ADOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ADOSC stream over the warm-up history; the handle's
@@ -4921,7 +4921,7 @@ public final class Core {
       requireHistoryLength("ADOSC openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("ADOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -5372,7 +5372,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("ADR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADR update: BadParam", RetCode.BadParam);
          core.adrStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -5390,7 +5390,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("ADR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADR peek: BadParam", RetCode.BadParam);
          AdrStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -5571,9 +5571,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADR openAndFill: internal error", retCode);
+         throw new TALibStateException("ADR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adrOpen (composition seam). */
    AdrStream adrOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -5592,9 +5592,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADR open: internal error", retCode);
+         throw new TALibStateException("ADR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADR open: " + retCode, retCode);
+      throw new TALibArgumentException("ADR open: " + retCode, retCode);
    }
    /**
     * Open a live ADR stream over the warm-up history; the handle's
@@ -5637,7 +5637,7 @@ public final class Core {
       requireHistoryLength("ADR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("ADR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("ADR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -6558,7 +6558,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX update: BadParam", RetCode.BadParam);
          core.adxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -6576,7 +6576,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX peek: BadParam", RetCode.BadParam);
          AdxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -7140,9 +7140,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADX openAndFill: internal error", retCode);
+         throw new TALibStateException("ADX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adxOpen (composition seam). */
    AdxStream adxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -7161,9 +7161,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADX open: internal error", retCode);
+         throw new TALibStateException("ADX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADX open: " + retCode, retCode);
+      throw new TALibArgumentException("ADX open: " + retCode, retCode);
    }
    /**
     * Open a live ADX stream over the warm-up history; the handle's
@@ -7210,7 +7210,7 @@ public final class Core {
       requireHistoryLength("ADX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ADX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -7623,7 +7623,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADXR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADXR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADXR update: BadParam", RetCode.BadParam);
          core.adxrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -7641,7 +7641,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADXR peek: BadParam", RetCode.BadParam);
          AdxrStream sp = this;
          double cur_adx = 0.0;
          double cur_outReal = 0.0;
@@ -7797,9 +7797,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADXR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADXR openAndFill: internal error", retCode);
+         throw new TALibStateException("ADXR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADXR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADXR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adxrOpen (composition seam). */
    AdxrStream adxrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -7818,9 +7818,9 @@ public final class Core {
          throw new InsufficientHistoryException("ADXR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADXR open: internal error", retCode);
+         throw new TALibStateException("ADXR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADXR open: " + retCode, retCode);
+      throw new TALibArgumentException("ADXR open: " + retCode, retCode);
    }
    /**
     * Open a live ADXR stream over the warm-up history; the handle's
@@ -7867,7 +7867,7 @@ public final class Core {
       requireHistoryLength("ADXR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ADXR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADXR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -8391,7 +8391,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO update: BadParam", RetCode.BadParam);
          core.aoStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -8409,7 +8409,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO peek: BadParam", RetCode.BadParam);
          AoStream sp = this;
          double medianPrice = 0.0;
          double tempReal = 0.0;
@@ -8689,9 +8689,9 @@ public final class Core {
          throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AO openAndFill: internal error", retCode);
+         throw new TALibStateException("AO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind aoOpen (composition seam). */
    AoStream aoOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -8710,9 +8710,9 @@ public final class Core {
          throw new InsufficientHistoryException("AO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AO open: internal error", retCode);
+         throw new TALibStateException("AO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AO open: " + retCode, retCode);
+      throw new TALibArgumentException("AO open: " + retCode, retCode);
    }
    /**
     * Open a live AO stream over the warm-up history; the handle's
@@ -8755,7 +8755,7 @@ public final class Core {
       requireHistoryLength("AO openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -9210,7 +9210,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("APO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("APO update: BadParam", RetCode.BadParam);
          core.apoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -9228,7 +9228,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("APO peek: BadParam", RetCode.BadParam);
          ApoStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outReal = 0.0;
@@ -9389,9 +9389,9 @@ public final class Core {
          throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("APO openAndFill: internal error", retCode);
+         throw new TALibStateException("APO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("APO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind apoOpen (composition seam). */
    ApoStream apoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -9410,9 +9410,9 @@ public final class Core {
          throw new InsufficientHistoryException("APO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("APO open: internal error", retCode);
+         throw new TALibStateException("APO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("APO open: " + retCode, retCode);
+      throw new TALibArgumentException("APO open: " + retCode, retCode);
    }
    /**
     * Open a live APO stream over the warm-up history; the handle's
@@ -9453,7 +9453,7 @@ public final class Core {
       int guardOutLen = openFillCount("APO openAndFill", inReal.length, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("APO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("APO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -9959,7 +9959,7 @@ public final class Core {
             throw failure("AROON update", RetCode.OutOfRangeEndIndex);
          requireArgument("AROON update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON update: BadParam", RetCode.BadParam);
          core.aroonStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.aroonDown = this.cur_outAroonDown;
@@ -9979,7 +9979,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, AroonOut out ) {
          requireArgument("AROON peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON peek: BadParam", RetCode.BadParam);
          AroonStream sp = this;
          double tmp = 0.0;
          double cur_outAroonDown = 0.0;
@@ -10294,9 +10294,9 @@ public final class Core {
          throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROON openAndFill: internal error", retCode);
+         throw new TALibStateException("AROON openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROON openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AROON openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind aroonOpen (composition seam). */
    AroonStream aroonOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -10316,9 +10316,9 @@ public final class Core {
          throw new InsufficientHistoryException("AROON open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROON open: internal error", retCode);
+         throw new TALibStateException("AROON open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROON open: " + retCode, retCode);
+      throw new TALibArgumentException("AROON open: " + retCode, retCode);
    }
    /**
     * Open a live AROON stream over the warm-up history; the handle's
@@ -10362,7 +10362,7 @@ public final class Core {
       requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
       requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
-         throw new TaLibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -10859,7 +10859,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AROONOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
          core.aroonoscStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -10877,7 +10877,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
          AroonoscStream sp = this;
          double tmp = 0.0;
          double aroon = 0.0;
@@ -11198,9 +11198,9 @@ public final class Core {
          throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROONOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("AROONOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind aroonoscOpen (composition seam). */
    AroonoscStream aroonoscOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -11219,9 +11219,9 @@ public final class Core {
          throw new InsufficientHistoryException("AROONOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AROONOSC open: internal error", retCode);
+         throw new TALibStateException("AROONOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AROONOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("AROONOSC open: " + retCode, retCode);
    }
    /**
     * Open a live AROONOSC stream over the warm-up history; the handle's
@@ -11264,7 +11264,7 @@ public final class Core {
       requireHistoryLength("AROONOSC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AROONOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("AROONOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AROONOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -11545,7 +11545,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ASIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ASIN update: BadParam", RetCode.BadParam);
          core.asinStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -11563,7 +11563,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
          AsinStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.asin(inReal);
@@ -11640,9 +11640,9 @@ public final class Core {
          throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
+         throw new TALibStateException("ASIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ASIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind asinOpen (composition seam). */
    AsinStream asinOpenInternal( double inReal[], int startIdx )
@@ -11661,9 +11661,9 @@ public final class Core {
          throw new InsufficientHistoryException("ASIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ASIN open: internal error", retCode);
+         throw new TALibStateException("ASIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ASIN open: " + retCode, retCode);
+      throw new TALibArgumentException("ASIN open: " + retCode, retCode);
    }
    /**
     * Open a live ASIN stream over the warm-up history; the handle's
@@ -11700,7 +11700,7 @@ public final class Core {
       int guardOutLen = openFillCount("ASIN openAndFill", inReal.length, ASIN_Lookback());
       requireLength("ASIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ASIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -11972,7 +11972,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ATAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATAN update: BadParam", RetCode.BadParam);
          core.atanStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -11990,7 +11990,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
          AtanStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.atan(inReal);
@@ -12068,9 +12068,9 @@ public final class Core {
          throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN openAndFill: internal error", retCode);
+         throw new TALibStateException("ATAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ATAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind atanOpen (composition seam). */
    AtanStream atanOpenInternal( double inReal[], int startIdx )
@@ -12089,9 +12089,9 @@ public final class Core {
          throw new InsufficientHistoryException("ATAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATAN open: internal error", retCode);
+         throw new TALibStateException("ATAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATAN open: " + retCode, retCode);
+      throw new TALibArgumentException("ATAN open: " + retCode, retCode);
    }
    /**
     * Open a live ATAN stream over the warm-up history; the handle's
@@ -12128,7 +12128,7 @@ public final class Core {
       int guardOutLen = openFillCount("ATAN openAndFill", inReal.length, ATAN_Lookback());
       requireLength("ATAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ATAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -12686,7 +12686,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ATR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ATR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATR update: BadParam", RetCode.BadParam);
          core.atrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -12704,7 +12704,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ATR peek: BadParam", RetCode.BadParam);
          AtrStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -12973,9 +12973,9 @@ public final class Core {
          throw new InsufficientHistoryException("ATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATR openAndFill: internal error", retCode);
+         throw new TALibStateException("ATR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ATR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind atrOpen (composition seam). */
    AtrStream atrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -12994,9 +12994,9 @@ public final class Core {
          throw new InsufficientHistoryException("ATR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ATR open: internal error", retCode);
+         throw new TALibStateException("ATR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ATR open: " + retCode, retCode);
+      throw new TALibArgumentException("ATR open: " + retCode, retCode);
    }
    /**
     * Open a live ATR stream over the warm-up history; the handle's
@@ -13043,7 +13043,7 @@ public final class Core {
       requireHistoryLength("ATR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -13405,7 +13405,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AVGDEV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
          core.avgdevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -13423,7 +13423,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
          AvgdevStream sp = this;
          double todaySum = 0.0;
          double todayDev = 0.0;
@@ -13573,9 +13573,9 @@ public final class Core {
          throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGDEV openAndFill: internal error", retCode);
+         throw new TALibStateException("AVGDEV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind avgdevOpen (composition seam). */
    AvgdevStream avgdevOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -13594,9 +13594,9 @@ public final class Core {
          throw new InsufficientHistoryException("AVGDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGDEV open: internal error", retCode);
+         throw new TALibStateException("AVGDEV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGDEV open: " + retCode, retCode);
+      throw new TALibArgumentException("AVGDEV open: " + retCode, retCode);
    }
    /**
     * Open a live AVGDEV stream over the warm-up history; the handle's
@@ -13635,7 +13635,7 @@ public final class Core {
       int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
       requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -13941,7 +13941,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AVGPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
          core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -13959,7 +13959,7 @@ public final class Core {
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
          AvgpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
@@ -14041,9 +14041,9 @@ public final class Core {
          throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("AVGPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind avgpriceOpen (composition seam). */
    AvgpriceStream avgpriceOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -14062,9 +14062,9 @@ public final class Core {
          throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AVGPRICE open: internal error", retCode);
+         throw new TALibStateException("AVGPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AVGPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("AVGPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live AVGPRICE stream over the warm-up history; the handle's
@@ -14113,7 +14113,7 @@ public final class Core {
       requireHistoryLength("AVGPRICE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("AVGPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -14977,7 +14977,7 @@ public final class Core {
             throw failure("BBANDS update", RetCode.OutOfRangeEndIndex);
          requireArgument("BBANDS update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
          core.bbandsStepImpl(this, inReal);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -14998,7 +14998,7 @@ public final class Core {
       public void peek( double inReal, BbandsOut out ) {
          requireArgument("BBANDS peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
          BbandsStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -15255,9 +15255,9 @@ public final class Core {
          throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BBANDS openAndFill: internal error", retCode);
+         throw new TALibStateException("BBANDS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BBANDS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BBANDS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind bbandsOpen (composition seam). */
    BbandsStream bbandsOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -15278,9 +15278,9 @@ public final class Core {
          throw new InsufficientHistoryException("BBANDS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BBANDS open: internal error", retCode);
+         throw new TALibStateException("BBANDS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BBANDS open: " + retCode, retCode);
+      throw new TALibArgumentException("BBANDS open: " + retCode, retCode);
    }
    /**
     * Open a live BBANDS stream over the warm-up history; the handle's
@@ -15324,7 +15324,7 @@ public final class Core {
       requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -16209,7 +16209,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("BETA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BETA update: BadParam", RetCode.BadParam);
          core.betaStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -16227,7 +16227,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("BETA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BETA peek: BadParam", RetCode.BadParam);
          BetaStream sp = this;
          double tmp_real = 0.0;
          double denom = 0.0;
@@ -17048,9 +17048,9 @@ public final class Core {
          throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
+         throw new TALibStateException("BETA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BETA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind betaOpen (composition seam). */
    BetaStream betaOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -17069,9 +17069,9 @@ public final class Core {
          throw new InsufficientHistoryException("BETA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BETA open: internal error", retCode);
+         throw new TALibStateException("BETA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BETA open: " + retCode, retCode);
+      throw new TALibArgumentException("BETA open: " + retCode, retCode);
    }
    /**
     * Open a live BETA stream over the warm-up history; the handle's
@@ -17114,7 +17114,7 @@ public final class Core {
       requireHistoryLength("BETA openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("BETA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BETA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -17432,7 +17432,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("BOP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BOP update: BadParam", RetCode.BadParam);
          core.bopStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -17450,7 +17450,7 @@ public final class Core {
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BOP peek: BadParam", RetCode.BadParam);
          BopStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -17568,9 +17568,9 @@ public final class Core {
          throw new InsufficientHistoryException("BOP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BOP openAndFill: internal error", retCode);
+         throw new TALibStateException("BOP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("BOP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("BOP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind bopOpen (composition seam). */
    BopStream bopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -17589,9 +17589,9 @@ public final class Core {
          throw new InsufficientHistoryException("BOP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("BOP open: internal error", retCode);
+         throw new TALibStateException("BOP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("BOP open: " + retCode, retCode);
+      throw new TALibArgumentException("BOP open: " + retCode, retCode);
    }
    /**
     * Open a live BOP stream over the warm-up history; the handle's
@@ -17640,7 +17640,7 @@ public final class Core {
       requireHistoryLength("BOP openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("BOP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -18140,7 +18140,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CCI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI update: BadParam", RetCode.BadParam);
          core.cciStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -18158,7 +18158,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI peek: BadParam", RetCode.BadParam);
          CciStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -18449,9 +18449,9 @@ public final class Core {
          throw new InsufficientHistoryException("CCI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CCI openAndFill: internal error", retCode);
+         throw new TALibStateException("CCI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CCI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CCI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cciOpen (composition seam). */
    CciStream cciOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -18470,9 +18470,9 @@ public final class Core {
          throw new InsufficientHistoryException("CCI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CCI open: internal error", retCode);
+         throw new TALibStateException("CCI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CCI open: " + retCode, retCode);
+      throw new TALibArgumentException("CCI open: " + retCode, retCode);
    }
    /**
     * Open a live CCI stream over the warm-up history; the handle's
@@ -18519,7 +18519,7 @@ public final class Core {
       requireHistoryLength("CCI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("CCI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -18961,7 +18961,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL2CROWS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL2CROWS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL2CROWS update: BadParam", RetCode.BadParam);
          core.cdl2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -18979,7 +18979,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
          Cdl2crowsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -19199,9 +19199,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL2CROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL2CROWS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL2CROWS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL2CROWS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL2CROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl2crowsOpen (composition seam). */
    Cdl2crowsStream cdl2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -19220,9 +19220,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL2CROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL2CROWS open: internal error", retCode);
+         throw new TALibStateException("CDL2CROWS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL2CROWS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL2CROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDL2CROWS stream over the warm-up history; the handle's
@@ -19271,7 +19271,7 @@ public final class Core {
       requireHistoryLength("CDL2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -19736,7 +19736,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3BLACKCROWS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
          core.cdl3blackcrowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -19754,7 +19754,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3BLACKCROWS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3BLACKCROWS peek: BadParam", RetCode.BadParam);
          Cdl3blackcrowsStream sp = this;
          int cur_outInteger = 0;
          int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -20004,9 +20004,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3BLACKCROWS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3BLACKCROWS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3BLACKCROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3blackcrowsOpen (composition seam). */
    Cdl3blackcrowsStream cdl3blackcrowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -20025,9 +20025,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3BLACKCROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3BLACKCROWS open: internal error", retCode);
+         throw new TALibStateException("CDL3BLACKCROWS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3BLACKCROWS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3BLACKCROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3BLACKCROWS stream over the warm-up history; the handle's
@@ -20076,7 +20076,7 @@ public final class Core {
       requireHistoryLength("CDL3BLACKCROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3BLACKCROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3BLACKCROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -20567,7 +20567,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3INSIDE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3INSIDE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3INSIDE update: BadParam", RetCode.BadParam);
          core.cdl3insideStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -20585,7 +20585,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3INSIDE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3INSIDE peek: BadParam", RetCode.BadParam);
          Cdl3insideStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -20852,9 +20852,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3INSIDE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3INSIDE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3INSIDE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3INSIDE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3insideOpen (composition seam). */
    Cdl3insideStream cdl3insideOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -20873,9 +20873,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3INSIDE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3INSIDE open: internal error", retCode);
+         throw new TALibStateException("CDL3INSIDE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3INSIDE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3INSIDE open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3INSIDE stream over the warm-up history; the handle's
@@ -20924,7 +20924,7 @@ public final class Core {
       requireHistoryLength("CDL3INSIDE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3INSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3INSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3INSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -21398,7 +21398,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3LINESTRIKE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3LINESTRIKE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3LINESTRIKE update: BadParam", RetCode.BadParam);
          core.cdl3linestrikeStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -21416,7 +21416,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3LINESTRIKE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3LINESTRIKE peek: BadParam", RetCode.BadParam);
          Cdl3linestrikeStream sp = this;
          int cur_outInteger = 0;
          int Near_rangeType = sp.cs_Near_rangeType;
@@ -21675,9 +21675,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3LINESTRIKE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3LINESTRIKE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3LINESTRIKE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3LINESTRIKE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3LINESTRIKE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3linestrikeOpen (composition seam). */
    Cdl3linestrikeStream cdl3linestrikeOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -21696,9 +21696,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3LINESTRIKE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3LINESTRIKE open: internal error", retCode);
+         throw new TALibStateException("CDL3LINESTRIKE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3LINESTRIKE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3LINESTRIKE open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3LINESTRIKE stream over the warm-up history; the handle's
@@ -21747,7 +21747,7 @@ public final class Core {
       requireHistoryLength("CDL3LINESTRIKE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3LINESTRIKE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3LINESTRIKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3LINESTRIKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -22134,7 +22134,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3OUTSIDE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
          core.cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -22152,7 +22152,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
          Cdl3outsideStream sp = this;
          int cur_outInteger = 0;
          if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
@@ -22314,9 +22314,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3outsideOpen (composition seam). */
    Cdl3outsideStream cdl3outsideOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -22335,9 +22335,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3OUTSIDE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3OUTSIDE open: internal error", retCode);
+         throw new TALibStateException("CDL3OUTSIDE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3OUTSIDE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3OUTSIDE open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3OUTSIDE stream over the warm-up history; the handle's
@@ -22386,7 +22386,7 @@ public final class Core {
       requireHistoryLength("CDL3OUTSIDE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3OUTSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -22990,7 +22990,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3STARSINSOUTH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3STARSINSOUTH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3STARSINSOUTH update: BadParam", RetCode.BadParam);
          core.cdl3starsinsouthStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -23008,7 +23008,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3STARSINSOUTH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3STARSINSOUTH peek: BadParam", RetCode.BadParam);
          Cdl3starsinsouthStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -23389,9 +23389,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3STARSINSOUTH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3STARSINSOUTH openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3STARSINSOUTH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3STARSINSOUTH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3starsinsouthOpen (composition seam). */
    Cdl3starsinsouthStream cdl3starsinsouthOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -23410,9 +23410,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3STARSINSOUTH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3STARSINSOUTH open: internal error", retCode);
+         throw new TALibStateException("CDL3STARSINSOUTH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3STARSINSOUTH open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3STARSINSOUTH open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3STARSINSOUTH stream over the warm-up history; the handle's
@@ -23461,7 +23461,7 @@ public final class Core {
       requireHistoryLength("CDL3STARSINSOUTH openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3STARSINSOUTH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3STARSINSOUTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3STARSINSOUTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -24082,7 +24082,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDL3WHITESOLDIERS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
          core.cdl3whitesoldiersStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -24100,7 +24100,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
          Cdl3whitesoldiersStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -24492,9 +24492,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3WHITESOLDIERS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3WHITESOLDIERS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDL3WHITESOLDIERS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdl3whitesoldiersOpen (composition seam). */
    Cdl3whitesoldiersStream cdl3whitesoldiersOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -24513,9 +24513,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDL3WHITESOLDIERS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDL3WHITESOLDIERS open: internal error", retCode);
+         throw new TALibStateException("CDL3WHITESOLDIERS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDL3WHITESOLDIERS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDL3WHITESOLDIERS open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3WHITESOLDIERS stream over the warm-up history; the handle's
@@ -24564,7 +24564,7 @@ public final class Core {
       requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3WHITESOLDIERS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -25136,7 +25136,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLABANDONEDBABY update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
          core.cdlabandonedbabyStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -25154,7 +25154,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
          CdlabandonedbabyStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -25486,9 +25486,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLABANDONEDBABY openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLABANDONEDBABY openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLABANDONEDBABY openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlabandonedbabyOpen (composition seam). */
    CdlabandonedbabyStream cdlabandonedbabyOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -25507,9 +25507,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLABANDONEDBABY open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLABANDONEDBABY open: internal error", retCode);
+         throw new TALibStateException("CDLABANDONEDBABY open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLABANDONEDBABY open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLABANDONEDBABY open: " + retCode, retCode);
    }
    /**
     * Open a live CDLABANDONEDBABY stream over the warm-up history; the handle's
@@ -25560,7 +25560,7 @@ public final class Core {
       requireHistoryLength("CDLABANDONEDBABY openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLABANDONEDBABY openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -26242,7 +26242,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLADVANCEBLOCK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
          core.cdladvanceblockStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -26260,7 +26260,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
          CdladvanceblockStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -26715,9 +26715,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdladvanceblockOpen (composition seam). */
    CdladvanceblockStream cdladvanceblockOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -26736,9 +26736,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLADVANCEBLOCK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLADVANCEBLOCK open: internal error", retCode);
+         throw new TALibStateException("CDLADVANCEBLOCK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLADVANCEBLOCK open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLADVANCEBLOCK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLADVANCEBLOCK stream over the warm-up history; the handle's
@@ -26787,7 +26787,7 @@ public final class Core {
       requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -27250,7 +27250,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLBELTHOLD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLBELTHOLD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLBELTHOLD update: BadParam", RetCode.BadParam);
          core.cdlbeltholdStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -27268,7 +27268,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLBELTHOLD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLBELTHOLD peek: BadParam", RetCode.BadParam);
          CdlbeltholdStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -27500,9 +27500,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLBELTHOLD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBELTHOLD openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLBELTHOLD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLBELTHOLD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlbeltholdOpen (composition seam). */
    CdlbeltholdStream cdlbeltholdOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -27521,9 +27521,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLBELTHOLD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBELTHOLD open: internal error", retCode);
+         throw new TALibStateException("CDLBELTHOLD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLBELTHOLD open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLBELTHOLD open: " + retCode, retCode);
    }
    /**
     * Open a live CDLBELTHOLD stream over the warm-up history; the handle's
@@ -27572,7 +27572,7 @@ public final class Core {
       requireHistoryLength("CDLBELTHOLD openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLBELTHOLD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLBELTHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLBELTHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -28046,7 +28046,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLBREAKAWAY update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLBREAKAWAY update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLBREAKAWAY update: BadParam", RetCode.BadParam);
          core.cdlbreakawayStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -28064,7 +28064,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
          CdlbreakawayStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -28333,9 +28333,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLBREAKAWAY openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBREAKAWAY openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLBREAKAWAY openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLBREAKAWAY openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlbreakawayOpen (composition seam). */
    CdlbreakawayStream cdlbreakawayOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -28354,9 +28354,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLBREAKAWAY open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLBREAKAWAY open: internal error", retCode);
+         throw new TALibStateException("CDLBREAKAWAY open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLBREAKAWAY open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLBREAKAWAY open: " + retCode, retCode);
    }
    /**
     * Open a live CDLBREAKAWAY stream over the warm-up history; the handle's
@@ -28405,7 +28405,7 @@ public final class Core {
       requireHistoryLength("CDLBREAKAWAY openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLBREAKAWAY openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLBREAKAWAY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLBREAKAWAY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -28864,7 +28864,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLCLOSINGMARUBOZU update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
          core.cdlclosingmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -28882,7 +28882,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
          CdlclosingmarubozuStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -29114,9 +29114,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCLOSINGMARUBOZU openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLCLOSINGMARUBOZU openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlclosingmarubozuOpen (composition seam). */
    CdlclosingmarubozuStream cdlclosingmarubozuOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -29135,9 +29135,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCLOSINGMARUBOZU open: internal error", retCode);
+         throw new TALibStateException("CDLCLOSINGMARUBOZU open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCLOSINGMARUBOZU open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCLOSINGMARUBOZU open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCLOSINGMARUBOZU stream over the warm-up history; the handle's
@@ -29186,7 +29186,7 @@ public final class Core {
       requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLCLOSINGMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -29652,7 +29652,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLCONCEALBABYSWALL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
          core.cdlconcealbabyswallStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -29670,7 +29670,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
          CdlconcealbabyswallStream sp = this;
          int cur_outInteger = 0;
          int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -29919,9 +29919,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCONCEALBABYSWALL openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLCONCEALBABYSWALL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlconcealbabyswallOpen (composition seam). */
    CdlconcealbabyswallStream cdlconcealbabyswallOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -29940,9 +29940,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCONCEALBABYSWALL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCONCEALBABYSWALL open: internal error", retCode);
+         throw new TALibStateException("CDLCONCEALBABYSWALL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCONCEALBABYSWALL open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCONCEALBABYSWALL open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCONCEALBABYSWALL stream over the warm-up history; the handle's
@@ -29991,7 +29991,7 @@ public final class Core {
       requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLCONCEALBABYSWALL openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -30477,7 +30477,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLCOUNTERATTACK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCOUNTERATTACK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCOUNTERATTACK update: BadParam", RetCode.BadParam);
          core.cdlcounterattackStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -30495,7 +30495,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCOUNTERATTACK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCOUNTERATTACK peek: BadParam", RetCode.BadParam);
          CdlcounterattackStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -30743,9 +30743,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCOUNTERATTACK openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLCOUNTERATTACK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlcounterattackOpen (composition seam). */
    CdlcounterattackStream cdlcounterattackOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -30764,9 +30764,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLCOUNTERATTACK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCOUNTERATTACK open: internal error", retCode);
+         throw new TALibStateException("CDLCOUNTERATTACK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCOUNTERATTACK open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCOUNTERATTACK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCOUNTERATTACK stream over the warm-up history; the handle's
@@ -30815,7 +30815,7 @@ public final class Core {
       requireHistoryLength("CDLCOUNTERATTACK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLCOUNTERATTACK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLCOUNTERATTACK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -31279,7 +31279,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLDARKCLOUDCOVER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDARKCLOUDCOVER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDARKCLOUDCOVER update: BadParam", RetCode.BadParam);
          core.cdldarkcloudcoverStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -31297,7 +31297,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
          CdldarkcloudcoverStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -31505,9 +31505,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDARKCLOUDCOVER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDARKCLOUDCOVER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLDARKCLOUDCOVER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdldarkcloudcoverOpen (composition seam). */
    CdldarkcloudcoverStream cdldarkcloudcoverOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -31526,9 +31526,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDARKCLOUDCOVER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDARKCLOUDCOVER open: internal error", retCode);
+         throw new TALibStateException("CDLDARKCLOUDCOVER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDARKCLOUDCOVER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDARKCLOUDCOVER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLDARKCLOUDCOVER stream over the warm-up history; the handle's
@@ -31579,7 +31579,7 @@ public final class Core {
       requireHistoryLength("CDLDARKCLOUDCOVER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDARKCLOUDCOVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLDARKCLOUDCOVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -31979,7 +31979,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLDOJI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
          core.cdldojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -31997,7 +31997,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
          CdldojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -32170,9 +32170,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLDOJI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdldojiOpen (composition seam). */
    CdldojiStream cdldojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -32191,9 +32191,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJI open: internal error", retCode);
+         throw new TALibStateException("CDLDOJI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDOJI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLDOJI stream over the warm-up history; the handle's
@@ -32242,7 +32242,7 @@ public final class Core {
       requireHistoryLength("CDLDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -32726,7 +32726,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLDOJISTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDOJISTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDOJISTAR update: BadParam", RetCode.BadParam);
          core.cdldojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -32744,7 +32744,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDOJISTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDOJISTAR peek: BadParam", RetCode.BadParam);
          CdldojistarStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -32991,9 +32991,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDOJISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJISTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLDOJISTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDOJISTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDOJISTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdldojistarOpen (composition seam). */
    CdldojistarStream cdldojistarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -33012,9 +33012,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDOJISTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDOJISTAR open: internal error", retCode);
+         throw new TALibStateException("CDLDOJISTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDOJISTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDOJISTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLDOJISTAR stream over the warm-up history; the handle's
@@ -33063,7 +33063,7 @@ public final class Core {
       requireHistoryLength("CDLDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -33528,7 +33528,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLDRAGONFLYDOJI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDRAGONFLYDOJI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDRAGONFLYDOJI update: BadParam", RetCode.BadParam);
          core.cdldragonflydojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -33546,7 +33546,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLDRAGONFLYDOJI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLDRAGONFLYDOJI peek: BadParam", RetCode.BadParam);
          CdldragonflydojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -33766,9 +33766,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDRAGONFLYDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDRAGONFLYDOJI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLDRAGONFLYDOJI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdldragonflydojiOpen (composition seam). */
    CdldragonflydojiStream cdldragonflydojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -33787,9 +33787,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLDRAGONFLYDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLDRAGONFLYDOJI open: internal error", retCode);
+         throw new TALibStateException("CDLDRAGONFLYDOJI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLDRAGONFLYDOJI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLDRAGONFLYDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLDRAGONFLYDOJI stream over the warm-up history; the handle's
@@ -33838,7 +33838,7 @@ public final class Core {
       requireHistoryLength("CDLDRAGONFLYDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDRAGONFLYDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLDRAGONFLYDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -34237,7 +34237,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLENGULFING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
          core.cdlengulfingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -34255,7 +34255,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
          CdlengulfingStream sp = this;
          int cur_outInteger = 0;
          if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
@@ -34433,9 +34433,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLENGULFING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlengulfingOpen (composition seam). */
    CdlengulfingStream cdlengulfingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -34454,9 +34454,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLENGULFING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING open: internal error", retCode);
+         throw new TALibStateException("CDLENGULFING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLENGULFING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLENGULFING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLENGULFING stream over the warm-up history; the handle's
@@ -34505,7 +34505,7 @@ public final class Core {
       requireHistoryLength("CDLENGULFING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLENGULFING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -35067,7 +35067,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLEVENINGDOJISTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLEVENINGDOJISTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLEVENINGDOJISTAR update: BadParam", RetCode.BadParam);
          core.cdleveningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -35085,7 +35085,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLEVENINGDOJISTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLEVENINGDOJISTAR peek: BadParam", RetCode.BadParam);
          CdleveningdojistarStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -35397,9 +35397,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLEVENINGDOJISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGDOJISTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLEVENINGDOJISTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdleveningdojistarOpen (composition seam). */
    CdleveningdojistarStream cdleveningdojistarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -35418,9 +35418,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLEVENINGDOJISTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGDOJISTAR open: internal error", retCode);
+         throw new TALibStateException("CDLEVENINGDOJISTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLEVENINGDOJISTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLEVENINGDOJISTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLEVENINGDOJISTAR stream over the warm-up history; the handle's
@@ -35471,7 +35471,7 @@ public final class Core {
       requireHistoryLength("CDLEVENINGDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLEVENINGDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -36001,7 +36001,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLEVENINGSTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
          core.cdleveningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -36019,7 +36019,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLEVENINGSTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLEVENINGSTAR peek: BadParam", RetCode.BadParam);
          CdleveningstarStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -36291,9 +36291,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGSTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLEVENINGSTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdleveningstarOpen (composition seam). */
    CdleveningstarStream cdleveningstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -36312,9 +36312,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLEVENINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLEVENINGSTAR open: internal error", retCode);
+         throw new TALibStateException("CDLEVENINGSTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLEVENINGSTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLEVENINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLEVENINGSTAR stream over the warm-up history; the handle's
@@ -36365,7 +36365,7 @@ public final class Core {
       requireHistoryLength("CDLEVENINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLEVENINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLEVENINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -36856,7 +36856,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLGAPSIDESIDEWHITE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
          core.cdlgapsidesidewhiteStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -36874,7 +36874,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
          CdlgapsidesidewhiteStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -37137,9 +37137,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlgapsidesidewhiteOpen (composition seam). */
    CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -37158,9 +37158,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGAPSIDESIDEWHITE open: internal error", retCode);
+         throw new TALibStateException("CDLGAPSIDESIDEWHITE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGAPSIDESIDEWHITE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLGAPSIDESIDEWHITE stream over the warm-up history; the handle's
@@ -37209,7 +37209,7 @@ public final class Core {
       requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -37674,7 +37674,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLGRAVESTONEDOJI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
          core.cdlgravestonedojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -37692,7 +37692,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
          CdlgravestonedojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -37912,9 +37912,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLGRAVESTONEDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGRAVESTONEDOJI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLGRAVESTONEDOJI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlgravestonedojiOpen (composition seam). */
    CdlgravestonedojiStream cdlgravestonedojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -37933,9 +37933,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLGRAVESTONEDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGRAVESTONEDOJI open: internal error", retCode);
+         throw new TALibStateException("CDLGRAVESTONEDOJI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGRAVESTONEDOJI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGRAVESTONEDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLGRAVESTONEDOJI stream over the warm-up history; the handle's
@@ -37984,7 +37984,7 @@ public final class Core {
       requireHistoryLength("CDLGRAVESTONEDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLGRAVESTONEDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -38545,7 +38545,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHAMMER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
          core.cdlhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -38563,7 +38563,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
          CdlhammerStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -38894,9 +38894,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHAMMER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHAMMER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHAMMER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhammerOpen (composition seam). */
    CdlhammerStream cdlhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -38915,9 +38915,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHAMMER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHAMMER open: internal error", retCode);
+         throw new TALibStateException("CDLHAMMER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHAMMER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHAMMER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHAMMER stream over the warm-up history; the handle's
@@ -38966,7 +38966,7 @@ public final class Core {
       requireHistoryLength("CDLHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -39529,7 +39529,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHANGINGMAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHANGINGMAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHANGINGMAN update: BadParam", RetCode.BadParam);
          core.cdlhangingmanStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -39547,7 +39547,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHANGINGMAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHANGINGMAN peek: BadParam", RetCode.BadParam);
          CdlhangingmanStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -39878,9 +39878,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHANGINGMAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHANGINGMAN openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHANGINGMAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHANGINGMAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhangingmanOpen (composition seam). */
    CdlhangingmanStream cdlhangingmanOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -39899,9 +39899,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHANGINGMAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHANGINGMAN open: internal error", retCode);
+         throw new TALibStateException("CDLHANGINGMAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHANGINGMAN open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHANGINGMAN open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHANGINGMAN stream over the warm-up history; the handle's
@@ -39950,7 +39950,7 @@ public final class Core {
       requireHistoryLength("CDLHANGINGMAN openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHANGINGMAN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHANGINGMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHANGINGMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -40448,7 +40448,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHARAMI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMI update: BadParam", RetCode.BadParam);
          core.cdlharamiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -40466,7 +40466,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMI peek: BadParam", RetCode.BadParam);
          CdlharamiStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -40748,9 +40748,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHARAMI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHARAMI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlharamiOpen (composition seam). */
    CdlharamiStream cdlharamiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -40769,9 +40769,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHARAMI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMI open: internal error", retCode);
+         throw new TALibStateException("CDLHARAMI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHARAMI stream over the warm-up history; the handle's
@@ -40820,7 +40820,7 @@ public final class Core {
       requireHistoryLength("CDLHARAMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHARAMI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHARAMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -41316,7 +41316,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHARAMICROSS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
          core.cdlharamicrossStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -41334,7 +41334,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
          CdlharamicrossStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -41610,9 +41610,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHARAMICROSS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMICROSS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHARAMICROSS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlharamicrossOpen (composition seam). */
    CdlharamicrossStream cdlharamicrossOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -41631,9 +41631,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHARAMICROSS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMICROSS open: internal error", retCode);
+         throw new TALibStateException("CDLHARAMICROSS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMICROSS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMICROSS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHARAMICROSS stream over the warm-up history; the handle's
@@ -41682,7 +41682,7 @@ public final class Core {
       requireHistoryLength("CDLHARAMICROSS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHARAMICROSS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -42143,7 +42143,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHIGHWAVE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
          core.cdlhighwaveStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -42161,7 +42161,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
          CdlhighwaveStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -42379,9 +42379,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIGHWAVE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHIGHWAVE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIGHWAVE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhighwaveOpen (composition seam). */
    CdlhighwaveStream cdlhighwaveOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -42400,9 +42400,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIGHWAVE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIGHWAVE open: internal error", retCode);
+         throw new TALibStateException("CDLHIGHWAVE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIGHWAVE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIGHWAVE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIGHWAVE stream over the warm-up history; the handle's
@@ -42451,7 +42451,7 @@ public final class Core {
       requireHistoryLength("CDLHIGHWAVE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHIGHWAVE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHIGHWAVE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -42932,7 +42932,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHIKKAKE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
          core.cdlhikkakeStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -42950,7 +42950,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
          CdlhikkakeStream sp = this;
          int cd = sp.cd;
          int cur_outInteger = 0;
@@ -43190,9 +43190,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIKKAKE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhikkakeOpen (composition seam). */
    CdlhikkakeStream cdlhikkakeOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -43211,9 +43211,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIKKAKE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKE open: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIKKAKE stream over the warm-up history; the handle's
@@ -43262,7 +43262,7 @@ public final class Core {
       requireHistoryLength("CDLHIKKAKE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHIKKAKE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHIKKAKE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -43818,7 +43818,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHIKKAKEMOD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
          core.cdlhikkakemodStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -43836,7 +43836,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
          CdlhikkakemodStream sp = this;
          int cur_outInteger = 0;
          int patternCount = sp.patternCount;
@@ -44156,9 +44156,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKEMOD openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKEMOD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhikkakemodOpen (composition seam). */
    CdlhikkakemodStream cdlhikkakemodOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -44177,9 +44177,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHIKKAKEMOD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHIKKAKEMOD open: internal error", retCode);
+         throw new TALibStateException("CDLHIKKAKEMOD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHIKKAKEMOD open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHIKKAKEMOD open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIKKAKEMOD stream over the warm-up history; the handle's
@@ -44228,7 +44228,7 @@ public final class Core {
       requireHistoryLength("CDLHIKKAKEMOD openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHIKKAKEMOD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHIKKAKEMOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -44700,7 +44700,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHOMINGPIGEON update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHOMINGPIGEON update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHOMINGPIGEON update: BadParam", RetCode.BadParam);
          core.cdlhomingpigeonStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -44718,7 +44718,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHOMINGPIGEON peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHOMINGPIGEON peek: BadParam", RetCode.BadParam);
          CdlhomingpigeonStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -44963,9 +44963,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHOMINGPIGEON openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHOMINGPIGEON openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHOMINGPIGEON openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHOMINGPIGEON openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhomingpigeonOpen (composition seam). */
    CdlhomingpigeonStream cdlhomingpigeonOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -44984,9 +44984,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLHOMINGPIGEON open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHOMINGPIGEON open: internal error", retCode);
+         throw new TALibStateException("CDLHOMINGPIGEON open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHOMINGPIGEON open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHOMINGPIGEON open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHOMINGPIGEON stream over the warm-up history; the handle's
@@ -45035,7 +45035,7 @@ public final class Core {
       requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -45551,7 +45551,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLIDENTICAL3CROWS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLIDENTICAL3CROWS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLIDENTICAL3CROWS update: BadParam", RetCode.BadParam);
          core.cdlidentical3crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -45569,7 +45569,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLIDENTICAL3CROWS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLIDENTICAL3CROWS peek: BadParam", RetCode.BadParam);
          Cdlidentical3crowsStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -45858,9 +45858,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLIDENTICAL3CROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLIDENTICAL3CROWS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLIDENTICAL3CROWS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlidentical3crowsOpen (composition seam). */
    Cdlidentical3crowsStream cdlidentical3crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -45879,9 +45879,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLIDENTICAL3CROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLIDENTICAL3CROWS open: internal error", retCode);
+         throw new TALibStateException("CDLIDENTICAL3CROWS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLIDENTICAL3CROWS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLIDENTICAL3CROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLIDENTICAL3CROWS stream over the warm-up history; the handle's
@@ -45930,7 +45930,7 @@ public final class Core {
       requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLIDENTICAL3CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLIDENTICAL3CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -46408,7 +46408,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLINNECK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINNECK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINNECK update: BadParam", RetCode.BadParam);
          core.cdlinneckStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -46426,7 +46426,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINNECK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINNECK peek: BadParam", RetCode.BadParam);
          CdlinneckStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -46670,9 +46670,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLINNECK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINNECK openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLINNECK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINNECK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINNECK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlinneckOpen (composition seam). */
    CdlinneckStream cdlinneckOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -46691,9 +46691,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLINNECK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINNECK open: internal error", retCode);
+         throw new TALibStateException("CDLINNECK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINNECK open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINNECK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLINNECK stream over the warm-up history; the handle's
@@ -46742,7 +46742,7 @@ public final class Core {
       requireHistoryLength("CDLINNECK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLINNECK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLINNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLINNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -47252,7 +47252,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLINVERTEDHAMMER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
          core.cdlinvertedhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -47270,7 +47270,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
          CdlinvertedhammerStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -47551,9 +47551,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINVERTEDHAMMER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLINVERTEDHAMMER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlinvertedhammerOpen (composition seam). */
    CdlinvertedhammerStream cdlinvertedhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -47572,9 +47572,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLINVERTEDHAMMER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINVERTEDHAMMER open: internal error", retCode);
+         throw new TALibStateException("CDLINVERTEDHAMMER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINVERTEDHAMMER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINVERTEDHAMMER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLINVERTEDHAMMER stream over the warm-up history; the handle's
@@ -47623,7 +47623,7 @@ public final class Core {
       requireHistoryLength("CDLINVERTEDHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLINVERTEDHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -48115,7 +48115,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLKICKING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
          core.cdlkickingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -48133,7 +48133,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
          CdlkickingStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -48401,9 +48401,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLKICKING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLKICKING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlkickingOpen (composition seam). */
    CdlkickingStream cdlkickingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -48422,9 +48422,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLKICKING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKING open: internal error", retCode);
+         throw new TALibStateException("CDLKICKING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLKICKING stream over the warm-up history; the handle's
@@ -48473,7 +48473,7 @@ public final class Core {
       requireHistoryLength("CDLKICKING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLKICKING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLKICKING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -48960,7 +48960,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLKICKINGBYLENGTH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKINGBYLENGTH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKINGBYLENGTH update: BadParam", RetCode.BadParam);
          core.cdlkickingbylengthStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -48978,7 +48978,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLKICKINGBYLENGTH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLKICKINGBYLENGTH peek: BadParam", RetCode.BadParam);
          CdlkickingbylengthStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -49247,9 +49247,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKINGBYLENGTH openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLKICKINGBYLENGTH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlkickingbylengthOpen (composition seam). */
    CdlkickingbylengthStream cdlkickingbylengthOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -49268,9 +49268,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLKICKINGBYLENGTH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLKICKINGBYLENGTH open: internal error", retCode);
+         throw new TALibStateException("CDLKICKINGBYLENGTH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLKICKINGBYLENGTH open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLKICKINGBYLENGTH open: " + retCode, retCode);
    }
    /**
     * Open a live CDLKICKINGBYLENGTH stream over the warm-up history; the handle's
@@ -49319,7 +49319,7 @@ public final class Core {
       requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLKICKINGBYLENGTH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -49772,7 +49772,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLLADDERBOTTOM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
          core.cdlladderbottomStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -49790,7 +49790,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
          CdlladderbottomStream sp = this;
          int cur_outInteger = 0;
          int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -50021,9 +50021,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLADDERBOTTOM openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLLADDERBOTTOM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlladderbottomOpen (composition seam). */
    CdlladderbottomStream cdlladderbottomOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -50042,9 +50042,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLADDERBOTTOM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLADDERBOTTOM open: internal error", retCode);
+         throw new TALibStateException("CDLLADDERBOTTOM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLADDERBOTTOM open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLADDERBOTTOM open: " + retCode, retCode);
    }
    /**
     * Open a live CDLLADDERBOTTOM stream over the warm-up history; the handle's
@@ -50093,7 +50093,7 @@ public final class Core {
       requireHistoryLength("CDLLADDERBOTTOM openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLLADDERBOTTOM openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLLADDERBOTTOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -50550,7 +50550,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLLONGLEGGEDDOJI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLEGGEDDOJI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLEGGEDDOJI update: BadParam", RetCode.BadParam);
          core.cdllongleggeddojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -50568,7 +50568,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLEGGEDDOJI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLEGGEDDOJI peek: BadParam", RetCode.BadParam);
          CdllongleggeddojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -50786,9 +50786,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLONGLEGGEDDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLEGGEDDOJI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLLONGLEGGEDDOJI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdllongleggeddojiOpen (composition seam). */
    CdllongleggeddojiStream cdllongleggeddojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -50807,9 +50807,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLONGLEGGEDDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLEGGEDDOJI open: internal error", retCode);
+         throw new TALibStateException("CDLLONGLEGGEDDOJI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLEGGEDDOJI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLEGGEDDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLLONGLEGGEDDOJI stream over the warm-up history; the handle's
@@ -50858,7 +50858,7 @@ public final class Core {
       requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLLONGLEGGEDDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLLONGLEGGEDDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -51306,7 +51306,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLLONGLINE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
          core.cdllonglineStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -51324,7 +51324,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
          CdllonglineStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -51541,9 +51541,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLONGLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLINE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLLONGLINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdllonglineOpen (composition seam). */
    CdllonglineStream cdllonglineOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -51562,9 +51562,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLLONGLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLLONGLINE open: internal error", retCode);
+         throw new TALibStateException("CDLLONGLINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLLONGLINE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLLONGLINE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLLONGLINE stream over the warm-up history; the handle's
@@ -51613,7 +51613,7 @@ public final class Core {
       requireHistoryLength("CDLLONGLINE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLLONGLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLLONGLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -52065,7 +52065,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMARUBOZU update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMARUBOZU update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMARUBOZU update: BadParam", RetCode.BadParam);
          core.cdlmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -52083,7 +52083,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMARUBOZU peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMARUBOZU peek: BadParam", RetCode.BadParam);
          CdlmarubozuStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -52300,9 +52300,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMARUBOZU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMARUBOZU openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMARUBOZU openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMARUBOZU openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmarubozuOpen (composition seam). */
    CdlmarubozuStream cdlmarubozuOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -52321,9 +52321,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMARUBOZU open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMARUBOZU open: internal error", retCode);
+         throw new TALibStateException("CDLMARUBOZU open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMARUBOZU open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMARUBOZU open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMARUBOZU stream over the warm-up history; the handle's
@@ -52372,7 +52372,7 @@ public final class Core {
       requireHistoryLength("CDLMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -52795,7 +52795,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMATCHINGLOW update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
          core.cdlmatchinglowStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -52813,7 +52813,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
          CdlmatchinglowStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -53005,9 +53005,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmatchinglowOpen (composition seam). */
    CdlmatchinglowStream cdlmatchinglowOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -53026,9 +53026,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMATCHINGLOW open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATCHINGLOW open: internal error", retCode);
+         throw new TALibStateException("CDLMATCHINGLOW open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMATCHINGLOW open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMATCHINGLOW open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMATCHINGLOW stream over the warm-up history; the handle's
@@ -53077,7 +53077,7 @@ public final class Core {
       requireHistoryLength("CDLMATCHINGLOW openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMATCHINGLOW openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMATCHINGLOW openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -53637,7 +53637,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMATHOLD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
          core.cdlmatholdStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -53655,7 +53655,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
          CdlmatholdStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -53974,9 +53974,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATHOLD openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMATHOLD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMATHOLD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmatholdOpen (composition seam). */
    CdlmatholdStream cdlmatholdOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -53995,9 +53995,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMATHOLD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMATHOLD open: internal error", retCode);
+         throw new TALibStateException("CDLMATHOLD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMATHOLD open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMATHOLD open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMATHOLD stream over the warm-up history; the handle's
@@ -54048,7 +54048,7 @@ public final class Core {
       requireHistoryLength("CDLMATHOLD openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMATHOLD openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMATHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMATHOLD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -54617,7 +54617,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMORNINGDOJISTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
          core.cdlmorningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -54635,7 +54635,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
          CdlmorningdojistarStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -54947,9 +54947,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGDOJISTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGDOJISTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmorningdojistarOpen (composition seam). */
    CdlmorningdojistarStream cdlmorningdojistarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -54968,9 +54968,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMORNINGDOJISTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGDOJISTAR open: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGDOJISTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGDOJISTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGDOJISTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMORNINGDOJISTAR stream over the warm-up history; the handle's
@@ -55021,7 +55021,7 @@ public final class Core {
       requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMORNINGDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -55556,7 +55556,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMORNINGSTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
          core.cdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -55574,7 +55574,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
          CdlmorningstarStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -55846,9 +55846,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmorningstarOpen (composition seam). */
    CdlmorningstarStream cdlmorningstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -55867,9 +55867,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLMORNINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGSTAR open: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGSTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGSTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMORNINGSTAR stream over the warm-up history; the handle's
@@ -55920,7 +55920,7 @@ public final class Core {
       requireHistoryLength("CDLMORNINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMORNINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -56396,7 +56396,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLONNECK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
          core.cdlonneckStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -56414,7 +56414,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
          CdlonneckStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -56658,9 +56658,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLONNECK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLONNECK openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLONNECK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlonneckOpen (composition seam). */
    CdlonneckStream cdlonneckOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -56679,9 +56679,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLONNECK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLONNECK open: internal error", retCode);
+         throw new TALibStateException("CDLONNECK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLONNECK open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLONNECK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLONNECK stream over the warm-up history; the handle's
@@ -56730,7 +56730,7 @@ public final class Core {
       requireHistoryLength("CDLONNECK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLONNECK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -57171,7 +57171,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLPIERCING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLPIERCING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLPIERCING update: BadParam", RetCode.BadParam);
          core.cdlpiercingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -57189,7 +57189,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLPIERCING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLPIERCING peek: BadParam", RetCode.BadParam);
          CdlpiercingStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -57401,9 +57401,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLPIERCING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLPIERCING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLPIERCING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLPIERCING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLPIERCING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlpiercingOpen (composition seam). */
    CdlpiercingStream cdlpiercingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -57422,9 +57422,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLPIERCING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLPIERCING open: internal error", retCode);
+         throw new TALibStateException("CDLPIERCING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLPIERCING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLPIERCING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLPIERCING stream over the warm-up history; the handle's
@@ -57473,7 +57473,7 @@ public final class Core {
       requireHistoryLength("CDLPIERCING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLPIERCING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLPIERCING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -57979,7 +57979,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLRICKSHAWMAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
          core.cdlrickshawmanStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -57997,7 +57997,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLRICKSHAWMAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLRICKSHAWMAN peek: BadParam", RetCode.BadParam);
          CdlrickshawmanStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -58276,9 +58276,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLRICKSHAWMAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRICKSHAWMAN openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLRICKSHAWMAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLRICKSHAWMAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlrickshawmanOpen (composition seam). */
    CdlrickshawmanStream cdlrickshawmanOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -58297,9 +58297,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLRICKSHAWMAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRICKSHAWMAN open: internal error", retCode);
+         throw new TALibStateException("CDLRICKSHAWMAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLRICKSHAWMAN open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLRICKSHAWMAN open: " + retCode, retCode);
    }
    /**
     * Open a live CDLRICKSHAWMAN stream over the warm-up history; the handle's
@@ -58348,7 +58348,7 @@ public final class Core {
       requireHistoryLength("CDLRICKSHAWMAN openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLRICKSHAWMAN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLRICKSHAWMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLRICKSHAWMAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -58887,7 +58887,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLRISEFALL3METHODS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLRISEFALL3METHODS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLRISEFALL3METHODS update: BadParam", RetCode.BadParam);
          core.cdlrisefall3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -58905,7 +58905,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLRISEFALL3METHODS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLRISEFALL3METHODS peek: BadParam", RetCode.BadParam);
          Cdlrisefall3methodsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -59226,9 +59226,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRISEFALL3METHODS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLRISEFALL3METHODS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlrisefall3methodsOpen (composition seam). */
    Cdlrisefall3methodsStream cdlrisefall3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -59247,9 +59247,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLRISEFALL3METHODS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLRISEFALL3METHODS open: internal error", retCode);
+         throw new TALibStateException("CDLRISEFALL3METHODS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLRISEFALL3METHODS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLRISEFALL3METHODS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLRISEFALL3METHODS stream over the warm-up history; the handle's
@@ -59298,7 +59298,7 @@ public final class Core {
       requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -59815,7 +59815,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSEPARATINGLINES update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
          core.cdlseparatinglinesStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -59833,7 +59833,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
          CdlseparatinglinesStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -60129,9 +60129,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSEPARATINGLINES openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSEPARATINGLINES openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSEPARATINGLINES openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSEPARATINGLINES openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlseparatinglinesOpen (composition seam). */
    CdlseparatinglinesStream cdlseparatinglinesOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -60150,9 +60150,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSEPARATINGLINES open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSEPARATINGLINES open: internal error", retCode);
+         throw new TALibStateException("CDLSEPARATINGLINES open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSEPARATINGLINES open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSEPARATINGLINES open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSEPARATINGLINES stream over the warm-up history; the handle's
@@ -60201,7 +60201,7 @@ public final class Core {
       requireHistoryLength("CDLSEPARATINGLINES openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSEPARATINGLINES openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSEPARATINGLINES openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -60715,7 +60715,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSHOOTINGSTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
          core.cdlshootingstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -60733,7 +60733,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
          CdlshootingstarStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -61014,9 +61014,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSHOOTINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHOOTINGSTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSHOOTINGSTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlshootingstarOpen (composition seam). */
    CdlshootingstarStream cdlshootingstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -61035,9 +61035,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSHOOTINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHOOTINGSTAR open: internal error", retCode);
+         throw new TALibStateException("CDLSHOOTINGSTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHOOTINGSTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHOOTINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSHOOTINGSTAR stream over the warm-up history; the handle's
@@ -61086,7 +61086,7 @@ public final class Core {
       requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -61533,7 +61533,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSHORTLINE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
          core.cdlshortlineStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -61551,7 +61551,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHORTLINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHORTLINE peek: BadParam", RetCode.BadParam);
          CdlshortlineStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -61769,9 +61769,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSHORTLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHORTLINE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSHORTLINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHORTLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlshortlineOpen (composition seam). */
    CdlshortlineStream cdlshortlineOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -61790,9 +61790,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSHORTLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHORTLINE open: internal error", retCode);
+         throw new TALibStateException("CDLSHORTLINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHORTLINE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHORTLINE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSHORTLINE stream over the warm-up history; the handle's
@@ -61841,7 +61841,7 @@ public final class Core {
       requireHistoryLength("CDLSHORTLINE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSHORTLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -62241,7 +62241,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSPINNINGTOP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
          core.cdlspinningtopStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -62259,7 +62259,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
          CdlspinningtopStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -62432,9 +62432,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSPINNINGTOP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSPINNINGTOP openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSPINNINGTOP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSPINNINGTOP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlspinningtopOpen (composition seam). */
    CdlspinningtopStream cdlspinningtopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -62453,9 +62453,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSPINNINGTOP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSPINNINGTOP open: internal error", retCode);
+         throw new TALibStateException("CDLSPINNINGTOP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSPINNINGTOP open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSPINNINGTOP open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSPINNINGTOP stream over the warm-up history; the handle's
@@ -62504,7 +62504,7 @@ public final class Core {
       requireHistoryLength("CDLSPINNINGTOP openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSPINNINGTOP openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSPINNINGTOP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -63110,7 +63110,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSTALLEDPATTERN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTALLEDPATTERN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTALLEDPATTERN update: BadParam", RetCode.BadParam);
          core.cdlstalledpatternStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -63128,7 +63128,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTALLEDPATTERN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTALLEDPATTERN peek: BadParam", RetCode.BadParam);
          CdlstalledpatternStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -63503,9 +63503,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSTALLEDPATTERN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTALLEDPATTERN openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSTALLEDPATTERN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTALLEDPATTERN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlstalledpatternOpen (composition seam). */
    CdlstalledpatternStream cdlstalledpatternOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -63524,9 +63524,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSTALLEDPATTERN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTALLEDPATTERN open: internal error", retCode);
+         throw new TALibStateException("CDLSTALLEDPATTERN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTALLEDPATTERN open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTALLEDPATTERN open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSTALLEDPATTERN stream over the warm-up history; the handle's
@@ -63575,7 +63575,7 @@ public final class Core {
       requireHistoryLength("CDLSTALLEDPATTERN openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSTALLEDPATTERN openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSTALLEDPATTERN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -64013,7 +64013,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSTICKSANDWICH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
          core.cdlsticksandwichStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -64031,7 +64031,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
          CdlsticksandwichStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -64240,9 +64240,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlsticksandwichOpen (composition seam). */
    CdlsticksandwichStream cdlsticksandwichOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -64261,9 +64261,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLSTICKSANDWICH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSTICKSANDWICH open: internal error", retCode);
+         throw new TALibStateException("CDLSTICKSANDWICH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSTICKSANDWICH open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSTICKSANDWICH open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
@@ -64312,7 +64312,7 @@ public final class Core {
       requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSTICKSANDWICH openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSTICKSANDWICH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -64818,7 +64818,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLTAKURI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTAKURI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTAKURI update: BadParam", RetCode.BadParam);
          core.cdltakuriStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -64836,7 +64836,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTAKURI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTAKURI peek: BadParam", RetCode.BadParam);
          CdltakuriStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -65101,9 +65101,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTAKURI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTAKURI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLTAKURI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTAKURI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTAKURI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdltakuriOpen (composition seam). */
    CdltakuriStream cdltakuriOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -65122,9 +65122,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTAKURI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTAKURI open: internal error", retCode);
+         throw new TALibStateException("CDLTAKURI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTAKURI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTAKURI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLTAKURI stream over the warm-up history; the handle's
@@ -65173,7 +65173,7 @@ public final class Core {
       requireHistoryLength("CDLTAKURI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLTAKURI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLTAKURI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLTAKURI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -65621,7 +65621,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLTASUKIGAP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTASUKIGAP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTASUKIGAP update: BadParam", RetCode.BadParam);
          core.cdltasukigapStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -65639,7 +65639,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
          CdltasukigapStream sp = this;
          int cur_outInteger = 0;
          int Near_rangeType = sp.cs_Near_rangeType;
@@ -65876,9 +65876,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTASUKIGAP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTASUKIGAP openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLTASUKIGAP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTASUKIGAP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdltasukigapOpen (composition seam). */
    CdltasukigapStream cdltasukigapOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -65897,9 +65897,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTASUKIGAP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTASUKIGAP open: internal error", retCode);
+         throw new TALibStateException("CDLTASUKIGAP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTASUKIGAP open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTASUKIGAP open: " + retCode, retCode);
    }
    /**
     * Open a live CDLTASUKIGAP stream over the warm-up history; the handle's
@@ -65948,7 +65948,7 @@ public final class Core {
       requireHistoryLength("CDLTASUKIGAP openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLTASUKIGAP openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLTASUKIGAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLTASUKIGAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -66432,7 +66432,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLTHRUSTING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTHRUSTING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTHRUSTING update: BadParam", RetCode.BadParam);
          core.cdlthrustingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -66450,7 +66450,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
          CdlthrustingStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -66696,9 +66696,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTHRUSTING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTHRUSTING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLTHRUSTING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTHRUSTING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlthrustingOpen (composition seam). */
    CdlthrustingStream cdlthrustingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -66717,9 +66717,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTHRUSTING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTHRUSTING open: internal error", retCode);
+         throw new TALibStateException("CDLTHRUSTING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTHRUSTING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTHRUSTING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLTHRUSTING stream over the warm-up history; the handle's
@@ -66768,7 +66768,7 @@ public final class Core {
       requireHistoryLength("CDLTHRUSTING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLTHRUSTING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -67219,7 +67219,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLTRISTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
          core.cdltristarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -67237,7 +67237,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
          CdltristarStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -67466,9 +67466,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTRISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTRISTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLTRISTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTRISTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdltristarOpen (composition seam). */
    CdltristarStream cdltristarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -67487,9 +67487,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLTRISTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLTRISTAR open: internal error", retCode);
+         throw new TALibStateException("CDLTRISTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLTRISTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLTRISTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLTRISTAR stream over the warm-up history; the handle's
@@ -67538,7 +67538,7 @@ public final class Core {
       requireHistoryLength("CDLTRISTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLTRISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLTRISTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -68024,7 +68024,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLUNIQUE3RIVER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
          core.cdlunique3riverStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -68042,7 +68042,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
          Cdlunique3riverStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -68306,9 +68306,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLUNIQUE3RIVER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUNIQUE3RIVER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLUNIQUE3RIVER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlunique3riverOpen (composition seam). */
    Cdlunique3riverStream cdlunique3riverOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -68327,9 +68327,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLUNIQUE3RIVER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUNIQUE3RIVER open: internal error", retCode);
+         throw new TALibStateException("CDLUNIQUE3RIVER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUNIQUE3RIVER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUNIQUE3RIVER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLUNIQUE3RIVER stream over the warm-up history; the handle's
@@ -68378,7 +68378,7 @@ public final class Core {
       requireHistoryLength("CDLUNIQUE3RIVER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLUNIQUE3RIVER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -68866,7 +68866,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLUPSIDEGAP2CROWS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
          core.cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -68884,7 +68884,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
          Cdlupsidegap2crowsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -69150,9 +69150,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlupsidegap2crowsOpen (composition seam). */
    Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -69171,9 +69171,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUPSIDEGAP2CROWS open: internal error", retCode);
+         throw new TALibStateException("CDLUPSIDEGAP2CROWS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; the handle's
@@ -69222,7 +69222,7 @@ public final class Core {
       requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -69613,7 +69613,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLXSIDEGAP3METHODS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLXSIDEGAP3METHODS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLXSIDEGAP3METHODS update: BadParam", RetCode.BadParam);
          core.cdlxsidegap3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -69631,7 +69631,7 @@ public final class Core {
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
          Cdlxsidegap3methodsStream sp = this;
          int cur_outInteger = 0;
          if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
@@ -69800,9 +69800,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLXSIDEGAP3METHODS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLXSIDEGAP3METHODS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlxsidegap3methodsOpen (composition seam). */
    Cdlxsidegap3methodsStream cdlxsidegap3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -69821,9 +69821,9 @@ public final class Core {
          throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLXSIDEGAP3METHODS open: internal error", retCode);
+         throw new TALibStateException("CDLXSIDEGAP3METHODS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLXSIDEGAP3METHODS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLXSIDEGAP3METHODS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLXSIDEGAP3METHODS stream over the warm-up history; the handle's
@@ -69872,7 +69872,7 @@ public final class Core {
       requireHistoryLength("CDLXSIDEGAP3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLXSIDEGAP3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -70141,7 +70141,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CEIL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CEIL update: BadParam", RetCode.BadParam);
          core.ceilStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -70159,7 +70159,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
          CeilStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.ceil(inReal);
@@ -70236,9 +70236,9 @@ public final class Core {
          throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL openAndFill: internal error", retCode);
+         throw new TALibStateException("CEIL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CEIL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CEIL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ceilOpen (composition seam). */
    CeilStream ceilOpenInternal( double inReal[], int startIdx )
@@ -70257,9 +70257,9 @@ public final class Core {
          throw new InsufficientHistoryException("CEIL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CEIL open: internal error", retCode);
+         throw new TALibStateException("CEIL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CEIL open: " + retCode, retCode);
+      throw new TALibArgumentException("CEIL open: " + retCode, retCode);
    }
    /**
     * Open a live CEIL stream over the warm-up history; the handle's
@@ -70296,7 +70296,7 @@ public final class Core {
       int guardOutLen = openFillCount("CEIL openAndFill", inReal.length, CEIL_Lookback());
       requireLength("CEIL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CEIL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -70863,7 +70863,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CMF update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMF update: BadParam", RetCode.BadParam);
          core.cmfStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -70881,7 +70881,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("CMF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMF peek: BadParam", RetCode.BadParam);
          CmfStream sp = this;
          double high = 0.0;
          double low = 0.0;
@@ -71132,9 +71132,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMF openAndFill: internal error", retCode);
+         throw new TALibStateException("CMF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CMF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cmfOpen (composition seam). */
    CmfStream cmfOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -71153,9 +71153,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMF open: internal error", retCode);
+         throw new TALibStateException("CMF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMF open: " + retCode, retCode);
+      throw new TALibArgumentException("CMF open: " + retCode, retCode);
    }
    /**
     * Open a live CMF stream over the warm-up history; the handle's
@@ -71206,7 +71206,7 @@ public final class Core {
       requireHistoryLength("CMF openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("CMF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("CMF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CMF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -71730,7 +71730,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CMO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMO update: BadParam", RetCode.BadParam);
          core.cmoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -71748,7 +71748,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CmoStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -72001,9 +72001,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMO openAndFill: internal error", retCode);
+         throw new TALibStateException("CMO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CMO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cmoOpen (composition seam). */
    CmoStream cmoOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -72022,9 +72022,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMO open: internal error", retCode);
+         throw new TALibStateException("CMO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMO open: " + retCode, retCode);
+      throw new TALibArgumentException("CMO open: " + retCode, retCode);
    }
    /**
     * Open a live CMO stream over the warm-up history; the handle's
@@ -72063,7 +72063,7 @@ public final class Core {
       int guardOutLen = openFillCount("CMO openAndFill", inReal.length, CMO_Lookback(optInTimePeriod));
       requireLength("CMO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CMO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -72616,7 +72616,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CMOU update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMOU update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMOU update: BadParam", RetCode.BadParam);
          core.cmouStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -72634,7 +72634,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
          CmouStream sp = this;
          double sum = 0.0;
          double diff = 0.0;
@@ -72969,9 +72969,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMOU openAndFill: internal error", retCode);
+         throw new TALibStateException("CMOU openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMOU openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CMOU openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cmouOpen (composition seam). */
    CmouStream cmouOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -72990,9 +72990,9 @@ public final class Core {
          throw new InsufficientHistoryException("CMOU open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CMOU open: internal error", retCode);
+         throw new TALibStateException("CMOU open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CMOU open: " + retCode, retCode);
+      throw new TALibArgumentException("CMOU open: " + retCode, retCode);
    }
    /**
     * Open a live CMOU stream over the warm-up history; the handle's
@@ -73031,7 +73031,7 @@ public final class Core {
       int guardOutLen = openFillCount("CMOU openAndFill", inReal.length, CMOU_Lookback(optInTimePeriod));
       requireLength("CMOU openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CMOU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CMOU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -73711,7 +73711,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COPPOCK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
          core.coppockStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -73729,7 +73729,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COPPOCK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK peek: BadParam", RetCode.BadParam);
          CoppockStream sp = this;
          int q = 0;
          int rw = 0;
@@ -74187,9 +74187,9 @@ public final class Core {
          throw new InsufficientHistoryException("COPPOCK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COPPOCK openAndFill: internal error", retCode);
+         throw new TALibStateException("COPPOCK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COPPOCK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COPPOCK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind coppockOpen (composition seam). */
    CoppockStream coppockOpenInternal( double inReal[], int startIdx, int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
@@ -74208,9 +74208,9 @@ public final class Core {
          throw new InsufficientHistoryException("COPPOCK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COPPOCK open: internal error", retCode);
+         throw new TALibStateException("COPPOCK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COPPOCK open: " + retCode, retCode);
+      throw new TALibArgumentException("COPPOCK open: " + retCode, retCode);
    }
    /**
     * Open a live COPPOCK stream over the warm-up history; the handle's
@@ -74249,7 +74249,7 @@ public final class Core {
       int guardOutLen = openFillCount("COPPOCK openAndFill", inReal.length, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       requireLength("COPPOCK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COPPOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COPPOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -74958,7 +74958,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CORREL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CORREL update: BadParam", RetCode.BadParam);
          core.correlStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -74976,7 +74976,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
          CorrelStream sp = this;
          double x = 0.0;
          double y = 0.0;
@@ -75624,9 +75624,9 @@ public final class Core {
          throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL openAndFill: internal error", retCode);
+         throw new TALibStateException("CORREL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CORREL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CORREL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind correlOpen (composition seam). */
    CorrelStream correlOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -75645,9 +75645,9 @@ public final class Core {
          throw new InsufficientHistoryException("CORREL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CORREL open: internal error", retCode);
+         throw new TALibStateException("CORREL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CORREL open: " + retCode, retCode);
+      throw new TALibArgumentException("CORREL open: " + retCode, retCode);
    }
    /**
     * Open a live CORREL stream over the warm-up history; the handle's
@@ -75690,7 +75690,7 @@ public final class Core {
       requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CORREL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -75963,7 +75963,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COS update: BadParam", RetCode.BadParam);
          core.cosStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -75981,7 +75981,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COS peek: BadParam", RetCode.BadParam);
          CosStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cos(inReal);
@@ -76058,9 +76058,9 @@ public final class Core {
          throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS openAndFill: internal error", retCode);
+         throw new TALibStateException("COS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cosOpen (composition seam). */
    CosStream cosOpenInternal( double inReal[], int startIdx )
@@ -76079,9 +76079,9 @@ public final class Core {
          throw new InsufficientHistoryException("COS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COS open: internal error", retCode);
+         throw new TALibStateException("COS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COS open: " + retCode, retCode);
+      throw new TALibArgumentException("COS open: " + retCode, retCode);
    }
    /**
     * Open a live COS stream over the warm-up history; the handle's
@@ -76118,7 +76118,7 @@ public final class Core {
       int guardOutLen = openFillCount("COS openAndFill", inReal.length, COS_Lookback());
       requireLength("COS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -76389,7 +76389,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COSH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH update: BadParam", RetCode.BadParam);
          core.coshStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -76407,7 +76407,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH peek: BadParam", RetCode.BadParam);
          CoshStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cosh(inReal);
@@ -76484,9 +76484,9 @@ public final class Core {
          throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
+         throw new TALibStateException("COSH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COSH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind coshOpen (composition seam). */
    CoshStream coshOpenInternal( double inReal[], int startIdx )
@@ -76505,9 +76505,9 @@ public final class Core {
          throw new InsufficientHistoryException("COSH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COSH open: internal error", retCode);
+         throw new TALibStateException("COSH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COSH open: " + retCode, retCode);
+      throw new TALibArgumentException("COSH open: " + retCode, retCode);
    }
    /**
     * Open a live COSH stream over the warm-up history; the handle's
@@ -76544,7 +76544,7 @@ public final class Core {
       int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
       requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -76858,7 +76858,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CUMSUM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
          core.cumsumStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -76876,7 +76876,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CUMSUM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM peek: BadParam", RetCode.BadParam);
          CumsumStream sp = this;
          double cur_outReal = 0.0;
          double total = sp.total;
@@ -76975,9 +76975,9 @@ public final class Core {
          throw new InsufficientHistoryException("CUMSUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CUMSUM openAndFill: internal error", retCode);
+         throw new TALibStateException("CUMSUM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CUMSUM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CUMSUM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cumsumOpen (composition seam). */
    CumsumStream cumsumOpenInternal( double inReal[], int startIdx )
@@ -76996,9 +76996,9 @@ public final class Core {
          throw new InsufficientHistoryException("CUMSUM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CUMSUM open: internal error", retCode);
+         throw new TALibStateException("CUMSUM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CUMSUM open: " + retCode, retCode);
+      throw new TALibArgumentException("CUMSUM open: " + retCode, retCode);
    }
    /**
     * Open a live CUMSUM stream over the warm-up history; the handle's
@@ -77035,7 +77035,7 @@ public final class Core {
       int guardOutLen = openFillCount("CUMSUM openAndFill", inReal.length, CUMSUM_Lookback());
       requireLength("CUMSUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CUMSUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CUMSUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -77554,7 +77554,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("CVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI update: BadParam", RetCode.BadParam);
          core.cviStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -77572,7 +77572,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("CVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI peek: BadParam", RetCode.BadParam);
          CviStream sp = this;
          double laggedEMA = 0.0;
          double tempReal = 0.0;
@@ -77778,9 +77778,9 @@ public final class Core {
          throw new InsufficientHistoryException("CVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CVI openAndFill: internal error", retCode);
+         throw new TALibStateException("CVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cviOpen (composition seam). */
    CviStream cviOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInROCPeriod )
@@ -77799,9 +77799,9 @@ public final class Core {
          throw new InsufficientHistoryException("CVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CVI open: internal error", retCode);
+         throw new TALibStateException("CVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CVI open: " + retCode, retCode);
+      throw new TALibArgumentException("CVI open: " + retCode, retCode);
    }
    /**
     * Open a live CVI stream over the warm-up history; the handle's
@@ -77844,7 +77844,7 @@ public final class Core {
       requireHistoryLength("CVI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("CVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("CVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -78342,7 +78342,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DEMA update: BadParam", RetCode.BadParam);
          core.demaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -78360,7 +78360,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
          DemaStream sp = this;
          double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
@@ -78584,9 +78584,9 @@ public final class Core {
          throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("DEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind demaOpen (composition seam). */
    DemaStream demaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -78605,9 +78605,9 @@ public final class Core {
          throw new InsufficientHistoryException("DEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DEMA open: internal error", retCode);
+         throw new TALibStateException("DEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("DEMA open: " + retCode, retCode);
    }
    /**
     * Open a live DEMA stream over the warm-up history; the handle's
@@ -78646,7 +78646,7 @@ public final class Core {
       int guardOutLen = openFillCount("DEMA openAndFill", inReal.length, DEMA_Lookback(optInTimePeriod));
       requireLength("DEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -78933,7 +78933,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DIV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV update: BadParam", RetCode.BadParam);
          core.divStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -78951,7 +78951,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV peek: BadParam", RetCode.BadParam);
          DivStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 / inReal1;
@@ -79031,9 +79031,9 @@ public final class Core {
          throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
+         throw new TALibStateException("DIV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DIV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind divOpen (composition seam). */
    DivStream divOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -79052,9 +79052,9 @@ public final class Core {
          throw new InsufficientHistoryException("DIV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV open: internal error", retCode);
+         throw new TALibStateException("DIV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DIV open: " + retCode, retCode);
+      throw new TALibArgumentException("DIV open: " + retCode, retCode);
    }
    /**
     * Open a live DIV stream over the warm-up history; the handle's
@@ -79095,7 +79095,7 @@ public final class Core {
       requireHistoryLength("DIV openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("DIV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -79629,7 +79629,7 @@ public final class Core {
             throw failure("DONCHIAN update", RetCode.OutOfRangeEndIndex);
          requireArgument("DONCHIAN update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
          core.donchianStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -79650,7 +79650,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, DonchianOut out ) {
          requireArgument("DONCHIAN peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
          DonchianStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -79977,9 +79977,9 @@ public final class Core {
          throw new InsufficientHistoryException("DONCHIAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DONCHIAN openAndFill: internal error", retCode);
+         throw new TALibStateException("DONCHIAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind donchianOpen (composition seam). */
    DonchianStream donchianOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -80000,9 +80000,9 @@ public final class Core {
          throw new InsufficientHistoryException("DONCHIAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DONCHIAN open: internal error", retCode);
+         throw new TALibStateException("DONCHIAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DONCHIAN open: " + retCode, retCode);
+      throw new TALibArgumentException("DONCHIAN open: " + retCode, retCode);
    }
    /**
     * Open a live DONCHIAN stream over the warm-up history; the handle's
@@ -80047,7 +80047,7 @@ public final class Core {
       requireLength("DONCHIAN openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("DONCHIAN openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -80468,7 +80468,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DPO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DPO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO update: BadParam", RetCode.BadParam);
          core.dpoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -80486,7 +80486,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DPO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO peek: BadParam", RetCode.BadParam);
          DpoStream sp = this;
          double tempReal = 0.0;
          double dispVal = 0.0;
@@ -80689,9 +80689,9 @@ public final class Core {
          throw new InsufficientHistoryException("DPO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DPO openAndFill: internal error", retCode);
+         throw new TALibStateException("DPO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DPO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DPO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind dpoOpen (composition seam). */
    DpoStream dpoOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -80710,9 +80710,9 @@ public final class Core {
          throw new InsufficientHistoryException("DPO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DPO open: internal error", retCode);
+         throw new TALibStateException("DPO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DPO open: " + retCode, retCode);
+      throw new TALibArgumentException("DPO open: " + retCode, retCode);
    }
    /**
     * Open a live DPO stream over the warm-up history; the handle's
@@ -80751,7 +80751,7 @@ public final class Core {
       int guardOutLen = openFillCount("DPO openAndFill", inReal.length, DPO_Lookback(optInTimePeriod));
       requireLength("DPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("DPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -81576,7 +81576,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DX update: BadParam", RetCode.BadParam);
          core.dxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -81594,7 +81594,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DX peek: BadParam", RetCode.BadParam);
          DxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -82100,9 +82100,9 @@ public final class Core {
          throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DX openAndFill: internal error", retCode);
+         throw new TALibStateException("DX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind dxOpen (composition seam). */
    DxStream dxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -82121,9 +82121,9 @@ public final class Core {
          throw new InsufficientHistoryException("DX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DX open: internal error", retCode);
+         throw new TALibStateException("DX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DX open: " + retCode, retCode);
+      throw new TALibArgumentException("DX open: " + retCode, retCode);
    }
    /**
     * Open a live DX stream over the warm-up history; the handle's
@@ -82170,7 +82170,7 @@ public final class Core {
       requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("DX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -82671,7 +82671,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI update: BadParam", RetCode.BadParam);
          core.efiStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -82689,7 +82689,7 @@ public final class Core {
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI peek: BadParam", RetCode.BadParam);
          EfiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -82964,9 +82964,9 @@ public final class Core {
          throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
+         throw new TALibStateException("EFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind efiOpen (composition seam). */
    EfiStream efiOpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -82985,9 +82985,9 @@ public final class Core {
          throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EFI open: internal error", retCode);
+         throw new TALibStateException("EFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EFI open: " + retCode, retCode);
+      throw new TALibArgumentException("EFI open: " + retCode, retCode);
    }
    /**
     * Open a live EFI stream over the warm-up history; the handle's
@@ -83030,7 +83030,7 @@ public final class Core {
       requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -83454,7 +83454,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EMA update: BadParam", RetCode.BadParam);
          core.emaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -83472,7 +83472,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EMA peek: BadParam", RetCode.BadParam);
          EmaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -83625,9 +83625,9 @@ public final class Core {
          throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
+         throw new TALibStateException("EMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind emaOpen (composition seam). */
    EmaStream emaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -83646,9 +83646,9 @@ public final class Core {
          throw new InsufficientHistoryException("EMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EMA open: internal error", retCode);
+         throw new TALibStateException("EMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EMA open: " + retCode, retCode);
+      throw new TALibArgumentException("EMA open: " + retCode, retCode);
    }
    /**
     * Open a live EMA stream over the warm-up history; the handle's
@@ -83687,7 +83687,7 @@ public final class Core {
       int guardOutLen = openFillCount("EMA openAndFill", inReal.length, EMA_Lookback(optInTimePeriod));
       requireLength("EMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -84231,7 +84231,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ER update: BadParam", RetCode.BadParam);
          core.erStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -84249,7 +84249,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ER peek: BadParam", RetCode.BadParam);
          ErStream sp = this;
          double periodROC = 0.0;
          double tempReal = 0.0;
@@ -84563,9 +84563,9 @@ public final class Core {
          throw new InsufficientHistoryException("ER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ER openAndFill: internal error", retCode);
+         throw new TALibStateException("ER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind erOpen (composition seam). */
    ErStream erOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -84584,9 +84584,9 @@ public final class Core {
          throw new InsufficientHistoryException("ER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ER open: internal error", retCode);
+         throw new TALibStateException("ER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ER open: " + retCode, retCode);
+      throw new TALibArgumentException("ER open: " + retCode, retCode);
    }
    /**
     * Open a live ER stream over the warm-up history; the handle's
@@ -84625,7 +84625,7 @@ public final class Core {
       int guardOutLen = openFillCount("ER openAndFill", inReal.length, ER_Lookback(optInTimePeriod));
       requireLength("ER openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -85122,7 +85122,7 @@ public final class Core {
             throw failure("ERI update", RetCode.OutOfRangeEndIndex);
          requireArgument("ERI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ERI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI update: BadParam", RetCode.BadParam);
          core.eriStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.bullPower = this.cur_outBullPower;
@@ -85142,7 +85142,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
          requireArgument("ERI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ERI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI peek: BadParam", RetCode.BadParam);
          EriStream sp = this;
          double cur_outBullPower = 0.0;
          double cur_outBearPower = 0.0;
@@ -85421,9 +85421,9 @@ public final class Core {
          throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ERI openAndFill: internal error", retCode);
+         throw new TALibStateException("ERI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ERI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ERI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind eriOpen (composition seam). */
    EriStream eriOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -85443,9 +85443,9 @@ public final class Core {
          throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ERI open: internal error", retCode);
+         throw new TALibStateException("ERI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ERI open: " + retCode, retCode);
+      throw new TALibArgumentException("ERI open: " + retCode, retCode);
    }
    /**
     * Open a live ERI stream over the warm-up history; the handle's
@@ -85493,7 +85493,7 @@ public final class Core {
       requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
       requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
       if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
-         throw new TaLibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -85762,7 +85762,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EXP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EXP update: BadParam", RetCode.BadParam);
          core.expStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -85780,7 +85780,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EXP peek: BadParam", RetCode.BadParam);
          ExpStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.exp(inReal);
@@ -85857,9 +85857,9 @@ public final class Core {
          throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP openAndFill: internal error", retCode);
+         throw new TALibStateException("EXP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EXP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EXP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind expOpen (composition seam). */
    ExpStream expOpenInternal( double inReal[], int startIdx )
@@ -85878,9 +85878,9 @@ public final class Core {
          throw new InsufficientHistoryException("EXP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP open: internal error", retCode);
+         throw new TALibStateException("EXP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EXP open: " + retCode, retCode);
+      throw new TALibArgumentException("EXP open: " + retCode, retCode);
    }
    /**
     * Open a live EXP stream over the warm-up history; the handle's
@@ -85917,7 +85917,7 @@ public final class Core {
       int guardOutLen = openFillCount("EXP openAndFill", inReal.length, EXP_Lookback());
       requireLength("EXP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -86186,7 +86186,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("FLOOR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
          core.floorStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -86204,7 +86204,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
          FloorStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.floor(inReal);
@@ -86281,9 +86281,9 @@ public final class Core {
          throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
+         throw new TALibStateException("FLOOR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FLOOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind floorOpen (composition seam). */
    FloorStream floorOpenInternal( double inReal[], int startIdx )
@@ -86302,9 +86302,9 @@ public final class Core {
          throw new InsufficientHistoryException("FLOOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR open: internal error", retCode);
+         throw new TALibStateException("FLOOR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FLOOR open: " + retCode, retCode);
+      throw new TALibArgumentException("FLOOR open: " + retCode, retCode);
    }
    /**
     * Open a live FLOOR stream over the warm-up history; the handle's
@@ -86341,7 +86341,7 @@ public final class Core {
       int guardOutLen = openFillCount("FLOOR openAndFill", inReal.length, FLOOR_Lookback());
       requireLength("FLOOR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -86874,7 +86874,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("FOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FOSC update: BadParam", RetCode.BadParam);
          core.foscStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -86892,7 +86892,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FOSC peek: BadParam", RetCode.BadParam);
          FoscStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -87188,9 +87188,9 @@ public final class Core {
          throw new InsufficientHistoryException("FOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("FOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind foscOpen (composition seam). */
    FoscStream foscOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -87209,9 +87209,9 @@ public final class Core {
          throw new InsufficientHistoryException("FOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FOSC open: internal error", retCode);
+         throw new TALibStateException("FOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("FOSC open: " + retCode, retCode);
    }
    /**
     * Open a live FOSC stream over the warm-up history; the handle's
@@ -87250,7 +87250,7 @@ public final class Core {
       int guardOutLen = openFillCount("FOSC openAndFill", inReal.length, FOSC_Lookback(optInTimePeriod));
       requireLength("FOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("FOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -87765,7 +87765,7 @@ public final class Core {
             throw failure("FRACTAL update", RetCode.OutOfRangeEndIndex);
          requireArgument("FRACTAL update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
          core.fractalStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.swingHigh = this.cur_outSwingHigh;
@@ -87785,7 +87785,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, FractalOut out ) {
          requireArgument("FRACTAL peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
          FractalStream sp = this;
          int i = 0;
          double pivotHigh = 0.0;
@@ -88068,9 +88068,9 @@ public final class Core {
          throw new InsufficientHistoryException("FRACTAL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FRACTAL openAndFill: internal error", retCode);
+         throw new TALibStateException("FRACTAL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind fractalOpen (composition seam). */
    FractalStream fractalOpenInternal( double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars )
@@ -88090,9 +88090,9 @@ public final class Core {
          throw new InsufficientHistoryException("FRACTAL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FRACTAL open: internal error", retCode);
+         throw new TALibStateException("FRACTAL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FRACTAL open: " + retCode, retCode);
+      throw new TALibArgumentException("FRACTAL open: " + retCode, retCode);
    }
    /**
     * Open a live FRACTAL stream over the warm-up history; the handle's
@@ -88136,7 +88136,7 @@ public final class Core {
       requireLength("FRACTAL openAndFill", "outSwingHigh", outSwingHigh, guardOutLen);
       requireLength("FRACTAL openAndFill", "outSwingLow", outSwingLow, guardOutLen);
       if( (Object)outSwingHigh == (Object)inHigh || (Object)outSwingHigh == (Object)inLow || (Object)outSwingLow == (Object)inHigh || (Object)outSwingLow == (Object)inLow || (Object)outSwingHigh == (Object)outSwingLow ) {
-         throw new TaLibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -88695,7 +88695,7 @@ public final class Core {
             throw failure("HA update", RetCode.OutOfRangeEndIndex);
          requireArgument("HA update", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("HA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA update: BadParam", RetCode.BadParam);
          core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.haOpen = this.cur_outHAOpen;
@@ -88717,7 +88717,7 @@ public final class Core {
       public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
          requireArgument("HA peek", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("HA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA peek: BadParam", RetCode.BadParam);
          HaStream sp = this;
          double haHigh = 0.0;
          double haLow = 0.0;
@@ -89003,9 +89003,9 @@ public final class Core {
          throw new InsufficientHistoryException("HA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HA openAndFill: internal error", retCode);
+         throw new TALibStateException("HA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind haOpen (composition seam). */
    HaStream haOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -89027,9 +89027,9 @@ public final class Core {
          throw new InsufficientHistoryException("HA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HA open: internal error", retCode);
+         throw new TALibStateException("HA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HA open: " + retCode, retCode);
+      throw new TALibArgumentException("HA open: " + retCode, retCode);
    }
    /**
     * Open a live HA stream over the warm-up history; the handle's
@@ -89081,7 +89081,7 @@ public final class Core {
       requireLength("HA openAndFill", "outHALow", outHALow, guardOutLen);
       requireLength("HA openAndFill", "outHAClose", outHAClose, guardOutLen);
       if( (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose ) {
-         throw new TaLibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -90079,7 +90079,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HMA update: BadParam", RetCode.BadParam);
          core.hmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -90097,7 +90097,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HMA peek: BadParam", RetCode.BadParam);
          HmaStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -91080,9 +91080,9 @@ public final class Core {
          throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HMA openAndFill: internal error", retCode);
+         throw new TALibStateException("HMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind hmaOpen (composition seam). */
    HmaStream hmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -91101,9 +91101,9 @@ public final class Core {
          throw new InsufficientHistoryException("HMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HMA open: internal error", retCode);
+         throw new TALibStateException("HMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HMA open: " + retCode, retCode);
+      throw new TALibArgumentException("HMA open: " + retCode, retCode);
    }
    /**
     * Open a live HMA stream over the warm-up history; the handle's
@@ -91142,7 +91142,7 @@ public final class Core {
       int guardOutLen = openFillCount("HMA openAndFill", inReal.length, HMA_Lookback(optInTimePeriod));
       requireLength("HMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -92103,7 +92103,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_DCPERIOD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
          core.htDcperiodStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -92121,7 +92121,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
          HtDcperiodStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -92894,9 +92894,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_DCPERIOD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPERIOD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htDcperiodOpen (composition seam). */
    HtDcperiodStream htDcperiodOpenInternal( double inReal[], int startIdx )
@@ -92915,9 +92915,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_DCPERIOD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPERIOD open: internal error", retCode);
+         throw new TALibStateException("HT_DCPERIOD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPERIOD open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPERIOD open: " + retCode, retCode);
    }
    /**
     * Open a live HT_DCPERIOD stream over the warm-up history; the handle's
@@ -92954,7 +92954,7 @@ public final class Core {
       int guardOutLen = openFillCount("HT_DCPERIOD openAndFill", inReal.length, HT_DCPERIOD_Lookback());
       requireLength("HT_DCPERIOD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_DCPERIOD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -94060,7 +94060,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_DCPHASE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
          core.htDcphaseStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -94078,7 +94078,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
          HtDcphaseStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -95035,9 +95035,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_DCPHASE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_DCPHASE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPHASE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htDcphaseOpen (composition seam). */
    HtDcphaseStream htDcphaseOpenInternal( double inReal[], int startIdx )
@@ -95056,9 +95056,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_DCPHASE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_DCPHASE open: internal error", retCode);
+         throw new TALibStateException("HT_DCPHASE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_DCPHASE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_DCPHASE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_DCPHASE stream over the warm-up history; the handle's
@@ -95095,7 +95095,7 @@ public final class Core {
       int guardOutLen = openFillCount("HT_DCPHASE openAndFill", inReal.length, HT_DCPHASE_Lookback());
       requireLength("HT_DCPHASE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -96082,7 +96082,7 @@ public final class Core {
             throw failure("HT_PHASOR update", RetCode.OutOfRangeEndIndex);
          requireArgument("HT_PHASOR update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
          core.htPhasorStepImpl(this, inReal);
          this.outRangeCount++;
          out.inPhase = this.cur_outInPhase;
@@ -96102,7 +96102,7 @@ public final class Core {
       public void peek( double inReal, HtPhasorOut out ) {
          requireArgument("HT_PHASOR peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
          HtPhasorStream sp = this;
          double adjustedPrevPeriod = 0.0;
          double smoothedValue = 0.0;
@@ -96849,9 +96849,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_PHASOR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htPhasorOpen (composition seam). */
    HtPhasorStream htPhasorOpenInternal( double inReal[], int startIdx )
@@ -96871,9 +96871,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_PHASOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR open: internal error", retCode);
+         throw new TALibStateException("HT_PHASOR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_PHASOR open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_PHASOR open: " + retCode, retCode);
    }
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
@@ -96911,7 +96911,7 @@ public final class Core {
       requireLength("HT_PHASOR openAndFill", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR openAndFill", "outQuadrature", outQuadrature, guardOutLen);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
-         throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -98040,7 +98040,7 @@ public final class Core {
             throw failure("HT_SINE update", RetCode.OutOfRangeEndIndex);
          requireArgument("HT_SINE update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
          core.htSineStepImpl(this, inReal);
          this.outRangeCount++;
          out.sine = this.cur_outSine;
@@ -98060,7 +98060,7 @@ public final class Core {
       public void peek( double inReal, HtSineOut out ) {
          requireArgument("HT_SINE peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
          HtSineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -99050,9 +99050,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_SINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htSineOpen (composition seam). */
    HtSineStream htSineOpenInternal( double inReal[], int startIdx )
@@ -99072,9 +99072,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_SINE open: internal error", retCode);
+         throw new TALibStateException("HT_SINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_SINE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_SINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_SINE stream over the warm-up history; the handle's
@@ -99112,7 +99112,7 @@ public final class Core {
       requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         throw new TaLibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -100163,7 +100163,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_TRENDLINE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
          core.htTrendlineStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -100181,7 +100181,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
          HtTrendlineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -101080,9 +101080,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htTrendlineOpen (composition seam). */
    HtTrendlineStream htTrendlineOpenInternal( double inReal[], int startIdx )
@@ -101101,9 +101101,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_TRENDLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE open: internal error", retCode);
+         throw new TALibStateException("HT_TRENDLINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDLINE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDLINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDLINE stream over the warm-up history; the handle's
@@ -101140,7 +101140,7 @@ public final class Core {
       int guardOutLen = openFillCount("HT_TRENDLINE openAndFill", inReal.length, HT_TRENDLINE_Lookback());
       requireLength("HT_TRENDLINE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -102410,7 +102410,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_TRENDMODE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
          core.htTrendmodeStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -102428,7 +102428,7 @@ public final class Core {
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
          HtTrendmodeStream sp = this;
          int i = 0;
          int j = 0;
@@ -103613,9 +103613,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htTrendmodeOpen (composition seam). */
    HtTrendmodeStream htTrendmodeOpenInternal( double inReal[], int startIdx )
@@ -103634,9 +103634,9 @@ public final class Core {
          throw new InsufficientHistoryException("HT_TRENDMODE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDMODE open: internal error", retCode);
+         throw new TALibStateException("HT_TRENDMODE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDMODE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDMODE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDMODE stream over the warm-up history; the handle's
@@ -103673,7 +103673,7 @@ public final class Core {
       int guardOutLen = openFillCount("HT_TRENDMODE openAndFill", inReal.length, HT_TRENDMODE_Lookback());
       requireLength("HT_TRENDMODE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_TRENDMODE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -104053,7 +104053,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("IMI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI update: BadParam", RetCode.BadParam);
          core.imiStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -104071,7 +104071,7 @@ public final class Core {
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("IMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI peek: BadParam", RetCode.BadParam);
          ImiStream sp = this;
          double upsum = 0.0;
          double downsum = 0.0;
@@ -104252,9 +104252,9 @@ public final class Core {
          throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI openAndFill: internal error", retCode);
+         throw new TALibStateException("IMI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("IMI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("IMI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind imiOpen (composition seam). */
    ImiStream imiOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
@@ -104273,9 +104273,9 @@ public final class Core {
          throw new InsufficientHistoryException("IMI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI open: internal error", retCode);
+         throw new TALibStateException("IMI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("IMI open: " + retCode, retCode);
+      throw new TALibArgumentException("IMI open: " + retCode, retCode);
    }
    /**
     * Open a live IMI stream over the warm-up history; the handle's
@@ -104318,7 +104318,7 @@ public final class Core {
       requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -105025,7 +105025,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("KAMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA update: BadParam", RetCode.BadParam);
          core.kamaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -105043,7 +105043,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
          KamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -105491,9 +105491,9 @@ public final class Core {
          throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KAMA openAndFill: internal error", retCode);
+         throw new TALibStateException("KAMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KAMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KAMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kamaOpen (composition seam). */
    KamaStream kamaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -105512,9 +105512,9 @@ public final class Core {
          throw new InsufficientHistoryException("KAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KAMA open: internal error", retCode);
+         throw new TALibStateException("KAMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KAMA open: " + retCode, retCode);
+      throw new TALibArgumentException("KAMA open: " + retCode, retCode);
    }
    /**
     * Open a live KAMA stream over the warm-up history; the handle's
@@ -105553,7 +105553,7 @@ public final class Core {
       int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
       requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -106095,7 +106095,7 @@ public final class Core {
             throw failure("KC update", RetCode.OutOfRangeEndIndex);
          requireArgument("KC update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC update: BadParam", RetCode.BadParam);
          core.kcStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -106116,7 +106116,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
          requireArgument("KC peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC peek: BadParam", RetCode.BadParam);
          KcStream sp = this;
          double middle = 0.0;
          double tempReal = 0.0;
@@ -106345,9 +106345,9 @@ public final class Core {
          throw new InsufficientHistoryException("KC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KC openAndFill: internal error", retCode);
+         throw new TALibStateException("KC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kcOpen (composition seam). */
    KcStream kcOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -106368,9 +106368,9 @@ public final class Core {
          throw new InsufficientHistoryException("KC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KC open: internal error", retCode);
+         throw new TALibStateException("KC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KC open: " + retCode, retCode);
+      throw new TALibArgumentException("KC open: " + retCode, retCode);
    }
    /**
     * Open a live KC stream over the warm-up history; the handle's
@@ -106419,7 +106419,7 @@ public final class Core {
       requireLength("KC openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("KC openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TaLibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -106952,7 +106952,7 @@ public final class Core {
             throw failure("KDJ update", RetCode.OutOfRangeEndIndex);
          requireArgument("KDJ update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KDJ update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ update: BadParam", RetCode.BadParam);
          core.kdjStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.k = this.cur_outK;
@@ -106973,7 +106973,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
          requireArgument("KDJ peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
          KdjStream sp = this;
          double cur_outK = 0.0;
          double cur_outD = 0.0;
@@ -107165,9 +107165,9 @@ public final class Core {
          throw new InsufficientHistoryException("KDJ openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KDJ openAndFill: internal error", retCode);
+         throw new TALibStateException("KDJ openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KDJ openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KDJ openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kdjOpen (composition seam). */
    KdjStream kdjOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -107188,9 +107188,9 @@ public final class Core {
          throw new InsufficientHistoryException("KDJ open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KDJ open: internal error", retCode);
+         throw new TALibStateException("KDJ open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KDJ open: " + retCode, retCode);
+      throw new TALibArgumentException("KDJ open: " + retCode, retCode);
    }
    /**
     * Open a live KDJ stream over the warm-up history; the handle's
@@ -107243,7 +107243,7 @@ public final class Core {
       requireLength("KDJ openAndFill", "outD", outD, guardOutLen);
       requireLength("KDJ openAndFill", "outJ", outJ, guardOutLen);
       if( (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ ) {
-         throw new TaLibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -107820,7 +107820,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
          core.linearregStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -107838,7 +107838,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
          LinearregStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -108303,9 +108303,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregOpen (composition seam). */
    LinearregStream linearregOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -108324,9 +108324,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG open: internal error", retCode);
+         throw new TALibStateException("LINEARREG open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG stream over the warm-up history; the handle's
@@ -108365,7 +108365,7 @@ public final class Core {
       int guardOutLen = openFillCount("LINEARREG openAndFill", inReal.length, LINEARREG_Lookback(optInTimePeriod));
       requireLength("LINEARREG openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -108941,7 +108941,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_ANGLE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
          core.linearregAngleStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -108959,7 +108959,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
          LinearregAngleStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -109417,9 +109417,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregAngleOpen (composition seam). */
    LinearregAngleStream linearregAngleOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -109438,9 +109438,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_ANGLE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_ANGLE open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_ANGLE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_ANGLE stream over the warm-up history; the handle's
@@ -109479,7 +109479,7 @@ public final class Core {
       int guardOutLen = openFillCount("LINEARREG_ANGLE openAndFill", inReal.length, LINEARREG_ANGLE_Lookback(optInTimePeriod));
       requireLength("LINEARREG_ANGLE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -110050,7 +110050,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_INTERCEPT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
          core.linearregInterceptStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -110068,7 +110068,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
          LinearregInterceptStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -110526,9 +110526,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregInterceptOpen (composition seam). */
    LinearregInterceptStream linearregInterceptOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -110547,9 +110547,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_INTERCEPT open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_INTERCEPT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_INTERCEPT open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_INTERCEPT open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_INTERCEPT stream over the warm-up history; the handle's
@@ -110588,7 +110588,7 @@ public final class Core {
       int guardOutLen = openFillCount("LINEARREG_INTERCEPT openAndFill", inReal.length, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
       requireLength("LINEARREG_INTERCEPT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -111155,7 +111155,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LINEARREG_SLOPE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
          core.linearregSlopeStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -111173,7 +111173,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
          LinearregSlopeStream sp = this;
          int windowStart = 0;
          double tempValue1 = 0.0;
@@ -111624,9 +111624,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_SLOPE openAndFill: internal error", retCode);
+         throw new TALibStateException("LINEARREG_SLOPE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_SLOPE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind linearregSlopeOpen (composition seam). */
    LinearregSlopeStream linearregSlopeOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -111645,9 +111645,9 @@ public final class Core {
          throw new InsufficientHistoryException("LINEARREG_SLOPE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LINEARREG_SLOPE open: internal error", retCode);
+         throw new TALibStateException("LINEARREG_SLOPE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LINEARREG_SLOPE open: " + retCode, retCode);
+      throw new TALibArgumentException("LINEARREG_SLOPE open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_SLOPE stream over the warm-up history; the handle's
@@ -111686,7 +111686,7 @@ public final class Core {
       int guardOutLen = openFillCount("LINEARREG_SLOPE openAndFill", inReal.length, LINEARREG_SLOPE_Lookback(optInTimePeriod));
       requireLength("LINEARREG_SLOPE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_SLOPE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -111965,7 +111965,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LN update: BadParam", RetCode.BadParam);
          core.lnStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -111983,7 +111983,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LN peek: BadParam", RetCode.BadParam);
          LnStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log(inReal);
@@ -112060,9 +112060,9 @@ public final class Core {
          throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN openAndFill: internal error", retCode);
+         throw new TALibStateException("LN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind lnOpen (composition seam). */
    LnStream lnOpenInternal( double inReal[], int startIdx )
@@ -112081,9 +112081,9 @@ public final class Core {
          throw new InsufficientHistoryException("LN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LN open: internal error", retCode);
+         throw new TALibStateException("LN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LN open: " + retCode, retCode);
+      throw new TALibArgumentException("LN open: " + retCode, retCode);
    }
    /**
     * Open a live LN stream over the warm-up history; the handle's
@@ -112120,7 +112120,7 @@ public final class Core {
       int guardOutLen = openFillCount("LN openAndFill", inReal.length, LN_Lookback());
       requireLength("LN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -112397,7 +112397,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("LOG10 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
          core.log10StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -112415,7 +112415,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
          Log10Stream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log10(inReal);
@@ -112492,9 +112492,9 @@ public final class Core {
          throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 openAndFill: internal error", retCode);
+         throw new TALibStateException("LOG10 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("LOG10 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("LOG10 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind log10Open (composition seam). */
    Log10Stream log10OpenInternal( double inReal[], int startIdx )
@@ -112513,9 +112513,9 @@ public final class Core {
          throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("LOG10 open: internal error", retCode);
+         throw new TALibStateException("LOG10 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("LOG10 open: " + retCode, retCode);
+      throw new TALibArgumentException("LOG10 open: " + retCode, retCode);
    }
    /**
     * Open a live LOG10 stream over the warm-up history; the handle's
@@ -112552,7 +112552,7 @@ public final class Core {
       int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
       requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -113226,7 +113226,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA update: BadParam", RetCode.BadParam);
          core.maStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -113244,7 +113244,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA peek: BadParam", RetCode.BadParam);
          MaStream sp = this;
          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
             return inReal;
@@ -113801,9 +113801,9 @@ public final class Core {
          throw new InsufficientHistoryException("MA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA open: internal error", retCode);
+         throw new TALibStateException("MA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA open: " + retCode, retCode);
+      throw new TALibArgumentException("MA open: " + retCode, retCode);
    }
    /**
     * Open a live MA stream over the warm-up history; the handle's
@@ -113856,9 +113856,9 @@ public final class Core {
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA openAndFill: internal error", retCode);
+         throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
    }
    /* maOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MaStream maOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -113874,9 +113874,9 @@ public final class Core {
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA openAndFill: internal error", retCode);
+         throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
    }
 /* List of contributors:
  *
@@ -114563,7 +114563,7 @@ public final class Core {
             throw failure("MACD update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACD update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACD update: BadParam", RetCode.BadParam);
          core.macdStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -114584,7 +114584,7 @@ public final class Core {
       public void peek( double inReal, MacdOut out ) {
          requireArgument("MACD peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACD peek: BadParam", RetCode.BadParam);
          MacdStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -114903,9 +114903,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACD openAndFill: internal error", retCode);
+         throw new TALibStateException("MACD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdOpen (composition seam). */
    MacdStream macdOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -114926,9 +114926,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACD open: internal error", retCode);
+         throw new TALibStateException("MACD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACD open: " + retCode, retCode);
+      throw new TALibArgumentException("MACD open: " + retCode, retCode);
    }
    /**
     * Open a live MACD stream over the warm-up history; the handle's
@@ -114969,7 +114969,7 @@ public final class Core {
       requireLength("MACD openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACD openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -115653,7 +115653,7 @@ public final class Core {
             throw failure("MACDEXT update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACDEXT update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
          core.macdextStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -115674,7 +115674,7 @@ public final class Core {
       public void peek( double inReal, MacdextOut out ) {
          requireArgument("MACDEXT peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
          MacdextStream sp = this;
          double cur_slowMABuffer = 0.0;
          double cur_fastMABuffer = 0.0;
@@ -115938,9 +115938,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDEXT openAndFill: internal error", retCode);
+         throw new TALibStateException("MACDEXT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdextOpen (composition seam). */
    MacdextStream macdextOpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -115961,9 +115961,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDEXT open: internal error", retCode);
+         throw new TALibStateException("MACDEXT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDEXT open: " + retCode, retCode);
+      throw new TALibArgumentException("MACDEXT open: " + retCode, retCode);
    }
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -116010,7 +116010,7 @@ public final class Core {
       requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACDEXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -116605,7 +116605,7 @@ public final class Core {
             throw failure("MACDFIX update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACDFIX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
          core.macdfixStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -116626,7 +116626,7 @@ public final class Core {
       public void peek( double inReal, MacdfixOut out ) {
          requireArgument("MACDFIX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
          MacdfixStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -116920,9 +116920,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDFIX openAndFill: internal error", retCode);
+         throw new TALibStateException("MACDFIX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdfixOpen (composition seam). */
    MacdfixStream macdfixOpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
@@ -116943,9 +116943,9 @@ public final class Core {
          throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDFIX open: internal error", retCode);
+         throw new TALibStateException("MACDFIX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDFIX open: " + retCode, retCode);
+      throw new TALibArgumentException("MACDFIX open: " + retCode, retCode);
    }
    /**
     * Open a live MACDFIX stream over the warm-up history; the handle's
@@ -116986,7 +116986,7 @@ public final class Core {
       requireLength("MACDFIX openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDFIX openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -118121,7 +118121,7 @@ public final class Core {
             throw failure("MAMA update", RetCode.OutOfRangeEndIndex);
          requireArgument("MAMA update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          core.mamaStepImpl(this, inReal);
          this.outRangeCount++;
          out.mama = this.cur_outMAMA;
@@ -118141,7 +118141,7 @@ public final class Core {
       public void peek( double inReal, MamaOut out ) {
          requireArgument("MAMA peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
          MamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -119011,9 +119011,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
+         throw new TALibStateException("MAMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind mamaOpen (composition seam). */
    MamaStream mamaOpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
@@ -119033,9 +119033,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAMA open: internal error", retCode);
+         throw new TALibStateException("MAMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAMA open: " + retCode, retCode);
+      throw new TALibArgumentException("MAMA open: " + retCode, retCode);
    }
    /**
     * Open a live MAMA stream over the warm-up history; the handle's
@@ -119077,7 +119077,7 @@ public final class Core {
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
       if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
-         throw new TaLibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -119425,7 +119425,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MARKETFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
          core.marketfiStepImpl(this, inHigh, inLow, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -119443,7 +119443,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
          MarketfiStream sp = this;
          double cur_outReal = 0.0;
          /* A zero-volume bar would divide by zero. Neither reference guards
@@ -119580,9 +119580,9 @@ public final class Core {
          throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
+         throw new TALibStateException("MARKETFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind marketfiOpen (composition seam). */
    MarketfiStream marketfiOpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
@@ -119601,9 +119601,9 @@ public final class Core {
          throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI open: internal error", retCode);
+         throw new TALibStateException("MARKETFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MARKETFI open: " + retCode, retCode);
+      throw new TALibArgumentException("MARKETFI open: " + retCode, retCode);
    }
    /**
     * Open a live MARKETFI stream over the warm-up history; the handle's
@@ -119648,7 +119648,7 @@ public final class Core {
       requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -120274,7 +120274,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MASSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MASSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI update: BadParam", RetCode.BadParam);
          core.massiStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -120292,7 +120292,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MASSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI peek: BadParam", RetCode.BadParam);
          MassiStream sp = this;
          double hl = 0.0;
          double ratio = 0.0;
@@ -120572,9 +120572,9 @@ public final class Core {
          throw new InsufficientHistoryException("MASSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MASSI openAndFill: internal error", retCode);
+         throw new TALibStateException("MASSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MASSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MASSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind massiOpen (composition seam). */
    MassiStream massiOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -120593,9 +120593,9 @@ public final class Core {
          throw new InsufficientHistoryException("MASSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MASSI open: internal error", retCode);
+         throw new TALibStateException("MASSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MASSI open: " + retCode, retCode);
+      throw new TALibArgumentException("MASSI open: " + retCode, retCode);
    }
    /**
     * Open a live MASSI stream over the warm-up history; the handle's
@@ -120638,7 +120638,7 @@ public final class Core {
       requireHistoryLength("MASSI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MASSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MASSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MASSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -121403,7 +121403,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAVP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP update: BadParam", RetCode.BadParam);
          core.mavpStepImpl(this, inReal, inPeriods);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -121421,7 +121421,7 @@ public final class Core {
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
          MavpStream sp = this;
          int cp = (int)inPeriods;
          if( cp < sp.optInMinPeriod ) {
@@ -121625,9 +121625,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAVP open: internal error", retCode);
+         throw new TALibStateException("MAVP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAVP open: " + retCode, retCode);
+      throw new TALibArgumentException("MAVP open: " + retCode, retCode);
    }
    /**
     * Open a live MAVP stream over the warm-up history; the handle's
@@ -121684,9 +121684,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAVP openAndFill: internal error", retCode);
+         throw new TALibStateException("MAVP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAVP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAVP openAndFill: " + retCode, retCode);
    }
 /* List of contributors:
  *
@@ -122202,7 +122202,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAX update: BadParam", RetCode.BadParam);
          core.maxStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -122220,7 +122220,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAX peek: BadParam", RetCode.BadParam);
          MaxStream sp = this;
          double tmp = 0.0;
          double cur_outReal = 0.0;
@@ -122429,9 +122429,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAX openAndFill: internal error", retCode);
+         throw new TALibStateException("MAX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind maxOpen (composition seam). */
    MaxStream maxOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -122450,9 +122450,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAX open: internal error", retCode);
+         throw new TALibStateException("MAX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAX open: " + retCode, retCode);
+      throw new TALibArgumentException("MAX open: " + retCode, retCode);
    }
    /**
     * Open a live MAX stream over the warm-up history; the handle's
@@ -122491,7 +122491,7 @@ public final class Core {
       int guardOutLen = openFillCount("MAX openAndFill", inReal.length, MAX_Lookback(optInTimePeriod));
       requireLength("MAX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -122911,7 +122911,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAXINDEX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
          core.maxindexStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -122929,7 +122929,7 @@ public final class Core {
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
          MaxindexStream sp = this;
          double tmp = 0.0;
          int cur_outInteger = 0;
@@ -123128,9 +123128,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MAXINDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind maxindexOpen (composition seam). */
    MaxindexStream maxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -123149,9 +123149,9 @@ public final class Core {
          throw new InsufficientHistoryException("MAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX open: internal error", retCode);
+         throw new TALibStateException("MAXINDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAXINDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MAXINDEX stream over the warm-up history; the handle's
@@ -123190,7 +123190,7 @@ public final class Core {
       int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, MAXINDEX_Lookback(optInTimePeriod));
       requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -123485,7 +123485,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MEDPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
          core.medpriceStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -123503,7 +123503,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
          MedpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow) / 2.0;
@@ -123590,9 +123590,9 @@ public final class Core {
          throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("MEDPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MEDPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind medpriceOpen (composition seam). */
    MedpriceStream medpriceOpenInternal( double inHigh[], double inLow[], int startIdx )
@@ -123611,9 +123611,9 @@ public final class Core {
          throw new InsufficientHistoryException("MEDPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MEDPRICE open: internal error", retCode);
+         throw new TALibStateException("MEDPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MEDPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("MEDPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live MEDPRICE stream over the warm-up history; the handle's
@@ -123654,7 +123654,7 @@ public final class Core {
       requireHistoryLength("MEDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MEDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MEDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -124273,7 +124273,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI update: BadParam", RetCode.BadParam);
          core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -124291,7 +124291,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI peek: BadParam", RetCode.BadParam);
          MfiStream sp = this;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
@@ -124622,9 +124622,9 @@ public final class Core {
          throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MFI openAndFill: internal error", retCode);
+         throw new TALibStateException("MFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind mfiOpen (composition seam). */
    MfiStream mfiOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -124643,9 +124643,9 @@ public final class Core {
          throw new InsufficientHistoryException("MFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MFI open: internal error", retCode);
+         throw new TALibStateException("MFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MFI open: " + retCode, retCode);
+      throw new TALibArgumentException("MFI open: " + retCode, retCode);
    }
    /**
     * Open a live MFI stream over the warm-up history; the handle's
@@ -124696,7 +124696,7 @@ public final class Core {
       requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -125295,7 +125295,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIDPOINT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
          core.midpointStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -125313,7 +125313,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
          MidpointStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -125595,9 +125595,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPOINT openAndFill: internal error", retCode);
+         throw new TALibStateException("MIDPOINT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind midpointOpen (composition seam). */
    MidpointStream midpointOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -125616,9 +125616,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIDPOINT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPOINT open: internal error", retCode);
+         throw new TALibStateException("MIDPOINT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPOINT open: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPOINT open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPOINT stream over the warm-up history; the handle's
@@ -125657,7 +125657,7 @@ public final class Core {
       int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
       requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -126274,7 +126274,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIDPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
          core.midpriceStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -126292,7 +126292,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
          MidpriceStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -126583,9 +126583,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("MIDPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind midpriceOpen (composition seam). */
    MidpriceStream midpriceOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -126604,9 +126604,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIDPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPRICE open: internal error", retCode);
+         throw new TALibStateException("MIDPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPRICE stream over the warm-up history; the handle's
@@ -126649,7 +126649,7 @@ public final class Core {
       requireHistoryLength("MIDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MIDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIDPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -127166,7 +127166,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIN update: BadParam", RetCode.BadParam);
          core.minStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -127184,7 +127184,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIN peek: BadParam", RetCode.BadParam);
          MinStream sp = this;
          double tmp = 0.0;
          double cur_outReal = 0.0;
@@ -127391,9 +127391,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIN openAndFill: internal error", retCode);
+         throw new TALibStateException("MIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minOpen (composition seam). */
    MinStream minOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -127412,9 +127412,9 @@ public final class Core {
          throw new InsufficientHistoryException("MIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIN open: internal error", retCode);
+         throw new TALibStateException("MIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIN open: " + retCode, retCode);
+      throw new TALibArgumentException("MIN open: " + retCode, retCode);
    }
    /**
     * Open a live MIN stream over the warm-up history; the handle's
@@ -127453,7 +127453,7 @@ public final class Core {
       int guardOutLen = openFillCount("MIN openAndFill", inReal.length, MIN_Lookback(optInTimePeriod));
       requireLength("MIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -127873,7 +127873,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MININDEX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
          core.minindexStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -127891,7 +127891,7 @@ public final class Core {
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
          MinindexStream sp = this;
          double tmp = 0.0;
          int cur_outInteger = 0;
@@ -128090,9 +128090,9 @@ public final class Core {
          throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MININDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MININDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MININDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minindexOpen (composition seam). */
    MinindexStream minindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -128111,9 +128111,9 @@ public final class Core {
          throw new InsufficientHistoryException("MININDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MININDEX open: internal error", retCode);
+         throw new TALibStateException("MININDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MININDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MININDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MININDEX stream over the warm-up history; the handle's
@@ -128152,7 +128152,7 @@ public final class Core {
       int guardOutLen = openFillCount("MININDEX openAndFill", inReal.length, MININDEX_Lookback(optInTimePeriod));
       requireLength("MININDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MININDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -128770,7 +128770,7 @@ public final class Core {
             throw failure("MINMAX update", RetCode.OutOfRangeEndIndex);
          requireArgument("MINMAX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
          core.minmaxStepImpl(this, inReal);
          this.outRangeCount++;
          out.min = this.cur_outMin;
@@ -128790,7 +128790,7 @@ public final class Core {
       public void peek( double inReal, MinmaxOut out ) {
          requireArgument("MINMAX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
          MinmaxStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
@@ -129096,9 +129096,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINMAX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAX openAndFill: internal error", retCode);
+         throw new TALibStateException("MINMAX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minmaxOpen (composition seam). */
    MinmaxStream minmaxOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -129118,9 +129118,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINMAX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAX open: internal error", retCode);
+         throw new TALibStateException("MINMAX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAX open: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAX open: " + retCode, retCode);
    }
    /**
     * Open a live MINMAX stream over the warm-up history; the handle's
@@ -129160,7 +129160,7 @@ public final class Core {
       requireLength("MINMAX openAndFill", "outMin", outMin, guardOutLen);
       requireLength("MINMAX openAndFill", "outMax", outMax, guardOutLen);
       if( (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax ) {
-         throw new TaLibArgumentException("MINMAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINMAX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -129646,7 +129646,7 @@ public final class Core {
             throw failure("MINMAXINDEX update", RetCode.OutOfRangeEndIndex);
          requireArgument("MINMAXINDEX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
          core.minmaxindexStepImpl(this, inReal);
          this.outRangeCount++;
          out.minIdx = this.cur_outMinIdx;
@@ -129666,7 +129666,7 @@ public final class Core {
       public void peek( double inReal, MinmaxindexOut out ) {
          requireArgument("MINMAXINDEX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MinmaxindexStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
@@ -129955,9 +129955,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MINMAXINDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minmaxindexOpen (composition seam). */
    MinmaxindexStream minmaxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -129977,9 +129977,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX open: internal error", retCode);
+         throw new TALibStateException("MINMAXINDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAXINDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MINMAXINDEX stream over the warm-up history; the handle's
@@ -130019,7 +130019,7 @@ public final class Core {
       requireLength("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx, guardOutLen);
       requireLength("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx, guardOutLen);
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
-         throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -130861,7 +130861,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MINUS_DI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
          core.minusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -130879,7 +130879,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
          MinusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -131568,9 +131568,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
+         throw new TALibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minusDiOpen (composition seam). */
    MinusDiStream minusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -131589,9 +131589,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DI open: internal error", retCode);
+         throw new TALibStateException("MINUS_DI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DI open: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -131638,7 +131638,7 @@ public final class Core {
       requireHistoryLength("MINUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("MINUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -132249,7 +132249,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MINUS_DM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
          core.minusDmStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -132267,7 +132267,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
          MinusDmStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -132717,9 +132717,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM openAndFill: internal error", retCode);
+         throw new TALibStateException("MINUS_DM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minusDmOpen (composition seam). */
    MinusDmStream minusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -132738,9 +132738,9 @@ public final class Core {
          throw new InsufficientHistoryException("MINUS_DM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINUS_DM open: internal error", retCode);
+         throw new TALibStateException("MINUS_DM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINUS_DM open: " + retCode, retCode);
+      throw new TALibArgumentException("MINUS_DM open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DM stream over the warm-up history; the handle's
@@ -132783,7 +132783,7 @@ public final class Core {
       requireHistoryLength("MINUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MINUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -133159,7 +133159,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MOM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MOM update: BadParam", RetCode.BadParam);
          core.momStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -133177,7 +133177,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MOM peek: BadParam", RetCode.BadParam);
          MomStream sp = this;
          double cur_outReal = 0.0;
          int pkSlot0 = -1;
@@ -133336,9 +133336,9 @@ public final class Core {
          throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MOM openAndFill: internal error", retCode);
+         throw new TALibStateException("MOM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MOM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind momOpen (composition seam). */
    MomStream momOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -133357,9 +133357,9 @@ public final class Core {
          throw new InsufficientHistoryException("MOM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MOM open: internal error", retCode);
+         throw new TALibStateException("MOM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MOM open: " + retCode, retCode);
+      throw new TALibArgumentException("MOM open: " + retCode, retCode);
    }
    /**
     * Open a live MOM stream over the warm-up history; the handle's
@@ -133398,7 +133398,7 @@ public final class Core {
       int guardOutLen = openFillCount("MOM openAndFill", inReal.length, MOM_Lookback(optInTimePeriod));
       requireLength("MOM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MOM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -133685,7 +133685,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MULT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MULT update: BadParam", RetCode.BadParam);
          core.multStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -133703,7 +133703,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MULT peek: BadParam", RetCode.BadParam);
          MultStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 * inReal1;
@@ -133787,9 +133787,9 @@ public final class Core {
          throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
+         throw new TALibStateException("MULT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MULT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind multOpen (composition seam). */
    MultStream multOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -133808,9 +133808,9 @@ public final class Core {
          throw new InsufficientHistoryException("MULT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT open: internal error", retCode);
+         throw new TALibStateException("MULT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MULT open: " + retCode, retCode);
+      throw new TALibArgumentException("MULT open: " + retCode, retCode);
    }
    /**
     * Open a live MULT stream over the warm-up history; the handle's
@@ -133851,7 +133851,7 @@ public final class Core {
       requireHistoryLength("MULT openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("MULT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -134480,7 +134480,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("NATR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NATR update: BadParam", RetCode.BadParam);
          core.natrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -134498,7 +134498,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NATR peek: BadParam", RetCode.BadParam);
          NatrStream sp = this;
          double tempValue = 0.0;
          double val2 = 0.0;
@@ -134831,9 +134831,9 @@ public final class Core {
          throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NATR openAndFill: internal error", retCode);
+         throw new TALibStateException("NATR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("NATR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("NATR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind natrOpen (composition seam). */
    NatrStream natrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -134852,9 +134852,9 @@ public final class Core {
          throw new InsufficientHistoryException("NATR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NATR open: internal error", retCode);
+         throw new TALibStateException("NATR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("NATR open: " + retCode, retCode);
+      throw new TALibArgumentException("NATR open: " + retCode, retCode);
    }
    /**
     * Open a live NATR stream over the warm-up history; the handle's
@@ -134901,7 +134901,7 @@ public final class Core {
       requireHistoryLength("NATR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("NATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -135257,7 +135257,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("NVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NVI update: BadParam", RetCode.BadParam);
          core.nviStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -135275,7 +135275,7 @@ public final class Core {
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NVI peek: BadParam", RetCode.BadParam);
          NviStream sp = this;
          double tempClose = 0.0;
          double tempVolume = 0.0;
@@ -135454,9 +135454,9 @@ public final class Core {
          throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
+         throw new TALibStateException("NVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("NVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind nviOpen (composition seam). */
    NviStream nviOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -135475,9 +135475,9 @@ public final class Core {
          throw new InsufficientHistoryException("NVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NVI open: internal error", retCode);
+         throw new TALibStateException("NVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("NVI open: " + retCode, retCode);
+      throw new TALibArgumentException("NVI open: " + retCode, retCode);
    }
    /**
     * Open a live NVI stream over the warm-up history; the handle's
@@ -135518,7 +135518,7 @@ public final class Core {
       requireHistoryLength("NVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("NVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("NVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -135828,7 +135828,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("OBV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV update: BadParam", RetCode.BadParam);
          core.obvStepImpl(this, inReal, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -135846,7 +135846,7 @@ public final class Core {
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV peek: BadParam", RetCode.BadParam);
          ObvStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -135957,9 +135957,9 @@ public final class Core {
          throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
+         throw new TALibStateException("OBV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("OBV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind obvOpen (composition seam). */
    ObvStream obvOpenInternal( double inReal[], double inVolume[], int startIdx )
@@ -135978,9 +135978,9 @@ public final class Core {
          throw new InsufficientHistoryException("OBV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("OBV open: internal error", retCode);
+         throw new TALibStateException("OBV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("OBV open: " + retCode, retCode);
+      throw new TALibArgumentException("OBV open: " + retCode, retCode);
    }
    /**
     * Open a live OBV stream over the warm-up history; the handle's
@@ -136021,7 +136021,7 @@ public final class Core {
       requireHistoryLength("OBV openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("OBV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -136582,7 +136582,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PERCENTILE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTILE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTILE update: BadParam", RetCode.BadParam);
          core.percentileStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -136600,7 +136600,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTILE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTILE peek: BadParam", RetCode.BadParam);
          PercentileStream sp = this;
          double newValue = 0.0;
          double result = 0.0;
@@ -136867,9 +136867,9 @@ public final class Core {
          throw new InsufficientHistoryException("PERCENTILE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTILE openAndFill: internal error", retCode);
+         throw new TALibStateException("PERCENTILE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTILE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTILE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind percentileOpen (composition seam). */
    PercentileStream percentileOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInPercentile )
@@ -136888,9 +136888,9 @@ public final class Core {
          throw new InsufficientHistoryException("PERCENTILE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTILE open: internal error", retCode);
+         throw new TALibStateException("PERCENTILE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTILE open: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTILE open: " + retCode, retCode);
    }
    /**
     * Open a live PERCENTILE stream over the warm-up history; the handle's
@@ -136929,7 +136929,7 @@ public final class Core {
       int guardOutLen = openFillCount("PERCENTILE openAndFill", inReal.length, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
       requireLength("PERCENTILE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PERCENTILE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PERCENTILE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -137325,7 +137325,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PERCENTRANK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTRANK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTRANK update: BadParam", RetCode.BadParam);
          core.percentrankStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -137343,7 +137343,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PERCENTRANK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PERCENTRANK peek: BadParam", RetCode.BadParam);
          PercentrankStream sp = this;
          int i = 0;
          int count = 0;
@@ -137498,9 +137498,9 @@ public final class Core {
          throw new InsufficientHistoryException("PERCENTRANK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTRANK openAndFill: internal error", retCode);
+         throw new TALibStateException("PERCENTRANK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTRANK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTRANK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind percentrankOpen (composition seam). */
    PercentrankStream percentrankOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -137519,9 +137519,9 @@ public final class Core {
          throw new InsufficientHistoryException("PERCENTRANK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PERCENTRANK open: internal error", retCode);
+         throw new TALibStateException("PERCENTRANK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PERCENTRANK open: " + retCode, retCode);
+      throw new TALibArgumentException("PERCENTRANK open: " + retCode, retCode);
    }
    /**
     * Open a live PERCENTRANK stream over the warm-up history; the handle's
@@ -137560,7 +137560,7 @@ public final class Core {
       int guardOutLen = openFillCount("PERCENTRANK openAndFill", inReal.length, PERCENTRANK_Lookback(optInTimePeriod));
       requireLength("PERCENTRANK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PERCENTRANK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PERCENTRANK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -138402,7 +138402,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PLUS_DI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
          core.plusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -138420,7 +138420,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
          PlusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -139109,9 +139109,9 @@ public final class Core {
          throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DI openAndFill: internal error", retCode);
+         throw new TALibStateException("PLUS_DI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind plusDiOpen (composition seam). */
    PlusDiStream plusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -139130,9 +139130,9 @@ public final class Core {
          throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DI open: internal error", retCode);
+         throw new TALibStateException("PLUS_DI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DI open: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live PLUS_DI stream over the warm-up history; the handle's
@@ -139179,7 +139179,7 @@ public final class Core {
       requireHistoryLength("PLUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("PLUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -139792,7 +139792,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PLUS_DM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
          core.plusDmStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -139810,7 +139810,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
          PlusDmStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -140260,9 +140260,9 @@ public final class Core {
          throw new InsufficientHistoryException("PLUS_DM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DM openAndFill: internal error", retCode);
+         throw new TALibStateException("PLUS_DM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind plusDmOpen (composition seam). */
    PlusDmStream plusDmOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -140281,9 +140281,9 @@ public final class Core {
          throw new InsufficientHistoryException("PLUS_DM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PLUS_DM open: internal error", retCode);
+         throw new TALibStateException("PLUS_DM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PLUS_DM open: " + retCode, retCode);
+      throw new TALibArgumentException("PLUS_DM open: " + retCode, retCode);
    }
    /**
     * Open a live PLUS_DM stream over the warm-up history; the handle's
@@ -140326,7 +140326,7 @@ public final class Core {
       requireHistoryLength("PLUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("PLUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PLUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -140790,7 +140790,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PPO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PPO update: BadParam", RetCode.BadParam);
          core.ppoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -140808,7 +140808,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("PPO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PPO peek: BadParam", RetCode.BadParam);
          PpoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -140987,9 +140987,9 @@ public final class Core {
          throw new InsufficientHistoryException("PPO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PPO openAndFill: internal error", retCode);
+         throw new TALibStateException("PPO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PPO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PPO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ppoOpen (composition seam). */
    PpoStream ppoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -141008,9 +141008,9 @@ public final class Core {
          throw new InsufficientHistoryException("PPO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PPO open: internal error", retCode);
+         throw new TALibStateException("PPO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PPO open: " + retCode, retCode);
+      throw new TALibArgumentException("PPO open: " + retCode, retCode);
    }
    /**
     * Open a live PPO stream over the warm-up history; the handle's
@@ -141051,7 +141051,7 @@ public final class Core {
       int guardOutLen = openFillCount("PPO openAndFill", inReal.length, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -141407,7 +141407,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI update: BadParam", RetCode.BadParam);
          core.pviStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -141425,7 +141425,7 @@ public final class Core {
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI peek: BadParam", RetCode.BadParam);
          PviStream sp = this;
          double tempClose = 0.0;
          double tempVolume = 0.0;
@@ -141604,9 +141604,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
+         throw new TALibStateException("PVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pviOpen (composition seam). */
    PviStream pviOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -141625,9 +141625,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI open: internal error", retCode);
+         throw new TALibStateException("PVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVI open: " + retCode, retCode);
+      throw new TALibArgumentException("PVI open: " + retCode, retCode);
    }
    /**
     * Open a live PVI stream over the warm-up history; the handle's
@@ -141668,7 +141668,7 @@ public final class Core {
       requireHistoryLength("PVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -142130,7 +142130,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO update: BadParam", RetCode.BadParam);
          core.pvoStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -142148,7 +142148,7 @@ public final class Core {
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO peek: BadParam", RetCode.BadParam);
          PvoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -142327,9 +142327,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVO openAndFill: internal error", retCode);
+         throw new TALibStateException("PVO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pvoOpen (composition seam). */
    PvoStream pvoOpenInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -142348,9 +142348,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVO open: internal error", retCode);
+         throw new TALibStateException("PVO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVO open: " + retCode, retCode);
+      throw new TALibArgumentException("PVO open: " + retCode, retCode);
    }
    /**
     * Open a live PVO stream over the warm-up history; the handle's
@@ -142391,7 +142391,7 @@ public final class Core {
       int guardOutLen = openFillCount("PVO openAndFill", inVolume.length, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PVO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -142734,7 +142734,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT update: BadParam", RetCode.BadParam);
          core.pvtStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -142752,7 +142752,7 @@ public final class Core {
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT peek: BadParam", RetCode.BadParam);
          PvtStream sp = this;
          double tempClose = 0.0;
          double cur_outReal = 0.0;
@@ -142869,9 +142869,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVT openAndFill: internal error", retCode);
+         throw new TALibStateException("PVT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pvtOpen (composition seam). */
    PvtStream pvtOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -142890,9 +142890,9 @@ public final class Core {
          throw new InsufficientHistoryException("PVT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVT open: internal error", retCode);
+         throw new TALibStateException("PVT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVT open: " + retCode, retCode);
+      throw new TALibArgumentException("PVT open: " + retCode, retCode);
    }
    /**
     * Open a live PVT stream over the warm-up history; the handle's
@@ -142933,7 +142933,7 @@ public final class Core {
       requireHistoryLength("PVT openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -143353,7 +143353,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("QSTICK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
          core.qstickStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -143371,7 +143371,7 @@ public final class Core {
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
          QstickStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -143554,9 +143554,9 @@ public final class Core {
          throw new InsufficientHistoryException("QSTICK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("QSTICK openAndFill: internal error", retCode);
+         throw new TALibStateException("QSTICK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("QSTICK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("QSTICK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind qstickOpen (composition seam). */
    QstickStream qstickOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
@@ -143575,9 +143575,9 @@ public final class Core {
          throw new InsufficientHistoryException("QSTICK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("QSTICK open: internal error", retCode);
+         throw new TALibStateException("QSTICK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("QSTICK open: " + retCode, retCode);
+      throw new TALibArgumentException("QSTICK open: " + retCode, retCode);
    }
    /**
     * Open a live QSTICK stream over the warm-up history; the handle's
@@ -143620,7 +143620,7 @@ public final class Core {
       requireHistoryLength("QSTICK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("QSTICK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("QSTICK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -144084,7 +144084,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RMA update: BadParam", RetCode.BadParam);
          core.rmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -144102,7 +144102,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RMA peek: BadParam", RetCode.BadParam);
          RmaStream sp = this;
          double cur_outReal = 0.0;
          double prevRMA = sp.prevRMA;
@@ -144251,9 +144251,9 @@ public final class Core {
          throw new InsufficientHistoryException("RMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RMA openAndFill: internal error", retCode);
+         throw new TALibStateException("RMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rmaOpen (composition seam). */
    RmaStream rmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -144272,9 +144272,9 @@ public final class Core {
          throw new InsufficientHistoryException("RMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RMA open: internal error", retCode);
+         throw new TALibStateException("RMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RMA open: " + retCode, retCode);
+      throw new TALibArgumentException("RMA open: " + retCode, retCode);
    }
    /**
     * Open a live RMA stream over the warm-up history; the handle's
@@ -144313,7 +144313,7 @@ public final class Core {
       int guardOutLen = openFillCount("RMA openAndFill", inReal.length, RMA_Lookback(optInTimePeriod));
       requireLength("RMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -144702,7 +144702,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ROC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROC update: BadParam", RetCode.BadParam);
          core.rocStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -144720,7 +144720,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROC peek: BadParam", RetCode.BadParam);
          RocStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -144895,9 +144895,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROC openAndFill: internal error", retCode);
+         throw new TALibStateException("ROC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ROC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rocOpen (composition seam). */
    RocStream rocOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -144916,9 +144916,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROC open: internal error", retCode);
+         throw new TALibStateException("ROC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROC open: " + retCode, retCode);
+      throw new TALibArgumentException("ROC open: " + retCode, retCode);
    }
    /**
     * Open a live ROC stream over the warm-up history; the handle's
@@ -144957,7 +144957,7 @@ public final class Core {
       int guardOutLen = openFillCount("ROC openAndFill", inReal.length, ROC_Lookback(optInTimePeriod));
       requireLength("ROC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ROC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ROC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -145344,7 +145344,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ROCP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCP update: BadParam", RetCode.BadParam);
          core.rocpStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -145362,7 +145362,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
          RocpStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -145537,9 +145537,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCP openAndFill: internal error", retCode);
+         throw new TALibStateException("ROCP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ROCP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rocpOpen (composition seam). */
    RocpStream rocpOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -145558,9 +145558,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCP open: internal error", retCode);
+         throw new TALibStateException("ROCP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCP open: " + retCode, retCode);
+      throw new TALibArgumentException("ROCP open: " + retCode, retCode);
    }
    /**
     * Open a live ROCP stream over the warm-up history; the handle's
@@ -145599,7 +145599,7 @@ public final class Core {
       int guardOutLen = openFillCount("ROCP openAndFill", inReal.length, ROCP_Lookback(optInTimePeriod));
       requireLength("ROCP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ROCP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ROCP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -145989,7 +145989,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ROCR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR update: BadParam", RetCode.BadParam);
          core.rocrStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -146007,7 +146007,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
          RocrStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -146182,9 +146182,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR openAndFill: internal error", retCode);
+         throw new TALibStateException("ROCR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rocrOpen (composition seam). */
    RocrStream rocrOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -146203,9 +146203,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR open: internal error", retCode);
+         throw new TALibStateException("ROCR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR open: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR open: " + retCode, retCode);
    }
    /**
     * Open a live ROCR stream over the warm-up history; the handle's
@@ -146244,7 +146244,7 @@ public final class Core {
       int guardOutLen = openFillCount("ROCR openAndFill", inReal.length, ROCR_Lookback(optInTimePeriod));
       requireLength("ROCR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ROCR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ROCR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -146636,7 +146636,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ROCR100 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
          core.rocr100StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -146654,7 +146654,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
          Rocr100Stream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -146829,9 +146829,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCR100 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR100 openAndFill: internal error", retCode);
+         throw new TALibStateException("ROCR100 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR100 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rocr100Open (composition seam). */
    Rocr100Stream rocr100OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -146850,9 +146850,9 @@ public final class Core {
          throw new InsufficientHistoryException("ROCR100 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ROCR100 open: internal error", retCode);
+         throw new TALibStateException("ROCR100 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ROCR100 open: " + retCode, retCode);
+      throw new TALibArgumentException("ROCR100 open: " + retCode, retCode);
    }
    /**
     * Open a live ROCR100 stream over the warm-up history; the handle's
@@ -146891,7 +146891,7 @@ public final class Core {
       int guardOutLen = openFillCount("ROCR100 openAndFill", inReal.length, ROCR100_Lookback(optInTimePeriod));
       requireLength("ROCR100 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ROCR100 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -147435,7 +147435,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI update: BadParam", RetCode.BadParam);
          core.rsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -147453,7 +147453,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI peek: BadParam", RetCode.BadParam);
          RsiStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -147726,9 +147726,9 @@ public final class Core {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
+         throw new TALibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rsiOpen (composition seam). */
    RsiStream rsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -147747,9 +147747,9 @@ public final class Core {
          throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RSI open: internal error", retCode);
+         throw new TALibStateException("RSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RSI open: " + retCode, retCode);
+      throw new TALibArgumentException("RSI open: " + retCode, retCode);
    }
    /**
     * Open a live RSI stream over the warm-up history; the handle's
@@ -147788,7 +147788,7 @@ public final class Core {
       int guardOutLen = openFillCount("RSI openAndFill", inReal.length, RSI_Lookback(optInTimePeriod));
       requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -148638,7 +148638,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI update: BadParam", RetCode.BadParam);
          core.rviStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -148656,7 +148656,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("RVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI peek: BadParam", RetCode.BadParam);
          RviStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -149139,9 +149139,9 @@ public final class Core {
          throw new InsufficientHistoryException("RVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVI openAndFill: internal error", retCode);
+         throw new TALibStateException("RVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rviOpen (composition seam). */
    RviStream rviOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
@@ -149160,9 +149160,9 @@ public final class Core {
          throw new InsufficientHistoryException("RVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVI open: internal error", retCode);
+         throw new TALibStateException("RVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVI open: " + retCode, retCode);
+      throw new TALibArgumentException("RVI open: " + retCode, retCode);
    }
    /**
     * Open a live RVI stream over the warm-up history; the handle's
@@ -149201,7 +149201,7 @@ public final class Core {
       int guardOutLen = openFillCount("RVI openAndFill", inReal.length, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
       requireLength("RVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -149605,7 +149605,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("RVOL update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("RVOL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL update: BadParam", RetCode.BadParam);
          core.rvolStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -149623,7 +149623,7 @@ public final class Core {
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("RVOL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL peek: BadParam", RetCode.BadParam);
          RvolStream sp = this;
          double baseline = 0.0;
          double todayVolume = 0.0;
@@ -149791,9 +149791,9 @@ public final class Core {
          throw new InsufficientHistoryException("RVOL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVOL openAndFill: internal error", retCode);
+         throw new TALibStateException("RVOL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVOL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RVOL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rvolOpen (composition seam). */
    RvolStream rvolOpenInternal( double inVolume[], int startIdx, int optInTimePeriod )
@@ -149812,9 +149812,9 @@ public final class Core {
          throw new InsufficientHistoryException("RVOL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVOL open: internal error", retCode);
+         throw new TALibStateException("RVOL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVOL open: " + retCode, retCode);
+      throw new TALibArgumentException("RVOL open: " + retCode, retCode);
    }
    /**
     * Open a live RVOL stream over the warm-up history; the handle's
@@ -149853,7 +149853,7 @@ public final class Core {
       int guardOutLen = openFillCount("RVOL openAndFill", inVolume.length, RVOL_Lookback(optInTimePeriod));
       requireLength("RVOL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("RVOL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVOL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -150556,7 +150556,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAR update: BadParam", RetCode.BadParam);
          core.sarStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -150574,7 +150574,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAR peek: BadParam", RetCode.BadParam);
          SarStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -151124,9 +151124,9 @@ public final class Core {
          throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAR openAndFill: internal error", retCode);
+         throw new TALibStateException("SAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sarOpen (composition seam). */
    SarStream sarOpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
@@ -151145,9 +151145,9 @@ public final class Core {
          throw new InsufficientHistoryException("SAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAR open: internal error", retCode);
+         throw new TALibStateException("SAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAR open: " + retCode, retCode);
+      throw new TALibArgumentException("SAR open: " + retCode, retCode);
    }
    /**
     * Open a live SAR stream over the warm-up history; the handle's
@@ -151190,7 +151190,7 @@ public final class Core {
       requireHistoryLength("SAR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -152153,7 +152153,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SAREXT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
          core.sarextStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -152171,7 +152171,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
          SarextStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -152829,9 +152829,9 @@ public final class Core {
          throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAREXT openAndFill: internal error", retCode);
+         throw new TALibStateException("SAREXT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SAREXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sarextOpen (composition seam). */
    SarextStream sarextOpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -152850,9 +152850,9 @@ public final class Core {
          throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SAREXT open: internal error", retCode);
+         throw new TALibStateException("SAREXT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SAREXT open: " + retCode, retCode);
+      throw new TALibArgumentException("SAREXT open: " + retCode, retCode);
    }
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
@@ -152895,7 +152895,7 @@ public final class Core {
       requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -153166,7 +153166,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SIN update: BadParam", RetCode.BadParam);
          core.sinStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -153184,7 +153184,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SIN peek: BadParam", RetCode.BadParam);
          SinStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sin(inReal);
@@ -153261,9 +153261,9 @@ public final class Core {
          throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
+         throw new TALibStateException("SIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sinOpen (composition seam). */
    SinStream sinOpenInternal( double inReal[], int startIdx )
@@ -153282,9 +153282,9 @@ public final class Core {
          throw new InsufficientHistoryException("SIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN open: internal error", retCode);
+         throw new TALibStateException("SIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SIN open: " + retCode, retCode);
+      throw new TALibArgumentException("SIN open: " + retCode, retCode);
    }
    /**
     * Open a live SIN stream over the warm-up history; the handle's
@@ -153321,7 +153321,7 @@ public final class Core {
       int guardOutLen = openFillCount("SIN openAndFill", inReal.length, SIN_Lookback());
       requireLength("SIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -153590,7 +153590,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SINH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SINH update: BadParam", RetCode.BadParam);
          core.sinhStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -153608,7 +153608,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SINH peek: BadParam", RetCode.BadParam);
          SinhStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sinh(inReal);
@@ -153685,9 +153685,9 @@ public final class Core {
          throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
+         throw new TALibStateException("SINH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SINH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sinhOpen (composition seam). */
    SinhStream sinhOpenInternal( double inReal[], int startIdx )
@@ -153706,9 +153706,9 @@ public final class Core {
          throw new InsufficientHistoryException("SINH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH open: internal error", retCode);
+         throw new TALibStateException("SINH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SINH open: " + retCode, retCode);
+      throw new TALibArgumentException("SINH open: " + retCode, retCode);
    }
    /**
     * Open a live SINH stream over the warm-up history; the handle's
@@ -153745,7 +153745,7 @@ public final class Core {
       int guardOutLen = openFillCount("SINH openAndFill", inReal.length, SINH_Lookback());
       requireLength("SINH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -154139,7 +154139,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMA update: BadParam", RetCode.BadParam);
          core.smaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -154157,7 +154157,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMA peek: BadParam", RetCode.BadParam);
          SmaStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -154317,9 +154317,9 @@ public final class Core {
          throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMA openAndFill: internal error", retCode);
+         throw new TALibStateException("SMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind smaOpen (composition seam). */
    SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -154338,9 +154338,9 @@ public final class Core {
          throw new InsufficientHistoryException("SMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMA open: internal error", retCode);
+         throw new TALibStateException("SMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMA open: " + retCode, retCode);
+      throw new TALibArgumentException("SMA open: " + retCode, retCode);
    }
    /**
     * Open a live SMA stream over the warm-up history; the handle's
@@ -154379,7 +154379,7 @@ public final class Core {
       int guardOutLen = openFillCount("SMA openAndFill", inReal.length, SMA_Lookback(optInTimePeriod));
       requireLength("SMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -155317,7 +155317,7 @@ public final class Core {
             throw failure("SMI update", RetCode.OutOfRangeEndIndex);
          requireArgument("SMI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMI update: BadParam", RetCode.BadParam);
          core.smiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.smi = this.cur_outSMI;
@@ -155337,7 +155337,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
          requireArgument("SMI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SMI peek: BadParam", RetCode.BadParam);
          SmiStream sp = this;
          double tmp = 0.0;
          double num = 0.0;
@@ -155901,9 +155901,9 @@ public final class Core {
          throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI openAndFill: internal error", retCode);
+         throw new TALibStateException("SMI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SMI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind smiOpen (composition seam). */
    SmiStream smiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -155923,9 +155923,9 @@ public final class Core {
          throw new InsufficientHistoryException("SMI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SMI open: internal error", retCode);
+         throw new TALibStateException("SMI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SMI open: " + retCode, retCode);
+      throw new TALibArgumentException("SMI open: " + retCode, retCode);
    }
    /**
     * Open a live SMI stream over the warm-up history; the handle's
@@ -155973,7 +155973,7 @@ public final class Core {
       requireLength("SMI openAndFill", "outSMI", outSMI, guardOutLen);
       requireLength("SMI openAndFill", "outSMISignal", outSMISignal, guardOutLen);
       if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
-         throw new TaLibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -156244,7 +156244,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SQRT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SQRT update: BadParam", RetCode.BadParam);
          core.sqrtStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -156262,7 +156262,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
          SqrtStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sqrt(inReal);
@@ -156339,9 +156339,9 @@ public final class Core {
          throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SQRT openAndFill: internal error", retCode);
+         throw new TALibStateException("SQRT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SQRT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SQRT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sqrtOpen (composition seam). */
    SqrtStream sqrtOpenInternal( double inReal[], int startIdx )
@@ -156360,9 +156360,9 @@ public final class Core {
          throw new InsufficientHistoryException("SQRT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SQRT open: internal error", retCode);
+         throw new TALibStateException("SQRT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SQRT open: " + retCode, retCode);
+      throw new TALibArgumentException("SQRT open: " + retCode, retCode);
    }
    /**
     * Open a live SQRT stream over the warm-up history; the handle's
@@ -156399,7 +156399,7 @@ public final class Core {
       int guardOutLen = openFillCount("SQRT openAndFill", inReal.length, SQRT_Lookback());
       requireLength("SQRT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SQRT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -156793,7 +156793,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("STDDEV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
          core.stddevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -156811,7 +156811,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
          StddevStream sp = this;
          double cur_outReal = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -156962,9 +156962,9 @@ public final class Core {
          throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
+         throw new TALibStateException("STDDEV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STDDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stddevOpen (composition seam). */
    StddevStream stddevOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -156983,9 +156983,9 @@ public final class Core {
          throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STDDEV open: internal error", retCode);
+         throw new TALibStateException("STDDEV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STDDEV open: " + retCode, retCode);
+      throw new TALibArgumentException("STDDEV open: " + retCode, retCode);
    }
    /**
     * Open a live STDDEV stream over the warm-up history; the handle's
@@ -157024,7 +157024,7 @@ public final class Core {
       int guardOutLen = openFillCount("STDDEV openAndFill", inReal.length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       requireLength("STDDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -157819,7 +157819,7 @@ public final class Core {
             throw failure("STOCH update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCH update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCH update: BadParam", RetCode.BadParam);
          core.stochStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.slowK = this.cur_outSlowK;
@@ -157839,7 +157839,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
          requireArgument("STOCH peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
          StochStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outSlowD = 0.0;
@@ -158332,9 +158332,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCH openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochOpen (composition seam). */
    StochStream stochOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -158354,9 +158354,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCH open: internal error", retCode);
+         throw new TALibStateException("STOCH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCH open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCH open: " + retCode, retCode);
    }
    /**
     * Open a live STOCH stream over the warm-up history; the handle's
@@ -158408,7 +158408,7 @@ public final class Core {
       requireLength("STOCH openAndFill", "outSlowK", outSlowK, guardOutLen);
       requireLength("STOCH openAndFill", "outSlowD", outSlowD, guardOutLen);
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
-         throw new TaLibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -159122,7 +159122,7 @@ public final class Core {
             throw failure("STOCHF update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCHF update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
          core.stochfStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.fastK = this.cur_outFastK;
@@ -159142,7 +159142,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, StochfOut out ) {
          requireArgument("STOCHF peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
          StochfStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outFastD = 0.0;
@@ -159608,9 +159608,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCHF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHF openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCHF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochfOpen (composition seam). */
    StochfStream stochfOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -159630,9 +159630,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCHF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHF open: internal error", retCode);
+         throw new TALibStateException("STOCHF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHF open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHF open: " + retCode, retCode);
    }
    /**
     * Open a live STOCHF stream over the warm-up history; the handle's
@@ -159682,7 +159682,7 @@ public final class Core {
       requireLength("STOCHF openAndFill", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHF openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
-         throw new TaLibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -160208,7 +160208,7 @@ public final class Core {
             throw failure("STOCHRSI update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCHRSI update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
          core.stochrsiStepImpl(this, inReal);
          this.outRangeCount++;
          out.fastK = this.cur_outFastK;
@@ -160228,7 +160228,7 @@ public final class Core {
       public void peek( double inReal, StochrsiOut out ) {
          requireArgument("STOCHRSI peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
          StochrsiStream sp = this;
          double cur_tempRSIBuffer = 0.0;
          double cur_outFastK = 0.0;
@@ -160444,9 +160444,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCHRSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochrsiOpen (composition seam). */
    StochrsiStream stochrsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -160466,9 +160466,9 @@ public final class Core {
          throw new InsufficientHistoryException("STOCHRSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCHRSI open: internal error", retCode);
+         throw new TALibStateException("STOCHRSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCHRSI open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCHRSI open: " + retCode, retCode);
    }
    /**
     * Open a live STOCHRSI stream over the warm-up history; the handle's
@@ -160510,7 +160510,7 @@ public final class Core {
       requireLength("STOCHRSI openAndFill", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
-         throw new TaLibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCHRSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -160790,7 +160790,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SUB update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("SUB update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUB update: BadParam", RetCode.BadParam);
          core.subStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -160808,7 +160808,7 @@ public final class Core {
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUB peek: BadParam", RetCode.BadParam);
          SubStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 - inReal1;
@@ -160889,9 +160889,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB openAndFill: internal error", retCode);
+         throw new TALibStateException("SUB openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUB openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUB openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind subOpen (composition seam). */
    SubStream subOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -160910,9 +160910,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUB open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUB open: internal error", retCode);
+         throw new TALibStateException("SUB open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUB open: " + retCode, retCode);
+      throw new TALibArgumentException("SUB open: " + retCode, retCode);
    }
    /**
     * Open a live SUB stream over the warm-up history; the handle's
@@ -160953,7 +160953,7 @@ public final class Core {
       requireHistoryLength("SUB openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("SUB openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUB openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -161322,7 +161322,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SUM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUM update: BadParam", RetCode.BadParam);
          core.sumStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -161340,7 +161340,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUM peek: BadParam", RetCode.BadParam);
          SumStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -161496,9 +161496,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUM openAndFill: internal error", retCode);
+         throw new TALibStateException("SUM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sumOpen (composition seam). */
    SumStream sumOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -161517,9 +161517,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUM open: internal error", retCode);
+         throw new TALibStateException("SUM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUM open: " + retCode, retCode);
+      throw new TALibArgumentException("SUM open: " + retCode, retCode);
    }
    /**
     * Open a live SUM stream over the warm-up history; the handle's
@@ -161558,7 +161558,7 @@ public final class Core {
       int guardOutLen = openFillCount("SUM openAndFill", inReal.length, SUM_Lookback(optInTimePeriod));
       requireLength("SUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -162248,7 +162248,7 @@ public final class Core {
             throw failure("SUPERTREND update", RetCode.OutOfRangeEndIndex);
          requireArgument("SUPERTREND update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
          core.supertrendStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.supertrend = this.cur_outSupertrend;
@@ -162268,7 +162268,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
          requireArgument("SUPERTREND peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
          SupertrendStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -162688,9 +162688,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUPERTREND openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUPERTREND openAndFill: internal error", retCode);
+         throw new TALibStateException("SUPERTREND openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind supertrendOpen (composition seam). */
    SupertrendStream supertrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier )
@@ -162710,9 +162710,9 @@ public final class Core {
          throw new InsufficientHistoryException("SUPERTREND open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUPERTREND open: internal error", retCode);
+         throw new TALibStateException("SUPERTREND open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUPERTREND open: " + retCode, retCode);
+      throw new TALibArgumentException("SUPERTREND open: " + retCode, retCode);
    }
    /**
     * Open a live SUPERTREND stream over the warm-up history; the handle's
@@ -162760,7 +162760,7 @@ public final class Core {
       requireLength("SUPERTREND openAndFill", "outSupertrend", outSupertrend, guardOutLen);
       requireLength("SUPERTREND openAndFill", "outTrend", outTrend, guardOutLen);
       if( (Object)outSupertrend == (Object)inHigh || (Object)outSupertrend == (Object)inLow || (Object)outSupertrend == (Object)inClose || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outTrend == (Object)inClose || (Object)outSupertrend == (Object)outTrend ) {
-         throw new TaLibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -163383,7 +163383,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("T3 update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("T3 update: BadParam", RetCode.BadParam);
          core.t3StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -163401,7 +163401,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("T3 peek: BadParam", RetCode.BadParam);
          T3Stream sp = this;
          double cur_outReal = 0.0;
          double e1 = sp.e1;
@@ -163684,9 +163684,9 @@ public final class Core {
          throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("T3 openAndFill: internal error", retCode);
+         throw new TALibStateException("T3 openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("T3 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind t3Open (composition seam). */
    T3Stream t3OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
@@ -163705,9 +163705,9 @@ public final class Core {
          throw new InsufficientHistoryException("T3 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("T3 open: internal error", retCode);
+         throw new TALibStateException("T3 open: internal error", retCode);
       }
-      throw new TaLibArgumentException("T3 open: " + retCode, retCode);
+      throw new TALibArgumentException("T3 open: " + retCode, retCode);
    }
    /**
     * Open a live T3 stream over the warm-up history; the handle's
@@ -163746,7 +163746,7 @@ public final class Core {
       int guardOutLen = openFillCount("T3 openAndFill", inReal.length, T3_Lookback(optInTimePeriod, optInVFactor));
       requireLength("T3 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("T3 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -164019,7 +164019,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TAN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TAN update: BadParam", RetCode.BadParam);
          core.tanStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -164037,7 +164037,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TAN peek: BadParam", RetCode.BadParam);
          TanStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.tan(inReal);
@@ -164114,9 +164114,9 @@ public final class Core {
          throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN openAndFill: internal error", retCode);
+         throw new TALibStateException("TAN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TAN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TAN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tanOpen (composition seam). */
    TanStream tanOpenInternal( double inReal[], int startIdx )
@@ -164135,9 +164135,9 @@ public final class Core {
          throw new InsufficientHistoryException("TAN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TAN open: internal error", retCode);
+         throw new TALibStateException("TAN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TAN open: " + retCode, retCode);
+      throw new TALibArgumentException("TAN open: " + retCode, retCode);
    }
    /**
     * Open a live TAN stream over the warm-up history; the handle's
@@ -164174,7 +164174,7 @@ public final class Core {
       int guardOutLen = openFillCount("TAN openAndFill", inReal.length, TAN_Lookback());
       requireLength("TAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -164445,7 +164445,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TANH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TANH update: BadParam", RetCode.BadParam);
          core.tanhStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -164463,7 +164463,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TANH peek: BadParam", RetCode.BadParam);
          TanhStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.tanh(inReal);
@@ -164540,9 +164540,9 @@ public final class Core {
          throw new InsufficientHistoryException("TANH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TANH openAndFill: internal error", retCode);
+         throw new TALibStateException("TANH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TANH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TANH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tanhOpen (composition seam). */
    TanhStream tanhOpenInternal( double inReal[], int startIdx )
@@ -164561,9 +164561,9 @@ public final class Core {
          throw new InsufficientHistoryException("TANH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TANH open: internal error", retCode);
+         throw new TALibStateException("TANH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TANH open: " + retCode, retCode);
+      throw new TALibArgumentException("TANH open: " + retCode, retCode);
    }
    /**
     * Open a live TANH stream over the warm-up history; the handle's
@@ -164600,7 +164600,7 @@ public final class Core {
       int guardOutLen = openFillCount("TANH openAndFill", inReal.length, TANH_Lookback());
       requireLength("TANH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TANH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -165139,7 +165139,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TEMA update: BadParam", RetCode.BadParam);
          core.temaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -165157,7 +165157,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
          TemaStream sp = this;
          double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
@@ -165410,9 +165410,9 @@ public final class Core {
          throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("TEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind temaOpen (composition seam). */
    TemaStream temaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -165431,9 +165431,9 @@ public final class Core {
          throw new InsufficientHistoryException("TEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TEMA open: internal error", retCode);
+         throw new TALibStateException("TEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("TEMA open: " + retCode, retCode);
    }
    /**
     * Open a live TEMA stream over the warm-up history; the handle's
@@ -165472,7 +165472,7 @@ public final class Core {
       int guardOutLen = openFillCount("TEMA openAndFill", inReal.length, TEMA_Lookback(optInTimePeriod));
       requireLength("TEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -165852,7 +165852,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRANGE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
          core.trangeStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -165870,7 +165870,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
          TrangeStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -166040,9 +166040,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRANGE openAndFill: internal error", retCode);
+         throw new TALibStateException("TRANGE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRANGE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trangeOpen (composition seam). */
    TrangeStream trangeOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -166061,9 +166061,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRANGE open: internal error", retCode);
+         throw new TALibStateException("TRANGE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRANGE open: " + retCode, retCode);
+      throw new TALibArgumentException("TRANGE open: " + retCode, retCode);
    }
    /**
     * Open a live TRANGE stream over the warm-up history; the handle's
@@ -166108,7 +166108,7 @@ public final class Core {
       requireHistoryLength("TRANGE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TRANGE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -166799,7 +166799,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRIMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
          core.trimaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -166817,7 +166817,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
          TrimaStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod % 2 == 1 ) {
@@ -167445,9 +167445,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRIMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIMA openAndFill: internal error", retCode);
+         throw new TALibStateException("TRIMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRIMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trimaOpen (composition seam). */
    TrimaStream trimaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -167466,9 +167466,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRIMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIMA open: internal error", retCode);
+         throw new TALibStateException("TRIMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIMA open: " + retCode, retCode);
+      throw new TALibArgumentException("TRIMA open: " + retCode, retCode);
    }
    /**
     * Open a live TRIMA stream over the warm-up history; the handle's
@@ -167507,7 +167507,7 @@ public final class Core {
       int guardOutLen = openFillCount("TRIMA openAndFill", inReal.length, TRIMA_Lookback(optInTimePeriod));
       requireLength("TRIMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRIMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -168005,7 +168005,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRIX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX update: BadParam", RetCode.BadParam);
          core.trixStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -168023,7 +168023,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
          TrixStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -168231,9 +168231,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIX openAndFill: internal error", retCode);
+         throw new TALibStateException("TRIX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trixOpen (composition seam). */
    TrixStream trixOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -168252,9 +168252,9 @@ public final class Core {
          throw new InsufficientHistoryException("TRIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIX open: internal error", retCode);
+         throw new TALibStateException("TRIX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIX open: " + retCode, retCode);
+      throw new TALibArgumentException("TRIX open: " + retCode, retCode);
    }
    /**
     * Open a live TRIX stream over the warm-up history; the handle's
@@ -168293,7 +168293,7 @@ public final class Core {
       int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
       requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -168870,7 +168870,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TSF update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSF update: BadParam", RetCode.BadParam);
          core.tsfStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -168888,7 +168888,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSF peek: BadParam", RetCode.BadParam);
          TsfStream sp = this;
          double m = 0.0;
          double b = 0.0;
@@ -169353,9 +169353,9 @@ public final class Core {
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
+         throw new TALibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TSF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tsfOpen (composition seam). */
    TsfStream tsfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -169374,9 +169374,9 @@ public final class Core {
          throw new InsufficientHistoryException("TSF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSF open: internal error", retCode);
+         throw new TALibStateException("TSF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSF open: " + retCode, retCode);
+      throw new TALibArgumentException("TSF open: " + retCode, retCode);
    }
    /**
     * Open a live TSF stream over the warm-up history; the handle's
@@ -169415,7 +169415,7 @@ public final class Core {
       int guardOutLen = openFillCount("TSF openAndFill", inReal.length, TSF_Lookback(optInTimePeriod));
       requireLength("TSF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TSF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -170038,7 +170038,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI update: BadParam", RetCode.BadParam);
          core.tsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -170056,7 +170056,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI peek: BadParam", RetCode.BadParam);
          TsiStream sp = this;
          double mom = 0.0;
          double absMom = 0.0;
@@ -170325,9 +170325,9 @@ public final class Core {
          throw new InsufficientHistoryException("TSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSI openAndFill: internal error", retCode);
+         throw new TALibStateException("TSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tsiOpen (composition seam). */
    TsiStream tsiOpenInternal( double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod )
@@ -170346,9 +170346,9 @@ public final class Core {
          throw new InsufficientHistoryException("TSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSI open: internal error", retCode);
+         throw new TALibStateException("TSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSI open: " + retCode, retCode);
+      throw new TALibArgumentException("TSI open: " + retCode, retCode);
    }
    /**
     * Open a live TSI stream over the warm-up history; the handle's
@@ -170387,7 +170387,7 @@ public final class Core {
       int guardOutLen = openFillCount("TSI openAndFill", inReal.length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
       requireLength("TSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -170683,7 +170683,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TYPPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
          core.typpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -170701,7 +170701,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
          TyppriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose) / 3.0;
@@ -170783,9 +170783,9 @@ public final class Core {
          throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TYPPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("TYPPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind typpriceOpen (composition seam). */
    TyppriceStream typpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -170804,9 +170804,9 @@ public final class Core {
          throw new InsufficientHistoryException("TYPPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TYPPRICE open: internal error", retCode);
+         throw new TALibStateException("TYPPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TYPPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("TYPPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live TYPPRICE stream over the warm-up history; the handle's
@@ -170851,7 +170851,7 @@ public final class Core {
       requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -171708,7 +171708,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ULTOSC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
          core.ultoscStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -171726,7 +171726,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
          UltoscStream sp = this;
          double trueLow = 0.0;
          double trueRange = 0.0;
@@ -172298,9 +172298,9 @@ public final class Core {
          throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ULTOSC openAndFill: internal error", retCode);
+         throw new TALibStateException("ULTOSC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ultoscOpen (composition seam). */
    UltoscStream ultoscOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -172319,9 +172319,9 @@ public final class Core {
          throw new InsufficientHistoryException("ULTOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ULTOSC open: internal error", retCode);
+         throw new TALibStateException("ULTOSC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ULTOSC open: " + retCode, retCode);
+      throw new TALibArgumentException("ULTOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ULTOSC stream over the warm-up history; the handle's
@@ -172368,7 +172368,7 @@ public final class Core {
       requireHistoryLength("ULTOSC openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ULTOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ULTOSC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -172966,7 +172966,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VAR update: BadParam", RetCode.BadParam);
          core.varStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -172984,7 +172984,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VAR peek: BadParam", RetCode.BadParam);
          VarStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -173482,9 +173482,9 @@ public final class Core {
          throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VAR openAndFill: internal error", retCode);
+         throw new TALibStateException("VAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind varOpen (composition seam). */
    VarStream varOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -173503,9 +173503,9 @@ public final class Core {
          throw new InsufficientHistoryException("VAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VAR open: internal error", retCode);
+         throw new TALibStateException("VAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VAR open: " + retCode, retCode);
+      throw new TALibArgumentException("VAR open: " + retCode, retCode);
    }
    /**
     * Open a live VAR stream over the warm-up history; the handle's
@@ -173544,7 +173544,7 @@ public final class Core {
       int guardOutLen = openFillCount("VAR openAndFill", inReal.length, VAR_Lookback(optInTimePeriod, optInNbDev));
       requireLength("VAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -173969,7 +173969,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VHF update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VHF update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VHF update: BadParam", RetCode.BadParam);
          core.vhfStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -173987,7 +173987,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("VHF peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VHF peek: BadParam", RetCode.BadParam);
          VhfStream sp = this;
          int i = 0;
          double highest = 0.0;
@@ -174214,9 +174214,9 @@ public final class Core {
          throw new InsufficientHistoryException("VHF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VHF openAndFill: internal error", retCode);
+         throw new TALibStateException("VHF openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VHF openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VHF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vhfOpen (composition seam). */
    VhfStream vhfOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -174235,9 +174235,9 @@ public final class Core {
          throw new InsufficientHistoryException("VHF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VHF open: internal error", retCode);
+         throw new TALibStateException("VHF open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VHF open: " + retCode, retCode);
+      throw new TALibArgumentException("VHF open: " + retCode, retCode);
    }
    /**
     * Open a live VHF stream over the warm-up history; the handle's
@@ -174276,7 +174276,7 @@ public final class Core {
       int guardOutLen = openFillCount("VHF openAndFill", inReal.length, VHF_Lookback(optInTimePeriod));
       requireLength("VHF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("VHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VHF openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -174932,7 +174932,7 @@ public final class Core {
             throw failure("VORTEX update", RetCode.OutOfRangeEndIndex);
          requireArgument("VORTEX update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
          core.vortexStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.plusVI = this.cur_outPlusVI;
@@ -174952,7 +174952,7 @@ public final class Core {
       public void peek( double inHigh, double inLow, double inClose, VortexOut out ) {
          requireArgument("VORTEX peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("VORTEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VORTEX peek: BadParam", RetCode.BadParam);
          VortexStream sp = this;
          double curTR = 0.0;
          double curVMP = 0.0;
@@ -175470,9 +175470,9 @@ public final class Core {
          throw new InsufficientHistoryException("VORTEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VORTEX openAndFill: internal error", retCode);
+         throw new TALibStateException("VORTEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VORTEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VORTEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vortexOpen (composition seam). */
    VortexStream vortexOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -175492,9 +175492,9 @@ public final class Core {
          throw new InsufficientHistoryException("VORTEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VORTEX open: internal error", retCode);
+         throw new TALibStateException("VORTEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VORTEX open: " + retCode, retCode);
+      throw new TALibArgumentException("VORTEX open: " + retCode, retCode);
    }
    /**
     * Open a live VORTEX stream over the warm-up history; the handle's
@@ -175542,7 +175542,7 @@ public final class Core {
       requireLength("VORTEX openAndFill", "outPlusVI", outPlusVI, guardOutLen);
       requireLength("VORTEX openAndFill", "outMinusVI", outMinusVI, guardOutLen);
       if( (Object)outPlusVI == (Object)inHigh || (Object)outPlusVI == (Object)inLow || (Object)outPlusVI == (Object)inClose || (Object)outMinusVI == (Object)inHigh || (Object)outMinusVI == (Object)inLow || (Object)outMinusVI == (Object)inClose || (Object)outPlusVI == (Object)outMinusVI ) {
-         throw new TaLibArgumentException("VORTEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VORTEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -176010,7 +176010,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VWAP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWAP update: BadParam", RetCode.BadParam);
          core.vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -176028,7 +176028,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
          VwapStream sp = this;
          double typPrice = 0.0;
          double volume = 0.0;
@@ -176394,9 +176394,9 @@ public final class Core {
          throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP openAndFill: internal error", retCode);
+         throw new TALibStateException("VWAP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWAP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VWAP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vwapOpen (composition seam). */
    VwapStream vwapOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -176415,9 +176415,9 @@ public final class Core {
          throw new InsufficientHistoryException("VWAP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWAP open: internal error", retCode);
+         throw new TALibStateException("VWAP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWAP open: " + retCode, retCode);
+      throw new TALibArgumentException("VWAP open: " + retCode, retCode);
    }
    /**
     * Open a live VWAP stream over the warm-up history; the handle's
@@ -176466,7 +176466,7 @@ public final class Core {
       requireHistoryLength("VWAP openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("VWAP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VWAP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -176948,7 +176948,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VWMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWMA update: BadParam", RetCode.BadParam);
          core.vwmaStepImpl(this, inReal, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -176966,7 +176966,7 @@ public final class Core {
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
          VwmaStream sp = this;
          double tempPV = 0.0;
          double tempV = 0.0;
@@ -177224,9 +177224,9 @@ public final class Core {
          throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
+         throw new TALibStateException("VWMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VWMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vwmaOpen (composition seam). */
    VwmaStream vwmaOpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -177245,9 +177245,9 @@ public final class Core {
          throw new InsufficientHistoryException("VWMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA open: internal error", retCode);
+         throw new TALibStateException("VWMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWMA open: " + retCode, retCode);
+      throw new TALibArgumentException("VWMA open: " + retCode, retCode);
    }
    /**
     * Open a live VWMA stream over the warm-up history; the handle's
@@ -177290,7 +177290,7 @@ public final class Core {
       requireHistoryLength("VWMA openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("VWMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -177703,7 +177703,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WAD update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WAD update: BadParam", RetCode.BadParam);
          core.wadStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -177721,7 +177721,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WAD peek: BadParam", RetCode.BadParam);
          WadStream sp = this;
          double close = 0.0;
          double trueExtreme = 0.0;
@@ -177898,9 +177898,9 @@ public final class Core {
          throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WAD openAndFill: internal error", retCode);
+         throw new TALibStateException("WAD openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WAD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wadOpen (composition seam). */
    WadStream wadOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -177919,9 +177919,9 @@ public final class Core {
          throw new InsufficientHistoryException("WAD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WAD open: internal error", retCode);
+         throw new TALibStateException("WAD open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WAD open: " + retCode, retCode);
+      throw new TALibArgumentException("WAD open: " + retCode, retCode);
    }
    /**
     * Open a live WAD stream over the warm-up history; the handle's
@@ -177966,7 +177966,7 @@ public final class Core {
       requireHistoryLength("WAD openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WAD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WAD openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -178262,7 +178262,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WCLPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
          core.wclpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -178280,7 +178280,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
          WclpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
@@ -178362,9 +178362,9 @@ public final class Core {
          throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WCLPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("WCLPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wclpriceOpen (composition seam). */
    WclpriceStream wclpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -178383,9 +178383,9 @@ public final class Core {
          throw new InsufficientHistoryException("WCLPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WCLPRICE open: internal error", retCode);
+         throw new TALibStateException("WCLPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WCLPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("WCLPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live WCLPRICE stream over the warm-up history; the handle's
@@ -178430,7 +178430,7 @@ public final class Core {
       requireHistoryLength("WCLPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WCLPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -179113,7 +179113,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WILLR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR update: BadParam", RetCode.BadParam);
          core.willrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -179131,7 +179131,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
          double tempReal = 0.0;
@@ -179464,9 +179464,9 @@ public final class Core {
          throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WILLR openAndFill: internal error", retCode);
+         throw new TALibStateException("WILLR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WILLR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind willrOpen (composition seam). */
    WillrStream willrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -179485,9 +179485,9 @@ public final class Core {
          throw new InsufficientHistoryException("WILLR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WILLR open: internal error", retCode);
+         throw new TALibStateException("WILLR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WILLR open: " + retCode, retCode);
+      throw new TALibArgumentException("WILLR open: " + retCode, retCode);
    }
    /**
     * Open a live WILLR stream over the warm-up history; the handle's
@@ -179534,7 +179534,7 @@ public final class Core {
       requireHistoryLength("WILLR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WILLR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -180111,7 +180111,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA update: BadParam", RetCode.BadParam);
          core.wmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -180129,7 +180129,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA peek: BadParam", RetCode.BadParam);
          WmaStream sp = this;
          int j = 0;
          int rw = 0;
@@ -180600,9 +180600,9 @@ public final class Core {
          throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WMA openAndFill: internal error", retCode);
+         throw new TALibStateException("WMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wmaOpen (composition seam). */
    WmaStream wmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -180621,9 +180621,9 @@ public final class Core {
          throw new InsufficientHistoryException("WMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WMA open: internal error", retCode);
+         throw new TALibStateException("WMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WMA open: " + retCode, retCode);
+      throw new TALibArgumentException("WMA open: " + retCode, retCode);
    }
    /**
     * Open a live WMA stream over the warm-up history; the handle's
@@ -180662,7 +180662,7 @@ public final class Core {
       int guardOutLen = openFillCount("WMA openAndFill", inReal.length, WMA_Lookback(optInTimePeriod));
       requireLength("WMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -181146,7 +181146,7 @@ public final class Core {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ZLEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
          core.zlemaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -181164,7 +181164,7 @@ public final class Core {
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
          ZlemaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -181362,9 +181362,9 @@ public final class Core {
          throw new InsufficientHistoryException("ZLEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ZLEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("ZLEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind zlemaOpen (composition seam). */
    ZlemaStream zlemaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -181383,9 +181383,9 @@ public final class Core {
          throw new InsufficientHistoryException("ZLEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ZLEMA open: internal error", retCode);
+         throw new TALibStateException("ZLEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ZLEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("ZLEMA open: " + retCode, retCode);
    }
    /**
     * Open a live ZLEMA stream over the warm-up history; the handle's
@@ -181424,7 +181424,7 @@ public final class Core {
       int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, ZLEMA_Lookback(optInTimePeriod));
       requireLength("ZLEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ZLEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

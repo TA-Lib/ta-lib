@@ -180,7 +180,7 @@ internal static class NoPhantomIoBinder
             range = new OutRange(outcome.BegIdx, outcome.Count);
             return outcome.Code;
         }
-        catch (Exception e) when (e is ITaLibFailure f)
+        catch (Exception e) when (e is ITALibFailure f)
         {
             range = new OutRange(0, 0);
             return f.RetCode;
@@ -845,7 +845,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     // freed this one.
     //
     // The public overload returns `OutRange` and throws, so the code comes back
-    // through `FunctionCall.TryInvoke`'s `ITaLibFailure` catch -- the same one
+    // through `FunctionCall.TryInvoke`'s `ITALibFailure` catch -- the same one
     // that already converted a composed body's cross-call rejection since #236
     // step 3, now on the direct path too.
     s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n");
@@ -1930,7 +1930,7 @@ public sealed class FunctionCall
             range = _info.Invoke(_core, this, startIdx, endIdx);
             return RetCode.Success;
         }
-        catch (Exception _e) when (_e is ITaLibFailure)
+        catch (Exception _e) when (_e is ITALibFailure)
         {
             // The one conversion point. Since #265 the thunk calls the function's
             // PUBLIC overload, like C's frames and Java's Dispatch, so every
@@ -1941,7 +1941,7 @@ public sealed class FunctionCall
             // ...)` in APO, and that throws too. Only the library's own failure
             // is converted; anything else is not ours to relabel.
             range = new OutRange(0, 0);
-            return ((ITaLibFailure)_e).RetCode;
+            return ((ITALibFailure)_e).RetCode;
         }
     }
 

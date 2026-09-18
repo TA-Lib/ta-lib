@@ -340,7 +340,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MARKETFI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
          core.marketfiStepImpl(this, inHigh, inLow, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -358,7 +358,7 @@
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
          MarketfiStream sp = this;
          double cur_outReal = 0.0;
          /* A zero-volume bar would divide by zero. Neither reference guards
@@ -495,9 +495,9 @@
          throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
+         throw new TALibStateException("MARKETFI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind marketfiOpen (composition seam). */
    MarketfiStream marketfiOpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
@@ -516,9 +516,9 @@
          throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MARKETFI open: internal error", retCode);
+         throw new TALibStateException("MARKETFI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MARKETFI open: " + retCode, retCode);
+      throw new TALibArgumentException("MARKETFI open: " + retCode, retCode);
    }
    /**
     * Open a live MARKETFI stream over the warm-up history; the handle's
@@ -563,7 +563,7 @@
       requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

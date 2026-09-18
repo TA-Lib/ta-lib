@@ -261,7 +261,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("EXP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EXP update: BadParam", RetCode.BadParam);
          core.expStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -279,7 +279,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EXP peek: BadParam", RetCode.BadParam);
          ExpStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.exp(inReal);
@@ -356,9 +356,9 @@
          throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP openAndFill: internal error", retCode);
+         throw new TALibStateException("EXP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("EXP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("EXP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind expOpen (composition seam). */
    ExpStream expOpenInternal( double inReal[], int startIdx )
@@ -377,9 +377,9 @@
          throw new InsufficientHistoryException("EXP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("EXP open: internal error", retCode);
+         throw new TALibStateException("EXP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("EXP open: " + retCode, retCode);
+      throw new TALibArgumentException("EXP open: " + retCode, retCode);
    }
    /**
     * Open a live EXP stream over the warm-up history; the handle's
@@ -416,7 +416,7 @@
       int guardOutLen = openFillCount("EXP openAndFill", inReal.length, EXP_Lookback());
       requireLength("EXP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EXP openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

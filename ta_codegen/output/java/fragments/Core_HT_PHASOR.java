@@ -979,7 +979,7 @@
             throw failure("HT_PHASOR update", RetCode.OutOfRangeEndIndex);
          requireArgument("HT_PHASOR update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
          core.htPhasorStepImpl(this, inReal);
          this.outRangeCount++;
          out.inPhase = this.cur_outInPhase;
@@ -999,7 +999,7 @@
       public void peek( double inReal, HtPhasorOut out ) {
          requireArgument("HT_PHASOR peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
          HtPhasorStream sp = this;
          double adjustedPrevPeriod = 0.0;
          double smoothedValue = 0.0;
@@ -1746,9 +1746,9 @@
          throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_PHASOR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htPhasorOpen (composition seam). */
    HtPhasorStream htPhasorOpenInternal( double inReal[], int startIdx )
@@ -1768,9 +1768,9 @@
          throw new InsufficientHistoryException("HT_PHASOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_PHASOR open: internal error", retCode);
+         throw new TALibStateException("HT_PHASOR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_PHASOR open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_PHASOR open: " + retCode, retCode);
    }
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
@@ -1808,7 +1808,7 @@
       requireLength("HT_PHASOR openAndFill", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR openAndFill", "outQuadrature", outQuadrature, guardOutLen);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
-         throw new TaLibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_PHASOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

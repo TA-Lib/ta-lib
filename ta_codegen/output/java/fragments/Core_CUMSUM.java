@@ -306,7 +306,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CUMSUM update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
          core.cumsumStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -324,7 +324,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("CUMSUM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM peek: BadParam", RetCode.BadParam);
          CumsumStream sp = this;
          double cur_outReal = 0.0;
          double total = sp.total;
@@ -423,9 +423,9 @@
          throw new InsufficientHistoryException("CUMSUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CUMSUM openAndFill: internal error", retCode);
+         throw new TALibStateException("CUMSUM openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CUMSUM openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CUMSUM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cumsumOpen (composition seam). */
    CumsumStream cumsumOpenInternal( double inReal[], int startIdx )
@@ -444,9 +444,9 @@
          throw new InsufficientHistoryException("CUMSUM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CUMSUM open: internal error", retCode);
+         throw new TALibStateException("CUMSUM open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CUMSUM open: " + retCode, retCode);
+      throw new TALibArgumentException("CUMSUM open: " + retCode, retCode);
    }
    /**
     * Open a live CUMSUM stream over the warm-up history; the handle's
@@ -483,7 +483,7 @@
       int guardOutLen = openFillCount("CUMSUM openAndFill", inReal.length, CUMSUM_Lookback());
       requireLength("CUMSUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("CUMSUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CUMSUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

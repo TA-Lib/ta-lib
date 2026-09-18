@@ -527,7 +527,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLMORNINGSTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
          core.cdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -545,7 +545,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
          CdlmorningstarStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -817,9 +817,9 @@
          throw new InsufficientHistoryException("CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlmorningstarOpen (composition seam). */
    CdlmorningstarStream cdlmorningstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -838,9 +838,9 @@
          throw new InsufficientHistoryException("CDLMORNINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLMORNINGSTAR open: internal error", retCode);
+         throw new TALibStateException("CDLMORNINGSTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLMORNINGSTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLMORNINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMORNINGSTAR stream over the warm-up history; the handle's
@@ -891,7 +891,7 @@
       requireHistoryLength("CDLMORNINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMORNINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -615,7 +615,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TSI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI update: BadParam", RetCode.BadParam);
          core.tsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -633,7 +633,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI peek: BadParam", RetCode.BadParam);
          TsiStream sp = this;
          double mom = 0.0;
          double absMom = 0.0;
@@ -902,9 +902,9 @@
          throw new InsufficientHistoryException("TSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSI openAndFill: internal error", retCode);
+         throw new TALibStateException("TSI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind tsiOpen (composition seam). */
    TsiStream tsiOpenInternal( double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod )
@@ -923,9 +923,9 @@
          throw new InsufficientHistoryException("TSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TSI open: internal error", retCode);
+         throw new TALibStateException("TSI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TSI open: " + retCode, retCode);
+      throw new TALibArgumentException("TSI open: " + retCode, retCode);
    }
    /**
     * Open a live TSI stream over the warm-up history; the handle's
@@ -964,7 +964,7 @@
       int guardOutLen = openFillCount("TSI openAndFill", inReal.length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
       requireLength("TSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

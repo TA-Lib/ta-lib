@@ -288,7 +288,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TYPPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
          core.typpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -306,7 +306,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
          TyppriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose) / 3.0;
@@ -388,9 +388,9 @@
          throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TYPPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("TYPPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind typpriceOpen (composition seam). */
    TyppriceStream typpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -409,9 +409,9 @@
          throw new InsufficientHistoryException("TYPPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TYPPRICE open: internal error", retCode);
+         throw new TALibStateException("TYPPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TYPPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("TYPPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live TYPPRICE stream over the warm-up history; the handle's
@@ -456,7 +456,7 @@
       requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TYPPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

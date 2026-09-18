@@ -817,7 +817,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DX update: BadParam", RetCode.BadParam);
          core.dxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -835,7 +835,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DX peek: BadParam", RetCode.BadParam);
          DxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -1341,9 +1341,9 @@
          throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DX openAndFill: internal error", retCode);
+         throw new TALibStateException("DX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind dxOpen (composition seam). */
    DxStream dxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1362,9 +1362,9 @@
          throw new InsufficientHistoryException("DX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DX open: internal error", retCode);
+         throw new TALibStateException("DX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DX open: " + retCode, retCode);
+      throw new TALibArgumentException("DX open: " + retCode, retCode);
    }
    /**
     * Open a live DX stream over the warm-up history; the handle's
@@ -1411,7 +1411,7 @@
       requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("DX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -55,7 +55,7 @@ import io.github.talib.InsufficientHistoryException;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RetCode;
-import io.github.talib.TaLibFailure;
+import io.github.talib.TALibFailure;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -660,7 +660,7 @@ public class BatchApiTest {
      * is TOTAL and LOSSLESS.
      *
      * <p>Total: every exception the public API raises implements
-     * {@link TaLibFailure}, including the two conditions C cannot detect (an
+     * {@link TALibFailure}, including the two conditions C cannot detect (an
      * absent argument, a buffer too short) and the raw JVM types those used to
      * be. Anything not covered leaves a caller with a thrown object it cannot
      * classify, which is the state this replaced.
@@ -755,13 +755,13 @@ public class BatchApiTest {
             failures++;
             System.out.println("  FAIL: " + what + " (no exception thrown)");
         } catch (RuntimeException e) {
-            if (!(e instanceof TaLibFailure)) {
+            if (!(e instanceof TALibFailure)) {
                 failures++;
                 System.out.println("  FAIL: " + what + " (" + e.getClass().getName()
                     + " carries no RetCode)");
                 return;
             }
-            RetCode got = ((TaLibFailure) e).retCode();
+            RetCode got = ((TALibFailure) e).retCode();
             if (got != expected) {
                 failures++;
                 System.out.println("  FAIL: " + what + " (carried " + got + ")");
@@ -1085,7 +1085,7 @@ public class BatchApiTest {
             body.run();
             return null;
         } catch (RuntimeException e) {
-            return (e instanceof TaLibFailure) ? ((TaLibFailure) e).retCode() : null;
+            return (e instanceof TALibFailure) ? ((TALibFailure) e).retCode() : null;
         }
     }
 

@@ -451,7 +451,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLCLOSINGMARUBOZU update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
          core.cdlclosingmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -469,7 +469,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
          CdlclosingmarubozuStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -701,9 +701,9 @@
          throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCLOSINGMARUBOZU openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLCLOSINGMARUBOZU openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlclosingmarubozuOpen (composition seam). */
    CdlclosingmarubozuStream cdlclosingmarubozuOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -722,9 +722,9 @@
          throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLCLOSINGMARUBOZU open: internal error", retCode);
+         throw new TALibStateException("CDLCLOSINGMARUBOZU open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLCLOSINGMARUBOZU open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLCLOSINGMARUBOZU open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCLOSINGMARUBOZU stream over the warm-up history; the handle's
@@ -773,7 +773,7 @@
       requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLCLOSINGMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -471,9 +471,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public SubStream SubOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("SUB open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "SUB open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("SUB open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("SUB", "open", "inReal1", inReal1.Length, inReal0.Length);
       return SubOpenInternal(inReal0, inReal1, 0);
    }
@@ -506,9 +506,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public SubStream SubOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("SUB openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "SUB openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("SUB openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       int guardOutLen = OpenFillCount("SUB", "openAndFill", inReal0.Length, SUB_Lookback());
       RequireHistoryLength("SUB", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("SUB", "openAndFill", "outReal", outReal.Length, guardOutLen);

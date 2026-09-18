@@ -787,7 +787,7 @@
             throw failure("STOCH update", RetCode.OutOfRangeEndIndex);
          requireArgument("STOCH update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCH update: BadParam", RetCode.BadParam);
          core.stochStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.slowK = this.cur_outSlowK;
@@ -807,7 +807,7 @@
       public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
          requireArgument("STOCH peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
          StochStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outSlowD = 0.0;
@@ -1300,9 +1300,9 @@
          throw new InsufficientHistoryException("STOCH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCH openAndFill: internal error", retCode);
+         throw new TALibStateException("STOCH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("STOCH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind stochOpen (composition seam). */
    StochStream stochOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -1322,9 +1322,9 @@
          throw new InsufficientHistoryException("STOCH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("STOCH open: internal error", retCode);
+         throw new TALibStateException("STOCH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("STOCH open: " + retCode, retCode);
+      throw new TALibArgumentException("STOCH open: " + retCode, retCode);
    }
    /**
     * Open a live STOCH stream over the warm-up history; the handle's
@@ -1376,7 +1376,7 @@
       requireLength("STOCH openAndFill", "outSlowK", outSlowK, guardOutLen);
       requireLength("STOCH openAndFill", "outSlowD", outSlowD, guardOutLen);
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
-         throw new TaLibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STOCH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

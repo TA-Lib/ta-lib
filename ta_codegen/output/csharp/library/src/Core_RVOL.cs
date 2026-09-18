@@ -675,8 +675,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public RvolStream RvolOpen( ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "RVOL open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "RVOL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "RVOL open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "RVOL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return RvolOpenInternal(inVolume, 0, optInTimePeriod);
    }
 
@@ -709,8 +709,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public RvolStream RvolOpenAndFill( ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inVolume.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "RVOL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inVolume.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inVolume), "RVOL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inVolume.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "RVOL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inVolume.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "RVOL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("RVOL", "openAndFill", inVolume.Length, RVOL_Lookback(optInTimePeriod));
       RequireFillLength("RVOL", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inVolume) ) {

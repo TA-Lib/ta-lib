@@ -654,8 +654,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public StddevStream StddevOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STDDEV open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STDDEV open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STDDEV open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STDDEV open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return StddevOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -690,8 +690,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public StddevStream StddevOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STDDEV openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "STDDEV openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STDDEV openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STDDEV openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("STDDEV", "openAndFill", inReal.Length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       RequireFillLength("STDDEV", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

@@ -93,7 +93,7 @@ internal static class NoPhantomIoBinder
             range = new OutRange(outcome.BegIdx, outcome.Count);
             return outcome.Code;
         }
-        catch (Exception e) when (e is ITaLibFailure f)
+        catch (Exception e) when (e is ITALibFailure f)
         {
             range = new OutRange(0, 0);
             return f.RetCode;

@@ -372,7 +372,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("IMI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI update: BadParam", RetCode.BadParam);
          core.imiStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -390,7 +390,7 @@
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("IMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI peek: BadParam", RetCode.BadParam);
          ImiStream sp = this;
          double upsum = 0.0;
          double downsum = 0.0;
@@ -571,9 +571,9 @@
          throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI openAndFill: internal error", retCode);
+         throw new TALibStateException("IMI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("IMI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("IMI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind imiOpen (composition seam). */
    ImiStream imiOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
@@ -592,9 +592,9 @@
          throw new InsufficientHistoryException("IMI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("IMI open: internal error", retCode);
+         throw new TALibStateException("IMI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("IMI open: " + retCode, retCode);
+      throw new TALibArgumentException("IMI open: " + retCode, retCode);
    }
    /**
     * Open a live IMI stream over the warm-up history; the handle's
@@ -637,7 +637,7 @@
       requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

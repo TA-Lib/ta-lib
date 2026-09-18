@@ -483,7 +483,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLGAPSIDESIDEWHITE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
          core.cdlgapsidesidewhiteStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -501,7 +501,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
          CdlgapsidesidewhiteStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -764,9 +764,9 @@
          throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLGAPSIDESIDEWHITE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlgapsidesidewhiteOpen (composition seam). */
    CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -785,9 +785,9 @@
          throw new InsufficientHistoryException("CDLGAPSIDESIDEWHITE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGAPSIDESIDEWHITE open: internal error", retCode);
+         throw new TALibStateException("CDLGAPSIDESIDEWHITE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGAPSIDESIDEWHITE open: " + retCode, retCode);
    }
    /**
     * Open a live CDLGAPSIDESIDEWHITE stream over the warm-up history; the handle's
@@ -836,7 +836,7 @@
       requireHistoryLength("CDLGAPSIDESIDEWHITE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLGAPSIDESIDEWHITE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLGAPSIDESIDEWHITE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

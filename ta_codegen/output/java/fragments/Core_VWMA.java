@@ -474,7 +474,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("VWMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWMA update: BadParam", RetCode.BadParam);
          core.vwmaStepImpl(this, inReal, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -492,7 +492,7 @@
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
          VwmaStream sp = this;
          double tempPV = 0.0;
          double tempV = 0.0;
@@ -750,9 +750,9 @@
          throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
+         throw new TALibStateException("VWMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("VWMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind vwmaOpen (composition seam). */
    VwmaStream vwmaOpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -771,9 +771,9 @@
          throw new InsufficientHistoryException("VWMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("VWMA open: internal error", retCode);
+         throw new TALibStateException("VWMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("VWMA open: " + retCode, retCode);
+      throw new TALibArgumentException("VWMA open: " + retCode, retCode);
    }
    /**
     * Open a live VWMA stream over the warm-up history; the handle's
@@ -816,7 +816,7 @@
       requireHistoryLength("VWMA openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("VWMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("VWMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

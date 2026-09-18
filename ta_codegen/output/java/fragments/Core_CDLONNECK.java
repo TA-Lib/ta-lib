@@ -468,7 +468,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLONNECK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
          core.cdlonneckStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -486,7 +486,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
          CdlonneckStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -730,9 +730,9 @@
          throw new InsufficientHistoryException("CDLONNECK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLONNECK openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLONNECK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLONNECK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlonneckOpen (composition seam). */
    CdlonneckStream cdlonneckOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -751,9 +751,9 @@
          throw new InsufficientHistoryException("CDLONNECK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLONNECK open: internal error", retCode);
+         throw new TALibStateException("CDLONNECK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLONNECK open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLONNECK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLONNECK stream over the warm-up history; the handle's
@@ -802,7 +802,7 @@
       requireHistoryLength("CDLONNECK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLONNECK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLONNECK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

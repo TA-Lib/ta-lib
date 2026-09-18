@@ -45,7 +45,7 @@ const RIDE_JAVA_SUPPORT: &str = r#"
      * without narrowing the catch types; -1 is an exception the library does
      * not own, which is itself a divergence. */
     static int rideCode(RuntimeException e) {
-        return (e instanceof TaLibFailure) ? ((TaLibFailure) e).retCode().toInt() : -1;
+        return (e instanceof TALibFailure) ? ((TALibFailure) e).retCode().toInt() : -1;
     }
 
     static boolean rideFinite(double[] a, int n) {

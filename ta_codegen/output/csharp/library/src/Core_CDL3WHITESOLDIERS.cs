@@ -1136,11 +1136,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public Cdl3whitesoldiersStream Cdl3whitesoldiersOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("CDL3WHITESOLDIERS", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDL3WHITESOLDIERS", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDL3WHITESOLDIERS", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1181,11 +1181,11 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public Cdl3whitesoldiersStream Cdl3whitesoldiersOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("CDL3WHITESOLDIERS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDL3WHITESOLDIERS openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("CDL3WHITESOLDIERS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CDL3WHITESOLDIERS", "openAndFill", inOpen.Length, CDL3WHITESOLDIERS_Lookback());
       RequireHistoryLength("CDL3WHITESOLDIERS", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDL3WHITESOLDIERS", "openAndFill", "inLow", inLow.Length, inOpen.Length);

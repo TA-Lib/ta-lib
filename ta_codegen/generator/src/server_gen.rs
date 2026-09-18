@@ -1485,17 +1485,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static RuntimeException failure(String funcName, RetCode retCode) {\n");
     s.push_str("        String where = funcName + \": \";\n");
     s.push_str("        switch (retCode) {\n");
-    s.push_str("            case OutOfRangeStartIndex: return new TaLibIndexException(where + \"startIdx out of range\", retCode);\n");
-    s.push_str("            case OutOfRangeEndIndex: return new TaLibIndexException(where + \"endIdx out of range\", retCode);\n");
+    s.push_str("            case OutOfRangeStartIndex: return new TALibIndexException(where + \"startIdx out of range\", retCode);\n");
+    s.push_str("            case OutOfRangeEndIndex: return new TALibIndexException(where + \"endIdx out of range\", retCode);\n");
     // Split exactly as the shipped `Core.java` splits it: the parity gate
     // compares these bodies token by token (issue #271 item 3).
-    s.push_str("            case BadParam: return new TaLibArgumentException(\n");
+    s.push_str("            case BadParam: return new TALibArgumentException(\n");
     s.push_str("                where + \"bad parameter (out-of-range optional parameter, or two \"\n");
     s.push_str("                      + \"outputs sharing one array)\", retCode);\n");
-    s.push_str("            case AllocErr: return new TaLibStateException(where + \"allocation failed\", retCode);\n");
-    s.push_str("            case InternalError: return new TaLibStateException(where + \"internal error\", retCode);\n");
+    s.push_str("            case AllocErr: return new TALibStateException(where + \"allocation failed\", retCode);\n");
+    s.push_str("            case InternalError: return new TALibStateException(where + \"internal error\", retCode);\n");
     s.push_str("            case InsufficientHistory: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");
-    s.push_str("            default: return new TaLibStateException(where + retCode, retCode);\n");
+    s.push_str("            default: return new TALibStateException(where + retCode, retCode);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     // Same for the wrapper's argument checks (#172 C2). The server never calls a
@@ -1517,10 +1517,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("    static void checkLength(String funcName, String argName, int actual, int required) {\n");
     s.push_str("        if (actual < 0) {\n");
-    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("        if (actual < required) {\n");
-    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName\n");
     s.push_str("                + \" has length \" + actual + \", needs \" + required, RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1540,7 +1540,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n\n");
     s.push_str("    static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {\n");
     s.push_str("        if (actual != historyLen) {\n");
-    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" has length \" + actual\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" has length \" + actual\n");
     s.push_str("                  + \", needs \" + historyLen, RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1554,7 +1554,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n\n");
     s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
     s.push_str("        if (argument == null) {\n");
-    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     for func in funcs {
@@ -2084,8 +2084,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            try {\n");
             s.push_str(&format!("                rc = core.{func_base}_Impl({core_args});\n"));
             s.push_str("            } catch (RuntimeException _e) {\n");
-            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
-            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            }\n");
@@ -2102,8 +2102,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                outNBElement.value = _pr.count();\n");
             s.push_str("                rc = RetCode.Success;\n");
             s.push_str("            } catch (RuntimeException _e) {\n");
-            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
-            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            }\n");
@@ -2157,7 +2157,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // Report the code the open actually raised, not a stand-in. Every
             // failure the library throws carries it (#236 step 1); anything else
             // reaching here is not the library's and stays the catch-all.
-            s.push_str("        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }\n");
+            s.push_str("        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BadParam; } }\n");
         }
         s.push_str("        }\n"); // end bench_iters loop
 
@@ -2200,8 +2200,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                outNBElement.value = _fr.count();\n");
             s.push_str("                rc = RetCode.Success;\n");
             s.push_str("            } catch (RuntimeException _e) {\n");
-            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
-            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            }\n");
@@ -3018,8 +3018,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
             s.push_str("                try {\n");
             s.push_str(&format!("                    rc = core.{base}_Impl({call_args});\n"));
-            s.push_str("                } catch (Exception _e2) when (_e2 is ITaLibFailure) {\n");
-            s.push_str("                    rc = ((ITaLibFailure)_e2).RetCode;\n");
+            s.push_str("                } catch (Exception _e2) when (_e2 is ITALibFailure) {\n");
+            s.push_str("                    rc = ((ITALibFailure)_e2).RetCode;\n");
             s.push_str("                    outBegIdx = 0;\n");
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
@@ -3029,8 +3029,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                    outBegIdx = _pr.BegIdx;\n");
             s.push_str("                    outNBElement = _pr.Count;\n");
             s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e) when (_e is ITaLibFailure) {\n");
-            s.push_str("                    rc = ((ITaLibFailure)_e).RetCode;\n");
+            s.push_str("                } catch (Exception _e) when (_e is ITALibFailure) {\n");
+            s.push_str("                    rc = ((ITALibFailure)_e).RetCode;\n");
             s.push_str("                    outBegIdx = 0;\n");
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
@@ -3054,8 +3054,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                try {\n");
             s.push_str(&format!("                    core.{base_pascal}Open({ins});\n"));
             s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e3) when (_e3 is ITaLibFailure) {\n");
-            s.push_str("                    rc = ((ITaLibFailure)_e3).RetCode;\n");
+            s.push_str("                } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
+            s.push_str("                    rc = ((ITALibFailure)_e3).RetCode;\n");
             s.push_str("                }\n");
             s.push_str("            } else {\n");
             s.push_str("                try {\n");
@@ -3068,8 +3068,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                    outBegIdx = _wh.OutRange.BegIdx;\n");
             s.push_str("                    outNBElement = _wh.OutRange.Count;\n");
             s.push_str("                    rc = RetCode.Success;\n");
-            s.push_str("                } catch (Exception _e3) when (_e3 is ITaLibFailure) {\n");
-            s.push_str("                    rc = ((ITaLibFailure)_e3).RetCode;\n");
+            s.push_str("                } catch (Exception _e3) when (_e3 is ITALibFailure) {\n");
+            s.push_str("                    rc = ((ITALibFailure)_e3).RetCode;\n");
             s.push_str("                    outBegIdx = 0;\n");
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
@@ -3118,8 +3118,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                 s.push_str("                outBegIdx = _fr.BegIdx;\n");
                 s.push_str("                outNBElement = _fr.Count;\n");
                 s.push_str("                rc = RetCode.Success;\n");
-                s.push_str("            } catch (Exception _e) when (_e is ITaLibFailure) {\n");
-                s.push_str("                rc = ((ITaLibFailure)_e).RetCode;\n");
+                s.push_str("            } catch (Exception _e) when (_e is ITALibFailure) {\n");
+                s.push_str("                rc = ((ITALibFailure)_e).RetCode;\n");
                 s.push_str("                outBegIdx = 0;\n");
                 s.push_str("                outNBElement = 0;\n");
                 s.push_str("            }\n");
@@ -4564,7 +4564,7 @@ pub(crate) fn java_server_stream_scaffolding() -> String {
 /// rule in CLAUDE.md).
 const JAVA_IHE: &str = include_str!("../templates/java/InsufficientHistoryException.java");
 
-/// Default-package twins of the shipped `TaLibFailure` interface and the four
+/// Default-package twins of the shipped `TALibFailure` interface and the four
 /// exception classes that carry a `RetCode` (#236 step 1). Same rule, same
 /// reason: the spliced wrappers throw these by name.
 const JAVA_FAILURES: &str = include_str!("../templates/java/Failures.java");

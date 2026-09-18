@@ -51,7 +51,7 @@ package io.github.talib;
  *
  * <p>The public API raises rather than returning one, so this is reached
  * through a caught failure: every exception the library throws implements
- * {@link TaLibFailure}, whose {@link TaLibFailure#retCode()} answers the member
+ * {@link TALibFailure}, whose {@link TALibFailure#retCode()} answers the member
  * below. The numbers are C's, and are what the cross-language harness compares —
  * Java's ordinals are not, which is why {@link #asCInt()} exists.
  */

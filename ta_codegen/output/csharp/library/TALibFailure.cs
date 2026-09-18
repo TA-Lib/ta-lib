@@ -57,7 +57,7 @@ namespace TALib;
 /// <c>TALib.Metadata</c> binder still raise plain .NET types. Neither is an
 /// indicator call, so neither has a <see cref="TALib.RetCode"/> to carry.</para>
 /// </remarks>
-public interface ITaLibFailure
+public interface ITALibFailure
 {
     /// <summary>The condition reported, as the code C would have returned.</summary>
     RetCode RetCode { get; }
@@ -66,23 +66,23 @@ public interface ITaLibFailure
 /// <summary>An argument was rejected: an optional parameter outside its
 /// documented range, two outputs sharing one buffer, or a span too short for the
 /// values the call would read or write.</summary>
-public class TaLibArgumentException : ArgumentException, ITaLibFailure
+public class TALibArgumentException : ArgumentException, ITALibFailure
 {
     private readonly RetCode _retCode;
 
-    internal TaLibArgumentException(string message, RetCode retCode)
+    internal TALibArgumentException(string message, RetCode retCode)
         : base(message)
     {
         _retCode = retCode;
     }
 
-    internal TaLibArgumentException(string message, string? paramName, RetCode retCode)
+    internal TALibArgumentException(string message, string? paramName, RetCode retCode)
         : base(message, paramName)
     {
         _retCode = retCode;
     }
 
-    internal TaLibArgumentException(string message, Exception? innerException, RetCode retCode)
+    internal TALibArgumentException(string message, Exception? innerException, RetCode retCode)
         : base(message, innerException)
     {
         _retCode = retCode;
@@ -94,13 +94,13 @@ public class TaLibArgumentException : ArgumentException, ITaLibFailure
 
 /// <summary><c>startIdx</c> or <c>endIdx</c> is outside
 /// <c>[0, Core.MAX_INDEX]</c>, or <c>endIdx</c> precedes <c>startIdx</c>.</summary>
-/// <remarks><see cref="ITaLibFailure.RetCode"/> distinguishes the two, which the
+/// <remarks><see cref="ITALibFailure.RetCode"/> distinguishes the two, which the
 /// exception's <c>ParamName</c> can only hint at.</remarks>
-public class TaLibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITaLibFailure
+public class TALibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITALibFailure
 {
     private readonly RetCode _retCode;
 
-    internal TaLibArgumentOutOfRangeException(string paramName, string message, RetCode retCode)
+    internal TALibArgumentOutOfRangeException(string paramName, string message, RetCode retCode)
         : base(paramName, message)
     {
         _retCode = retCode;
@@ -114,11 +114,11 @@ public class TaLibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITa
 /// an allocation, or an invariant it owns.</summary>
 /// <remarks>Neither is expected in normal use — an allocation failure aborts the
 /// process long before it reaches here.</remarks>
-public class TaLibInvalidOperationException : InvalidOperationException, ITaLibFailure
+public class TALibInvalidOperationException : InvalidOperationException, ITALibFailure
 {
     private readonly RetCode _retCode;
 
-    internal TaLibInvalidOperationException(string message, RetCode retCode)
+    internal TALibInvalidOperationException(string message, RetCode retCode)
         : base(message)
     {
         _retCode = retCode;

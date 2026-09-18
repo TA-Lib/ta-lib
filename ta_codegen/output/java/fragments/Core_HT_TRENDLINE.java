@@ -1043,7 +1043,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("HT_TRENDLINE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
          core.htTrendlineStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -1061,7 +1061,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
          HtTrendlineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -1960,9 +1960,9 @@
          throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
+         throw new TALibStateException("HT_TRENDLINE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDLINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind htTrendlineOpen (composition seam). */
    HtTrendlineStream htTrendlineOpenInternal( double inReal[], int startIdx )
@@ -1981,9 +1981,9 @@
          throw new InsufficientHistoryException("HT_TRENDLINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HT_TRENDLINE open: internal error", retCode);
+         throw new TALibStateException("HT_TRENDLINE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HT_TRENDLINE open: " + retCode, retCode);
+      throw new TALibArgumentException("HT_TRENDLINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDLINE stream over the warm-up history; the handle's
@@ -2020,7 +2020,7 @@
       int guardOutLen = openFillCount("HT_TRENDLINE openAndFill", inReal.length, HT_TRENDLINE_Lookback());
       requireLength("HT_TRENDLINE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_TRENDLINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

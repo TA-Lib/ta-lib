@@ -591,7 +591,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MIDPOINT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
          core.midpointStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -609,7 +609,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
          MidpointStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -891,9 +891,9 @@
          throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPOINT openAndFill: internal error", retCode);
+         throw new TALibStateException("MIDPOINT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind midpointOpen (composition seam). */
    MidpointStream midpointOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -912,9 +912,9 @@
          throw new InsufficientHistoryException("MIDPOINT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MIDPOINT open: internal error", retCode);
+         throw new TALibStateException("MIDPOINT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MIDPOINT open: " + retCode, retCode);
+      throw new TALibArgumentException("MIDPOINT open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPOINT stream over the warm-up history; the handle's
@@ -953,7 +953,7 @@
       int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
       requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

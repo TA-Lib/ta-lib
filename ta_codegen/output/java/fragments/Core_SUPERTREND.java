@@ -682,7 +682,7 @@
             throw failure("SUPERTREND update", RetCode.OutOfRangeEndIndex);
          requireArgument("SUPERTREND update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
          core.supertrendStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.supertrend = this.cur_outSupertrend;
@@ -702,7 +702,7 @@
       public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
          requireArgument("SUPERTREND peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
          SupertrendStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -1122,9 +1122,9 @@
          throw new InsufficientHistoryException("SUPERTREND openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUPERTREND openAndFill: internal error", retCode);
+         throw new TALibStateException("SUPERTREND openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind supertrendOpen (composition seam). */
    SupertrendStream supertrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier )
@@ -1144,9 +1144,9 @@
          throw new InsufficientHistoryException("SUPERTREND open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SUPERTREND open: internal error", retCode);
+         throw new TALibStateException("SUPERTREND open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SUPERTREND open: " + retCode, retCode);
+      throw new TALibArgumentException("SUPERTREND open: " + retCode, retCode);
    }
    /**
     * Open a live SUPERTREND stream over the warm-up history; the handle's
@@ -1194,7 +1194,7 @@
       requireLength("SUPERTREND openAndFill", "outSupertrend", outSupertrend, guardOutLen);
       requireLength("SUPERTREND openAndFill", "outTrend", outTrend, guardOutLen);
       if( (Object)outSupertrend == (Object)inHigh || (Object)outSupertrend == (Object)inLow || (Object)outSupertrend == (Object)inClose || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outTrend == (Object)inClose || (Object)outSupertrend == (Object)outTrend ) {
-         throw new TaLibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

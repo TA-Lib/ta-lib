@@ -111,7 +111,7 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("throw new InsufficientHistoryException(\"SMA open:"));
     // Carrying, not a plain JDK type: the code has to be recoverable from every
     // failure the library raises, on this ladder as much as the batch one.
-    assert!(s.contains("throw new TaLibStateException(\"SMA open: internal error\", retCode);"));
+    assert!(s.contains("throw new TALibStateException(\"SMA open: internal error\", retCode);"));
     assert!(!s.contains("\"TA_SMA open:"), "no C-namespaced prefix survives");
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
@@ -621,7 +621,7 @@ fn java_public_fill_keeps_the_aliasing_guards() {
         "output-vs-output guard survives on the public fill:\n{body}"
     );
     assert!(
-        body.contains("throw new TaLibArgumentException(\"ACCBANDS openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"),
+        body.contains("throw new TALibArgumentException(\"ACCBANDS openAndFill: \" + RetCode.BadParam, RetCode.BadParam);"),
         "the guard throws the same text the retired ladder produced:\n{body}"
     );
     // Paired negatives: both are false today only because the guard moved UP,
@@ -916,7 +916,7 @@ fn no_java_peek_copies_the_handle() {
                 }
             }
             // Comments carry the word too, and `throw new
-            // TaLibArgumentException` is the bar rejection — neither copies a
+            // TALibArgumentException` is the bar rejection — neither copies a
             // handle. `new <N>Out()` is the sink a COMPOSED frame allocates for
             // a multi-output sub-handle (#310); it is counted separately and
             // pinned to an exact set below rather than blanket-exempted, so a

@@ -621,7 +621,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("NATR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NATR update: BadParam", RetCode.BadParam);
          core.natrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -639,7 +639,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("NATR peek: BadParam", RetCode.BadParam);
          NatrStream sp = this;
          double tempValue = 0.0;
          double val2 = 0.0;
@@ -972,9 +972,9 @@
          throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NATR openAndFill: internal error", retCode);
+         throw new TALibStateException("NATR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("NATR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("NATR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind natrOpen (composition seam). */
    NatrStream natrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -993,9 +993,9 @@
          throw new InsufficientHistoryException("NATR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("NATR open: internal error", retCode);
+         throw new TALibStateException("NATR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("NATR open: " + retCode, retCode);
+      throw new TALibArgumentException("NATR open: " + retCode, retCode);
    }
    /**
     * Open a live NATR stream over the warm-up history; the handle's
@@ -1042,7 +1042,7 @@
       requireHistoryLength("NATR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("NATR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("NATR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

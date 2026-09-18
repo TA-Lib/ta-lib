@@ -994,8 +994,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public TsiStream TsiOpen( ReadOnlySpan<double> inReal, int optInFirstPeriod, int optInSecondPeriod )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSI open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return TsiOpenInternal(inReal, 0, optInFirstPeriod, optInSecondPeriod);
    }
 
@@ -1031,8 +1031,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public TsiStream TsiOpenAndFill( ReadOnlySpan<double> inReal, int optInFirstPeriod, int optInSecondPeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "TSI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("TSI", "openAndFill", inReal.Length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
       RequireFillLength("TSI", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

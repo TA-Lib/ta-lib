@@ -564,7 +564,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLABANDONEDBABY update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
          core.cdlabandonedbabyStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -582,7 +582,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
          CdlabandonedbabyStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -914,9 +914,9 @@
          throw new InsufficientHistoryException("CDLABANDONEDBABY openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLABANDONEDBABY openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLABANDONEDBABY openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLABANDONEDBABY openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlabandonedbabyOpen (composition seam). */
    CdlabandonedbabyStream cdlabandonedbabyOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -935,9 +935,9 @@
          throw new InsufficientHistoryException("CDLABANDONEDBABY open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLABANDONEDBABY open: internal error", retCode);
+         throw new TALibStateException("CDLABANDONEDBABY open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLABANDONEDBABY open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLABANDONEDBABY open: " + retCode, retCode);
    }
    /**
     * Open a live CDLABANDONEDBABY stream over the warm-up history; the handle's
@@ -988,7 +988,7 @@
       requireHistoryLength("CDLABANDONEDBABY openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLABANDONEDBABY openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLABANDONEDBABY openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

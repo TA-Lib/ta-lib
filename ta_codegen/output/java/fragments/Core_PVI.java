@@ -348,7 +348,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI update: BadParam", RetCode.BadParam);
          core.pviStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -366,7 +366,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI peek: BadParam", RetCode.BadParam);
          PviStream sp = this;
          double tempClose = 0.0;
          double tempVolume = 0.0;
@@ -545,9 +545,9 @@
          throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI openAndFill: internal error", retCode);
+         throw new TALibStateException("PVI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pviOpen (composition seam). */
    PviStream pviOpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -566,9 +566,9 @@
          throw new InsufficientHistoryException("PVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVI open: internal error", retCode);
+         throw new TALibStateException("PVI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVI open: " + retCode, retCode);
+      throw new TALibArgumentException("PVI open: " + retCode, retCode);
    }
    /**
     * Open a live PVI stream over the warm-up history; the handle's
@@ -609,7 +609,7 @@
       requireHistoryLength("PVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

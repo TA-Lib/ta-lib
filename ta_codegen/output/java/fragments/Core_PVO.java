@@ -454,7 +454,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("PVO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO update: BadParam", RetCode.BadParam);
          core.pvoStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -472,7 +472,7 @@
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TaLibArgumentException("PVO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO peek: BadParam", RetCode.BadParam);
          PvoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -651,9 +651,9 @@
          throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVO openAndFill: internal error", retCode);
+         throw new TALibStateException("PVO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("PVO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind pvoOpen (composition seam). */
    PvoStream pvoOpenInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -672,9 +672,9 @@
          throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("PVO open: internal error", retCode);
+         throw new TALibStateException("PVO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("PVO open: " + retCode, retCode);
+      throw new TALibArgumentException("PVO open: " + retCode, retCode);
    }
    /**
     * Open a live PVO stream over the warm-up history; the handle's
@@ -715,7 +715,7 @@
       int guardOutLen = openFillCount("PVO openAndFill", inVolume.length, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PVO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TaLibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

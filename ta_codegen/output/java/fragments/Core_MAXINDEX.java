@@ -412,7 +412,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAXINDEX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
          core.maxindexStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -430,7 +430,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
          MaxindexStream sp = this;
          double tmp = 0.0;
          int cur_outInteger = 0;
@@ -629,9 +629,9 @@
          throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MAXINDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind maxindexOpen (composition seam). */
    MaxindexStream maxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -650,9 +650,9 @@
          throw new InsufficientHistoryException("MAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAXINDEX open: internal error", retCode);
+         throw new TALibStateException("MAXINDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAXINDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MAXINDEX stream over the warm-up history; the handle's
@@ -691,7 +691,7 @@
       int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, MAXINDEX_Lookback(optInTimePeriod));
       requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TaLibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

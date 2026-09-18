@@ -279,7 +279,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DIV update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV update: BadParam", RetCode.BadParam);
          core.divStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -297,7 +297,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV peek: BadParam", RetCode.BadParam);
          DivStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 / inReal1;
@@ -377,9 +377,9 @@
          throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV openAndFill: internal error", retCode);
+         throw new TALibStateException("DIV openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DIV openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DIV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind divOpen (composition seam). */
    DivStream divOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -398,9 +398,9 @@
          throw new InsufficientHistoryException("DIV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DIV open: internal error", retCode);
+         throw new TALibStateException("DIV open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DIV open: " + retCode, retCode);
+      throw new TALibArgumentException("DIV open: " + retCode, retCode);
    }
    /**
     * Open a live DIV stream over the warm-up history; the handle's
@@ -441,7 +441,7 @@
       requireHistoryLength("DIV openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("DIV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

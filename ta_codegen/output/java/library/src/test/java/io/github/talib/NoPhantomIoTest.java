@@ -596,7 +596,7 @@ public class NoPhantomIoTest {
                 // An IndexOutOfBoundsException is this core indexing a
                 // zero-length array: it computed.
                 //
-                // A TaLibArgumentException is a LENGTH check, and the core under
+                // A TALibArgumentException is a LENGTH check, and the core under
                 // test is NAME_Impl, which has none. So it can only have come from
                 // a callee's public tier, which this core reached by cross-calling
                 // it -- which is equally a proof that the core still computes, and
@@ -606,7 +606,7 @@ public class NoPhantomIoTest {
                 // sweep below would read as compliance.
                 Throwable cause = ite.getCause();
                 if (cause instanceof IndexOutOfBoundsException
-                        || cause instanceof TaLibArgumentException) {
+                        || cause instanceof TALibArgumentException) {
                     live.add(sig.name);
                 } else {
                     violation(tier + " " + sig.name + " at endIdx == lookback threw "
@@ -1000,7 +1000,7 @@ public class NoPhantomIoTest {
                 //
                 // S1's refusal is ITSELF an IndexOutOfBoundsException, so the
                 // discriminator is the carried code, not the type: what the
-                // library raises implements TaLibFailure, and a write past the
+                // library raises implements TALibFailure, and a write past the
                 // end of a zero-length array does not.
                 Object[] shortArgs = args.clone();
                 for (int k = 0; k < nLegs; k++) {
@@ -1018,7 +1018,7 @@ public class NoPhantomIoTest {
                 } catch (InvocationTargetException ite) {
                     Throwable t = ite.getCause();
                     if (t instanceof IndexOutOfBoundsException
-                            && !(t instanceof TaLibFailure)) {
+                            && !(t instanceof TALibFailure)) {
                         violation(camelCase(sig.name) + "OpenAndFill[" + v.label + "] wrote to a "
                             + "zero-length output before refusing a " + v.lookback
                             + "-bar history: " + t);
@@ -1219,7 +1219,7 @@ public class NoPhantomIoTest {
             body.run();
             return false;
         } catch (RuntimeException ex) {
-            return ex instanceof TaLibFailure;
+            return ex instanceof TALibFailure;
         }
     }
 

@@ -490,7 +490,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("TRIX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX update: BadParam", RetCode.BadParam);
          core.trixStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -508,7 +508,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
          TrixStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -716,9 +716,9 @@
          throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIX openAndFill: internal error", retCode);
+         throw new TALibStateException("TRIX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("TRIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind trixOpen (composition seam). */
    TrixStream trixOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -737,9 +737,9 @@
          throw new InsufficientHistoryException("TRIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("TRIX open: internal error", retCode);
+         throw new TALibStateException("TRIX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("TRIX open: " + retCode, retCode);
+      throw new TALibArgumentException("TRIX open: " + retCode, retCode);
    }
    /**
     * Open a live TRIX stream over the warm-up history; the handle's
@@ -778,7 +778,7 @@
       int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
       requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1470,9 +1470,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CorrelStream CorrelOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("CORREL open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("CORREL open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("CORREL", "open", "inReal1", inReal1.Length, inReal0.Length);
       return CorrelOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
@@ -1507,9 +1507,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CorrelStream CorrelOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TaLibArgumentException("CORREL openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal1.IsEmpty ) throw new TALibArgumentException("CORREL openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       int guardOutLen = OpenFillCount("CORREL", "openAndFill", inReal0.Length, CORREL_Lookback(optInTimePeriod));
       RequireHistoryLength("CORREL", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("CORREL", "openAndFill", "outReal", outReal.Length, guardOutLen);

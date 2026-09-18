@@ -652,7 +652,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("AC update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC update: BadParam", RetCode.BadParam);
          core.acStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -670,7 +670,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC peek: BadParam", RetCode.BadParam);
          AcStream sp = this;
          double medianPrice = 0.0;
          double osc = 0.0;
@@ -1051,9 +1051,9 @@
          throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AC openAndFill: internal error", retCode);
+         throw new TALibStateException("AC openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("AC openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("AC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind acOpen (composition seam). */
    AcStream acOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1072,9 +1072,9 @@
          throw new InsufficientHistoryException("AC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("AC open: internal error", retCode);
+         throw new TALibStateException("AC open: internal error", retCode);
       }
-      throw new TaLibArgumentException("AC open: " + retCode, retCode);
+      throw new TALibArgumentException("AC open: " + retCode, retCode);
    }
    /**
     * Open a live AC stream over the warm-up history; the handle's
@@ -1117,7 +1117,7 @@
       requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -391,7 +391,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLENGULFING update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
          core.cdlengulfingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -409,7 +409,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
          CdlengulfingStream sp = this;
          int cur_outInteger = 0;
          if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
@@ -587,9 +587,9 @@
          throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLENGULFING openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlengulfingOpen (composition seam). */
    CdlengulfingStream cdlengulfingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -608,9 +608,9 @@
          throw new InsufficientHistoryException("CDLENGULFING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLENGULFING open: internal error", retCode);
+         throw new TALibStateException("CDLENGULFING open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLENGULFING open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLENGULFING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLENGULFING stream over the warm-up history; the handle's
@@ -659,7 +659,7 @@
       requireHistoryLength("CDLENGULFING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLENGULFING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLENGULFING openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

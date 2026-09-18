@@ -65,7 +65,7 @@ package io.github.talib;
  * {@code io.github.talib.metadata} binder still raise plain JDK types. Neither
  * is an indicator call, so neither has a {@link RetCode} to carry.
  */
-public interface TaLibFailure {
+public interface TALibFailure {
 
    /** The condition reported, as the code C would have returned. */
    RetCode retCode();

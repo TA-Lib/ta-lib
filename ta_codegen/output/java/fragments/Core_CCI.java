@@ -492,7 +492,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CCI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI update: BadParam", RetCode.BadParam);
          core.cciStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -510,7 +510,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI peek: BadParam", RetCode.BadParam);
          CciStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -801,9 +801,9 @@
          throw new InsufficientHistoryException("CCI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CCI openAndFill: internal error", retCode);
+         throw new TALibStateException("CCI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CCI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CCI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cciOpen (composition seam). */
    CciStream cciOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -822,9 +822,9 @@
          throw new InsufficientHistoryException("CCI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CCI open: internal error", retCode);
+         throw new TALibStateException("CCI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CCI open: " + retCode, retCode);
+      throw new TALibArgumentException("CCI open: " + retCode, retCode);
    }
    /**
     * Open a live CCI stream over the warm-up history; the handle's
@@ -871,7 +871,7 @@
       requireHistoryLength("CCI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("CCI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

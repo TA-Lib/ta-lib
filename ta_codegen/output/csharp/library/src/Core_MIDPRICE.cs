@@ -1022,9 +1022,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MidpriceStream MidpriceOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("MIDPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("MIDPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("MIDPRICE", "open", "inLow", inLow.Length, inHigh.Length);
       return MidpriceOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -1059,9 +1059,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public MidpriceStream MidpriceOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TaLibArgumentException("MIDPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MIDPRICE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inLow.IsEmpty ) throw new TALibArgumentException("MIDPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       int guardOutLen = OpenFillCount("MIDPRICE", "openAndFill", inHigh.Length, MIDPRICE_Lookback(optInTimePeriod));
       RequireHistoryLength("MIDPRICE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("MIDPRICE", "openAndFill", "outReal", outReal.Length, guardOutLen);

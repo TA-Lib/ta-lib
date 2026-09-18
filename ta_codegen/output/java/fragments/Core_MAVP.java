@@ -757,7 +757,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MAVP update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP update: BadParam", RetCode.BadParam);
          core.mavpStepImpl(this, inReal, inPeriods);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -775,7 +775,7 @@
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
          MavpStream sp = this;
          int cp = (int)inPeriods;
          if( cp < sp.optInMinPeriod ) {
@@ -979,9 +979,9 @@
          throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAVP open: internal error", retCode);
+         throw new TALibStateException("MAVP open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAVP open: " + retCode, retCode);
+      throw new TALibArgumentException("MAVP open: " + retCode, retCode);
    }
    /**
     * Open a live MAVP stream over the warm-up history; the handle's
@@ -1038,7 +1038,7 @@
          throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MAVP openAndFill: internal error", retCode);
+         throw new TALibStateException("MAVP openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MAVP openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MAVP openAndFill: " + retCode, retCode);
    }

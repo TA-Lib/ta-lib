@@ -525,7 +525,7 @@
             throw failure("KDJ update", RetCode.OutOfRangeEndIndex);
          requireArgument("KDJ update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KDJ update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ update: BadParam", RetCode.BadParam);
          core.kdjStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.k = this.cur_outK;
@@ -546,7 +546,7 @@
       public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
          requireArgument("KDJ peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
          KdjStream sp = this;
          double cur_outK = 0.0;
          double cur_outD = 0.0;
@@ -738,9 +738,9 @@
          throw new InsufficientHistoryException("KDJ openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KDJ openAndFill: internal error", retCode);
+         throw new TALibStateException("KDJ openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KDJ openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KDJ openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kdjOpen (composition seam). */
    KdjStream kdjOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -761,9 +761,9 @@
          throw new InsufficientHistoryException("KDJ open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KDJ open: internal error", retCode);
+         throw new TALibStateException("KDJ open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KDJ open: " + retCode, retCode);
+      throw new TALibArgumentException("KDJ open: " + retCode, retCode);
    }
    /**
     * Open a live KDJ stream over the warm-up history; the handle's
@@ -816,7 +816,7 @@
       requireLength("KDJ openAndFill", "outD", outD, guardOutLen);
       requireLength("KDJ openAndFill", "outJ", outJ, guardOutLen);
       if( (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ ) {
-         throw new TaLibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

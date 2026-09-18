@@ -41,21 +41,20 @@
 package io.github.talib;
 
 /**
- * The library failed for a reason that is not the caller's argument: an
- * allocation, or an invariant it owns.
+ * {@code startIdx} or {@code endIdx} is outside {@code [0, }{@link
+ * Core#MAX_INDEX}{@code ]}, or {@code endIdx} precedes {@code startIdx}.
  *
- * <p>An {@link IllegalStateException}, which is what the API documents and what
- * a caller catches; {@link #retCode()} distinguishes {@link RetCode#AllocErr}
- * from {@link RetCode#InternalError}, which the type alone cannot. Neither is
- * expected in normal use — an allocation failure terminates the JVM long before
- * it reaches here.
+ * <p>An {@link IndexOutOfBoundsException}, which is what the API documents and
+ * what a caller catches; {@link #retCode()} distinguishes
+ * {@link RetCode#OutOfRangeStartIndex} from {@link RetCode#OutOfRangeEndIndex},
+ * which the type alone cannot.
  */
-public final class TaLibStateException extends IllegalStateException implements TaLibFailure {
+public final class TALibIndexException extends IndexOutOfBoundsException implements TALibFailure {
    private static final long serialVersionUID = 1L;
 
    private final RetCode retCode;
 
-   TaLibStateException(String message, RetCode retCode) {
+   TALibIndexException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }

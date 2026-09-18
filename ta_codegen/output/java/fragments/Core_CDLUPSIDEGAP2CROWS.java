@@ -480,7 +480,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLUPSIDEGAP2CROWS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
          core.cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -498,7 +498,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
          Cdlupsidegap2crowsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -764,9 +764,9 @@
          throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlupsidegap2crowsOpen (composition seam). */
    Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -785,9 +785,9 @@
          throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLUPSIDEGAP2CROWS open: internal error", retCode);
+         throw new TALibStateException("CDLUPSIDEGAP2CROWS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; the handle's
@@ -836,7 +836,7 @@
       requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

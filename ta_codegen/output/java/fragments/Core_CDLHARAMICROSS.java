@@ -488,7 +488,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHARAMICROSS update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
          core.cdlharamicrossStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -506,7 +506,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
          CdlharamicrossStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -782,9 +782,9 @@
          throw new InsufficientHistoryException("CDLHARAMICROSS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMICROSS openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHARAMICROSS openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMICROSS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlharamicrossOpen (composition seam). */
    CdlharamicrossStream cdlharamicrossOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -803,9 +803,9 @@
          throw new InsufficientHistoryException("CDLHARAMICROSS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHARAMICROSS open: internal error", retCode);
+         throw new TALibStateException("CDLHARAMICROSS open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHARAMICROSS open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHARAMICROSS open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHARAMICROSS stream over the warm-up history; the handle's
@@ -854,7 +854,7 @@
       requireHistoryLength("CDLHARAMICROSS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHARAMICROSS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHARAMICROSS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

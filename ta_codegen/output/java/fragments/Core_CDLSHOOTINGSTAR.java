@@ -506,7 +506,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLSHOOTINGSTAR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
          core.cdlshootingstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -524,7 +524,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
          CdlshootingstarStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -805,9 +805,9 @@
          throw new InsufficientHistoryException("CDLSHOOTINGSTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHOOTINGSTAR openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLSHOOTINGSTAR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHOOTINGSTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlshootingstarOpen (composition seam). */
    CdlshootingstarStream cdlshootingstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -826,9 +826,9 @@
          throw new InsufficientHistoryException("CDLSHOOTINGSTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLSHOOTINGSTAR open: internal error", retCode);
+         throw new TALibStateException("CDLSHOOTINGSTAR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLSHOOTINGSTAR open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLSHOOTINGSTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSHOOTINGSTAR stream over the warm-up history; the handle's
@@ -877,7 +877,7 @@
       requireHistoryLength("CDLSHOOTINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSHOOTINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLSHOOTINGSTAR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

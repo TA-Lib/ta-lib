@@ -413,7 +413,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("DPO update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DPO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO update: BadParam", RetCode.BadParam);
          core.dpoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -431,7 +431,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("DPO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO peek: BadParam", RetCode.BadParam);
          DpoStream sp = this;
          double tempReal = 0.0;
          double dispVal = 0.0;
@@ -634,9 +634,9 @@
          throw new InsufficientHistoryException("DPO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DPO openAndFill: internal error", retCode);
+         throw new TALibStateException("DPO openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("DPO openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("DPO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind dpoOpen (composition seam). */
    DpoStream dpoOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -655,9 +655,9 @@
          throw new InsufficientHistoryException("DPO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("DPO open: internal error", retCode);
+         throw new TALibStateException("DPO open: internal error", retCode);
       }
-      throw new TaLibArgumentException("DPO open: " + retCode, retCode);
+      throw new TALibArgumentException("DPO open: " + retCode, retCode);
    }
    /**
     * Open a live DPO stream over the warm-up history; the handle's
@@ -696,7 +696,7 @@
       int guardOutLen = openFillCount("DPO openAndFill", inReal.length, DPO_Lookback(optInTimePeriod));
       requireLength("DPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("DPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

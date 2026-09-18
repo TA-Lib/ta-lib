@@ -551,7 +551,7 @@
             throw failure("HA update", RetCode.OutOfRangeEndIndex);
          requireArgument("HA update", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("HA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA update: BadParam", RetCode.BadParam);
          core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.haOpen = this.cur_outHAOpen;
@@ -573,7 +573,7 @@
       public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
          requireArgument("HA peek", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("HA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA peek: BadParam", RetCode.BadParam);
          HaStream sp = this;
          double haHigh = 0.0;
          double haLow = 0.0;
@@ -859,9 +859,9 @@
          throw new InsufficientHistoryException("HA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HA openAndFill: internal error", retCode);
+         throw new TALibStateException("HA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("HA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("HA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind haOpen (composition seam). */
    HaStream haOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -883,9 +883,9 @@
          throw new InsufficientHistoryException("HA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("HA open: internal error", retCode);
+         throw new TALibStateException("HA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("HA open: " + retCode, retCode);
+      throw new TALibArgumentException("HA open: " + retCode, retCode);
    }
    /**
     * Open a live HA stream over the warm-up history; the handle's
@@ -937,7 +937,7 @@
       requireLength("HA openAndFill", "outHALow", outHALow, guardOutLen);
       requireLength("HA openAndFill", "outHAClose", outHAClose, guardOutLen);
       if( (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose ) {
-         throw new TaLibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

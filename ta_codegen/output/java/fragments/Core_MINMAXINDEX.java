@@ -478,7 +478,7 @@
             throw failure("MINMAXINDEX update", RetCode.OutOfRangeEndIndex);
          requireArgument("MINMAXINDEX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
          core.minmaxindexStepImpl(this, inReal);
          this.outRangeCount++;
          out.minIdx = this.cur_outMinIdx;
@@ -498,7 +498,7 @@
       public void peek( double inReal, MinmaxindexOut out ) {
          requireArgument("MINMAXINDEX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MinmaxindexStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
@@ -787,9 +787,9 @@
          throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX openAndFill: internal error", retCode);
+         throw new TALibStateException("MINMAXINDEX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind minmaxindexOpen (composition seam). */
    MinmaxindexStream minmaxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -809,9 +809,9 @@
          throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MINMAXINDEX open: internal error", retCode);
+         throw new TALibStateException("MINMAXINDEX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MINMAXINDEX open: " + retCode, retCode);
+      throw new TALibArgumentException("MINMAXINDEX open: " + retCode, retCode);
    }
    /**
     * Open a live MINMAXINDEX stream over the warm-up history; the handle's
@@ -851,7 +851,7 @@
       requireLength("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx, guardOutLen);
       requireLength("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx, guardOutLen);
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
-         throw new TaLibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

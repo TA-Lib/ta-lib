@@ -482,7 +482,7 @@ public static class StreamApiTest
                 _failures++;
                 Console.WriteLine($"  FAIL: reported \"{e.ParamName}\", expected \"inReal\"");
             }
-            if ((e as ITaLibFailure)?.RetCode != RetCode.OutOfRangeStartIndex)
+            if ((e as ITALibFailure)?.RetCode != RetCode.OutOfRangeStartIndex)
             {
                 _failures++;
                 Console.WriteLine("  FAIL: a null output pre-empted the empty history");
@@ -503,7 +503,7 @@ public static class StreamApiTest
         }
         catch (Exception e)
         {
-            RetCode? got = (e as ITaLibFailure)?.RetCode;
+            RetCode? got = (e as ITALibFailure)?.RetCode;
             if (got != expected)
             {
                 _failures++;
@@ -1482,7 +1482,7 @@ public static class StreamApiTest
             a();
             return false;
         }
-        catch (Exception e) when (e is ITaLibFailure f)
+        catch (Exception e) when (e is ITALibFailure f)
         {
             return f.RetCode == RetCode.OutOfRangeEndIndex;
         }

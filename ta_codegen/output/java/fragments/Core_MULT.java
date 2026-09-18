@@ -279,7 +279,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MULT update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MULT update: BadParam", RetCode.BadParam);
          core.multStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -297,7 +297,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MULT peek: BadParam", RetCode.BadParam);
          MultStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 * inReal1;
@@ -381,9 +381,9 @@
          throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
+         throw new TALibStateException("MULT openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MULT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind multOpen (composition seam). */
    MultStream multOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -402,9 +402,9 @@
          throw new InsufficientHistoryException("MULT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MULT open: internal error", retCode);
+         throw new TALibStateException("MULT open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MULT open: " + retCode, retCode);
+      throw new TALibArgumentException("MULT open: " + retCode, retCode);
    }
    /**
     * Open a live MULT stream over the warm-up history; the handle's
@@ -445,7 +445,7 @@
       requireHistoryLength("MULT openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("MULT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TaLibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MULT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

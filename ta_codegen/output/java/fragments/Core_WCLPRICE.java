@@ -288,7 +288,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WCLPRICE update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
          core.wclpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -306,7 +306,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
          WclpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
@@ -388,9 +388,9 @@
          throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WCLPRICE openAndFill: internal error", retCode);
+         throw new TALibStateException("WCLPRICE openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wclpriceOpen (composition seam). */
    WclpriceStream wclpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -409,9 +409,9 @@
          throw new InsufficientHistoryException("WCLPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WCLPRICE open: internal error", retCode);
+         throw new TALibStateException("WCLPRICE open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WCLPRICE open: " + retCode, retCode);
+      throw new TALibArgumentException("WCLPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live WCLPRICE stream over the warm-up history; the handle's
@@ -456,7 +456,7 @@
       requireHistoryLength("WCLPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WCLPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -666,7 +666,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("MA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA update: BadParam", RetCode.BadParam);
          core.maStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -684,7 +684,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA peek: BadParam", RetCode.BadParam);
          MaStream sp = this;
          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
             return inReal;
@@ -1241,9 +1241,9 @@
          throw new InsufficientHistoryException("MA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA open: internal error", retCode);
+         throw new TALibStateException("MA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA open: " + retCode, retCode);
+      throw new TALibArgumentException("MA open: " + retCode, retCode);
    }
    /**
     * Open a live MA stream over the warm-up history; the handle's
@@ -1296,9 +1296,9 @@
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA openAndFill: internal error", retCode);
+         throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
    }
    /* maOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MaStream maOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1314,7 +1314,7 @@
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MA openAndFill: internal error", retCode);
+         throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
    }

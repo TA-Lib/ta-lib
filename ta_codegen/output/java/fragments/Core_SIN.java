@@ -263,7 +263,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SIN update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SIN update: BadParam", RetCode.BadParam);
          core.sinStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SIN peek: BadParam", RetCode.BadParam);
          SinStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sin(inReal);
@@ -358,9 +358,9 @@
          throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN openAndFill: internal error", retCode);
+         throw new TALibStateException("SIN openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SIN openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sinOpen (composition seam). */
    SinStream sinOpenInternal( double inReal[], int startIdx )
@@ -379,9 +379,9 @@
          throw new InsufficientHistoryException("SIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SIN open: internal error", retCode);
+         throw new TALibStateException("SIN open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SIN open: " + retCode, retCode);
+      throw new TALibArgumentException("SIN open: " + retCode, retCode);
    }
    /**
     * Open a live SIN stream over the warm-up history; the handle's
@@ -418,7 +418,7 @@
       int guardOutLen = openFillCount("SIN openAndFill", inReal.length, SIN_Lookback());
       requireLength("SIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SIN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

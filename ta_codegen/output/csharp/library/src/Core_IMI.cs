@@ -677,9 +677,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public ImiStream ImiOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("IMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "IMI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("IMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("IMI", "open", "inClose", inClose.Length, inOpen.Length);
       return ImiOpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
@@ -714,9 +714,9 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public ImiStream ImiOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inOpen.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      if( inClose.IsEmpty ) throw new TaLibArgumentException("IMI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "IMI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inClose.IsEmpty ) throw new TALibArgumentException("IMI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
       int guardOutLen = OpenFillCount("IMI", "openAndFill", inOpen.Length, IMI_Lookback(optInTimePeriod));
       RequireHistoryLength("IMI", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("IMI", "openAndFill", "outReal", outReal.Length, guardOutLen);

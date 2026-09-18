@@ -569,7 +569,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("WMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA update: BadParam", RetCode.BadParam);
          core.wmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -587,7 +587,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA peek: BadParam", RetCode.BadParam);
          WmaStream sp = this;
          int j = 0;
          int rw = 0;
@@ -1058,9 +1058,9 @@
          throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WMA openAndFill: internal error", retCode);
+         throw new TALibStateException("WMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("WMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("WMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind wmaOpen (composition seam). */
    WmaStream wmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1079,9 +1079,9 @@
          throw new InsufficientHistoryException("WMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("WMA open: internal error", retCode);
+         throw new TALibStateException("WMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("WMA open: " + retCode, retCode);
+      throw new TALibArgumentException("WMA open: " + retCode, retCode);
    }
    /**
     * Open a live WMA stream over the warm-up history; the handle's
@@ -1120,7 +1120,7 @@
       int guardOutLen = openFillCount("WMA openAndFill", inReal.length, WMA_Lookback(optInTimePeriod));
       requireLength("WMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

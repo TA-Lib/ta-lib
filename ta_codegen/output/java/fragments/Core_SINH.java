@@ -261,7 +261,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("SINH update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SINH update: BadParam", RetCode.BadParam);
          core.sinhStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -279,7 +279,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SINH peek: BadParam", RetCode.BadParam);
          SinhStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sinh(inReal);
@@ -356,9 +356,9 @@
          throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
+         throw new TALibStateException("SINH openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("SINH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind sinhOpen (composition seam). */
    SinhStream sinhOpenInternal( double inReal[], int startIdx )
@@ -377,9 +377,9 @@
          throw new InsufficientHistoryException("SINH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("SINH open: internal error", retCode);
+         throw new TALibStateException("SINH open: internal error", retCode);
       }
-      throw new TaLibArgumentException("SINH open: " + retCode, retCode);
+      throw new TALibArgumentException("SINH open: " + retCode, retCode);
    }
    /**
     * Open a live SINH stream over the warm-up history; the handle's
@@ -416,7 +416,7 @@
       int guardOutLen = openFillCount("SINH openAndFill", inReal.length, SINH_Lookback());
       requireLength("SINH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SINH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

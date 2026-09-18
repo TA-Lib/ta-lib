@@ -41,19 +41,21 @@
 package io.github.talib;
 
 /**
- * An argument was rejected: an optional parameter outside its documented range,
- * two outputs sharing one array, or an array too short for the values the call
- * would read or write.
+ * The library failed for a reason that is not the caller's argument: an
+ * allocation, or an invariant it owns.
  *
- * <p>An {@link IllegalArgumentException}, which is what the API documents and
- * what a caller catches; the {@link RetCode} says which condition it was.
+ * <p>An {@link IllegalStateException}, which is what the API documents and what
+ * a caller catches; {@link #retCode()} distinguishes {@link RetCode#AllocErr}
+ * from {@link RetCode#InternalError}, which the type alone cannot. Neither is
+ * expected in normal use — an allocation failure terminates the JVM long before
+ * it reaches here.
  */
-public class TaLibArgumentException extends IllegalArgumentException implements TaLibFailure {
+public final class TALibStateException extends IllegalStateException implements TALibFailure {
    private static final long serialVersionUID = 1L;
 
    private final RetCode retCode;
 
-   TaLibArgumentException(String message, RetCode retCode) {
+   TALibStateException(String message, RetCode retCode) {
       super(message);
       this.retCode = retCode;
    }

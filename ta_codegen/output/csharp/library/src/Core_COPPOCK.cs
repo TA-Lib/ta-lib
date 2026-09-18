@@ -1261,8 +1261,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CoppockStream CoppockOpen( ReadOnlySpan<double> inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "COPPOCK open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "COPPOCK open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       return CoppockOpenInternal(inReal, 0, optInWMAPeriod, optInROC1Period, optInROC2Period);
    }
 
@@ -1300,8 +1300,8 @@ public partial class Core
    /// the two index faults an opener can have (rules S1 and S2).</exception>
    public CoppockStream CoppockOpenAndFill( ReadOnlySpan<double> inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("COPPOCK", "openAndFill", inReal.Length, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       RequireFillLength("COPPOCK", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {

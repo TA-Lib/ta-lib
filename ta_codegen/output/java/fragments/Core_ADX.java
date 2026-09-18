@@ -913,7 +913,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADX update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX update: BadParam", RetCode.BadParam);
          core.adxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -931,7 +931,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("ADX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX peek: BadParam", RetCode.BadParam);
          AdxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -1495,9 +1495,9 @@
          throw new InsufficientHistoryException("ADX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADX openAndFill: internal error", retCode);
+         throw new TALibStateException("ADX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adxOpen (composition seam). */
    AdxStream adxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1516,9 +1516,9 @@
          throw new InsufficientHistoryException("ADX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADX open: internal error", retCode);
+         throw new TALibStateException("ADX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADX open: " + retCode, retCode);
+      throw new TALibArgumentException("ADX open: " + retCode, retCode);
    }
    /**
     * Open a live ADX stream over the warm-up history; the handle's
@@ -1565,7 +1565,7 @@
       requireHistoryLength("ADX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ADX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TaLibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -502,7 +502,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLINVERTEDHAMMER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
          core.cdlinvertedhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -520,7 +520,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
          CdlinvertedhammerStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -801,9 +801,9 @@
          throw new InsufficientHistoryException("CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINVERTEDHAMMER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLINVERTEDHAMMER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlinvertedhammerOpen (composition seam). */
    CdlinvertedhammerStream cdlinvertedhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -822,9 +822,9 @@
          throw new InsufficientHistoryException("CDLINVERTEDHAMMER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLINVERTEDHAMMER open: internal error", retCode);
+         throw new TALibStateException("CDLINVERTEDHAMMER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLINVERTEDHAMMER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLINVERTEDHAMMER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLINVERTEDHAMMER stream over the warm-up history; the handle's
@@ -873,7 +873,7 @@
       requireHistoryLength("CDLINVERTEDHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLINVERTEDHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLINVERTEDHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

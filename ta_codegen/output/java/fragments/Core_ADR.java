@@ -443,7 +443,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ADR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("ADR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADR update: BadParam", RetCode.BadParam);
          core.adrStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -461,7 +461,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("ADR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADR peek: BadParam", RetCode.BadParam);
          AdrStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -642,9 +642,9 @@
          throw new InsufficientHistoryException("ADR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADR openAndFill: internal error", retCode);
+         throw new TALibStateException("ADR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ADR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind adrOpen (composition seam). */
    AdrStream adrOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -663,9 +663,9 @@
          throw new InsufficientHistoryException("ADR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ADR open: internal error", retCode);
+         throw new TALibStateException("ADR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ADR open: " + retCode, retCode);
+      throw new TALibArgumentException("ADR open: " + retCode, retCode);
    }
    /**
     * Open a live ADR stream over the warm-up history; the handle's
@@ -708,7 +708,7 @@
       requireHistoryLength("ADR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("ADR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("ADR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

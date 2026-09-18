@@ -261,7 +261,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("FLOOR update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
          core.floorStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -279,7 +279,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
          FloorStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.floor(inReal);
@@ -356,9 +356,9 @@
          throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
+         throw new TALibStateException("FLOOR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FLOOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind floorOpen (composition seam). */
    FloorStream floorOpenInternal( double inReal[], int startIdx )
@@ -377,9 +377,9 @@
          throw new InsufficientHistoryException("FLOOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FLOOR open: internal error", retCode);
+         throw new TALibStateException("FLOOR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FLOOR open: " + retCode, retCode);
+      throw new TALibArgumentException("FLOOR open: " + retCode, retCode);
    }
    /**
     * Open a live FLOOR stream over the warm-up history; the handle's
@@ -416,7 +416,7 @@
       int guardOutLen = openFillCount("FLOOR openAndFill", inReal.length, FLOOR_Lookback());
       requireLength("FLOOR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FLOOR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

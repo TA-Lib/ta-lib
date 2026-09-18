@@ -553,7 +553,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLHAMMER update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
          core.cdlhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -571,7 +571,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
          CdlhammerStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -902,9 +902,9 @@
          throw new InsufficientHistoryException("CDLHAMMER openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHAMMER openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLHAMMER openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHAMMER openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlhammerOpen (composition seam). */
    CdlhammerStream cdlhammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -923,9 +923,9 @@
          throw new InsufficientHistoryException("CDLHAMMER open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLHAMMER open: internal error", retCode);
+         throw new TALibStateException("CDLHAMMER open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLHAMMER open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLHAMMER open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHAMMER stream over the warm-up history; the handle's
@@ -974,7 +974,7 @@
       requireHistoryLength("CDLHAMMER openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHAMMER openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLHAMMER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

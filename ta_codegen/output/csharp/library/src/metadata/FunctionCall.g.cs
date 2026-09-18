@@ -530,7 +530,7 @@ public sealed class FunctionCall
             range = _info.Invoke(_core, this, startIdx, endIdx);
             return RetCode.Success;
         }
-        catch (Exception _e) when (_e is ITaLibFailure)
+        catch (Exception _e) when (_e is ITALibFailure)
         {
             // The one conversion point. Since #265 the thunk calls the function's
             // PUBLIC overload, like C's frames and Java's Dispatch, so every
@@ -541,7 +541,7 @@ public sealed class FunctionCall
             // ...)` in APO, and that throws too. Only the library's own failure
             // is converted; anything else is not ours to relabel.
             range = new OutRange(0, 0);
-            return ((ITaLibFailure)_e).RetCode;
+            return ((ITALibFailure)_e).RetCode;
         }
     }
 

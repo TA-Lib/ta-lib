@@ -507,7 +507,7 @@
             throw failure("FRACTAL update", RetCode.OutOfRangeEndIndex);
          requireArgument("FRACTAL update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
          core.fractalStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.swingHigh = this.cur_outSwingHigh;
@@ -527,7 +527,7 @@
       public void peek( double inHigh, double inLow, FractalOut out ) {
          requireArgument("FRACTAL peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
          FractalStream sp = this;
          int i = 0;
          double pivotHigh = 0.0;
@@ -810,9 +810,9 @@
          throw new InsufficientHistoryException("FRACTAL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FRACTAL openAndFill: internal error", retCode);
+         throw new TALibStateException("FRACTAL openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind fractalOpen (composition seam). */
    FractalStream fractalOpenInternal( double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars )
@@ -832,9 +832,9 @@
          throw new InsufficientHistoryException("FRACTAL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("FRACTAL open: internal error", retCode);
+         throw new TALibStateException("FRACTAL open: internal error", retCode);
       }
-      throw new TaLibArgumentException("FRACTAL open: " + retCode, retCode);
+      throw new TALibArgumentException("FRACTAL open: " + retCode, retCode);
    }
    /**
     * Open a live FRACTAL stream over the warm-up history; the handle's
@@ -878,7 +878,7 @@
       requireLength("FRACTAL openAndFill", "outSwingHigh", outSwingHigh, guardOutLen);
       requireLength("FRACTAL openAndFill", "outSwingLow", outSwingLow, guardOutLen);
       if( (Object)outSwingHigh == (Object)inHigh || (Object)outSwingHigh == (Object)inLow || (Object)outSwingLow == (Object)inHigh || (Object)outSwingLow == (Object)inLow || (Object)outSwingHigh == (Object)outSwingLow ) {
-         throw new TaLibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

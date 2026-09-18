@@ -699,7 +699,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("KAMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA update: BadParam", RetCode.BadParam);
          core.kamaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -717,7 +717,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
          KamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -1165,9 +1165,9 @@
          throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KAMA openAndFill: internal error", retCode);
+         throw new TALibStateException("KAMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("KAMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("KAMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind kamaOpen (composition seam). */
    KamaStream kamaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1186,9 +1186,9 @@
          throw new InsufficientHistoryException("KAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("KAMA open: internal error", retCode);
+         throw new TALibStateException("KAMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("KAMA open: " + retCode, retCode);
+      throw new TALibArgumentException("KAMA open: " + retCode, retCode);
    }
    /**
     * Open a live KAMA stream over the warm-up history; the handle's
@@ -1227,7 +1227,7 @@
       int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
       requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

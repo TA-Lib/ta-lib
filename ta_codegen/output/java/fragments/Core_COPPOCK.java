@@ -672,7 +672,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("COPPOCK update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
          core.coppockStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -690,7 +690,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("COPPOCK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK peek: BadParam", RetCode.BadParam);
          CoppockStream sp = this;
          int q = 0;
          int rw = 0;
@@ -1148,9 +1148,9 @@
          throw new InsufficientHistoryException("COPPOCK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COPPOCK openAndFill: internal error", retCode);
+         throw new TALibStateException("COPPOCK openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("COPPOCK openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("COPPOCK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind coppockOpen (composition seam). */
    CoppockStream coppockOpenInternal( double inReal[], int startIdx, int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
@@ -1169,9 +1169,9 @@
          throw new InsufficientHistoryException("COPPOCK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("COPPOCK open: internal error", retCode);
+         throw new TALibStateException("COPPOCK open: internal error", retCode);
       }
-      throw new TaLibArgumentException("COPPOCK open: " + retCode, retCode);
+      throw new TALibArgumentException("COPPOCK open: " + retCode, retCode);
    }
    /**
     * Open a live COPPOCK stream over the warm-up history; the handle's
@@ -1210,7 +1210,7 @@
       int guardOutLen = openFillCount("COPPOCK openAndFill", inReal.length, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       requireLength("COPPOCK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("COPPOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COPPOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

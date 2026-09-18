@@ -457,7 +457,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("CDLGRAVESTONEDOJI update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
          core.cdlgravestonedojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -475,7 +475,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TaLibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
          CdlgravestonedojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -695,9 +695,9 @@
          throw new InsufficientHistoryException("CDLGRAVESTONEDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGRAVESTONEDOJI openAndFill: internal error", retCode);
+         throw new TALibStateException("CDLGRAVESTONEDOJI openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind cdlgravestonedojiOpen (composition seam). */
    CdlgravestonedojiStream cdlgravestonedojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -716,9 +716,9 @@
          throw new InsufficientHistoryException("CDLGRAVESTONEDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("CDLGRAVESTONEDOJI open: internal error", retCode);
+         throw new TALibStateException("CDLGRAVESTONEDOJI open: internal error", retCode);
       }
-      throw new TaLibArgumentException("CDLGRAVESTONEDOJI open: " + retCode, retCode);
+      throw new TALibArgumentException("CDLGRAVESTONEDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLGRAVESTONEDOJI stream over the warm-up history; the handle's
@@ -767,7 +767,7 @@
       requireHistoryLength("CDLGRAVESTONEDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLGRAVESTONEDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TaLibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLGRAVESTONEDOJI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -587,7 +587,7 @@
             throw failure("MACDFIX update", RetCode.OutOfRangeEndIndex);
          requireArgument("MACDFIX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
          core.macdfixStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -608,7 +608,7 @@
       public void peek( double inReal, MacdfixOut out ) {
          requireArgument("MACDFIX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
          MacdfixStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -902,9 +902,9 @@
          throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDFIX openAndFill: internal error", retCode);
+         throw new TALibStateException("MACDFIX openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind macdfixOpen (composition seam). */
    MacdfixStream macdfixOpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
@@ -925,9 +925,9 @@
          throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("MACDFIX open: internal error", retCode);
+         throw new TALibStateException("MACDFIX open: internal error", retCode);
       }
-      throw new TaLibArgumentException("MACDFIX open: " + retCode, retCode);
+      throw new TALibArgumentException("MACDFIX open: " + retCode, retCode);
    }
    /**
     * Open a live MACDFIX stream over the warm-up history; the handle's
@@ -968,7 +968,7 @@
       requireLength("MACDFIX openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDFIX openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TaLibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

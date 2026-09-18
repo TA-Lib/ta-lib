@@ -476,7 +476,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
             throw failure("ZLEMA update", RetCode.OutOfRangeEndIndex);
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
          core.zlemaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -494,7 +494,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TaLibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
          ZlemaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -692,9 +692,9 @@
          throw new InsufficientHistoryException("ZLEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ZLEMA openAndFill: internal error", retCode);
+         throw new TALibStateException("ZLEMA openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind zlemaOpen (composition seam). */
    ZlemaStream zlemaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -713,9 +713,9 @@
          throw new InsufficientHistoryException("ZLEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("ZLEMA open: internal error", retCode);
+         throw new TALibStateException("ZLEMA open: internal error", retCode);
       }
-      throw new TaLibArgumentException("ZLEMA open: " + retCode, retCode);
+      throw new TALibArgumentException("ZLEMA open: " + retCode, retCode);
    }
    /**
     * Open a live ZLEMA stream over the warm-up history; the handle's
@@ -754,7 +754,7 @@
       int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, ZLEMA_Lookback(optInTimePeriod));
       requireLength("ZLEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TaLibArgumentException("ZLEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
