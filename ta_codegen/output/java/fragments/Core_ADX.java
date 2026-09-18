@@ -81,15 +81,15 @@
       double prevADX = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /*
        * The DM1 (one period) is base on the largest part of
@@ -213,7 +213,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -433,7 +433,7 @@
          outReal[outIdx++] = prevADX;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode ADX_Impl( int startIdx,
                      int endIdx,
@@ -468,15 +468,15 @@
       double prevADX = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
       if( startIdx < lookbackTotal ) {
@@ -485,7 +485,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -655,7 +655,7 @@
          outReal[outIdx++] = prevADX;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Wilder's Average Directional Movement Index, a smoothed measure of trend
@@ -726,7 +726,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ADX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ADX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -803,7 +803,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ADX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ADX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -871,7 +871,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ADX advance", RetCode.OutOfRangeEndIndex);
+            throw failure("ADX advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -911,9 +911,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ADX update", RetCode.OutOfRangeEndIndex);
+            throw failure("ADX update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ADX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX update: BAD_PARAM", RetCode.BAD_PARAM);
          core.adxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -931,7 +931,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ADX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ADX peek: BAD_PARAM", RetCode.BAD_PARAM);
          AdxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -1108,23 +1108,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /*
        * The DM1 (one period) is base on the largest part of
@@ -1248,7 +1248,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -1479,7 +1479,7 @@
       sp.prevTR = prevTR;
       sp.prevADX = prevADX;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* adxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AdxStream adxOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1488,13 +1488,13 @@
       RetCode retCode = adxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ADX openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ADX openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("ADX openAndFill: " + retCode, retCode);
@@ -1509,13 +1509,13 @@
       RetCode retCode = adxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ADX open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ADX open: internal error", retCode);
       }
       throw new TALibArgumentException("ADX open: " + retCode, retCode);
@@ -1565,7 +1565,7 @@
       requireHistoryLength("ADX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ADX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("ADX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ADX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -66,15 +66,15 @@
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
@@ -89,7 +89,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -109,7 +109,7 @@
          for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
             outReal[outIdx] = inReal[today++];
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
@@ -206,7 +206,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode RSI_Impl( int startIdx,
                      int endIdx,
@@ -228,15 +228,15 @@
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -245,7 +245,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       if( optInTimePeriod == 1 ) {
@@ -256,7 +256,7 @@
          for( outIdx = 0; outIdx < (int)i; outIdx += 1 ) {
             outReal[outIdx] = (double)inReal[today++];
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx - lookbackTotal;
@@ -322,7 +322,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
@@ -375,7 +375,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -434,7 +434,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -498,7 +498,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RSI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("RSI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -534,9 +534,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RSI update", RetCode.OutOfRangeEndIndex);
+            throw failure("RSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.rsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -554,7 +554,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RSI peek: BAD_PARAM", RetCode.BAD_PARAM);
          RsiStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -654,26 +654,26 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
          int fillLb = RSI_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.invPeriod = 0.0;
@@ -690,7 +690,7 @@
             }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
@@ -705,7 +705,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -811,7 +811,7 @@
       sp.prevLoss = prevLoss;
       sp.prevValue = prevValue;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* rsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RsiStream rsiOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -820,13 +820,13 @@
       RetCode retCode = rsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RSI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("RSI openAndFill: " + retCode, retCode);
@@ -841,13 +841,13 @@
       RetCode retCode = rsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RSI open: internal error", retCode);
       }
       throw new TALibArgumentException("RSI open: " + retCode, retCode);
@@ -889,7 +889,7 @@
       int guardOutLen = openFillCount("RSI openAndFill", inReal.length, RSI_Lookback(optInTimePeriod));
       requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("RSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

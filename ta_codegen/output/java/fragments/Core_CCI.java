@@ -74,15 +74,15 @@
       int circBuffer_Idx = 0;
       int maxIdx_circBuffer = (30)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* This ptr will points on a circular buffer of
        * at least "optInTimePeriod" element.
@@ -101,12 +101,12 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -178,7 +178,7 @@
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Free the circular buffer if it was dynamically allocated. */
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode CCI_Impl( int startIdx,
                      int endIdx,
@@ -203,15 +203,15 @@
       int circBuffer_Idx = 0;
       int maxIdx_circBuffer = (30)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
@@ -220,9 +220,9 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -262,7 +262,7 @@
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Commodity Channel Index: measures the current typical price relative to
@@ -323,7 +323,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CCI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CCI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -390,7 +390,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CCI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CCI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -454,7 +454,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CCI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("CCI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -490,9 +490,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CCI update", RetCode.OutOfRangeEndIndex);
+            throw failure("CCI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CCI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.cciStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -510,7 +510,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CCI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CCI peek: BAD_PARAM", RetCode.BAD_PARAM);
          CciStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -662,23 +662,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* This ptr will points on a circular buffer of
        * at least "optInTimePeriod" element.
@@ -697,12 +697,12 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Allocate a circular buffer equal to the requested
        * period.
        */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       circBuffer = new double[optInTimePeriod];
       maxIdx_circBuffer = (optInTimePeriod)-1;
       circBuffer_Idx = 0;
@@ -777,7 +777,7 @@
       /* Capture the live batch state into the handle. */
       int capCb_circBuffer = maxIdx_circBuffer + 1;
       if( capCb_circBuffer > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.circBuffer_Idx = circBuffer_Idx;
@@ -785,7 +785,7 @@
       sp.cbSize_circBuffer = capCb_circBuffer;
       sp.cb_circBuffer = circBuffer;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* cciOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CciStream cciOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -794,13 +794,13 @@
       RetCode retCode = cciOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CCI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CCI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("CCI openAndFill: " + retCode, retCode);
@@ -815,13 +815,13 @@
       RetCode retCode = cciOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CCI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CCI open: internal error", retCode);
       }
       throw new TALibArgumentException("CCI open: " + retCode, retCode);
@@ -871,7 +871,7 @@
       requireHistoryLength("CCI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("CCI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("CCI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CCI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

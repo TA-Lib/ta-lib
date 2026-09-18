@@ -45,10 +45,10 @@
       double tempLT = 0;
       double tempHT = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* True Range is the greatest of the following:
        *
@@ -73,7 +73,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -97,7 +97,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode TRANGE_Impl( int startIdx,
                         int endIdx,
@@ -117,10 +117,10 @@
       double tempLT = 0;
       double tempHT = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( startIdx < 1 ) {
          startIdx = 1;
@@ -128,7 +128,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -150,7 +150,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * True Range: the greatest of today's high-low span and the two gaps between
@@ -211,7 +211,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TRANGE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -278,7 +278,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TRANGE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TRANGE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -338,7 +338,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TRANGE advance", RetCode.OutOfRangeEndIndex);
+            throw failure("TRANGE advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -370,9 +370,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TRANGE update", RetCode.OutOfRangeEndIndex);
+            throw failure("TRANGE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE update: BAD_PARAM", RetCode.BAD_PARAM);
          core.trangeStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -390,7 +390,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRANGE peek: BAD_PARAM", RetCode.BAD_PARAM);
          TrangeStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -481,18 +481,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* True Range is the greatest of the following:
        *
@@ -517,7 +517,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outIdx = 0;
       today = startIdx;
@@ -544,7 +544,7 @@
       /* Capture the live batch state into the handle. */
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* trangeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TrangeStream trangeOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -553,13 +553,13 @@
       RetCode retCode = trangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TRANGE openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("TRANGE openAndFill: " + retCode, retCode);
@@ -574,13 +574,13 @@
       RetCode retCode = trangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TRANGE open: internal error", retCode);
       }
       throw new TALibArgumentException("TRANGE open: " + retCode, retCode);
@@ -628,7 +628,7 @@
       requireHistoryLength("TRANGE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TRANGE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("TRANGE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRANGE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

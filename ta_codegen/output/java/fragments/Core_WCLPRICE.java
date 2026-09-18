@@ -41,10 +41,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
       outIdx = 0;
@@ -53,7 +53,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode WCLPRICE_Impl( int startIdx,
                           int endIdx,
@@ -67,10 +67,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
@@ -78,7 +78,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Weighted Close Price: a per-bar price average giving the close double
@@ -134,7 +134,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WCLPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -196,7 +196,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WCLPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WCLPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -255,7 +255,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WCLPRICE advance", RetCode.OutOfRangeEndIndex);
+            throw failure("WCLPRICE advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -286,9 +286,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WCLPRICE update", RetCode.OutOfRangeEndIndex);
+            throw failure("WCLPRICE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE update: BAD_PARAM", RetCode.BAD_PARAM);
          core.wclpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -306,7 +306,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WCLPRICE peek: BAD_PARAM", RetCode.BAD_PARAM);
          WclpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
@@ -350,18 +350,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
       outIdx = 0;
@@ -372,7 +372,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* wclpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WclpriceStream wclpriceOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -381,13 +381,13 @@
       RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WCLPRICE openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("WCLPRICE openAndFill: " + retCode, retCode);
@@ -402,13 +402,13 @@
       RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WCLPRICE open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WCLPRICE open: internal error", retCode);
       }
       throw new TALibArgumentException("WCLPRICE open: " + retCode, retCode);
@@ -456,7 +456,7 @@
       requireHistoryLength("WCLPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WCLPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("WCLPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WCLPRICE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

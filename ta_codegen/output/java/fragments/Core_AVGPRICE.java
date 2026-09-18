@@ -42,10 +42,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* Average price = (High + Low + Open + Close) / 4 */
       outIdx = 0;
@@ -54,7 +54,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode AVGPRICE_Impl( int startIdx,
                           int endIdx,
@@ -69,10 +69,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
@@ -80,7 +80,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Average Price: the arithmetic mean of each bar's open, high, low, and
@@ -140,7 +140,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AVGPRICE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -206,7 +206,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AVGPRICE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -265,7 +265,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AVGPRICE advance", RetCode.OutOfRangeEndIndex);
+            throw failure("AVGPRICE advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -296,9 +296,9 @@
        */
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AVGPRICE update", RetCode.OutOfRangeEndIndex);
+            throw failure("AVGPRICE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE update: BAD_PARAM", RetCode.BAD_PARAM);
          core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -316,7 +316,7 @@
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGPRICE peek: BAD_PARAM", RetCode.BAD_PARAM);
          AvgpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
@@ -360,18 +360,18 @@
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Average price = (High + Low + Open + Close) / 4 */
       outIdx = 0;
@@ -382,7 +382,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* avgpriceOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AvgpriceStream avgpriceOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -391,13 +391,13 @@
       RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AVGPRICE openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
@@ -412,13 +412,13 @@
       RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AVGPRICE open: internal error", retCode);
       }
       throw new TALibArgumentException("AVGPRICE open: " + retCode, retCode);
@@ -470,7 +470,7 @@
       requireHistoryLength("AVGPRICE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("AVGPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("AVGPRICE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGPRICE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

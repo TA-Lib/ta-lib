@@ -77,20 +77,20 @@
       int nBar = 0;
       int nSecond = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFirstPeriod == Integer.MIN_VALUE ) {
          optInFirstPeriod = 25;
       } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSecondPeriod == Integer.MIN_VALUE ) {
          optInSecondPeriod = 13;
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
@@ -99,7 +99,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       /* Blau's double smoothing in one pass: the signed momentum and its
@@ -217,7 +217,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode TSI_Impl( int startIdx,
                      int endIdx,
@@ -249,20 +249,20 @@
       int nBar = 0;
       int nSecond = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFirstPeriod == Integer.MIN_VALUE ) {
          optInFirstPeriod = 25;
       } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSecondPeriod == Integer.MIN_VALUE ) {
          optInSecondPeriod = 13;
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
@@ -271,7 +271,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       kFirst = 2.0 / (double)(optInFirstPeriod + 1);
@@ -345,7 +345,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * True Strength Index: William Blau's double-smoothed momentum oscillator.
@@ -422,7 +422,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -505,7 +505,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -573,7 +573,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TSI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("TSI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -613,9 +613,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TSI update", RetCode.OutOfRangeEndIndex);
+            throw failure("TSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("TSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.tsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -633,7 +633,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("TSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TSI peek: BAD_PARAM", RetCode.BAD_PARAM);
          TsiStream sp = this;
          double mom = 0.0;
          double absMom = 0.0;
@@ -730,25 +730,25 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInFirstPeriod == Integer.MIN_VALUE ) {
          optInFirstPeriod = 25;
       } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSecondPeriod == Integer.MIN_VALUE ) {
          optInSecondPeriod = 13;
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
@@ -757,7 +757,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       /* Blau's double smoothing in one pass: the signed momentum and its
@@ -886,7 +886,7 @@
       sp.emaSecondDen = emaSecondDen;
       sp.prevClose = prevClose;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* tsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TsiStream tsiOpenAndFillInternal( double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -895,13 +895,13 @@
       RetCode retCode = tsiOpenImpl(sp, inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TSI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TSI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("TSI openAndFill: " + retCode, retCode);
@@ -916,13 +916,13 @@
       RetCode retCode = tsiOpenImpl(sp, inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TSI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TSI open: internal error", retCode);
       }
       throw new TALibArgumentException("TSI open: " + retCode, retCode);
@@ -964,7 +964,7 @@
       int guardOutLen = openFillCount("TSI openAndFill", inReal.length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
       requireLength("TSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

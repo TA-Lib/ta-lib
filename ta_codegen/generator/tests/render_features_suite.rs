@@ -146,12 +146,12 @@ fn test_all_indicators_contain_success_returns() {
                 name
             );
             // Accept: literal RetCode.Success OR a return of a RetCode variable/call.
-            let java_has_success = out.java.contains("RetCode.Success")
+            let java_has_success = out.java.contains("RetCode.SUCCESS")
                 || out.java.contains("return retCode ;")
                 || (out.java.contains("return ") && out.java.contains("Internal("));
             assert!(
                 java_has_success,
-                "Java {}: missing RetCode.Success return",
+                "Java {}: missing RetCode.SUCCESS return",
                 name
             );
         }));
@@ -1712,15 +1712,15 @@ fn java_backend_emits_candle_settings() {
 
     // Assert Java output contains unpacking lines (canonical array/ordinal form)
     assert!(
-        java_out.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType"),
+        java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType"),
         "Java output should unpack BodyLong.rangeType: {java_out}"
     );
     assert!(
-        java_out.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod"),
+        java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod"),
         "Java output should unpack BodyLong.avgPeriod"
     );
     assert!(
-        java_out.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor"),
+        java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor"),
         "Java output should unpack BodyLong.factor"
     );
 }
@@ -1755,7 +1755,7 @@ fn candle_settings_unpacking_in_lookback() {
     let java_lookback_end = java_out.find("RetCode CDL2CROWS_Impl(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
-        java_lookback.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
+        java_lookback.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()]"),
         "Java lookback should contain candle settings unpacking"
     );
 }
@@ -1789,11 +1789,11 @@ fn candle_settings_multiple_settings_in_kicking() {
 
     let java_out = backends::java::generate(&func, &enums, &registry, &helpers);
     assert!(
-        java_out.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
+        java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()]"),
         "Java output should unpack BodyLong"
     );
     assert!(
-        java_out.contains("this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()]"),
+        java_out.contains("this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()]"),
         "Java output should unpack ShadowVeryShort"
     );
 }

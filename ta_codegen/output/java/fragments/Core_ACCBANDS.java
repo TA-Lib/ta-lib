@@ -69,18 +69,18 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -96,7 +96,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Each band is a simple moving average maintained as a running sum over a
        * shared trailing window (all three share optInTimePeriod, so one trailing
@@ -182,7 +182,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode ACCBANDS_Impl( int startIdx,
                           int endIdx,
@@ -208,18 +208,18 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       lookbackTotal = SMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -228,7 +228,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       periodTotalUpper = 0.0;
       periodTotalMiddle = 0.0;
@@ -282,7 +282,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Acceleration Bands: three overlap lines around price. The middle band is
@@ -349,7 +349,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ACCBANDS_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ACCBANDS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -422,7 +422,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ACCBANDS_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ACCBANDS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -492,7 +492,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ACCBANDS advance", RetCode.OutOfRangeEndIndex);
+            throw failure("ACCBANDS advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -534,10 +534,10 @@
        */
       public void update( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ACCBANDS update", RetCode.OutOfRangeEndIndex);
+            throw failure("ACCBANDS update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("ACCBANDS update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS update: BAD_PARAM", RetCode.BAD_PARAM);
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -558,7 +558,7 @@
       public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          requireArgument("ACCBANDS peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ACCBANDS peek: BAD_PARAM", RetCode.BAD_PARAM);
          AccbandsStream sp = this;
          double tempUpper = 0.0;
          double tempMiddle = 0.0;
@@ -737,23 +737,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -769,7 +769,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Each band is a simple moving average maintained as a running sum over a
        * shared trailing window (all three share optInTimePeriod, so one trailing
@@ -858,7 +858,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
@@ -879,7 +879,7 @@
       sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* accbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AccbandsStream accbandsOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
@@ -888,13 +888,13 @@
       RetCode retCode = accbandsOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ACCBANDS openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
@@ -911,13 +911,13 @@
       RetCode retCode = accbandsOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ACCBANDS open: internal error", retCode);
       }
       throw new TALibArgumentException("ACCBANDS open: " + retCode, retCode);
@@ -969,7 +969,7 @@
       requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("ACCBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ACCBANDS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -256,9 +256,9 @@ pub fn emit_rust_unpacking_from(
 /// Emit Java unpacking lines for the given candle settings.
 ///
 /// ```java
-/// int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-/// int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-/// double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
+/// int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+/// int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+/// double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
 /// ```
 ///
 /// This is the canonical shipped-`Core.java` access form: `candleSettings` is a
@@ -270,14 +270,16 @@ pub fn emit_java_unpacking(settings: &BTreeSet<String>, indent: usize) -> String
     let pad = " ".repeat(indent);
     let mut out = String::new();
     for setting in settings {
+        // The local keeps the C spelling; only the enum member is Java-cased.
+        let member = pascal_to_snake_case(setting).to_uppercase();
         out.push_str(&format!(
-            "{pad}int {setting}_rangeType = this.candleSettings[CandleSettingType.{setting}.ordinal()].rangeType.ordinal();\n"
+            "{pad}int {setting}_rangeType = this.candleSettings[CandleSettingType.{member}.ordinal()].rangeType.ordinal();\n"
         ));
         out.push_str(&format!(
-            "{pad}int {setting}_avgPeriod = this.candleSettings[CandleSettingType.{setting}.ordinal()].avgPeriod;\n"
+            "{pad}int {setting}_avgPeriod = this.candleSettings[CandleSettingType.{member}.ordinal()].avgPeriod;\n"
         ));
         out.push_str(&format!(
-            "{pad}double {setting}_factor = this.candleSettings[CandleSettingType.{setting}.ordinal()].factor;\n"
+            "{pad}double {setting}_factor = this.candleSettings[CandleSettingType.{member}.ordinal()].factor;\n"
         ));
     }
     out
@@ -449,9 +451,9 @@ mod tests {
         let mut settings = BTreeSet::new();
         settings.insert("BodyLong".to_string());
         let code = emit_java_unpacking(&settings, 6);
-        assert!(code.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();"));
-        assert!(code.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;"));
-        assert!(code.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;"));
+        assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();"));
+        assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;"));
+        assert!(code.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;"));
     }
 
     #[test]

@@ -58,23 +58,23 @@ package io.github.talib;
 public enum RetCode
 {
     /** The call completed; the reported range says how much was written. */
-    Success(0),
+    SUCCESS(0),
     /** The catch-all rejection ({@code TA_BAD_PARAM}). */
-    BadParam(2),
+    BAD_PARAM(2),
     /** C parity only, never returned here: an allocation failure terminates the process (#178). */
-    AllocErr(3),
+    ALLOC_ERR(3),
     /** {@code startIdx} outside the addressable index domain. */
-    OutOfRangeStartIndex(12),
+    OUT_OF_RANGE_START_INDEX(12),
     /** {@code endIdx} outside the domain, or below {@code startIdx}. */
-    OutOfRangeEndIndex(13),
+    OUT_OF_RANGE_END_INDEX(13),
     /**
      * A stream opener was given fewer than {@code lookback + 1} bars — the
      * library's one recoverable condition. Streaming only: a batch range
-     * shorter than the lookback is {@link #Success} with a zero count.
+     * shorter than the lookback is {@link #SUCCESS} with a zero count.
      */
-    InsufficientHistory(17),
+    INSUFFICIENT_HISTORY(17),
     /** An invariant the library owns was violated. */
-    InternalError(5000);
+    INTERNAL_ERROR(5000);
 
     private final int cValue;
 

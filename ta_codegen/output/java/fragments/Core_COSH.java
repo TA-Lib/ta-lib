@@ -35,17 +35,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = Math.cosh(inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode COSH_Impl( int startIdx,
                       int endIdx,
@@ -57,17 +57,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = Math.cosh((double)inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Element-wise hyperbolic cosine of the input series.
@@ -116,7 +116,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("COSH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -171,7 +171,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("COSH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -230,7 +230,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("COSH advance", RetCode.OutOfRangeEndIndex);
+            throw failure("COSH advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -261,9 +261,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("COSH update", RetCode.OutOfRangeEndIndex);
+            throw failure("COSH update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COSH update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH update: BAD_PARAM", RetCode.BAD_PARAM);
          core.coshStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COSH peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COSH peek: BAD_PARAM", RetCode.BAD_PARAM);
          CoshStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cosh(inReal);
@@ -325,15 +325,15 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx * outStride] = Math.cosh(inReal[i]);
@@ -342,7 +342,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* coshOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CoshStream coshOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -351,13 +351,13 @@
       RetCode retCode = coshOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("COSH openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("COSH openAndFill: " + retCode, retCode);
@@ -372,13 +372,13 @@
       RetCode retCode = coshOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("COSH open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("COSH open: internal error", retCode);
       }
       throw new TALibArgumentException("COSH open: " + retCode, retCode);
@@ -418,7 +418,7 @@
       int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
       requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("COSH openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COSH openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

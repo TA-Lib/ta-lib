@@ -36,17 +36,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = inReal0[i] / inReal1[i];
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode DIV_Impl( int startIdx,
                      int endIdx,
@@ -59,17 +59,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = (double)inReal0[i] / (double)inReal1[i];
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Element-wise division of two input series.
@@ -125,7 +125,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DIV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -187,7 +187,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DIV_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DIV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -246,7 +246,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DIV advance", RetCode.OutOfRangeEndIndex);
+            throw failure("DIV advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -277,9 +277,9 @@
        */
       public double update( double inReal0, double inReal1 ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DIV update", RetCode.OutOfRangeEndIndex);
+            throw failure("DIV update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("DIV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV update: BAD_PARAM", RetCode.BAD_PARAM);
          core.divStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -297,7 +297,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("DIV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DIV peek: BAD_PARAM", RetCode.BAD_PARAM);
          DivStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 / inReal1;
@@ -341,18 +341,18 @@
       int historyLen = inReal0.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inReal1.length != inReal0.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx * outStride] = inReal0[i] / inReal1[i];
@@ -361,7 +361,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* divOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DivStream divOpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -370,13 +370,13 @@
       RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DIV openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DIV openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("DIV openAndFill: " + retCode, retCode);
@@ -391,13 +391,13 @@
       RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DIV open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DIV open: internal error", retCode);
       }
       throw new TALibArgumentException("DIV open: " + retCode, retCode);
@@ -441,7 +441,7 @@
       requireHistoryLength("DIV openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("DIV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TALibArgumentException("DIV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DIV openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

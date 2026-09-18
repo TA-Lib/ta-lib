@@ -109,15 +109,15 @@
       int outIdx = 0;
       int todayIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
@@ -150,7 +150,7 @@
       if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* No-smoothing identity: period 1 (every MA type) or the explicit
        * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
@@ -162,7 +162,7 @@
             outReal[outIdx] = inReal[todayIdx];
          }
          outBegIdx.value = startIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Simply forward the job to the corresponding TA function. */
       switch( optInMAType )
@@ -171,43 +171,43 @@
          OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case EMA:
          OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr1.begIdx();
          outNBElement.value = _xr1.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case WMA:
          OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr2.begIdx();
          outNBElement.value = _xr2.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case DEMA:
          OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr3.begIdx();
          outNBElement.value = _xr3.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case TEMA:
          OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr4.begIdx();
          outNBElement.value = _xr4.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case TRIMA:
          OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr5.begIdx();
          outNBElement.value = _xr5.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case KAMA:
          OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr6.begIdx();
          outNBElement.value = _xr6.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case MAMA:
          /* The optInTimePeriod is ignored. FAMA is a nullable output
@@ -216,34 +216,34 @@
          OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case T3:
          OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx.value = _xr8.begIdx();
          outNBElement.value = _xr8.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case HMA:
          OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr9.begIdx();
          outNBElement.value = _xr9.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case ZLEMA:
          OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr10.begIdx();
          outNBElement.value = _xr10.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case RMA:
          OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr11.begIdx();
          outNBElement.value = _xr11.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       default:
-         retCode = RetCode.BadParam;
+         retCode = RetCode.BAD_PARAM;
          break;
       }
       return retCode ;
@@ -262,15 +262,15 @@
       int outIdx = 0;
       int todayIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
@@ -278,7 +278,7 @@
       if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;
@@ -287,7 +287,7 @@
             outReal[outIdx] = (double)inReal[todayIdx];
          }
          outBegIdx.value = startIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       switch( optInMAType )
       {
@@ -295,76 +295,76 @@
          OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case EMA:
          OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr1.begIdx();
          outNBElement.value = _xr1.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case WMA:
          OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr2.begIdx();
          outNBElement.value = _xr2.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case DEMA:
          OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr3.begIdx();
          outNBElement.value = _xr3.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case TEMA:
          OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr4.begIdx();
          outNBElement.value = _xr4.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case TRIMA:
          OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr5.begIdx();
          outNBElement.value = _xr5.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case KAMA:
          OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr6.begIdx();
          outNBElement.value = _xr6.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case MAMA:
          OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case T3:
          OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx.value = _xr8.begIdx();
          outNBElement.value = _xr8.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case HMA:
          OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr9.begIdx();
          outNBElement.value = _xr9.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case ZLEMA:
          OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr10.begIdx();
          outNBElement.value = _xr10.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       case RMA:
          OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr11.begIdx();
          outNBElement.value = _xr11.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          break;
       default:
-         retCode = RetCode.BadParam;
+         retCode = RetCode.BAD_PARAM;
          break;
       }
       return retCode ;
@@ -442,7 +442,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -523,7 +523,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -586,7 +586,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -664,9 +664,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MA update", RetCode.OutOfRangeEndIndex);
+            throw failure("MA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.maStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -684,7 +684,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MA peek: BAD_PARAM", RetCode.BAD_PARAM);
          MaStream sp = this;
          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
             return inReal;
@@ -826,25 +826,25 @@
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -853,11 +853,11 @@
          int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.outRangeBegIdx = fillLb;
          sp.outRangeCount = historyLen - fillLb;
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       switch( optInMAType )
       {
@@ -958,38 +958,38 @@
          break;
       }
       default:
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInMAType = optInMAType;
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    private RetCode maOpenAndFillImpl( MaStream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( (Object)outReal == (Object)inReal ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -1001,7 +1001,7 @@
             outReal[fillIdx] = inReal[fillLb + fillIdx];
          }
          sp.cur_outReal = outReal[outNBElement.value - 1];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       switch( optInMAType )
       {
@@ -1102,35 +1102,35 @@
          break;
       }
       default:
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInMAType = optInMAType;
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    private RetCode maOpenAndFillInternalImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -1138,7 +1138,7 @@
          int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
@@ -1146,7 +1146,7 @@
             outReal[fillIdx] = inReal[fillLb + fillIdx];
          }
          sp.cur_outReal = outReal[outNBElement.value - 1];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       switch( optInMAType )
       {
@@ -1223,24 +1223,24 @@
          break;
       }
       default:
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInMAType = optInMAType;
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* Internal startIdx-anchored open behind maOpen (composition seam). */
    MaStream maOpenInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       MaStream sp = new MaStream(this);
       RetCode retCode = maOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MA open: internal error", retCode);
       }
       throw new TALibArgumentException("MA open: " + retCode, retCode);
@@ -1289,13 +1289,13 @@
       RetCode retCode = maOpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
@@ -1307,13 +1307,13 @@
       RetCode retCode = maOpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);

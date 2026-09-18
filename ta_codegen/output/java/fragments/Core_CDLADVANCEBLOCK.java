@@ -23,21 +23,21 @@
     */
    public int CDLADVANCEBLOCK_Lookback( )
    {
-      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-      double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
-      int Far_rangeType = this.candleSettings[CandleSettingType.Far.ordinal()].rangeType.ordinal();
-      int Far_avgPeriod = this.candleSettings[CandleSettingType.Far.ordinal()].avgPeriod;
-      double Far_factor = this.candleSettings[CandleSettingType.Far.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].rangeType.ordinal();
-      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].avgPeriod;
-      double ShadowLong_factor = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].factor;
-      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].rangeType.ordinal();
-      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].factor;
+      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+      double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
+      int Far_rangeType = this.candleSettings[CandleSettingType.FAR.ordinal()].rangeType.ordinal();
+      int Far_avgPeriod = this.candleSettings[CandleSettingType.FAR.ordinal()].avgPeriod;
+      double Far_factor = this.candleSettings[CandleSettingType.FAR.ordinal()].factor;
+      int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
+      int Near_avgPeriod = this.candleSettings[CandleSettingType.NEAR.ordinal()].avgPeriod;
+      double Near_factor = this.candleSettings[CandleSettingType.NEAR.ordinal()].factor;
+      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].rangeType.ordinal();
+      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].avgPeriod;
+      double ShadowLong_factor = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].factor;
+      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].rangeType.ordinal();
+      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].avgPeriod;
+      double ShadowShort_factor = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].factor;
       return Math.max(Math.max(Math.max(ShadowLong_avgPeriod, ShadowShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
 
    }
@@ -65,26 +65,26 @@
       int NearTrailingIdx = 0;
       int FarTrailingIdx = 0;
       int lookbackTotal = 0;
-      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-      double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
-      int Far_rangeType = this.candleSettings[CandleSettingType.Far.ordinal()].rangeType.ordinal();
-      int Far_avgPeriod = this.candleSettings[CandleSettingType.Far.ordinal()].avgPeriod;
-      double Far_factor = this.candleSettings[CandleSettingType.Far.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].rangeType.ordinal();
-      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].avgPeriod;
-      double ShadowLong_factor = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].factor;
-      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].rangeType.ordinal();
-      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].factor;
+      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+      double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
+      int Far_rangeType = this.candleSettings[CandleSettingType.FAR.ordinal()].rangeType.ordinal();
+      int Far_avgPeriod = this.candleSettings[CandleSettingType.FAR.ordinal()].avgPeriod;
+      double Far_factor = this.candleSettings[CandleSettingType.FAR.ordinal()].factor;
+      int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
+      int Near_avgPeriod = this.candleSettings[CandleSettingType.NEAR.ordinal()].avgPeriod;
+      double Near_factor = this.candleSettings[CandleSettingType.NEAR.ordinal()].factor;
+      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].rangeType.ordinal();
+      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].avgPeriod;
+      double ShadowLong_factor = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].factor;
+      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].rangeType.ordinal();
+      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].avgPeriod;
+      double ShadowShort_factor = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].factor;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -100,7 +100,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -215,7 +215,7 @@
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode CDLADVANCEBLOCK_Impl( int startIdx,
                                  int endIdx,
@@ -241,26 +241,26 @@
       int NearTrailingIdx = 0;
       int FarTrailingIdx = 0;
       int lookbackTotal = 0;
-      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-      double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
-      int Far_rangeType = this.candleSettings[CandleSettingType.Far.ordinal()].rangeType.ordinal();
-      int Far_avgPeriod = this.candleSettings[CandleSettingType.Far.ordinal()].avgPeriod;
-      double Far_factor = this.candleSettings[CandleSettingType.Far.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].rangeType.ordinal();
-      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].avgPeriod;
-      double ShadowLong_factor = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].factor;
-      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].rangeType.ordinal();
-      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].factor;
+      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+      double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
+      int Far_rangeType = this.candleSettings[CandleSettingType.FAR.ordinal()].rangeType.ordinal();
+      int Far_avgPeriod = this.candleSettings[CandleSettingType.FAR.ordinal()].avgPeriod;
+      double Far_factor = this.candleSettings[CandleSettingType.FAR.ordinal()].factor;
+      int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
+      int Near_avgPeriod = this.candleSettings[CandleSettingType.NEAR.ordinal()].avgPeriod;
+      double Near_factor = this.candleSettings[CandleSettingType.NEAR.ordinal()].factor;
+      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].rangeType.ordinal();
+      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].avgPeriod;
+      double ShadowLong_factor = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].factor;
+      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].rangeType.ordinal();
+      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].avgPeriod;
+      double ShadowShort_factor = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].factor;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       lookbackTotal = CDLADVANCEBLOCK_Lookback();
       if( startIdx < lookbackTotal ) {
@@ -269,7 +269,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       ShadowShortPeriodTotal[2] = 0;
       ShadowShortPeriodTotal[1] = 0;
@@ -346,7 +346,7 @@
       } while( i <= endIdx );
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Three-candle bearish reversal pattern: three white candles with
@@ -413,7 +413,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLADVANCEBLOCK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -486,7 +486,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CDLADVANCEBLOCK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLADVANCEBLOCK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -593,7 +593,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CDLADVANCEBLOCK advance", RetCode.OutOfRangeEndIndex);
+            throw failure("CDLADVANCEBLOCK advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -672,9 +672,9 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CDLADVANCEBLOCK update", RetCode.OutOfRangeEndIndex);
+            throw failure("CDLADVANCEBLOCK update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLADVANCEBLOCK update: BAD_PARAM", RetCode.BAD_PARAM);
          core.cdladvanceblockStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -692,7 +692,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CDLADVANCEBLOCK peek: BAD_PARAM", RetCode.BAD_PARAM);
          CdladvanceblockStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -874,34 +874,34 @@
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
-      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-      double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
-      int Far_rangeType = this.candleSettings[CandleSettingType.Far.ordinal()].rangeType.ordinal();
-      int Far_avgPeriod = this.candleSettings[CandleSettingType.Far.ordinal()].avgPeriod;
-      double Far_factor = this.candleSettings[CandleSettingType.Far.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].rangeType.ordinal();
-      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].avgPeriod;
-      double ShadowLong_factor = this.candleSettings[CandleSettingType.ShadowLong.ordinal()].factor;
-      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].rangeType.ordinal();
-      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].avgPeriod;
-      double ShadowShort_factor = this.candleSettings[CandleSettingType.ShadowShort.ordinal()].factor;
+      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
+      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
+      double BodyLong_factor = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor;
+      int Far_rangeType = this.candleSettings[CandleSettingType.FAR.ordinal()].rangeType.ordinal();
+      int Far_avgPeriod = this.candleSettings[CandleSettingType.FAR.ordinal()].avgPeriod;
+      double Far_factor = this.candleSettings[CandleSettingType.FAR.ordinal()].factor;
+      int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
+      int Near_avgPeriod = this.candleSettings[CandleSettingType.NEAR.ordinal()].avgPeriod;
+      double Near_factor = this.candleSettings[CandleSettingType.NEAR.ordinal()].factor;
+      int ShadowLong_rangeType = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].rangeType.ordinal();
+      int ShadowLong_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].avgPeriod;
+      double ShadowLong_factor = this.candleSettings[CandleSettingType.SHADOW_LONG.ordinal()].factor;
+      int ShadowShort_rangeType = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].rangeType.ordinal();
+      int ShadowShort_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].avgPeriod;
+      double ShadowShort_factor = this.candleSettings[CandleSettingType.SHADOW_SHORT.ordinal()].factor;
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -916,7 +916,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -1035,7 +1035,7 @@
       int capLag_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
       int cap_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx + 3;
       if( capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
       double[] capRing_BodyLongTrailingIdx_derived = new double[allocN_BodyLongTrailingIdx];
@@ -1045,7 +1045,7 @@
       int capLag_FarTrailingIdx = i - FarTrailingIdx;
       int cap_FarTrailingIdx = capLag_FarTrailingIdx + 3;
       if( capLag_FarTrailingIdx < 0 || cap_FarTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_FarTrailingIdx = (cap_FarTrailingIdx > 0)? cap_FarTrailingIdx : 1;
       double[] capRing_FarTrailingIdx_derived = new double[allocN_FarTrailingIdx];
@@ -1055,7 +1055,7 @@
       int capLag_NearTrailingIdx = i - NearTrailingIdx;
       int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
       if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
       double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
@@ -1065,7 +1065,7 @@
       int capLag_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
       int cap_ShadowLongTrailingIdx = capLag_ShadowLongTrailingIdx + 3;
       if( capLag_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_ShadowLongTrailingIdx = (cap_ShadowLongTrailingIdx > 0)? cap_ShadowLongTrailingIdx : 1;
       double[] capRing_ShadowLongTrailingIdx_derived = new double[allocN_ShadowLongTrailingIdx];
@@ -1075,7 +1075,7 @@
       int capLag_ShadowShortTrailingIdx = i - ShadowShortTrailingIdx;
       int cap_ShadowShortTrailingIdx = capLag_ShadowShortTrailingIdx + 3;
       if( capLag_ShadowShortTrailingIdx < 0 || cap_ShadowShortTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_ShadowShortTrailingIdx = (cap_ShadowShortTrailingIdx > 0)? cap_ShadowShortTrailingIdx : 1;
       double[] capRing_ShadowShortTrailingIdx_derived = new double[allocN_ShadowShortTrailingIdx];
@@ -1131,7 +1131,7 @@
       sp.cs_ShadowShort_avgPeriod = ShadowShort_avgPeriod;
       sp.cs_ShadowShort_factor = ShadowShort_factor;
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* cdladvanceblockOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CdladvanceblockStream cdladvanceblockOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
@@ -1140,13 +1140,13 @@
       RetCode retCode = cdladvanceblockOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
@@ -1161,13 +1161,13 @@
       RetCode retCode = cdladvanceblockOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CDLADVANCEBLOCK open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CDLADVANCEBLOCK open: internal error", retCode);
       }
       throw new TALibArgumentException("CDLADVANCEBLOCK open: " + retCode, retCode);
@@ -1219,7 +1219,7 @@
       requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

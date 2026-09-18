@@ -75,20 +75,20 @@
       int ratioRing_Idx = 0;
       int maxIdx_ratioRing = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 9;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 25;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackEma = EMA_Lookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
@@ -99,9 +99,9 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInSlowPeriod < 1 ) return RetCode.InternalError;
+      if( optInSlowPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ratioRing = new double[optInSlowPeriod];
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
@@ -209,7 +209,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MASSI_Impl( int startIdx,
                        int endIdx,
@@ -241,20 +241,20 @@
       int ratioRing_Idx = 0;
       int maxIdx_ratioRing = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 9;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 25;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackEma = EMA_Lookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
@@ -265,9 +265,9 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInSlowPeriod < 1 ) return RetCode.InternalError;
+      if( optInSlowPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ratioRing = new double[optInSlowPeriod];
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
@@ -342,7 +342,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Mass Index: Donald Dorsey's non-directional measure of how the trading
@@ -421,7 +421,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MASSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -506,7 +506,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MASSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -575,7 +575,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MASSI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MASSI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -616,9 +616,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MASSI update", RetCode.OutOfRangeEndIndex);
+            throw failure("MASSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MASSI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.massiStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -636,7 +636,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MASSI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MASSI peek: BAD_PARAM", RetCode.BAD_PARAM);
          MassiStream sp = this;
          double hl = 0.0;
          double ratio = 0.0;
@@ -742,28 +742,28 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 9;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 25;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       lookbackEma = EMA_Lookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
@@ -774,9 +774,9 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
-      if( optInSlowPeriod < 1 ) return RetCode.InternalError;
+      if( optInSlowPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       ratioRing = new double[optInSlowPeriod];
       maxIdx_ratioRing = (optInSlowPeriod)-1;
       ratioRing_Idx = 0;
@@ -887,7 +887,7 @@
       /* Capture the live batch state into the handle. */
       int capCb_ratioRing = maxIdx_ratioRing + 1;
       if( capCb_ratioRing > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
@@ -900,7 +900,7 @@
       sp.cbSize_ratioRing = capCb_ratioRing;
       sp.cb_ratioRing = ratioRing;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* massiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MassiStream massiOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -909,13 +909,13 @@
       RetCode retCode = massiOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MASSI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MASSI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MASSI openAndFill: " + retCode, retCode);
@@ -930,13 +930,13 @@
       RetCode retCode = massiOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MASSI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MASSI open: internal error", retCode);
       }
       throw new TALibArgumentException("MASSI open: " + retCode, retCode);
@@ -982,7 +982,7 @@
       requireHistoryLength("MASSI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MASSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("MASSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MASSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

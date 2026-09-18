@@ -56,15 +56,15 @@
       int outIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
@@ -107,7 +107,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* No smoothing at a period of 1: the output is the raw Force Index.
        * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -129,7 +129,7 @@
             today = today + 1;
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       /* The first EMA value is a simple average of the first 'period' force
@@ -164,7 +164,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode EFI_Impl( int startIdx,
                      int endIdx,
@@ -185,15 +185,15 @@
       int outIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       lookbackTotal = EFI_Lookback(optInTimePeriod);
@@ -203,7 +203,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -218,7 +218,7 @@
             today = today + 1;
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal + 1;
@@ -249,7 +249,7 @@
          today = today + 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
@@ -318,7 +318,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("EFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -393,7 +393,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = EFI_Impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("EFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -456,7 +456,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("EFI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("EFI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -491,9 +491,9 @@
        */
       public double update( double inClose, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("EFI update", RetCode.OutOfRangeEndIndex);
+            throw failure("EFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("EFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.efiStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -511,7 +511,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("EFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("EFI peek: BAD_PARAM", RetCode.BAD_PARAM);
          EfiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -578,18 +578,18 @@
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == 1 ) {
          double optInK_1 = 0;
@@ -642,7 +642,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -669,7 +669,7 @@
          sp.optInK_1 = optInK_1;
          sp.prevMA = prevMA;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       } else {
          double optInK_1 = 0;
          double tempReal = 0;
@@ -721,7 +721,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -769,7 +769,7 @@
          sp.optInK_1 = optInK_1;
          sp.prevMA = prevMA;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
    }
    /* efiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -779,13 +779,13 @@
       RetCode retCode = efiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("EFI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("EFI openAndFill: " + retCode, retCode);
@@ -800,13 +800,13 @@
       RetCode retCode = efiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("EFI open: internal error", retCode);
       }
       throw new TALibArgumentException("EFI open: " + retCode, retCode);
@@ -852,7 +852,7 @@
       requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("EFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("EFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

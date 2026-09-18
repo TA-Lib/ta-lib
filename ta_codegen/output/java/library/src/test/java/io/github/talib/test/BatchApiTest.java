@@ -677,42 +677,42 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         // Lossless, the pair the type cannot separate.
-        checkCode(RetCode.OutOfRangeStartIndex,
+        checkCode(RetCode.OUT_OF_RANGE_START_INDEX,
             () -> Core.DEFAULT.SMA(-1, 50, in, 10, out), "negative startIdx carries OutOfRangeStartIndex");
-        checkCode(RetCode.OutOfRangeEndIndex,
+        checkCode(RetCode.OUT_OF_RANGE_END_INDEX,
             () -> Core.DEFAULT.SMA(50, 10, in, 10, out), "endIdx < startIdx carries OutOfRangeEndIndex");
 
         // The rest of the batch tier's vocabulary.
-        checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "an out-of-range period carries BadParam");
-        checkCode(RetCode.BadParam,
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "an out-of-range period carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, out, out, new double[200]),
-            "two outputs sharing one array carries BadParam");
+            "two outputs sharing one array carries BAD_PARAM");
 
         // The two conditions C has no code for. They report the code C answers
         // for an absent argument it CAN detect, so the mapping stays total.
-        checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out), "a null input carries BadParam");
-        checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, new double[3]), "a short output carries BadParam");
-        checkCode(RetCode.BadParam,
-            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out), "a null enum carries BadParam");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out), "a null input carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.SMA(0, 199, in, 10, new double[3]), "a short output carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
+            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out), "a null enum carries BAD_PARAM");
 
         // Streaming's one recoverable condition, which is why it has a code.
-        checkCode(RetCode.InsufficientHistory,
+        checkCode(RetCode.INSUFFICIENT_HISTORY,
             () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
             "a short history carries InsufficientHistory");
 
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
-        checkCode(RetCode.OutOfRangeStartIndex,
+        checkCode(RetCode.OUT_OF_RANGE_START_INDEX,
             () -> Core.DEFAULT.smaOpen(new double[0], 30),
             "an empty history carries OutOfRangeStartIndex");
-        checkCode(RetCode.BadParam,
+        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.smaOpen(in, 0),
-            "an out-of-range period on a stream open carries BadParam");
-        checkCode(RetCode.BadParam,
+            "an out-of-range period on a stream open carries BAD_PARAM");
+        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA, out, out, new double[200]),
             "aliased OpenAndFill outputs carry BadParam");
 
@@ -724,13 +724,13 @@ public class BatchApiTest {
 
         // The numbers the cross-language harness compares. Hardcoded, because
         // asking the enum for its own value would prove nothing.
-        check(RetCode.Success.asCInt() == 0, "Success is 0");
-        check(RetCode.BadParam.asCInt() == 2, "BadParam is 2");
-        check(RetCode.AllocErr.asCInt() == 3, "AllocErr is 3");
-        check(RetCode.OutOfRangeStartIndex.asCInt() == 12, "OutOfRangeStartIndex is 12");
-        check(RetCode.OutOfRangeEndIndex.asCInt() == 13, "OutOfRangeEndIndex is 13");
-        check(RetCode.InsufficientHistory.asCInt() == 17, "InsufficientHistory is 17");
-        check(RetCode.InternalError.asCInt() == 5000, "InternalError is 5000");
+        check(RetCode.SUCCESS.asCInt() == 0, "Success is 0");
+        check(RetCode.BAD_PARAM.asCInt() == 2, "BadParam is 2");
+        check(RetCode.ALLOC_ERR.asCInt() == 3, "AllocErr is 3");
+        check(RetCode.OUT_OF_RANGE_START_INDEX.asCInt() == 12, "OutOfRangeStartIndex is 12");
+        check(RetCode.OUT_OF_RANGE_END_INDEX.asCInt() == 13, "OutOfRangeEndIndex is 13");
+        check(RetCode.INSUFFICIENT_HISTORY.asCInt() == 17, "InsufficientHistory is 17");
+        check(RetCode.INTERNAL_ERROR.asCInt() == 5000, "InternalError is 5000");
 
         // Non-vacuity: the cases above have to REACH every code the batch and
         // streaming tiers can produce, or a member could stop being emitted
@@ -739,8 +739,8 @@ public class BatchApiTest {
         // needs a corrupted CIRCBUF size -- so they are named rather than
         // silently excluded.
         Set<RetCode> expected = EnumSet.of(
-            RetCode.OutOfRangeStartIndex, RetCode.OutOfRangeEndIndex,
-            RetCode.BadParam, RetCode.InsufficientHistory);
+            RetCode.OUT_OF_RANGE_START_INDEX, RetCode.OUT_OF_RANGE_END_INDEX,
+            RetCode.BAD_PARAM, RetCode.INSUFFICIENT_HISTORY);
         check(seenCodes.equals(expected),
               "the probes reached exactly " + expected + " (got " + seenCodes + ")");
     }
@@ -840,9 +840,9 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
             "a null enum names the function and the parameter", "MA", "optInMAType");
-        checkCode(RetCode.BadParam,
+        checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
-            "a null enum carries BadParam");
+            "a null enum carries BAD_PARAM");
         // ...and neither outranks the index rules.
         checkThrows(IndexOutOfBoundsException.class,
             () -> Core.DEFAULT.MA(-1, 199, in, 10, null, out),
@@ -1062,7 +1062,7 @@ public class BatchApiTest {
 
         // The code, not just the type: one IndexOutOfBoundsException serves both
         // index rules, so the type alone cannot say which fired.
-        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OutOfRangeStartIndex,
+        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OUT_OF_RANGE_START_INDEX,
             "an empty history carries OutOfRangeStartIndex");
 
         // A history of exactly one bar is inside the domain: that is S7's

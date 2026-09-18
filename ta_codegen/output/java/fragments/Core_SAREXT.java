@@ -125,50 +125,50 @@
       double sar = 0;
       double[] ep_temp = new double[1];
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
       } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
       } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
       } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
       } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
       } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
       } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
       } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* > 0 indicates long. == 0 indicates short */
       /* This function is the same as TA_SAR, except that the caller has
@@ -240,7 +240,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Check if the acceleration factors are being defined by the user.
        * Make sure the acceleration and maximum are coherent.
@@ -274,7 +274,7 @@
          OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -439,7 +439,7 @@
          }
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode SAREXT_Impl( int startIdx,
                         int endIdx,
@@ -472,50 +472,50 @@
       double sar = 0;
       double[] ep_temp = new double[1];
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
       } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
       } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
       } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
       } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
       } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
       } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
       } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx < 1 ) {
          startIdx = 1;
@@ -523,7 +523,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       afLong = optInAccelerationInitLong;
       afShort = optInAccelerationInitShort;
@@ -545,7 +545,7 @@
          OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -665,7 +665,7 @@
          }
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Extended Parabolic SAR (stop and reverse) giving the caller full control
@@ -746,7 +746,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -833,7 +833,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -907,7 +907,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("SAREXT advance", RetCode.OutOfRangeEndIndex);
+            throw failure("SAREXT advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -953,9 +953,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("SAREXT update", RetCode.OutOfRangeEndIndex);
+            throw failure("SAREXT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT update: BAD_PARAM", RetCode.BAD_PARAM);
          core.sarextStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -973,7 +973,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SAREXT peek: BAD_PARAM", RetCode.BAD_PARAM);
          SarextStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -1276,58 +1276,58 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
       } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
       } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
       } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
       } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
       } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
       } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
       } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* > 0 indicates long. == 0 indicates short */
       /* This function is the same as TA_SAR, except that the caller has
@@ -1399,7 +1399,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Check if the acceleration factors are being defined by the user.
        * Make sure the acceleration and maximum are coherent.
@@ -1433,7 +1433,7 @@
          OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -1615,7 +1615,7 @@
       sp.ep = ep;
       sp.sar = sar;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* sarextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SarextStream sarextOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1624,13 +1624,13 @@
       RetCode retCode = sarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("SAREXT openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("SAREXT openAndFill: " + retCode, retCode);
@@ -1645,13 +1645,13 @@
       RetCode retCode = sarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("SAREXT open: internal error", retCode);
       }
       throw new TALibArgumentException("SAREXT open: " + retCode, retCode);
@@ -1697,7 +1697,7 @@
       requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("SAREXT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SAREXT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

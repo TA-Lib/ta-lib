@@ -41,10 +41,10 @@
       double prevClose = 0;
       double tempClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       prevPVT = 0.0;
       prevClose = inClose[startIdx];
@@ -63,7 +63,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode PVT_Impl( int startIdx,
                      int endIdx,
@@ -79,10 +79,10 @@
       double prevClose = 0;
       double tempClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       prevPVT = 0.0;
       prevClose = (double)inClose[startIdx];
@@ -97,7 +97,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Price Volume Trend: a running cumulative total of each bar's volume
@@ -165,7 +165,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVT_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -239,7 +239,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVT_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -300,7 +300,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVT advance", RetCode.OutOfRangeEndIndex);
+            throw failure("PVT advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -333,9 +333,9 @@
        */
       public double update( double inClose, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVT update", RetCode.OutOfRangeEndIndex);
+            throw failure("PVT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT update: BAD_PARAM", RetCode.BAD_PARAM);
          core.pvtStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -353,7 +353,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVT peek: BAD_PARAM", RetCode.BAD_PARAM);
          PvtStream sp = this;
          double tempClose = 0.0;
          double cur_outReal = 0.0;
@@ -420,18 +420,18 @@
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       prevPVT = 0.0;
       prevClose = inClose[startIdx];
@@ -454,7 +454,7 @@
       sp.prevPVT = prevPVT;
       sp.prevClose = prevClose;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* pvtOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PvtStream pvtOpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -463,13 +463,13 @@
       RetCode retCode = pvtOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVT openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVT openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("PVT openAndFill: " + retCode, retCode);
@@ -484,13 +484,13 @@
       RetCode retCode = pvtOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVT open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVT open: internal error", retCode);
       }
       throw new TALibArgumentException("PVT open: " + retCode, retCode);
@@ -534,7 +534,7 @@
       requireHistoryLength("PVT openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("PVT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -57,18 +57,18 @@
       int today = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Donchian Channels over the optInTimePeriod bars ending at the current
        * bar:
@@ -98,7 +98,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -161,7 +161,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode DONCHIAN_Impl( int startIdx,
                           int endIdx,
@@ -186,18 +186,18 @@
       int today = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -206,7 +206,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -257,7 +257,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Donchian Channels: three overlap lines built from rolling price extrema.
@@ -329,7 +329,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DONCHIAN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -407,7 +407,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DONCHIAN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -479,7 +479,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DONCHIAN advance", RetCode.OutOfRangeEndIndex);
+            throw failure("DONCHIAN advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -523,10 +523,10 @@
        */
       public void update( double inHigh, double inLow, DonchianOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DONCHIAN update", RetCode.OutOfRangeEndIndex);
+            throw failure("DONCHIAN update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("DONCHIAN update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN update: BAD_PARAM", RetCode.BAD_PARAM);
          core.donchianStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -547,7 +547,7 @@
       public void peek( double inHigh, double inLow, DonchianOut out ) {
          requireArgument("DONCHIAN peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DONCHIAN peek: BAD_PARAM", RetCode.BAD_PARAM);
          DonchianStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -720,23 +720,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Donchian Channels over the optInTimePeriod bars ending at the current
        * bar:
@@ -766,7 +766,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -832,7 +832,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -858,7 +858,7 @@
       sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* donchianOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DonchianStream donchianOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
@@ -867,13 +867,13 @@
       RetCode retCode = donchianOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DONCHIAN openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DONCHIAN openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
@@ -890,13 +890,13 @@
       RetCode retCode = donchianOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DONCHIAN open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DONCHIAN open: internal error", retCode);
       }
       throw new TALibArgumentException("DONCHIAN open: " + retCode, retCode);
@@ -944,7 +944,7 @@
       requireLength("DONCHIAN openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("DONCHIAN openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DONCHIAN openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

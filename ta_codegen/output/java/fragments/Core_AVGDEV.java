@@ -44,15 +44,15 @@
       int outIdx = 0;
       int lookback = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookback = optInTimePeriod - 1;
       if( startIdx < lookback ) {
@@ -63,7 +63,7 @@
       if( today > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Process the initial DM and TR */
       outBegIdx.value = today;
@@ -85,7 +85,7 @@
          today += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode AVGDEV_Impl( int startIdx,
                         int endIdx,
@@ -99,15 +99,15 @@
       int outIdx = 0;
       int lookback = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookback = optInTimePeriod - 1;
       if( startIdx < lookback ) {
@@ -117,7 +117,7 @@
       if( today > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = today;
       outIdx = 0;
@@ -138,7 +138,7 @@
          today += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Rolling average absolute deviation of a series from its own simple moving
@@ -193,7 +193,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -254,7 +254,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -317,7 +317,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AVGDEV advance", RetCode.OutOfRangeEndIndex);
+            throw failure("AVGDEV advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -352,9 +352,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AVGDEV update", RetCode.OutOfRangeEndIndex);
+            throw failure("AVGDEV update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV update: BAD_PARAM", RetCode.BAD_PARAM);
          core.avgdevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -372,7 +372,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AVGDEV peek: BAD_PARAM", RetCode.BAD_PARAM);
          AvgdevStream sp = this;
          double todaySum = 0.0;
          double todayDev = 0.0;
@@ -448,20 +448,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       lookback = optInTimePeriod - 1;
       if( startIdx < lookback ) {
@@ -472,7 +472,7 @@
       if( today > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Process the initial DM and TR */
       outBegIdx.value = today;
@@ -497,7 +497,7 @@
       /* Capture the live batch state into the handle. */
       int cap_i = (int)(optInTimePeriod);
       if( cap_i < 1 || cap_i > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       double[] capWin_i_inReal = new double[cap_i];
       System.arraycopy(inReal, historyLen - cap_i, capWin_i_inReal, 0, cap_i);
@@ -506,7 +506,7 @@
       sp.winCap_i = cap_i;
       sp.win_i_inReal = capWin_i_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* avgdevOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AvgdevStream avgdevOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -515,13 +515,13 @@
       RetCode retCode = avgdevOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AVGDEV openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("AVGDEV openAndFill: " + retCode, retCode);
@@ -536,13 +536,13 @@
       RetCode retCode = avgdevOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AVGDEV open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AVGDEV open: internal error", retCode);
       }
       throw new TALibArgumentException("AVGDEV open: " + retCode, retCode);
@@ -584,7 +584,7 @@
       int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
       requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("AVGDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AVGDEV openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

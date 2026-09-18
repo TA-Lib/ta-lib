@@ -70,15 +70,15 @@
       int m = 0;
       int blockNext = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Find the highest and lowest value of a timeserie
        * over the period.
@@ -102,7 +102,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -125,19 +125,19 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
       sufHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preHighest = new double[optInTimePeriod];
       maxIdx_preHighest = (optInTimePeriod)-1;
       preHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
       sufLowest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preLowest = new double[optInTimePeriod];
       maxIdx_preLowest = (optInTimePeriod)-1;
       preLowest_Idx = 0;
@@ -223,7 +223,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MIDPOINT_Impl( int startIdx,
                           int endIdx,
@@ -258,15 +258,15 @@
       int m = 0;
       int blockNext = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -275,24 +275,24 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
       sufHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preHighest = new double[optInTimePeriod];
       maxIdx_preHighest = (optInTimePeriod)-1;
       preHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
       sufLowest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preLowest = new double[optInTimePeriod];
       maxIdx_preLowest = (optInTimePeriod)-1;
       preLowest_Idx = 0;
@@ -363,7 +363,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Midpoint over a period: the average of the highest and lowest input values
@@ -417,7 +417,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MIDPOINT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -477,7 +477,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MIDPOINT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -548,7 +548,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MIDPOINT advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MIDPOINT advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -589,9 +589,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MIDPOINT update", RetCode.OutOfRangeEndIndex);
+            throw failure("MIDPOINT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT update: BAD_PARAM", RetCode.BAD_PARAM);
          core.midpointStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -609,7 +609,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MIDPOINT peek: BAD_PARAM", RetCode.BAD_PARAM);
          MidpointStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -742,20 +742,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Find the highest and lowest value of a timeserie
        * over the period.
@@ -779,7 +779,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -854,7 +854,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -875,7 +875,7 @@
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* midpointOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MidpointStream midpointOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -884,13 +884,13 @@
       RetCode retCode = midpointOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MIDPOINT openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
@@ -905,13 +905,13 @@
       RetCode retCode = midpointOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MIDPOINT open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MIDPOINT open: internal error", retCode);
       }
       throw new TALibArgumentException("MIDPOINT open: " + retCode, retCode);
@@ -953,7 +953,7 @@
       int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
       requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("MIDPOINT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MIDPOINT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

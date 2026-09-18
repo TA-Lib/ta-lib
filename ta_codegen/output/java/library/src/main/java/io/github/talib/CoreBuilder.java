@@ -130,7 +130,7 @@ public final class CoreBuilder {
     *
     * @throws NullPointerException if {@code settingType} or {@code rangeType} is null
     * @throws IllegalArgumentException if {@code settingType} is
-    *         {@link CandleSettingType#AllCandleSettings} (not a single-setting
+    *         {@link CandleSettingType#ALL_CANDLE_SETTINGS} (not a single-setting
     *         target), if {@code avgPeriod} is outside {@code 0..}{@link
     *         Core#MAX_INDEX}, or if {@code factor} is NaN
     */
@@ -142,7 +142,7 @@ public final class CoreBuilder {
       if (rangeType == null) {
          throw new NullPointerException("rangeType");
       }
-      if (settingType == CandleSettingType.AllCandleSettings) {
+      if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS) {
          throw new IllegalArgumentException(
             "AllCandleSettings is not a single-setting target");
       }
@@ -163,7 +163,7 @@ public final class CoreBuilder {
 
    /**
     * Restores one candlestick setting to its TA-Lib default, or every setting
-    * when given {@link CandleSettingType#AllCandleSettings}.
+    * when given {@link CandleSettingType#ALL_CANDLE_SETTINGS}.
     *
     * @throws NullPointerException if {@code settingType} is null
     */
@@ -171,7 +171,7 @@ public final class CoreBuilder {
       if (settingType == null) {
          throw new NullPointerException("settingType");
       }
-      if (settingType == CandleSettingType.AllCandleSettings) {
+      if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS) {
          System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, candleSettings, 0,
             candleSettings.length);
       } else {

@@ -85,28 +85,28 @@
       double[] tempTP;
       double[] tempATR;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInATRPeriod == Integer.MIN_VALUE ) {
          optInATRPeriod = 10;
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       emaLookback = EMA_Lookback(optInTimePeriod);
       lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -117,7 +117,7 @@
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -134,21 +134,21 @@
       OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
       OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
       OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx.value = _xr2.begIdx();
       outNBElement.value = _xr2.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -160,7 +160,7 @@
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode KC_Impl( int startIdx,
                     int endIdx,
@@ -188,35 +188,35 @@
       double[] tempTP;
       double[] tempATR;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInATRPeriod == Integer.MIN_VALUE ) {
          optInATRPeriod = 10;
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       emaLookback = EMA_Lookback(optInTimePeriod);
       lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -227,15 +227,15 @@
       OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx.value = _xr2.begIdx();
       outNBElement.value = _xr2.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -247,7 +247,7 @@
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Keltner Channels: three overlap lines around price. The centre line is an
@@ -333,7 +333,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -425,7 +425,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -492,7 +492,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KC advance", RetCode.OutOfRangeEndIndex);
+            throw failure("KC advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -531,10 +531,10 @@
        */
       public void update( double inHigh, double inLow, double inClose, KcOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KC update", RetCode.OutOfRangeEndIndex);
+            throw failure("KC update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("KC update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC update: BAD_PARAM", RetCode.BAD_PARAM);
          core.kcStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -555,7 +555,7 @@
       public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
          requireArgument("KC peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KC peek: BAD_PARAM", RetCode.BAD_PARAM);
          KcStream sp = this;
          double middle = 0.0;
          double tempReal = 0.0;
@@ -669,36 +669,36 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInATRPeriod == Integer.MIN_VALUE ) {
          optInATRPeriod = 10;
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen < KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
@@ -712,7 +712,7 @@
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -729,24 +729,24 @@
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       TyppriceStream sub0 = typpriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, tempBegIdx, tempNbElement, tempTP);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
       /* Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       AtrStream sub1 = atrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
       /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       EmaStream sub2 = emaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempTP, 0, (endIdx - tpStartIdx) + 1), emaLookback, optInTimePeriod, outBegIdx, outNBElement, sc_outRealMiddleBand);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
@@ -757,7 +757,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInATRPeriod = optInATRPeriod;
@@ -768,7 +768,7 @@
       sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* kcOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    KcStream kcOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
@@ -777,13 +777,13 @@
       RetCode retCode = kcOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KC openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KC openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("KC openAndFill: " + retCode, retCode);
@@ -800,13 +800,13 @@
       RetCode retCode = kcOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KC open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KC open: internal error", retCode);
       }
       throw new TALibArgumentException("KC open: " + retCode, retCode);
@@ -858,7 +858,7 @@
       requireLength("KC openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("KC openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KC openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

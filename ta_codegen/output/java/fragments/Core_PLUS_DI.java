@@ -76,15 +76,15 @@
       double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /*
        * The DM1 (one period) is base on the largest part of
@@ -191,7 +191,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -245,7 +245,7 @@
             prevClose = inClose[today];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* The declaration order above sets invPeriod's place in the stream state,
        * and that place is load-bearing: a layout that lets Update load it paired
@@ -389,7 +389,7 @@
          }
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode PLUS_DI_Impl( int startIdx,
                          int endIdx,
@@ -416,15 +416,15 @@
       double plusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod > 1 ) {
          lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.PLUS_DI.ordinal()];
@@ -437,7 +437,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       if( optInTimePeriod <= 1 ) {
@@ -478,7 +478,7 @@
             prevClose = (double)inClose[today];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       today = startIdx;
@@ -586,7 +586,7 @@
          }
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Plus Directional Indicator: the Wilder-smoothed positive directional
@@ -654,7 +654,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -728,7 +728,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -794,7 +794,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PLUS_DI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("PLUS_DI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -832,9 +832,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PLUS_DI update", RetCode.OutOfRangeEndIndex);
+            throw failure("PLUS_DI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.plusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -852,7 +852,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PLUS_DI peek: BAD_PARAM", RetCode.BAD_PARAM);
          PlusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1050,18 +1050,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod <= 1 ) {
          int today = 0;
@@ -1183,7 +1183,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1245,7 +1245,7 @@
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       } else {
          int today = 0;
          int lookbackTotal = 0;
@@ -1366,7 +1366,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1524,7 +1524,7 @@
          sp.prevPlusDM = prevPlusDM;
          sp.prevTR = prevTR;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
    }
    /* plusDiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -1534,13 +1534,13 @@
       RetCode retCode = plusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PLUS_DI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
@@ -1555,13 +1555,13 @@
       RetCode retCode = plusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PLUS_DI open: internal error", retCode);
       }
       throw new TALibArgumentException("PLUS_DI open: " + retCode, retCode);
@@ -1611,7 +1611,7 @@
       requireHistoryLength("PLUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("PLUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("PLUS_DI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PLUS_DI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

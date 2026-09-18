@@ -50,12 +50,12 @@ package io.github.talib;
  *
  * <p>Still an {@link IllegalArgumentException} by inheritance, so an existing
  * {@code catch} keeps working, and it reports
- * {@link RetCode#InsufficientHistory} through {@link TALibFailure#retCode()}.
+ * {@link RetCode#INSUFFICIENT_HISTORY} through {@link TALibFailure#retCode()}.
  */
 public final class InsufficientHistoryException extends TALibArgumentException {
     private static final long serialVersionUID = 1L;
 
     public InsufficientHistoryException(String message) {
-        super(message, RetCode.InsufficientHistory);
+        super(message, RetCode.INSUFFICIENT_HISTORY);
     }
 }

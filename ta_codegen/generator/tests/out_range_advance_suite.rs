@@ -178,7 +178,7 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
         "java" => [
             ceiling_needle("java"),
             "throw failure(",
-            "RetCode.OutOfRangeEndIndex",
+            "RetCode.OUT_OF_RANGE_END_INDEX",
         ],
         "csharp" => [
             ceiling_needle("csharp"),

@@ -59,15 +59,15 @@
       double divider = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = optInTimePeriod - 1;
       /* Move up the start index if there is not
@@ -80,7 +80,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* To make the rest more efficient, handle exception
        * case where the user is asking for a period of '1'.
@@ -98,7 +98,7 @@
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             outReal[i] = inReal[inIdx++];
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
@@ -229,7 +229,7 @@
       /* Set output limits. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode WMA_Impl( int startIdx,
                      int endIdx,
@@ -254,15 +254,15 @@
       double divider = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal ) {
@@ -271,7 +271,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -280,7 +280,7 @@
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             outReal[i] = (double)inReal[inIdx++];
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
       outIdx = 0;
@@ -325,7 +325,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Linearly weighted moving average: each of the last N prices is weighted by
@@ -385,7 +385,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -451,7 +451,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -523,7 +523,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WMA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("WMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -567,9 +567,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WMA update", RetCode.OutOfRangeEndIndex);
+            throw failure("WMA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("WMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.wmaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -587,7 +587,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("WMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WMA peek: BAD_PARAM", RetCode.BAD_PARAM);
          WmaStream sp = this;
          int j = 0;
          int rw = 0;
@@ -826,26 +826,26 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
          int fillLb = WMA_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.lookbackWin = 0;
@@ -870,7 +870,7 @@
             }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       lookbackTotal = optInTimePeriod - 1;
       /* Move up the start index if there is not
@@ -883,7 +883,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
@@ -1017,14 +1017,14 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = inIdx - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
       System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
       int cap_j = (int)(lookbackWin + 1);
       if( cap_j < 1 || cap_j > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       double[] capWin_j_inReal = new double[cap_j];
       System.arraycopy(inReal, historyLen - cap_j, capWin_j_inReal, 0, cap_j);
@@ -1042,7 +1042,7 @@
       sp.winCap_j = cap_j;
       sp.win_j_inReal = capWin_j_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* wmaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WmaStream wmaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1051,13 +1051,13 @@
       RetCode retCode = wmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WMA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("WMA openAndFill: " + retCode, retCode);
@@ -1072,13 +1072,13 @@
       RetCode retCode = wmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WMA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WMA open: internal error", retCode);
       }
       throw new TALibArgumentException("WMA open: " + retCode, retCode);
@@ -1120,7 +1120,7 @@
       int guardOutLen = openFillCount("WMA openAndFill", inReal.length, WMA_Lookback(optInTimePeriod));
       requireLength("WMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("WMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

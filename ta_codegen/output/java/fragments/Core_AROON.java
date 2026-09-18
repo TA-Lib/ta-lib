@@ -56,18 +56,18 @@
       int today = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outAroonDown == outAroonUp ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* This function is using a speed optimized algorithm
        * for the min/max logic.
@@ -85,7 +85,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -148,7 +148,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode AROON_Impl( int startIdx,
                        int endIdx,
@@ -171,18 +171,18 @@
       int today = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outAroonDown == outAroonUp ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       if( startIdx < optInTimePeriod ) {
          startIdx = optInTimePeriod;
@@ -190,7 +190,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -241,7 +241,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Aroon reports how recently the highest high and lowest low occurred within
@@ -307,7 +307,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AROON", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -379,7 +379,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AROON", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -451,7 +451,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AROON advance", RetCode.OutOfRangeEndIndex);
+            throw failure("AROON advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -495,10 +495,10 @@
        */
       public void update( double inHigh, double inLow, AroonOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AROON update", RetCode.OutOfRangeEndIndex);
+            throw failure("AROON update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("AROON update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AROON update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON update: BAD_PARAM", RetCode.BAD_PARAM);
          core.aroonStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.aroonDown = this.cur_outAroonDown;
@@ -518,7 +518,7 @@
       public void peek( double inHigh, double inLow, AroonOut out ) {
          requireArgument("AROON peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AROON peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AROON peek: BAD_PARAM", RetCode.BAD_PARAM);
          AroonStream sp = this;
          double tmp = 0.0;
          double cur_outAroonDown = 0.0;
@@ -691,23 +691,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* This function is using a speed optimized algorithm
        * for the min/max logic.
@@ -725,7 +725,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -791,7 +791,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -817,7 +817,7 @@
       sp.x_inLow = capX_inLow;
       sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
       sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AroonStream aroonOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
@@ -826,13 +826,13 @@
       RetCode retCode = aroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AROON openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("AROON openAndFill: " + retCode, retCode);
@@ -848,13 +848,13 @@
       RetCode retCode = aroonOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outAroonDown, sink_outAroonUp, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AROON open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AROON open: internal error", retCode);
       }
       throw new TALibArgumentException("AROON open: " + retCode, retCode);
@@ -901,7 +901,7 @@
       requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
       requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);
       if( (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp ) {
-         throw new TALibArgumentException("AROON openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AROON openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

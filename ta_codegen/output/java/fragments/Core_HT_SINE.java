@@ -116,13 +116,13 @@
       double imagPart = 0;
       double realPart = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( outSine == outLeadSine ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -154,7 +154,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -451,7 +451,7 @@
          today += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode HT_SINE_Impl( int startIdx,
                          int endIdx,
@@ -531,13 +531,13 @@
       double imagPart = 0;
       double realPart = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( outSine == outLeadSine ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -553,7 +553,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       trailingWMAIdx = startIdx - lookbackTotal;
@@ -800,7 +800,7 @@
          today += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Hilbert Transform SineWave: derives the dominant-cycle phase from price
@@ -858,7 +858,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = HT_SINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -922,7 +922,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = HT_SINE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -1034,7 +1034,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("HT_SINE advance", RetCode.OutOfRangeEndIndex);
+            throw failure("HT_SINE advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -1118,10 +1118,10 @@
        */
       public void update( double inReal, HtSineOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("HT_SINE update", RetCode.OutOfRangeEndIndex);
+            throw failure("HT_SINE update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("HT_SINE update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE update: BAD_PARAM", RetCode.BAD_PARAM);
          core.htSineStepImpl(this, inReal);
          this.outRangeCount++;
          out.sine = this.cur_outSine;
@@ -1141,7 +1141,7 @@
       public void peek( double inReal, HtSineOut out ) {
          requireArgument("HT_SINE peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HT_SINE peek: BAD_PARAM", RetCode.BAD_PARAM);
          HtSineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -1712,15 +1712,15 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       a = 0.0962;
       b = 0.5769;
@@ -1752,7 +1752,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2052,14 +2052,14 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
       if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
       System.arraycopy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
       int capCb_smoothPrice = maxIdx_smoothPrice + 1;
       if( capCb_smoothPrice > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.period = period;
       sp.periodWMASum = periodWMASum;
@@ -2115,7 +2115,7 @@
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = outSine[(outNBElement.value - 1) * outStride];
       sp.cur_outLeadSine = outLeadSine[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* htSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HtSineStream htSineOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
@@ -2124,13 +2124,13 @@
       RetCode retCode = htSineOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("HT_SINE openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
@@ -2146,13 +2146,13 @@
       RetCode retCode = htSineOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outSine, sink_outLeadSine, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("HT_SINE open: internal error", retCode);
       }
       throw new TALibArgumentException("HT_SINE open: " + retCode, retCode);
@@ -2193,7 +2193,7 @@
       requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         throw new TALibArgumentException("HT_SINE openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HT_SINE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

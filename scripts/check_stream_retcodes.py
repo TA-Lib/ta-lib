@@ -67,9 +67,9 @@ BACKENDS = [
      re.compile(r"if\s+startIdx\s*>\s*endIdx\s*\{[\s\S]{0,220}?return\s+(\w+(?:\(RetCode::\w+\))?)"), 100),
 
     ("Java", os.path.join("ta_codegen", "output", "java", "fragments"), ".java",
-     r"RetCode.BadParam", r"RetCode.InsufficientHistory",
+     r"RetCode.BAD_PARAM", r"RetCode.INSUFFICIENT_HISTORY",
      re.compile(r"(?:historyLen\s*<\s*(?!1\s*\))[^\n)]*?\+\s*1|outNBElement\.value\s*<\s*1)\s*\)\s*\{\s*\n\s*"
-                r"return\s+RetCode\.(BadParam|InsufficientHistory)\s*;"), 11,
+                r"return\s+RetCode\.(BAD_PARAM|INSUFFICIENT_HISTORY)\s*;"), 11,
      None, 0),
 
     ("C#", os.path.join("ta_codegen", "output", "csharp", "library", "src"), ".cs",
@@ -93,7 +93,7 @@ EMPTY_ARMS = [
      re.compile(r"if\s+\w+\.is_empty\(\)\s*\{\s*\n\s*return\s+Err\(RetCode::(\w+)\)\s*;"), 170),
 
     ("Java", os.path.join("ta_codegen", "output", "java", "fragments"), ".java",
-     "OutOfRangeStartIndex",
+     "OUT_OF_RANGE_START_INDEX",
      re.compile(r"if\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
 
     ("C#", os.path.join("ta_codegen", "output", "csharp", "library", "src"), ".cs",
@@ -102,7 +102,7 @@ EMPTY_ARMS = [
 ]
 
 
-CATCH_ALL = ("TA_BAD_PARAM", "BadParam", "Err(RetCode::BadParam)")
+CATCH_ALL = ("TA_BAD_PARAM", "BadParam", "BAD_PARAM", "Err(RetCode::BadParam)")
 
 
 def _scan(root_dir, subdir, suffix, arm_re, is_wrong):

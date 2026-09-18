@@ -56,15 +56,15 @@
       int dispIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* The running sum is accumulated, snapshot and divided in exactly the order
        * ta_codegen/input/sma/sma.c uses, so this fused loop is bit-for-bit equal
@@ -81,7 +81,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - (optInTimePeriod - 1);
@@ -111,7 +111,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode DPO_Impl( int startIdx,
                      int endIdx,
@@ -130,15 +130,15 @@
       int dispIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = DPO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -147,7 +147,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - (optInTimePeriod - 1);
@@ -171,7 +171,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Detrended Price Oscillator: the price a half-cycle back, less the moving
@@ -235,7 +235,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DPO_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DPO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -305,7 +305,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = DPO_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("DPO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -372,7 +372,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DPO advance", RetCode.OutOfRangeEndIndex);
+            throw failure("DPO advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -411,9 +411,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("DPO update", RetCode.OutOfRangeEndIndex);
+            throw failure("DPO update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("DPO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO update: BAD_PARAM", RetCode.BAD_PARAM);
          core.dpoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -431,7 +431,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("DPO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("DPO peek: BAD_PARAM", RetCode.BAD_PARAM);
          DpoStream sp = this;
          double tempReal = 0.0;
          double dispVal = 0.0;
@@ -534,20 +534,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* The running sum is accumulated, snapshot and divided in exactly the order
        * ta_codegen/input/sma/sma.c uses, so this fused loop is bit-for-bit equal
@@ -564,7 +564,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - (optInTimePeriod - 1);
@@ -597,14 +597,14 @@
       /* Capture the live batch state into the handle. */
       int cap_dispIdx = i - dispIdx;
       if( cap_dispIdx < 0 || cap_dispIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_dispIdx = (cap_dispIdx > 0)? cap_dispIdx : 1;
       double[] capRing_dispIdx_inReal = new double[allocN_dispIdx];
       System.arraycopy(inReal, historyLen - cap_dispIdx, capRing_dispIdx_inReal, 0, cap_dispIdx);
       int cap_trailingIdx = i - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
@@ -618,7 +618,7 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* dpoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    DpoStream dpoOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -627,13 +627,13 @@
       RetCode retCode = dpoOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DPO openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DPO openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("DPO openAndFill: " + retCode, retCode);
@@ -648,13 +648,13 @@
       RetCode retCode = dpoOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("DPO open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("DPO open: internal error", retCode);
       }
       throw new TALibArgumentException("DPO open: " + retCode, retCode);
@@ -696,7 +696,7 @@
       int guardOutLen = openFillCount("DPO openAndFill", inReal.length, DPO_Lookback(optInTimePeriod));
       requireLength("DPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("DPO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("DPO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

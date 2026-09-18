@@ -75,15 +75,15 @@
       int m = 0;
       int blockNext = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
@@ -100,7 +100,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -123,19 +123,19 @@
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
       sufHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preHighest = new double[optInTimePeriod];
       maxIdx_preHighest = (optInTimePeriod)-1;
       preHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
       sufLowest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preLowest = new double[optInTimePeriod];
       maxIdx_preLowest = (optInTimePeriod)-1;
       preLowest_Idx = 0;
@@ -262,7 +262,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode WILLR_Impl( int startIdx,
                        int endIdx,
@@ -300,15 +300,15 @@
       int m = 0;
       int blockNext = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -317,24 +317,24 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufHighest = new double[optInTimePeriod];
       maxIdx_sufHighest = (optInTimePeriod)-1;
       sufHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preHighest = new double[optInTimePeriod];
       maxIdx_preHighest = (optInTimePeriod)-1;
       preHighest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       sufLowest = new double[optInTimePeriod];
       maxIdx_sufLowest = (optInTimePeriod)-1;
       sufLowest_Idx = 0;
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       preLowest = new double[optInTimePeriod];
       maxIdx_preLowest = (optInTimePeriod)-1;
       preLowest_Idx = 0;
@@ -429,7 +429,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
@@ -490,7 +490,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WILLR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -557,7 +557,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("WILLR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -630,7 +630,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WILLR advance", RetCode.OutOfRangeEndIndex);
+            throw failure("WILLR advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -673,9 +673,9 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("WILLR update", RetCode.OutOfRangeEndIndex);
+            throw failure("WILLR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("WILLR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR update: BAD_PARAM", RetCode.BAD_PARAM);
          core.willrStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -693,7 +693,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("WILLR peek: BAD_PARAM", RetCode.BAD_PARAM);
          WillrStream sp = this;
          double tmp = 0.0;
          double tempReal = 0.0;
@@ -862,23 +862,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
@@ -895,7 +895,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -983,7 +983,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -1010,7 +1010,7 @@
       sp.x_inLow = capX_inLow;
       sp.x_inClose = capX_inClose;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* willrOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    WillrStream willrOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1019,13 +1019,13 @@
       RetCode retCode = willrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WILLR openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("WILLR openAndFill: " + retCode, retCode);
@@ -1040,13 +1040,13 @@
       RetCode retCode = willrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("WILLR open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("WILLR open: internal error", retCode);
       }
       throw new TALibArgumentException("WILLR open: " + retCode, retCode);
@@ -1096,7 +1096,7 @@
       requireHistoryLength("WILLR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WILLR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("WILLR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("WILLR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

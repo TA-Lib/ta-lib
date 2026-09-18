@@ -1300,7 +1300,7 @@ fn test_java_sma_guarded_has_validation() {
     let guarded = extract_section(&out.java, "RetCode SMA_Impl( int startIdx", "double inReal[]");
     let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
-        guarded.contains("OutOfRangeStartIndex"),
+        guarded.contains("OUT_OF_RANGE_START_INDEX"),
         "Java guarded SMA should have start index validation"
     );
 }

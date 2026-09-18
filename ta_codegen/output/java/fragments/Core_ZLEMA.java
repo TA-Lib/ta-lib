@@ -55,15 +55,15 @@
       int lag = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
@@ -86,7 +86,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* No smoothing at period of 1: the output is a copy of the input, the
        * convention TA_MA applies to every MAType. Explicit, because at period 1
@@ -103,7 +103,7 @@
             outReal[outIdx++] = inReal[today++];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       /* In-place safe (outReal == inReal): both of a bar's reads precede its
@@ -134,7 +134,7 @@
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode ZLEMA_Impl( int startIdx,
                        int endIdx,
@@ -154,15 +154,15 @@
       int lag = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       lag = (optInTimePeriod - 1) / 2;
@@ -173,7 +173,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( optInTimePeriod == 1 ) {
          outBegIdx.value = startIdx;
@@ -183,7 +183,7 @@
             outReal[outIdx++] = (double)inReal[today++];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       trailingIdx = startIdx - lookbackTotal;
@@ -210,7 +210,7 @@
          outReal[outIdx++] = prevMA;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Zero-Lag Exponential Moving Average: an <a
@@ -288,7 +288,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ZLEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ZLEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -372,7 +372,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ZLEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ZLEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -437,7 +437,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ZLEMA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("ZLEMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -474,9 +474,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ZLEMA update", RetCode.OutOfRangeEndIndex);
+            throw failure("ZLEMA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.zlemaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -494,7 +494,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ZLEMA peek: BAD_PARAM", RetCode.BAD_PARAM);
          ZlemaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -570,26 +570,26 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
          int fillLb = ZLEMA_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInK_1 = 0.0;
@@ -607,7 +607,7 @@
             }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* KEEP THIS ARITHMETIC EXACTLY AS WRITTEN -- the de-lag in one rounding
@@ -630,7 +630,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       /* In-place safe (outReal == inReal): both of a bar's reads precede its
@@ -664,7 +664,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
@@ -676,7 +676,7 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* zlemaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ZlemaStream zlemaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -685,13 +685,13 @@
       RetCode retCode = zlemaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ZLEMA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ZLEMA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
@@ -706,13 +706,13 @@
       RetCode retCode = zlemaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ZLEMA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ZLEMA open: internal error", retCode);
       }
       throw new TALibArgumentException("ZLEMA open: " + retCode, retCode);
@@ -754,7 +754,7 @@
       int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, ZLEMA_Lookback(optInTimePeriod));
       requireLength("ZLEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

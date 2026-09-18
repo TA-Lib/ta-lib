@@ -83,20 +83,20 @@
       int i = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 9;
       } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_Period == Integer.MIN_VALUE ) {
          optInSlowK_Period = 3;
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.RMA;
@@ -104,13 +104,13 @@
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.RMA;
       }
       if( outK == outD || outK == outJ || outD == outJ ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
       /* Nothing to produce: the range is shorter than the lookback. Answering here
@@ -120,12 +120,12 @@
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       OutRange _xr0 = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -137,7 +137,7 @@
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          outJ[i] = 3.0 * outK[i] - 2.0 * outD[i];
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode KDJ_Impl( int startIdx,
                      int endIdx,
@@ -159,20 +159,20 @@
       int i = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 9;
       } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_Period == Integer.MIN_VALUE ) {
          optInSlowK_Period = 3;
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.RMA;
@@ -180,24 +180,24 @@
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.RMA;
       }
       if( outK == outD || outK == outJ || outD == outJ ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       OutRange _xr0 = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -206,7 +206,7 @@
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          outJ[i] = 3.0 * outK[i] - 2.0 * outD[i];
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * The stochastic oscillator as it is drawn on Chinese-market platforms: the
@@ -308,7 +308,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KDJ", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -416,7 +416,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KDJ", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -483,7 +483,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KDJ advance", RetCode.OutOfRangeEndIndex);
+            throw failure("KDJ advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -522,10 +522,10 @@
        */
       public void update( double inHigh, double inLow, double inClose, KdjOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KDJ update", RetCode.OutOfRangeEndIndex);
+            throw failure("KDJ update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("KDJ update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KDJ update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ update: BAD_PARAM", RetCode.BAD_PARAM);
          core.kdjStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.k = this.cur_outK;
@@ -546,7 +546,7 @@
       public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
          requireArgument("KDJ peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KDJ peek: BAD_PARAM", RetCode.BAD_PARAM);
          KdjStream sp = this;
          double cur_outK = 0.0;
          double cur_outD = 0.0;
@@ -644,23 +644,23 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 9;
       } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_Period == Integer.MIN_VALUE ) {
          optInSlowK_Period = 3;
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.RMA;
@@ -668,7 +668,7 @@
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.RMA;
@@ -676,10 +676,10 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen < KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outK = outStride == 1 ? outK : new double[historyLen];
       double[] sc_outD = outStride == 1 ? outD : new double[historyLen];
@@ -692,16 +692,16 @@
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Sub-stream 0: stoch over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StochStream sub0 = stochOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outK, sc_outD);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Keep this one Sub expression: spelling it as an Add of a negated term
        * would arm the multiply-add fusion and move the last bits of J.
@@ -711,7 +711,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInFastK_Period = optInFastK_Period;
       sp.optInSlowK_Period = optInSlowK_Period;
@@ -722,7 +722,7 @@
       sp.cur_outK = sc_outK[outNBElement.value - 1];
       sp.cur_outD = sc_outD[outNBElement.value - 1];
       sp.cur_outJ = sc_outJ[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* kdjOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    KdjStream kdjOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outK[], double outD[], double outJ[] )
@@ -731,13 +731,13 @@
       RetCode retCode = kdjOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KDJ openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KDJ openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("KDJ openAndFill: " + retCode, retCode);
@@ -754,13 +754,13 @@
       RetCode retCode = kdjOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outK, sink_outD, sink_outJ, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KDJ open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KDJ open: internal error", retCode);
       }
       throw new TALibArgumentException("KDJ open: " + retCode, retCode);
@@ -816,7 +816,7 @@
       requireLength("KDJ openAndFill", "outD", outD, guardOutLen);
       requireLength("KDJ openAndFill", "outJ", outJ, guardOutLen);
       if( (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ ) {
-         throw new TALibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KDJ openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

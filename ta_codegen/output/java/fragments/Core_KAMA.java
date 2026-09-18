@@ -78,15 +78,15 @@
       int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       constMax = 2.0 / (30.0 + 1.0);
       constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -103,7 +103,7 @@
             startIdx = lookbackTotal;
          }
          if( startIdx > endIdx ) {
-            return RetCode.Success ;
+            return RetCode.SUCCESS ;
          }
          outBegIdx.value = startIdx;
          outIdx = 0;
@@ -112,7 +112,7 @@
             outReal[outIdx++] = inReal[today++];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -128,7 +128,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Initialize the variables by going through
        * the lookback period.
@@ -300,7 +300,7 @@
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode KAMA_Impl( int startIdx,
                       int endIdx,
@@ -325,15 +325,15 @@
       int nullRun = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       constMax = 2.0 / (30.0 + 1.0);
       constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -345,7 +345,7 @@
             startIdx = lookbackTotal;
          }
          if( startIdx > endIdx ) {
-            return RetCode.Success ;
+            return RetCode.SUCCESS ;
          }
          outBegIdx.value = startIdx;
          outIdx = 0;
@@ -354,7 +354,7 @@
             outReal[outIdx++] = (double)inReal[today++];
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
       if( startIdx < lookbackTotal ) {
@@ -363,7 +363,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       sumROC1 = 0.0;
       nullRun = 0;
@@ -457,7 +457,7 @@
          outReal[outIdx++] = prevKAMA;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each
@@ -518,7 +518,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -585,7 +585,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("KAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -655,7 +655,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KAMA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("KAMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -697,9 +697,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("KAMA update", RetCode.OutOfRangeEndIndex);
+            throw failure("KAMA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("KAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.kamaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -717,7 +717,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("KAMA peek: BAD_PARAM", RetCode.BAD_PARAM);
          KamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -894,26 +894,26 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
          int fillLb = KAMA_Lookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.InsufficientHistory;
+            return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.constMax = 0.0;
@@ -936,7 +936,7 @@
             }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
       constMax = 2.0 / (30.0 + 1.0);
       constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -957,7 +957,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Initialize the variables by going through
        * the lookback period.
@@ -1132,7 +1132,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
@@ -1149,7 +1149,7 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* kamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    KamaStream kamaOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1158,13 +1158,13 @@
       RetCode retCode = kamaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KAMA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("KAMA openAndFill: " + retCode, retCode);
@@ -1179,13 +1179,13 @@
       RetCode retCode = kamaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("KAMA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("KAMA open: internal error", retCode);
       }
       throw new TALibArgumentException("KAMA open: " + retCode, retCode);
@@ -1227,7 +1227,7 @@
       int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
       requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("KAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("KAMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

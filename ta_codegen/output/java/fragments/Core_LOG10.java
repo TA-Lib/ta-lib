@@ -35,17 +35,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = Math.log10(inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode LOG10_Impl( int startIdx,
                        int endIdx,
@@ -57,17 +57,17 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx] = Math.log10((double)inReal[i]);
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Element-wise base-10 logarithm of the input series.
@@ -119,7 +119,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("LOG10", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -177,7 +177,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("LOG10", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -236,7 +236,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("LOG10 advance", RetCode.OutOfRangeEndIndex);
+            throw failure("LOG10 advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -267,9 +267,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("LOG10 update", RetCode.OutOfRangeEndIndex);
+            throw failure("LOG10 update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 update: BAD_PARAM", RetCode.BAD_PARAM);
          core.log10StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -287,7 +287,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LOG10 peek: BAD_PARAM", RetCode.BAD_PARAM);
          Log10Stream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log10(inReal);
@@ -331,15 +331,15 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
          outReal[outIdx * outStride] = Math.log10(inReal[i]);
@@ -348,7 +348,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* log10OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    Log10Stream log10OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -357,13 +357,13 @@
       RetCode retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("LOG10 openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("LOG10 openAndFill: " + retCode, retCode);
@@ -378,13 +378,13 @@
       RetCode retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("LOG10 open: internal error", retCode);
       }
       throw new TALibArgumentException("LOG10 open: " + retCode, retCode);
@@ -424,7 +424,7 @@
       int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
       requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

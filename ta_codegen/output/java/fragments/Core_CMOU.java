@@ -65,15 +65,15 @@
       double prevValue = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
        * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
@@ -94,7 +94,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Accumulate the up/down sums over the first window: the optInTimePeriod
        * changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
@@ -199,7 +199,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode CMOU_Impl( int startIdx,
                       int endIdx,
@@ -223,15 +223,15 @@
       double prevValue = 0;
       double trailingValue = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -240,7 +240,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       today = startIdx - lookbackTotal;
       trailingIdx = today + 1;
@@ -311,7 +311,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
@@ -370,7 +370,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -435,7 +435,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -503,7 +503,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CMOU advance", RetCode.OutOfRangeEndIndex);
+            throw failure("CMOU advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -543,9 +543,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CMOU update", RetCode.OutOfRangeEndIndex);
+            throw failure("CMOU update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CMOU update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMOU update: BAD_PARAM", RetCode.BAD_PARAM);
          core.cmouStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -563,7 +563,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CMOU peek: BAD_PARAM", RetCode.BAD_PARAM);
          CmouStream sp = this;
          double sum = 0.0;
          double diff = 0.0;
@@ -725,20 +725,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
        * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
@@ -759,7 +759,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Accumulate the up/down sums over the first window: the optInTimePeriod
        * changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
@@ -867,7 +867,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = today - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
@@ -882,7 +882,7 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* cmouOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CmouStream cmouOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -891,13 +891,13 @@
       RetCode retCode = cmouOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CMOU openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("CMOU openAndFill: " + retCode, retCode);
@@ -912,13 +912,13 @@
       RetCode retCode = cmouOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CMOU open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CMOU open: internal error", retCode);
       }
       throw new TALibArgumentException("CMOU open: " + retCode, retCode);
@@ -960,7 +960,7 @@
       int guardOutLen = openFillCount("CMOU openAndFill", inReal.length, CMOU_Lookback(optInTimePeriod));
       requireLength("CMOU openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("CMOU openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CMOU openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

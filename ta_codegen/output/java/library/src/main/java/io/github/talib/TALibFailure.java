@@ -49,15 +49,15 @@ package io.github.talib;
  * index is still an {@link IndexOutOfBoundsException}, a bad parameter still an
  * {@link IllegalArgumentException} — because that is what a caller catches.
  * What the types cannot carry is <i>which</i> condition: one
- * {@code IndexOutOfBoundsException} serves both {@link RetCode#OutOfRangeStartIndex}
- * and {@link RetCode#OutOfRangeEndIndex}, and one {@link IllegalStateException}
- * serves both {@link RetCode#AllocErr} and {@link RetCode#InternalError}. This
+ * {@code IndexOutOfBoundsException} serves both {@link RetCode#OUT_OF_RANGE_START_INDEX}
+ * and {@link RetCode#OUT_OF_RANGE_END_INDEX}, and one {@link IllegalStateException}
+ * serves both {@link RetCode#ALLOC_ERR} and {@link RetCode#INTERNAL_ERROR}. This
  * interface is what makes the two separable again, without narrowing the catch
  * types.
  *
  * <p>The mapping is <b>total</b> over the batch and streaming tiers — every
  * failure a call to an indicator raises implements it, including the length and
- * presence checks C cannot make (they report {@link RetCode#BadParam}, the code
+ * presence checks C cannot make (they report {@link RetCode#BAD_PARAM}, the code
  * C uses for an argument it can detect) — and <b>lossless</b>: distinct codes
  * never share one thrown representation.
  *

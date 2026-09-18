@@ -36,10 +36,10 @@
       int i = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* Running total from the ANCHOR bar forward: the accumulator re-seeds at
        * startIdx, exactly as every shipped path-dependent accumulator does
@@ -63,7 +63,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode CUMSUM_Impl( int startIdx,
                         int endIdx,
@@ -76,10 +76,10 @@
       int i = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       total = 0.0;
       for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
@@ -88,7 +88,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Cumulative Sum: the running total of a series from the anchor bar forward.
@@ -147,7 +147,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CUMSUM_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CUMSUM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -212,7 +212,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CUMSUM_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CUMSUM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -272,7 +272,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CUMSUM advance", RetCode.OutOfRangeEndIndex);
+            throw failure("CUMSUM advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -304,9 +304,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CUMSUM update", RetCode.OutOfRangeEndIndex);
+            throw failure("CUMSUM update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM update: BAD_PARAM", RetCode.BAD_PARAM);
          core.cumsumStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -324,7 +324,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CUMSUM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CUMSUM peek: BAD_PARAM", RetCode.BAD_PARAM);
          CumsumStream sp = this;
          double cur_outReal = 0.0;
          double total = sp.total;
@@ -372,15 +372,15 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Running total from the ANCHOR bar forward: the accumulator re-seeds at
        * startIdx, exactly as every shipped path-dependent accumulator does
@@ -407,7 +407,7 @@
       /* Capture the live batch state into the handle. */
       sp.total = total;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* cumsumOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CumsumStream cumsumOpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -416,13 +416,13 @@
       RetCode retCode = cumsumOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CUMSUM openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CUMSUM openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("CUMSUM openAndFill: " + retCode, retCode);
@@ -437,13 +437,13 @@
       RetCode retCode = cumsumOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CUMSUM open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CUMSUM open: internal error", retCode);
       }
       throw new TALibArgumentException("CUMSUM open: " + retCode, retCode);
@@ -483,7 +483,7 @@
       int guardOutLen = openFillCount("CUMSUM openAndFill", inReal.length, CUMSUM_Lookback());
       requireLength("CUMSUM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("CUMSUM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CUMSUM openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

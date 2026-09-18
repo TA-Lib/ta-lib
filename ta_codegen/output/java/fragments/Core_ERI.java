@@ -56,18 +56,18 @@
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outBullPower == outBearPower ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
        * the bar's extremes sit from one shared EMA of close.
@@ -93,7 +93,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
        * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
@@ -116,7 +116,7 @@
          }
          outBegIdx.value = startIdx;
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       k = 2.0 / ((double)optInTimePeriod + 1.0);
       /* Seed: ema.c's DEFAULT arm, op for op. */
@@ -152,7 +152,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode ERI_Impl( int startIdx,
                      int endIdx,
@@ -175,18 +175,18 @@
       double tempHT = 0;
       double tempLT = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outBullPower == outBearPower ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       lookbackTotal = ERI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -195,7 +195,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( optInTimePeriod == 1 ) {
          outIdx = 0;
@@ -211,7 +211,7 @@
          }
          outBegIdx.value = startIdx;
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       k = 2.0 / ((double)optInTimePeriod + 1.0);
       today = startIdx - lookbackTotal;
@@ -240,7 +240,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
@@ -311,7 +311,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ERI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -388,7 +388,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("ERI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -451,7 +451,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ERI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("ERI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -486,10 +486,10 @@
        */
       public void update( double inHigh, double inLow, double inClose, EriOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("ERI update", RetCode.OutOfRangeEndIndex);
+            throw failure("ERI update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("ERI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ERI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.eriStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.bullPower = this.cur_outBullPower;
@@ -509,7 +509,7 @@
       public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
          requireArgument("ERI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ERI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("ERI peek: BAD_PARAM", RetCode.BAD_PARAM);
          EriStream sp = this;
          double cur_outBullPower = 0.0;
          double cur_outBearPower = 0.0;
@@ -612,18 +612,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == 1 ) {
          int outIdx = 0;
@@ -659,7 +659,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
           * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
@@ -687,7 +687,7 @@
          sp.k = k;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       } else {
          int outIdx = 0;
          int today = 0;
@@ -722,7 +722,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
           * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
@@ -771,7 +771,7 @@
          sp.k = k;
          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
    }
    /* eriOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -781,13 +781,13 @@
       RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ERI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("ERI openAndFill: " + retCode, retCode);
@@ -803,13 +803,13 @@
       RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outBullPower, sink_outBearPower, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("ERI open: internal error", retCode);
       }
       throw new TALibArgumentException("ERI open: " + retCode, retCode);
@@ -860,7 +860,7 @@
       requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
       requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
       if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
-         throw new TALibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("ERI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

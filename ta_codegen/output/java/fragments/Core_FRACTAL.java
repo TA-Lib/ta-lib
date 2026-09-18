@@ -64,23 +64,23 @@
       double tempHigh = 0;
       double tempLow = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInLeftBars == Integer.MIN_VALUE ) {
          optInLeftBars = 2;
       } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInRightBars == Integer.MIN_VALUE ) {
          optInRightBars = 2;
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outSwingHigh == outSwingLow ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -90,7 +90,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -135,7 +135,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode FRACTAL_Impl( int startIdx,
                          int endIdx,
@@ -159,23 +159,23 @@
       double tempHigh = 0;
       double tempLow = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInLeftBars == Integer.MIN_VALUE ) {
          optInLeftBars = 2;
       } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInRightBars == Integer.MIN_VALUE ) {
          optInRightBars = 2;
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outSwingHigh == outSwingLow ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -184,7 +184,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -226,7 +226,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Williams Fractal: a causal swing-pivot detector. A bar is a swing high
@@ -310,7 +310,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("FRACTAL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -400,7 +400,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("FRACTAL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -466,7 +466,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("FRACTAL advance", RetCode.OutOfRangeEndIndex);
+            throw failure("FRACTAL advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -504,10 +504,10 @@
        */
       public void update( double inHigh, double inLow, FractalOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("FRACTAL update", RetCode.OutOfRangeEndIndex);
+            throw failure("FRACTAL update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("FRACTAL update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL update: BAD_PARAM", RetCode.BAD_PARAM);
          core.fractalStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          out.swingHigh = this.cur_outSwingHigh;
@@ -527,7 +527,7 @@
       public void peek( double inHigh, double inLow, FractalOut out ) {
          requireArgument("FRACTAL peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("FRACTAL peek: BAD_PARAM", RetCode.BAD_PARAM);
          FractalStream sp = this;
          int i = 0;
          double pivotHigh = 0.0;
@@ -701,28 +701,28 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInLeftBars == Integer.MIN_VALUE ) {
          optInLeftBars = 2;
       } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInRightBars == Integer.MIN_VALUE ) {
          optInRightBars = 2;
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -732,7 +732,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outIdx = 0;
       today = startIdx;
@@ -780,7 +780,7 @@
       /* Capture the live batch state into the handle. */
       int cap_i = (int)(optInLeftBars + optInRightBars + 1);
       if( cap_i < 1 || cap_i > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       double[] capWin_i_inHigh = new double[cap_i];
       System.arraycopy(inHigh, historyLen - cap_i, capWin_i_inHigh, 0, cap_i);
@@ -794,7 +794,7 @@
       sp.win_i_inLow = capWin_i_inLow;
       sp.cur_outSwingHigh = outSwingHigh[(outNBElement.value - 1) * outStride];
       sp.cur_outSwingLow = outSwingLow[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* fractalOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    FractalStream fractalOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars, MInteger outBegIdx, MInteger outNBElement, int outSwingHigh[], int outSwingLow[] )
@@ -803,13 +803,13 @@
       RetCode retCode = fractalOpenImpl(sp, inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("FRACTAL openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("FRACTAL openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
@@ -825,13 +825,13 @@
       RetCode retCode = fractalOpenImpl(sp, inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, sink_outSwingHigh, sink_outSwingLow, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("FRACTAL open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("FRACTAL open: internal error", retCode);
       }
       throw new TALibArgumentException("FRACTAL open: " + retCode, retCode);
@@ -878,7 +878,7 @@
       requireLength("FRACTAL openAndFill", "outSwingHigh", outSwingHigh, guardOutLen);
       requireLength("FRACTAL openAndFill", "outSwingLow", outSwingLow, guardOutLen);
       if( (Object)outSwingHigh == (Object)inHigh || (Object)outSwingHigh == (Object)inLow || (Object)outSwingLow == (Object)inHigh || (Object)outSwingLow == (Object)inLow || (Object)outSwingHigh == (Object)outSwingLow ) {
-         throw new TALibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("FRACTAL openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

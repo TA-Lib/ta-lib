@@ -265,7 +265,7 @@ public class DivZeroTest {
             failures++;
             System.out.println("  FAIL: " + what + " accepted a non-finite bar (" + bad + ")");
         } catch (TALibArgumentException e) {
-            if (e.retCode() != RetCode.BadParam) {
+            if (e.retCode() != RetCode.BAD_PARAM) {
                 failures++;
                 System.out.println("  FAIL: " + what + " on " + bad + " gave " + e.retCode());
             }

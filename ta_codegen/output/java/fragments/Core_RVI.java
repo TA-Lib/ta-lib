@@ -83,20 +83,20 @@
       int nbInitialElementNeeded = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -106,7 +106,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* wAlpha is derived FROM wBeta, never the reverse (rma.c): only that order
        * makes the pair sum to exactly 1, and TA_RMA over this function's two legs
@@ -310,7 +310,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode RVI_Impl( int startIdx,
                      int endIdx,
@@ -350,20 +350,20 @@
       int nbInitialElementNeeded = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -372,7 +372,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
@@ -556,7 +556,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Relative Volatility Index: Donald Dorsey's volatility oscillator, built
@@ -631,7 +631,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -712,7 +712,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -790,7 +790,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("RVI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -840,9 +840,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVI update", RetCode.OutOfRangeEndIndex);
+            throw failure("RVI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.rviStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -860,7 +860,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVI peek: BAD_PARAM", RetCode.BAD_PARAM);
          RviStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -1062,25 +1062,25 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -1090,7 +1090,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* wAlpha is derived FROM wBeta, never the reverse (rma.c): only that order
        * makes the pair sum to exactly 1, and TA_RMA over this function's two legs
@@ -1297,7 +1297,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -1327,7 +1327,7 @@
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* rviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RviStream rviOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1336,13 +1336,13 @@
       RetCode retCode = rviOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RVI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("RVI openAndFill: " + retCode, retCode);
@@ -1357,13 +1357,13 @@
       RetCode retCode = rviOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RVI open: internal error", retCode);
       }
       throw new TALibArgumentException("RVI open: " + retCode, retCode);
@@ -1405,7 +1405,7 @@
       int guardOutLen = openFillCount("RVI openAndFill", inReal.length, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
       requireLength("RVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

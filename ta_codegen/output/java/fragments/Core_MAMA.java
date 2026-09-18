@@ -138,23 +138,23 @@
       double todayValue = 0;
       double prevPhase = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outFAMA != null && outMAMA == outFAMA ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -176,7 +176,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -461,7 +461,7 @@
       }
       /* Default return values */
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MAMA_Impl( int startIdx,
                       int endIdx,
@@ -534,23 +534,23 @@
       double todayValue = 0;
       double prevPhase = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outFAMA != null && outMAMA == outFAMA ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       a = 0.0962;
       b = 0.5769;
@@ -562,7 +562,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       trailingWMAIdx = startIdx - lookbackTotal;
@@ -796,7 +796,7 @@
          today += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
@@ -862,7 +862,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -934,7 +934,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAMA_Impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -1043,7 +1043,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MAMA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MAMA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -1124,10 +1124,10 @@
        */
       public void update( double inReal, MamaOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MAMA update", RetCode.OutOfRangeEndIndex);
+            throw failure("MAMA update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("MAMA update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MAMA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.mamaStepImpl(this, inReal);
          this.outRangeCount++;
          out.mama = this.cur_outMAMA;
@@ -1147,7 +1147,7 @@
       public void peek( double inReal, MamaOut out ) {
          requireArgument("MAMA peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAMA peek: BAD_PARAM", RetCode.BAD_PARAM);
          MamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -1616,25 +1616,25 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       a = 0.0962;
       b = 0.5769;
@@ -1656,7 +1656,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1945,7 +1945,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingWMAIdx = today - trailingWMAIdx;
       if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
@@ -2001,7 +2001,7 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
       sp.cur_outFAMA = lastCur_outFAMA;
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MamaStream mamaOpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
@@ -2010,13 +2010,13 @@
       RetCode retCode = mamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MAMA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MAMA openAndFill: " + retCode, retCode);
@@ -2032,13 +2032,13 @@
       RetCode retCode = mamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, sink_outMAMA, sink_outFAMA, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MAMA open: internal error", retCode);
       }
       throw new TALibArgumentException("MAMA open: " + retCode, retCode);
@@ -2083,7 +2083,7 @@
       requireLength("MAMA openAndFill", "outMAMA", outMAMA, guardOutLen);
       if( outFAMA != null ) requireLength("MAMA openAndFill", "outFAMA", outFAMA, guardOutLen);
       if( (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) ) {
-         throw new TALibArgumentException("MAMA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MAMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

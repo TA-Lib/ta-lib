@@ -234,7 +234,7 @@ public class StreamSmokeTest {
             r.run();
             return false;
         } catch (IllegalArgumentException e) {
-            return String.valueOf(e.getMessage()).endsWith(": BadParam");
+            return String.valueOf(e.getMessage()).endsWith(": BAD_PARAM");
         }
     }
 
@@ -754,7 +754,7 @@ public class StreamSmokeTest {
             return false;
         } catch (IndexOutOfBoundsException e) {
             return e instanceof io.github.talib.TALibFailure
-                && ((io.github.talib.TALibFailure) e).retCode() == RetCode.OutOfRangeEndIndex;
+                && ((io.github.talib.TALibFailure) e).retCode() == RetCode.OUT_OF_RANGE_END_INDEX;
         }
     }
 
@@ -1729,7 +1729,7 @@ public class StreamSmokeTest {
          * with a huge BodyDoji factor calls every candle a doji, the default
          * core calls none of these one. */
         Core tuned = Core.builder()
-            .candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
+            .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 1.0e9)
             .build();
         Core.CdldojiStream d1 = core.cdldojiOpen(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),

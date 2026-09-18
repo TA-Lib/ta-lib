@@ -113,31 +113,31 @@
       double[] tempBuffer1;
       double[] tempBuffer2;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
       } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
       } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       if( optInMAType == MAType.SMA ) {
          /* SMA fast path: the middle band (SMA) and the standard deviation share one
@@ -165,7 +165,7 @@
           * (like using the input buffer in two output!)
           */
          if( tempBuffer1 == inReal || tempBuffer2 == inReal ) {
-            return RetCode.BadParam ;
+            return RetCode.BAD_PARAM ;
          }
          /* One pass with two independent recurrences: the SMA running sum (maTotal,
           * mean -> tempBuffer1, bit-identical to TA_MA(SMA)) and the shifted-data
@@ -195,7 +195,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.Success ;
+            return RetCode.SUCCESS ;
          }
          _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
@@ -303,7 +303,7 @@
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
@@ -328,7 +328,7 @@
       if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -336,7 +336,7 @@
       OutRange _xr0 = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -347,7 +347,7 @@
       OutRange _xr1 = STDDEV((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -378,7 +378,7 @@
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode BBANDS_Impl( int startIdx,
                         int endIdx,
@@ -402,31 +402,31 @@
       double[] tempBuffer1;
       double[] tempBuffer2;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
       } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
       } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       if( optInMAType == MAType.SMA ) {
          if( false ) {
@@ -443,7 +443,7 @@
             tempBuffer2 = outRealUpperBand;
          }
          if( false || false ) {
-            return RetCode.BadParam ;
+            return RetCode.BAD_PARAM ;
          }
          double maTotal;
          double shift;
@@ -467,7 +467,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.Success ;
+            return RetCode.SUCCESS ;
          }
          _invPeriod = 1.0 / (double)optInTimePeriod;
          _trailingIdx = startIdx - _lookbackTotal;
@@ -551,19 +551,19 @@
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       OutRange _xr0 = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
          return retCode ;
@@ -572,7 +572,7 @@
       OutRange _xr1 = STDDEV((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outBegIdx.value > maBegIdx ) {
          shiftIdx = (int)outBegIdx.value - maBegIdx;
       } else {
@@ -593,7 +593,7 @@
             outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Bollinger Bands: a moving-average middle band with upper and lower bands
@@ -667,7 +667,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = BBANDS_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -747,7 +747,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = BBANDS_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -814,7 +814,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("BBANDS advance", RetCode.OutOfRangeEndIndex);
+            throw failure("BBANDS advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -853,10 +853,10 @@
        */
       public void update( double inReal, BbandsOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("BBANDS update", RetCode.OutOfRangeEndIndex);
+            throw failure("BBANDS update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("BBANDS update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS update: BAD_PARAM", RetCode.BAD_PARAM);
          core.bbandsStepImpl(this, inReal);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -877,7 +877,7 @@
       public void peek( double inReal, BbandsOut out ) {
          requireArgument("BBANDS peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("BBANDS peek: BAD_PARAM", RetCode.BAD_PARAM);
          BbandsStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -998,25 +998,25 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
       } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
       } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
@@ -1024,10 +1024,10 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
@@ -1055,7 +1055,7 @@
       if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -1063,10 +1063,10 @@
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( (int)outNBElement.value == 0 ) {
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx.value;
@@ -1074,7 +1074,7 @@
       /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       StddevStream sub1 = stddevOpenAndFillInternal(inReal, (int)outBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
        * begIdx than the moving average did - as with TA_MAType_MAMA (constant
        * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
@@ -1107,7 +1107,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDevUp = optInNbDevUp;
@@ -1118,7 +1118,7 @@
       sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* bbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    BbandsStream bbandsOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
@@ -1127,13 +1127,13 @@
       RetCode retCode = bbandsOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("BBANDS openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("BBANDS openAndFill: " + retCode, retCode);
@@ -1150,13 +1150,13 @@
       RetCode retCode = bbandsOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("BBANDS open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("BBANDS open: internal error", retCode);
       }
       throw new TALibArgumentException("BBANDS open: " + retCode, retCode);
@@ -1203,7 +1203,7 @@
       requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("BBANDS openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("BBANDS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

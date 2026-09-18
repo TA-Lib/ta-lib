@@ -67,15 +67,15 @@
       double weightedTrailing = 0;
       double sumAbs = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
@@ -102,7 +102,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -228,7 +228,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode LINEARREG_INTERCEPT_Impl( int startIdx,
                                      int endIdx,
@@ -258,15 +258,15 @@
       double weightedTrailing = 0;
       double sumAbs = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
@@ -275,7 +275,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -327,7 +327,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Returns the y-intercept (b) of the least-squares regression line fitted
@@ -382,7 +382,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("LINEARREG_INTERCEPT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -443,7 +443,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("LINEARREG_INTERCEPT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -516,7 +516,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("LINEARREG_INTERCEPT advance", RetCode.OutOfRangeEndIndex);
+            throw failure("LINEARREG_INTERCEPT advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -561,9 +561,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("LINEARREG_INTERCEPT update", RetCode.OutOfRangeEndIndex);
+            throw failure("LINEARREG_INTERCEPT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT update: BAD_PARAM", RetCode.BAD_PARAM);
          core.linearregInterceptStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -581,7 +581,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("LINEARREG_INTERCEPT peek: BAD_PARAM", RetCode.BAD_PARAM);
          LinearregInterceptStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -829,20 +829,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Linear Regression is a concept also known as the
        * "least squares method" or "best fit." Linear
@@ -869,7 +869,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -998,7 +998,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -1023,7 +1023,7 @@
       sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* linearregInterceptOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LinearregInterceptStream linearregInterceptOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1032,13 +1032,13 @@
       RetCode retCode = linearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("LINEARREG_INTERCEPT openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + retCode, retCode);
@@ -1053,13 +1053,13 @@
       RetCode retCode = linearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("LINEARREG_INTERCEPT open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("LINEARREG_INTERCEPT open: internal error", retCode);
       }
       throw new TALibArgumentException("LINEARREG_INTERCEPT open: " + retCode, retCode);
@@ -1101,7 +1101,7 @@
       int guardOutLen = openFillCount("LINEARREG_INTERCEPT openAndFill", inReal.length, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
       requireLength("LINEARREG_INTERCEPT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("LINEARREG_INTERCEPT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

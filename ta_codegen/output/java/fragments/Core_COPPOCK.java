@@ -90,25 +90,25 @@
       int sRing_Idx = 0;
       int maxIdx_sRing = (50)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInWMAPeriod == Integer.MIN_VALUE ) {
          optInWMAPeriod = 10;
       } else if( optInWMAPeriod < 1 || optInWMAPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC1Period == Integer.MIN_VALUE ) {
          optInROC1Period = 11;
       } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC2Period == Integer.MIN_VALUE ) {
          optInROC2Period = 14;
       } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Coppock Curve: a WMA(optInWMAPeriod) of the SUM of two rates of change,
        * ROC(optInROC1Period) + ROC(optInROC2Period). The sum, not the mean:
@@ -144,7 +144,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Triangle divider in double: the int product w*(w+1) overflows int32 at
        * w >= 46341 (#142), exactly as in TA_WMA.
@@ -161,7 +161,7 @@
       if( ringSize < 1 ) {
          ringSize = 1;
       }
-      if( ringSize < 1 ) return RetCode.InternalError;
+      if( ringSize < 1 ) return RetCode.INTERNAL_ERROR;
       sRing = new double[ringSize];
       maxIdx_sRing = (ringSize)-1;
       sRing_Idx = 0;
@@ -263,7 +263,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode COPPOCK_Impl( int startIdx,
                          int endIdx,
@@ -300,25 +300,25 @@
       int sRing_Idx = 0;
       int maxIdx_sRing = (50)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInWMAPeriod == Integer.MIN_VALUE ) {
          optInWMAPeriod = 10;
       } else if( optInWMAPeriod < 1 || optInWMAPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC1Period == Integer.MIN_VALUE ) {
          optInROC1Period = 11;
       } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC2Period == Integer.MIN_VALUE ) {
          optInROC2Period = 14;
       } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
       if( startIdx < lookbackTotal ) {
@@ -327,7 +327,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       divider = (double)optInWMAPeriod * (optInWMAPeriod + 1) / 2.0;
       outIdx = 0;
@@ -335,7 +335,7 @@
       if( ringSize < 1 ) {
          ringSize = 1;
       }
-      if( ringSize < 1 ) return RetCode.InternalError;
+      if( ringSize < 1 ) return RetCode.INTERNAL_ERROR;
       sRing = new double[ringSize];
       maxIdx_sRing = (ringSize)-1;
       sRing_Idx = 0;
@@ -410,7 +410,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
@@ -473,7 +473,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = COPPOCK_Impl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("COPPOCK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -542,7 +542,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = COPPOCK_Impl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("COPPOCK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -620,7 +620,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("COPPOCK advance", RetCode.OutOfRangeEndIndex);
+            throw failure("COPPOCK advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -670,9 +670,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("COPPOCK update", RetCode.OutOfRangeEndIndex);
+            throw failure("COPPOCK update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK update: BAD_PARAM", RetCode.BAD_PARAM);
          core.coppockStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -690,7 +690,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COPPOCK peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("COPPOCK peek: BAD_PARAM", RetCode.BAD_PARAM);
          CoppockStream sp = this;
          int q = 0;
          int rw = 0;
@@ -915,30 +915,30 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInWMAPeriod == Integer.MIN_VALUE ) {
          optInWMAPeriod = 10;
       } else if( optInWMAPeriod < 1 || optInWMAPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC1Period == Integer.MIN_VALUE ) {
          optInROC1Period = 11;
       } else if( optInROC1Period < 1 || optInROC1Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROC2Period == Integer.MIN_VALUE ) {
          optInROC2Period = 14;
       } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Coppock Curve: a WMA(optInWMAPeriod) of the SUM of two rates of change,
        * ROC(optInROC1Period) + ROC(optInROC2Period). The sum, not the mean:
@@ -974,7 +974,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Triangle divider in double: the int product w*(w+1) overflows int32 at
        * w >= 46341 (#142), exactly as in TA_WMA.
@@ -991,7 +991,7 @@
       if( ringSize < 1 ) {
          ringSize = 1;
       }
-      if( ringSize < 1 ) return RetCode.InternalError;
+      if( ringSize < 1 ) return RetCode.INTERNAL_ERROR;
       sRing = new double[ringSize];
       maxIdx_sRing = (ringSize)-1;
       sRing_Idx = 0;
@@ -1096,21 +1096,21 @@
       /* Capture the live batch state into the handle. */
       int cap_roc1Idx = inIdx - roc1Idx;
       if( cap_roc1Idx < 0 || cap_roc1Idx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_roc1Idx = (cap_roc1Idx > 0)? cap_roc1Idx : 1;
       double[] capRing_roc1Idx_inReal = new double[allocN_roc1Idx];
       System.arraycopy(inReal, historyLen - cap_roc1Idx, capRing_roc1Idx_inReal, 0, cap_roc1Idx);
       int cap_roc2Idx = inIdx - roc2Idx;
       if( cap_roc2Idx < 0 || cap_roc2Idx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_roc2Idx = (cap_roc2Idx > 0)? cap_roc2Idx : 1;
       double[] capRing_roc2Idx_inReal = new double[allocN_roc2Idx];
       System.arraycopy(inReal, historyLen - cap_roc2Idx, capRing_roc2Idx_inReal, 0, cap_roc2Idx);
       int capCb_sRing = maxIdx_sRing + 1;
       if( capCb_sRing > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInWMAPeriod = optInWMAPeriod;
       sp.optInROC1Period = optInROC1Period;
@@ -1132,7 +1132,7 @@
       sp.cbSize_sRing = capCb_sRing;
       sp.cb_sRing = sRing;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* coppockOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CoppockStream coppockOpenAndFillInternal( double inReal[], int startIdx, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1141,13 +1141,13 @@
       RetCode retCode = coppockOpenImpl(sp, inReal, startIdx, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("COPPOCK openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("COPPOCK openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("COPPOCK openAndFill: " + retCode, retCode);
@@ -1162,13 +1162,13 @@
       RetCode retCode = coppockOpenImpl(sp, inReal, startIdx, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("COPPOCK open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("COPPOCK open: internal error", retCode);
       }
       throw new TALibArgumentException("COPPOCK open: " + retCode, retCode);
@@ -1210,7 +1210,7 @@
       int guardOutLen = openFillCount("COPPOCK openAndFill", inReal.length, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       requireLength("COPPOCK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("COPPOCK openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("COPPOCK openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

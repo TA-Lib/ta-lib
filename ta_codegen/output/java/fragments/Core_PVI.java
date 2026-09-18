@@ -45,10 +45,10 @@
       double tempVolume = 0;
       double tempPVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume increased versus the prior bar (Positive Volume).
@@ -88,7 +88,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode PVI_Impl( int startIdx,
                      int endIdx,
@@ -107,10 +107,10 @@
       double tempVolume = 0;
       double tempPVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       prevPVI = 1000.0;
       prevClose = (double)inClose[startIdx];
@@ -132,7 +132,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Positive Volume Index: a running cumulative index that changes only on
@@ -188,7 +188,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -250,7 +250,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -312,7 +312,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("PVI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -346,9 +346,9 @@
        */
       public double update( double inClose, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVI update", RetCode.OutOfRangeEndIndex);
+            throw failure("PVI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.pviStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -366,7 +366,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVI peek: BAD_PARAM", RetCode.BAD_PARAM);
          PviStream sp = this;
          double tempClose = 0.0;
          double tempVolume = 0.0;
@@ -473,18 +473,18 @@
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume increased versus the prior bar (Positive Volume).
@@ -529,7 +529,7 @@
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* pviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PviStream pviOpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -538,13 +538,13 @@
       RetCode retCode = pviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("PVI openAndFill: " + retCode, retCode);
@@ -559,13 +559,13 @@
       RetCode retCode = pviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVI open: internal error", retCode);
       }
       throw new TALibArgumentException("PVI open: " + retCode, retCode);
@@ -609,7 +609,7 @@
       requireHistoryLength("PVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("PVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

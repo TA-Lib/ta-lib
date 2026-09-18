@@ -68,18 +68,18 @@
       int optInFastPeriod = 0;
       int optInSlowPeriod = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       optInFastPeriod = 12;
       optInSlowPeriod = 26;
@@ -114,7 +114,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Everything is computed in a single lockstep pass: each bar
        * advances the fast and slow EMA (two independent recursions),
@@ -216,7 +216,7 @@
       /* All done! Indicate the output limits and return success. */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MACDFIX_Impl( int startIdx,
                          int endIdx,
@@ -244,18 +244,18 @@
       int optInFastPeriod = 0;
       int optInSlowPeriod = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       optInFastPeriod = 12;
       optInSlowPeriod = 26;
@@ -271,7 +271,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       today = startIdx - lookbackTotal;
       tempReal = 0.0;
@@ -336,7 +336,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
@@ -403,7 +403,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MACDFIX_Impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -476,7 +476,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MACDFIX_Impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -544,7 +544,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MACDFIX advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MACDFIX advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -584,10 +584,10 @@
        */
       public void update( double inReal, MacdfixOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MACDFIX update", RetCode.OutOfRangeEndIndex);
+            throw failure("MACDFIX update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("MACDFIX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX update: BAD_PARAM", RetCode.BAD_PARAM);
          core.macdfixStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -608,7 +608,7 @@
       public void peek( double inReal, MacdfixOut out ) {
          requireArgument("MACDFIX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MACDFIX peek: BAD_PARAM", RetCode.BAD_PARAM);
          MacdfixStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -725,20 +725,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 9;
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       optInFastPeriod = 12;
       optInSlowPeriod = 26;
@@ -773,7 +773,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Everything is computed in a single lockstep pass: each bar
        * advances the fast and slow EMA (two independent recursions),
@@ -886,7 +886,7 @@
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* macdfixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MacdfixStream macdfixOpenAndFillInternal( double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
@@ -895,13 +895,13 @@
       RetCode retCode = macdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MACDFIX openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
@@ -918,13 +918,13 @@
       RetCode retCode = macdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MACDFIX open: internal error", retCode);
       }
       throw new TALibArgumentException("MACDFIX open: " + retCode, retCode);
@@ -968,7 +968,7 @@
       requireLength("MACDFIX openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDFIX openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TALibArgumentException("MACDFIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MACDFIX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

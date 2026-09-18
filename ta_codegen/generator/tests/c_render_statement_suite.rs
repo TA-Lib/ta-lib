@@ -636,10 +636,10 @@ fn stochrsi_lookback_cross_calls() {
 fn java_var_name_mappings() {
     // Fixed (non-enum) constant renderings.
     let mut cases: Vec<(String, String)> = [
-        ("BAD_PARAM", "RetCode.BadParam"),
-        ("SUCCESS", "RetCode.Success"),
-        ("ALLOC_ERR", "RetCode.AllocErr"),
-        ("INTERNAL_ERROR", "RetCode.InternalError"),
+        ("BAD_PARAM", "RetCode.BAD_PARAM"),
+        ("SUCCESS", "RetCode.SUCCESS"),
+        ("ALLOC_ERR", "RetCode.ALLOC_ERR"),
+        ("INTERNAL_ERROR", "RetCode.INTERNAL_ERROR"),
     ]
     .iter()
     .map(|(a, b)| ((*a).to_string(), (*b).to_string()))

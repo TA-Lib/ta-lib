@@ -64,15 +64,15 @@
       double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /*
        * The DM1 (one period) is base on the largest part of
@@ -152,7 +152,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -182,7 +182,7 @@
             outReal[outIdx++] = minusDM1;
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Process the initial DM */
@@ -254,7 +254,7 @@
          outReal[outIdx++] = prevMinusDM;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MINUS_DM_Impl( int startIdx,
                           int endIdx,
@@ -278,15 +278,15 @@
       double minusDM1 = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod > 1 ) {
          lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
@@ -299,7 +299,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       if( optInTimePeriod <= 1 ) {
@@ -320,7 +320,7 @@
             outReal[outIdx++] = minusDM1;
          }
          outNBElement.value = outIdx;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       outBegIdx.value = startIdx;
@@ -375,7 +375,7 @@
          outReal[outIdx++] = prevMinusDM;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Minus Directional Movement, the downward component of Wilder's directional
@@ -435,7 +435,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MINUS_DM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -501,7 +501,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MINUS_DM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -565,7 +565,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MINUS_DM advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MINUS_DM advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -601,9 +601,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MINUS_DM update", RetCode.OutOfRangeEndIndex);
+            throw failure("MINUS_DM update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM update: BAD_PARAM", RetCode.BAD_PARAM);
          core.minusDmStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -621,7 +621,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINUS_DM peek: BAD_PARAM", RetCode.BAD_PARAM);
          MinusDmStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -738,18 +738,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod <= 1 ) {
          int today = 0;
@@ -842,7 +842,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -878,7 +878,7 @@
          sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       } else {
          int today = 0;
          int lookbackTotal = 0;
@@ -970,7 +970,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.InsufficientHistory ;
+            return RetCode.INSUFFICIENT_HISTORY ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1054,7 +1054,7 @@
          sp.invPeriod = invPeriod;
          sp.prevMinusDM = prevMinusDM;
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-         return RetCode.Success;
+         return RetCode.SUCCESS;
       }
    }
    /* minusDmOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -1064,13 +1064,13 @@
       RetCode retCode = minusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MINUS_DM openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MINUS_DM openAndFill: " + retCode, retCode);
@@ -1085,13 +1085,13 @@
       RetCode retCode = minusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MINUS_DM open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MINUS_DM open: internal error", retCode);
       }
       throw new TALibArgumentException("MINUS_DM open: " + retCode, retCode);
@@ -1137,7 +1137,7 @@
       requireHistoryLength("MINUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MINUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("MINUS_DM openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINUS_DM openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

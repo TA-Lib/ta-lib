@@ -64,20 +64,20 @@
       int trailingSlowIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
        * spread between a short and a long simple moving average of the median
@@ -120,7 +120,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       sumFast = 0.0;
       sumSlow = 0.0;
@@ -175,7 +175,7 @@
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode AO_Impl( int startIdx,
                     int endIdx,
@@ -197,20 +197,20 @@
       int trailingSlowIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
@@ -219,7 +219,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       sumFast = 0.0;
       sumSlow = 0.0;
@@ -252,7 +252,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
@@ -325,7 +325,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -404,7 +404,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -473,7 +473,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AO advance", RetCode.OutOfRangeEndIndex);
+            throw failure("AO advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -514,9 +514,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AO update", RetCode.OutOfRangeEndIndex);
+            throw failure("AO update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO update: BAD_PARAM", RetCode.BAD_PARAM);
          core.aoStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -534,7 +534,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AO peek: BAD_PARAM", RetCode.BAD_PARAM);
          AoStream sp = this;
          double medianPrice = 0.0;
          double tempReal = 0.0;
@@ -649,28 +649,28 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
        * spread between a short and a long simple moving average of the median
@@ -713,7 +713,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       sumFast = 0.0;
       sumSlow = 0.0;
@@ -771,7 +771,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingFastIdx = i - trailingFastIdx;
       if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
       double[] capRing_trailingFastIdx_derived = new double[allocN_trailingFastIdx];
@@ -780,7 +780,7 @@
       }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
       if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
       double[] capRing_trailingSlowIdx_derived = new double[allocN_trailingSlowIdx];
@@ -798,7 +798,7 @@
       sp.ringCap_trailingSlowIdx = cap_trailingSlowIdx;
       sp.ring_trailingSlowIdx_derived = capRing_trailingSlowIdx_derived;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* aoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AoStream aoOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -807,13 +807,13 @@
       RetCode retCode = aoOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AO openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("AO openAndFill: " + retCode, retCode);
@@ -828,13 +828,13 @@
       RetCode retCode = aoOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AO open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AO open: internal error", retCode);
       }
       throw new TALibArgumentException("AO open: " + retCode, retCode);
@@ -880,7 +880,7 @@
       requireHistoryLength("AO openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("AO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

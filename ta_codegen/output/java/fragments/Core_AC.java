@@ -81,25 +81,25 @@
       int oscBuffer_Idx = 0;
       int maxIdx_oscBuffer = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 5;
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Bill Williams' Accelerator/Decelerator Oscillator (New Trading
        * Dimensions, 1998): how fast the Awesome Oscillator is itself
@@ -141,10 +141,10 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
-      if( optInSignalPeriod < 1 ) return RetCode.InternalError;
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       oscBuffer = new double[optInSignalPeriod];
       maxIdx_oscBuffer = (optInSignalPeriod)-1;
       oscBuffer_Idx = 0;
@@ -240,7 +240,7 @@
       /* All done. Indicate the output limits and return. */
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode AC_Impl( int startIdx,
                     int endIdx,
@@ -269,25 +269,25 @@
       int oscBuffer_Idx = 0;
       int maxIdx_oscBuffer = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 5;
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
@@ -296,9 +296,9 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInSignalPeriod < 1 ) return RetCode.InternalError;
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       oscBuffer = new double[optInSignalPeriod];
       maxIdx_oscBuffer = (optInSignalPeriod)-1;
       oscBuffer_Idx = 0;
@@ -356,7 +356,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
@@ -439,7 +439,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -528,7 +528,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("AC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -603,7 +603,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AC advance", RetCode.OutOfRangeEndIndex);
+            throw failure("AC advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -650,9 +650,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("AC update", RetCode.OutOfRangeEndIndex);
+            throw failure("AC update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AC update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC update: BAD_PARAM", RetCode.BAD_PARAM);
          core.acStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -670,7 +670,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AC peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("AC peek: BAD_PARAM", RetCode.BAD_PARAM);
          AcStream sp = this;
          double medianPrice = 0.0;
          double osc = 0.0;
@@ -828,33 +828,33 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 34;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 5;
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Bill Williams' Accelerator/Decelerator Oscillator (New Trading
        * Dimensions, 1998): how fast the Awesome Oscillator is itself
@@ -896,10 +896,10 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
-      if( optInSignalPeriod < 1 ) return RetCode.InternalError;
+      if( optInSignalPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       oscBuffer = new double[optInSignalPeriod];
       maxIdx_oscBuffer = (optInSignalPeriod)-1;
       oscBuffer_Idx = 0;
@@ -998,7 +998,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingFastIdx = i - trailingFastIdx;
       if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
       double[] capRing_trailingFastIdx_derived = new double[allocN_trailingFastIdx];
@@ -1007,7 +1007,7 @@
       }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
       if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
       double[] capRing_trailingSlowIdx_derived = new double[allocN_trailingSlowIdx];
@@ -1016,7 +1016,7 @@
       }
       int capCb_oscBuffer = maxIdx_oscBuffer + 1;
       if( capCb_oscBuffer > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
@@ -1035,7 +1035,7 @@
       sp.cbSize_oscBuffer = capCb_oscBuffer;
       sp.cb_oscBuffer = oscBuffer;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* acOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    AcStream acOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1044,13 +1044,13 @@
       RetCode retCode = acOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AC openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("AC openAndFill: " + retCode, retCode);
@@ -1065,13 +1065,13 @@
       RetCode retCode = acOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("AC open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("AC open: internal error", retCode);
       }
       throw new TALibArgumentException("AC open: " + retCode, retCode);
@@ -1117,7 +1117,7 @@
       requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("AC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("AC openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

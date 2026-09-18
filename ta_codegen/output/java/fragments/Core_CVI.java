@@ -64,20 +64,20 @@
       int emaRing_Idx = 0;
       int maxIdx_emaRing = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROCPeriod == Integer.MIN_VALUE ) {
          optInROCPeriod = 10;
       } else if( optInROCPeriod < 1 || optInROCPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* CVI[t] = 100 * (E[t] - E[t-optInROCPeriod]) / E[t-optInROCPeriod], with E
        * an EMA of the high-low spread. The spread is never materialised and the
@@ -100,9 +100,9 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInROCPeriod < 1 ) return RetCode.InternalError;
+      if( optInROCPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
@@ -150,7 +150,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode CVI_Impl( int startIdx,
                      int endIdx,
@@ -174,20 +174,20 @@
       int emaRing_Idx = 0;
       int maxIdx_emaRing = (32)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROCPeriod == Integer.MIN_VALUE ) {
          optInROCPeriod = 10;
       } else if( optInROCPeriod < 1 || optInROCPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -196,9 +196,9 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
-      if( optInROCPeriod < 1 ) return RetCode.InternalError;
+      if( optInROCPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
@@ -239,7 +239,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Chaikin's Volatility: Marc Chaikin's reading of how fast a market's daily
@@ -318,7 +318,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CVI_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -403,7 +403,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CVI_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("CVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -470,7 +470,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CVI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("CVI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -509,9 +509,9 @@
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("CVI update", RetCode.OutOfRangeEndIndex);
+            throw failure("CVI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("CVI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.cviStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -529,7 +529,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("CVI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("CVI peek: BAD_PARAM", RetCode.BAD_PARAM);
          CviStream sp = this;
          double laggedEMA = 0.0;
          double tempReal = 0.0;
@@ -611,28 +611,28 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInROCPeriod == Integer.MIN_VALUE ) {
          optInROCPeriod = 10;
       } else if( optInROCPeriod < 1 || optInROCPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* CVI[t] = 100 * (E[t] - E[t-optInROCPeriod]) / E[t-optInROCPeriod], with E
        * an EMA of the high-low spread. The spread is never materialised and the
@@ -655,9 +655,9 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
-      if( optInROCPeriod < 1 ) return RetCode.InternalError;
+      if( optInROCPeriod < 1 ) return RetCode.INTERNAL_ERROR;
       emaRing = new double[optInROCPeriod];
       maxIdx_emaRing = (optInROCPeriod)-1;
       emaRing_Idx = 0;
@@ -708,7 +708,7 @@
       /* Capture the live batch state into the handle. */
       int capCb_emaRing = maxIdx_emaRing + 1;
       if( capCb_emaRing > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInROCPeriod = optInROCPeriod;
@@ -719,7 +719,7 @@
       sp.cbSize_emaRing = capCb_emaRing;
       sp.cb_emaRing = emaRing;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* cviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CviStream cviOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInROCPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -728,13 +728,13 @@
       RetCode retCode = cviOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CVI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CVI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("CVI openAndFill: " + retCode, retCode);
@@ -749,13 +749,13 @@
       RetCode retCode = cviOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("CVI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("CVI open: internal error", retCode);
       }
       throw new TALibArgumentException("CVI open: " + retCode, retCode);
@@ -801,7 +801,7 @@
       requireHistoryLength("CVI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("CVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("CVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("CVI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

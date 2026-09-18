@@ -79,18 +79,18 @@
       int mflow_Idx = 0;
       int maxIdx_mflow = (50)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -104,7 +104,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -231,7 +231,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MFI_Impl( int startIdx,
                      int endIdx,
@@ -264,17 +264,17 @@
       int mflow_Idx = 0;
       int maxIdx_mflow = (50)-1;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -286,7 +286,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx - lookbackTotal;
@@ -357,7 +357,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
@@ -425,7 +425,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -499,7 +499,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -568,7 +568,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MFI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MFI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -609,9 +609,9 @@
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MFI update", RetCode.OutOfRangeEndIndex);
+            throw failure("MFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -629,7 +629,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MFI peek: BAD_PARAM", RetCode.BAD_PARAM);
          MfiStream sp = this;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
@@ -768,26 +768,26 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
       mflow_positive = new double[optInTimePeriod];
       mflow_negative = new double[optInTimePeriod];
       maxIdx_mflow = (optInTimePeriod)-1;
@@ -801,7 +801,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -931,7 +931,7 @@
       /* Capture the live batch state into the handle. */
       int capCb_mflow = maxIdx_mflow + 1;
       if( capCb_mflow > historyLen + 1 ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.posSumMF = posSumMF;
@@ -944,7 +944,7 @@
       sp.cb_mflow_positive = mflow_positive;
       sp.cb_mflow_negative = mflow_negative;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* mfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MfiStream mfiOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -953,13 +953,13 @@
       RetCode retCode = mfiOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MFI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MFI openAndFill: " + retCode, retCode);
@@ -974,13 +974,13 @@
       RetCode retCode = mfiOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MFI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MFI open: internal error", retCode);
       }
       throw new TALibArgumentException("MFI open: " + retCode, retCode);
@@ -1034,7 +1034,7 @@
       requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("MFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

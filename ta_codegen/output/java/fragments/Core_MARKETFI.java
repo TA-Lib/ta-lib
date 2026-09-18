@@ -40,10 +40,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       /* Bill Williams' Market Facilitation Index: the price range a bar
        * travelled per unit of volume traded, i.e. how much movement the
@@ -79,7 +79,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MARKETFI_Impl( int startIdx,
                           int endIdx,
@@ -93,10 +93,10 @@
       int outIdx = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
@@ -108,7 +108,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
@@ -175,7 +175,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MARKETFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -248,7 +248,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MARKETFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -307,7 +307,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MARKETFI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MARKETFI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -338,9 +338,9 @@
        */
       public double update( double inHigh, double inLow, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MARKETFI update", RetCode.OutOfRangeEndIndex);
+            throw failure("MARKETFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.marketfiStepImpl(this, inHigh, inLow, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -358,7 +358,7 @@
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MARKETFI peek: BAD_PARAM", RetCode.BAD_PARAM);
          MarketfiStream sp = this;
          double cur_outReal = 0.0;
          /* A zero-volume bar would divide by zero. Neither reference guards
@@ -430,18 +430,18 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Bill Williams' Market Facilitation Index: the price range a bar
        * travelled per unit of volume traded, i.e. how much movement the
@@ -479,7 +479,7 @@
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* marketfiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MarketfiStream marketfiOpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -488,13 +488,13 @@
       RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MARKETFI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
@@ -509,13 +509,13 @@
       RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MARKETFI open: internal error", retCode);
       }
       throw new TALibArgumentException("MARKETFI open: " + retCode, retCode);
@@ -563,7 +563,7 @@
       requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("MARKETFI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MARKETFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

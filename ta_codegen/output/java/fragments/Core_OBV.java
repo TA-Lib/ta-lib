@@ -44,10 +44,10 @@
       double tempReal = 0;
       double prevOBV = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       prevOBV = inVolume[startIdx];
       prevReal = inReal[startIdx];
@@ -64,7 +64,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode OBV_Impl( int startIdx,
                      int endIdx,
@@ -80,10 +80,10 @@
       double tempReal = 0;
       double prevOBV = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       prevOBV = (double)inVolume[startIdx];
       prevReal = (double)inReal[startIdx];
@@ -100,7 +100,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * On Balance Volume: a running cumulative total of volume, added on up-price
@@ -150,7 +150,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("OBV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -206,7 +206,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("OBV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -267,7 +267,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("OBV advance", RetCode.OutOfRangeEndIndex);
+            throw failure("OBV advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -300,9 +300,9 @@
        */
       public double update( double inReal, double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("OBV update", RetCode.OutOfRangeEndIndex);
+            throw failure("OBV update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("OBV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV update: BAD_PARAM", RetCode.BAD_PARAM);
          core.obvStepImpl(this, inReal, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -320,7 +320,7 @@
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("OBV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("OBV peek: BAD_PARAM", RetCode.BAD_PARAM);
          ObvStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -383,18 +383,18 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inVolume.length != inReal.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       prevOBV = inVolume[startIdx];
       prevReal = inReal[startIdx];
@@ -415,7 +415,7 @@
       sp.prevReal = prevReal;
       sp.prevOBV = prevOBV;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* obvOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ObvStream obvOpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -424,13 +424,13 @@
       RetCode retCode = obvOpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("OBV openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("OBV openAndFill: " + retCode, retCode);
@@ -445,13 +445,13 @@
       RetCode retCode = obvOpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("OBV open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("OBV open: internal error", retCode);
       }
       throw new TALibArgumentException("OBV open: " + retCode, retCode);
@@ -495,7 +495,7 @@
       requireHistoryLength("OBV openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("OBV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("OBV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("OBV openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -82,20 +82,20 @@
       double closeToday = 0;
       double prevClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -105,7 +105,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* The Average True Range is carried inline rather than taken from a call,
        * because the band and the ratchet advance together one bar at a time and a
@@ -240,7 +240,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode SUPERTREND_Impl( int startIdx,
                             int endIdx,
@@ -278,20 +278,20 @@
       double closeToday = 0;
       double prevClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -300,7 +300,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
@@ -397,7 +397,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * An ATR-scaled trailing band that follows price on one side at a time and
@@ -479,7 +479,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("SUPERTREND", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -567,7 +567,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("SUPERTREND", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -637,7 +637,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("SUPERTREND advance", RetCode.OutOfRangeEndIndex);
+            throw failure("SUPERTREND advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -679,10 +679,10 @@
        */
       public void update( double inHigh, double inLow, double inClose, SupertrendOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("SUPERTREND update", RetCode.OutOfRangeEndIndex);
+            throw failure("SUPERTREND update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("SUPERTREND update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND update: BAD_PARAM", RetCode.BAD_PARAM);
          core.supertrendStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.supertrend = this.cur_outSupertrend;
@@ -702,7 +702,7 @@
       public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
          requireArgument("SUPERTREND peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("SUPERTREND peek: BAD_PARAM", RetCode.BAD_PARAM);
          SupertrendStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -927,28 +927,28 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -958,7 +958,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* The Average True Range is carried inline rather than taken from a call,
        * because the band and the ratchet advance together one bar at a time and a
@@ -1106,7 +1106,7 @@
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outSupertrend = outSupertrend[(outNBElement.value - 1) * outStride];
       sp.cur_outTrend = outTrend[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* supertrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SupertrendStream supertrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outSupertrend[], int outTrend[] )
@@ -1115,13 +1115,13 @@
       RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("SUPERTREND openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("SUPERTREND openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
@@ -1137,13 +1137,13 @@
       RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, sink_outSupertrend, sink_outTrend, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("SUPERTREND open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("SUPERTREND open: internal error", retCode);
       }
       throw new TALibArgumentException("SUPERTREND open: " + retCode, retCode);
@@ -1194,7 +1194,7 @@
       requireLength("SUPERTREND openAndFill", "outSupertrend", outSupertrend, guardOutLen);
       requireLength("SUPERTREND openAndFill", "outTrend", outTrend, guardOutLen);
       if( (Object)outSupertrend == (Object)inHigh || (Object)outSupertrend == (Object)inLow || (Object)outSupertrend == (Object)inClose || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outTrend == (Object)inClose || (Object)outSupertrend == (Object)outTrend ) {
-         throw new TALibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("SUPERTREND openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

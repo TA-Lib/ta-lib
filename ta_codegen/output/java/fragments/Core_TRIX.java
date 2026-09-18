@@ -61,15 +61,15 @@
       int lookbackEMA = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* TRIX = 1-day percent rate-of-change of a triple EMA. */
       /* Will change only on success. */
@@ -83,7 +83,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
        * roc() of consecutive EMA3 values. Output element j is the TRIX
@@ -168,7 +168,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode TRIX_Impl( int startIdx,
                       int endIdx,
@@ -189,15 +189,15 @@
       int lookbackEMA = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outNBElement.value = 0;
       outBegIdx.value = 0;
@@ -207,7 +207,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       today = startIdx - lookbackTotal;
@@ -260,7 +260,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
@@ -321,7 +321,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -388,7 +388,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -452,7 +452,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TRIX advance", RetCode.OutOfRangeEndIndex);
+            throw failure("TRIX advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -488,9 +488,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("TRIX update", RetCode.OutOfRangeEndIndex);
+            throw failure("TRIX update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("TRIX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX update: BAD_PARAM", RetCode.BAD_PARAM);
          core.trixStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -508,7 +508,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("TRIX peek: BAD_PARAM", RetCode.BAD_PARAM);
          TrixStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -581,20 +581,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* TRIX = 1-day percent rate-of-change of a triple EMA. */
       /* Will change only on success. */
@@ -608,7 +608,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
        * roc() of consecutive EMA3 values. Output element j is the TRIX
@@ -700,7 +700,7 @@
       sp.prevEMA3 = prevEMA3;
       sp.optInK_1 = optInK_1;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* trixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TrixStream trixOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -709,13 +709,13 @@
       RetCode retCode = trixOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TRIX openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("TRIX openAndFill: " + retCode, retCode);
@@ -730,13 +730,13 @@
       RetCode retCode = trixOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("TRIX open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("TRIX open: internal error", retCode);
       }
       throw new TALibArgumentException("TRIX open: " + retCode, retCode);
@@ -778,7 +778,7 @@
       int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
       requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("TRIX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("TRIX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

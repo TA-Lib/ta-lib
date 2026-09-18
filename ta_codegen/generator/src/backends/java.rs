@@ -504,7 +504,7 @@ pub(crate) fn java_type_str(var_type: &VarType) -> &'static str {
 /// Optional-parameter validation prologue (Java): map the Integer.MIN_VALUE /
 /// `Core.REAL_DEFAULT` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
-/// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`
+/// functions fail with `RetCode.BAD_PARAM`, lookback functions fail with `-1`
 /// (the classic lookback bad-param contract).
 ///
 /// An `enum:` param substitutes its type's `DEFAULT` member (#182) and nothing
@@ -858,7 +858,7 @@ fn gen_public_wrapper(
         let _ = write!(out, "      RetCode retCode = {core}(");
         out.push_str(&args.join(", "));
         out.push_str(");\n");
-        out.push_str("      if( retCode != RetCode.Success ) {\n");
+        out.push_str("      if( retCode != RetCode.SUCCESS ) {\n");
         let _ = writeln!(out, "         throw failure(\"{}\", retCode);", func.name);
         out.push_str("      }\n");
     }
@@ -1124,13 +1124,13 @@ fn gen_func_inner(
     // guarded cores that have already validated.
     if name_override.is_none() {
         out.push_str("      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {\n");
-        out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
+        out.push_str("         return RetCode.OUT_OF_RANGE_START_INDEX ;\n");
         out.push_str("      }\n");
         out.push_str("      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {\n");
-        out.push_str("         return RetCode.OutOfRangeEndIndex ;\n");
+        out.push_str("         return RetCode.OUT_OF_RANGE_END_INDEX ;\n");
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
-        out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
+        out.push_str(&emit_opt_param_validation(func, "RetCode.BAD_PARAM", enums));
         // Output-distinctness (issue #108): aliasing two different output arrays
         // has no correct result, so reject it. Input == output stays allowed.
         // A nullable operand is guarded non-null first — a declined output
@@ -1171,7 +1171,7 @@ fn gen_func_inner(
             }
             if !pairs.is_empty() {
                 out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
-                out.push_str("         return RetCode.BadParam ;\n");
+                out.push_str("         return RetCode.BAD_PARAM ;\n");
                 out.push_str("      }\n");
             }
         }
@@ -1445,7 +1445,7 @@ impl StatementEmitter for JavaStmt<'_> {
                 let mut s = String::new();
                 // The size is derived, so < 1 is a logic defect rather than an allocation
                 // failure: same code as C's TA_INTERNAL_ERROR(137) (#178).
-                s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.InternalError;\n"));
+                s.push_str(&format!("{pad}if( {sz} < 1 ) return RetCode.INTERNAL_ERROR;\n"));
                 for (arr, t) in circbuf_arrays(id, layout) {
                     s.push_str(&format!(
                         "{pad}{arr} = new {}[{sz}];\n",
@@ -1516,7 +1516,7 @@ impl StatementEmitter for JavaStmt<'_> {
                     render_cross_indicator_call(fname, cargs, indent, self.ctx, self.registry, self.helpers)
                 {
                     let t = render_assign_target(target, self.ctx, self.registry, self.helpers);
-                    return format!("{block}{pad}{t} = RetCode.Success;\n");
+                    return format!("{block}{pad}{t} = RetCode.SUCCESS;\n");
                 }
             }
         }
@@ -1803,7 +1803,7 @@ impl StatementEmitter for JavaStmt<'_> {
                 if let Some(block) =
                     render_cross_indicator_call(fname, cargs, indent, self.ctx, self.registry, self.helpers)
                 {
-                    return format!("{block}{pad}return RetCode.Success ;\n");
+                    return format!("{block}{pad}return RetCode.SUCCESS ;\n");
                 }
             }
         }
@@ -1986,11 +1986,11 @@ fn render_return_expr(
 ) -> String {
     if let Expr::Var(name) = expr {
         return match name.as_str() {
-            "SUCCESS" => "RetCode.Success".to_string(),
-            "BadParam" => "RetCode.BadParam".to_string(),
-            "InsufficientHistory" => "RetCode.InsufficientHistory".to_string(),
-            "OutOfRangeEndIndex" => "RetCode.OutOfRangeEndIndex".to_string(),
-            "OutOfRangeStartIndex" => "RetCode.OutOfRangeStartIndex".to_string(),
+            "SUCCESS" => "RetCode.SUCCESS".to_string(),
+            "BadParam" => "RetCode.BAD_PARAM".to_string(),
+            "InsufficientHistory" => "RetCode.INSUFFICIENT_HISTORY".to_string(),
+            "OutOfRangeEndIndex" => "RetCode.OUT_OF_RANGE_END_INDEX".to_string(),
+            "OutOfRangeStartIndex" => "RetCode.OUT_OF_RANGE_START_INDEX".to_string(),
             _ => render_expr(expr, ctx, registry, helpers),
         };
     }
@@ -2010,10 +2010,10 @@ struct JavaExpr<'a> {
 impl ExprEmitter for JavaExpr<'_> {
     fn var(&self, name: &str) -> String {
         let mapped = match name {
-            "BAD_PARAM" => "RetCode.BadParam".to_string(),
-            "SUCCESS" => "RetCode.Success".to_string(),
-            "ALLOC_ERR" => "RetCode.AllocErr".to_string(),
-            "INTERNAL_ERROR" => "RetCode.InternalError".to_string(),
+            "BAD_PARAM" => "RetCode.BAD_PARAM".to_string(),
+            "SUCCESS" => "RetCode.SUCCESS".to_string(),
+            "ALLOC_ERR" => "RetCode.ALLOC_ERR".to_string(),
+            "INTERNAL_ERROR" => "RetCode.INTERNAL_ERROR".to_string(),
             // MAType constants (`TA_MAType_SMA` → `MAType.Sma`) resolve from the
             // enums.yaml-derived map on the ctx; unknown names pass through.
             _ => self.ctx.matype_map.get(name).cloned().unwrap_or_else(|| name.to_string()),
@@ -2807,7 +2807,7 @@ mod tests {
             .find("   RetCode ")
             .map_or(body_section.len(), |i| i + 1);
         assert!(
-            body_section[..body_end].contains("OutOfRangeStartIndex"),
+            body_section[..body_end].contains("OUT_OF_RANGE_START_INDEX"),
             "the body should contain validation"
         );
 

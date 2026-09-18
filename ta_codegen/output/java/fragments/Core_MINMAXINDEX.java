@@ -53,18 +53,18 @@
       int highestIdx = 0;
       int lowestIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outMinIdx == outMaxIdx ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
@@ -81,7 +81,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer outputs can never share the real input's buffer —
@@ -138,7 +138,7 @@
        */
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MINMAXINDEX_Impl( int startIdx,
                              int endIdx,
@@ -161,18 +161,18 @@
       int highestIdx = 0;
       int lowestIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( outMinIdx == outMaxIdx ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
       if( startIdx < nbInitialElementNeeded ) {
@@ -181,7 +181,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outIdx = 0;
       today = startIdx;
@@ -231,7 +231,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Returns the absolute input indices of the lowest and highest values within
@@ -294,7 +294,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MINMAXINDEX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -363,7 +363,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MINMAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MINMAXINDEX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -433,7 +433,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MINMAXINDEX advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MINMAXINDEX advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -475,10 +475,10 @@
        */
       public void update( double inReal, MinmaxindexOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MINMAXINDEX update", RetCode.OutOfRangeEndIndex);
+            throw failure("MINMAXINDEX update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("MINMAXINDEX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX update: BAD_PARAM", RetCode.BAD_PARAM);
          core.minmaxindexStepImpl(this, inReal);
          this.outRangeCount++;
          out.minIdx = this.cur_outMinIdx;
@@ -498,7 +498,7 @@
       public void peek( double inReal, MinmaxindexOut out ) {
          requireArgument("MINMAXINDEX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MINMAXINDEX peek: BAD_PARAM", RetCode.BAD_PARAM);
          MinmaxindexStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
@@ -659,20 +659,20 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
@@ -689,7 +689,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer outputs can never share the real input's buffer —
@@ -749,7 +749,7 @@
       /* Capture the live batch state into the handle. */
       int capX = today - trailingIdx + 1;
       if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int physX = 1;
       while( physX < capX ) {
@@ -771,7 +771,7 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
       sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* minmaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MinmaxindexStream minmaxindexOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
@@ -780,13 +780,13 @@
       RetCode retCode = minmaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MINMAXINDEX openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MINMAXINDEX openAndFill: " + retCode, retCode);
@@ -802,13 +802,13 @@
       RetCode retCode = minmaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MINMAXINDEX open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MINMAXINDEX open: internal error", retCode);
       }
       throw new TALibArgumentException("MINMAXINDEX open: " + retCode, retCode);
@@ -851,7 +851,7 @@
       requireLength("MINMAXINDEX openAndFill", "outMinIdx", outMinIdx, guardOutLen);
       requireLength("MINMAXINDEX openAndFill", "outMaxIdx", outMaxIdx, guardOutLen);
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
-         throw new TALibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("MINMAXINDEX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

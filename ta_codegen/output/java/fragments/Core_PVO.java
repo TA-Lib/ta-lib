@@ -67,20 +67,20 @@
       int offset = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
@@ -100,7 +100,7 @@
       if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -117,12 +117,12 @@
       OutRange _xr0 = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, tempBuffer);
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Calculate the slow MA into the output. */
       OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -137,7 +137,7 @@
             outReal[i] = 0.0;
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode PVO_Impl( int startIdx,
                      int endIdx,
@@ -158,20 +158,20 @@
       int offset = 0;
       int i = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
@@ -179,7 +179,7 @@
       if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
@@ -190,11 +190,11 @@
       OutRange _xr0 = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, tempBuffer);
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       OutRange _xr1 = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       offset = fastNb.value - outNBElement.value;
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
          tempReal = outReal[i];
@@ -204,7 +204,7 @@
             outReal[i] = 0.0;
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Percentage Volume Oscillator: a variation of the <a
@@ -275,7 +275,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -352,7 +352,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = PVO_Impl(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("PVO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -416,7 +416,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVO advance", RetCode.OutOfRangeEndIndex);
+            throw failure("PVO advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -452,9 +452,9 @@
        */
       public double update( double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("PVO update", RetCode.OutOfRangeEndIndex);
+            throw failure("PVO update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVO update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO update: BAD_PARAM", RetCode.BAD_PARAM);
          core.pvoStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -472,7 +472,7 @@
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVO peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("PVO peek: BAD_PARAM", RetCode.BAD_PARAM);
          PvoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -546,20 +546,20 @@
       int historyLen = inVolume.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
       } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInSlowPeriod == Integer.MIN_VALUE ) {
          optInSlowPeriod = 26;
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
@@ -567,10 +567,10 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen < PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Nothing to produce: the range is shorter than the lookback. Return before
@@ -588,7 +588,7 @@
       if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -605,12 +605,12 @@
       /* Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MaStream sub0 = maOpenAndFillInternal(inVolume, startIdx, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Calculate the slow MA into the output. */
       /* Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       MaStream sub1 = maOpenAndFillInternal(inVolume, startIdx, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
        * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
        * outReal[i], with a non-negative index. An empty slow MA skips the loop.
@@ -627,7 +627,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
@@ -635,7 +635,7 @@
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* pvoOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    PvoStream pvoOpenAndFillInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -644,13 +644,13 @@
       RetCode retCode = pvoOpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVO openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("PVO openAndFill: " + retCode, retCode);
@@ -665,13 +665,13 @@
       RetCode retCode = pvoOpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("PVO open: internal error", retCode);
       }
       throw new TALibArgumentException("PVO open: " + retCode, retCode);
@@ -715,7 +715,7 @@
       int guardOutLen = openFillCount("PVO openAndFill", inVolume.length, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PVO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("PVO openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("PVO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

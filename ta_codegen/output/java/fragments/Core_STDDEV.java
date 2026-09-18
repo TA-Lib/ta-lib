@@ -57,20 +57,20 @@
       int i = 0;
       RetCode retCode;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything.
@@ -84,13 +84,13 @@
       if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Calculate the variance. */
       OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -115,7 +115,7 @@
             outReal[i] = Math.sqrt(outReal[i]);
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode STDDEV_Impl( int startIdx,
                         int endIdx,
@@ -129,30 +129,30 @@
       int i = 0;
       RetCode retCode;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       if( optInNbDev != 1.0 ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
             outReal[i] = Math.sqrt(outReal[i]) * optInNbDev;
@@ -162,7 +162,7 @@
             outReal[i] = Math.sqrt(outReal[i]);
          }
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Rolling standard deviation of a series over a window, scaled by a
@@ -222,7 +222,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -288,7 +288,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -350,7 +350,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("STDDEV advance", RetCode.OutOfRangeEndIndex);
+            throw failure("STDDEV advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -384,9 +384,9 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("STDDEV update", RetCode.OutOfRangeEndIndex);
+            throw failure("STDDEV update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV update: BAD_PARAM", RetCode.BAD_PARAM);
          core.stddevStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -404,7 +404,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("STDDEV peek: BAD_PARAM", RetCode.BAD_PARAM);
          StddevStream sp = this;
          double cur_outReal = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -464,28 +464,28 @@
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Nothing to produce: the range is shorter than the lookback. Return before
@@ -500,13 +500,13 @@
       if( STDDEV_Lookback(optInTimePeriod, optInNbDev) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarStream sub0 = varOpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Calculate the square root of each variance, this
        * is the standard deviation.
        *
@@ -533,13 +533,13 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDev = optInNbDev;
       sp.sub0 = sub0;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* stddevOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    StddevStream stddevOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -548,13 +548,13 @@
       RetCode retCode = stddevOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("STDDEV openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("STDDEV openAndFill: " + retCode, retCode);
@@ -569,13 +569,13 @@
       RetCode retCode = stddevOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("STDDEV open: internal error", retCode);
       }
       throw new TALibArgumentException("STDDEV open: " + retCode, retCode);
@@ -617,7 +617,7 @@
       int guardOutLen = openFillCount("STDDEV openAndFill", inReal.length, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       requireLength("STDDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("STDDEV openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("STDDEV openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -5,6 +5,6 @@ class InsufficientHistoryException extends TALibArgumentException {
    private static final long serialVersionUID = 1L;
 
    public InsufficientHistoryException(String message) {
-      super(message, RetCode.InsufficientHistory);
+      super(message, RetCode.INSUFFICIENT_HISTORY);
    }
 }

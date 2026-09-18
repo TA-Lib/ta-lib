@@ -551,7 +551,7 @@ public class NoPhantomIoTest {
      * with zero-length arrays for every input and every output.
      *
      * <p>Such a call is a documented success with no values: it must return
-     * {@link RetCode#Success}, report a count of 0, and touch neither array.
+     * {@link RetCode#SUCCESS}, report a count of 0, and touch neither array.
      *
      * <p>Each core also gets its own control arm before the quiet call: the same
      * call one bar longer produces exactly one value, so it must index an array,
@@ -645,7 +645,7 @@ public class NoPhantomIoTest {
                     + v.lookback + ", endIdx " + (v.lookback - 1) + ")";
                 try {
                     Object rc = sig.core.invoke(sig.on, args);
-                    if (rc != RetCode.Success) {
+                    if (rc != RetCode.SUCCESS) {
                         violation(where + " returned " + rc + ", expected Success");
                         violations++;
                     } else if (nb.value != 0) {
@@ -757,7 +757,7 @@ public class NoPhantomIoTest {
                         violations++;
                         continue;
                     }
-                    if (rc != RetCode.Success) {
+                    if (rc != RetCode.SUCCESS) {
                         // An out-of-range parameter combination the lookback let
                         // through. Not this sweep's business; it simply is not a
                         // call, so there is nothing to hold to a bound.
@@ -871,7 +871,7 @@ public class NoPhantomIoTest {
                     zeroArray(sig.core.getParameterTypes()[sig.inputPos[leg]]);
                 try {
                     Object rc = sig.core.invoke(sig.on, args);
-                    if (rc != RetCode.Success) {
+                    if (rc != RetCode.SUCCESS) {
                         continue;
                     }
                     unread.add(sig.name + "." + sig.legName[leg]);
@@ -1160,7 +1160,7 @@ public class NoPhantomIoTest {
         // 1. sub-lookback: the quiet case, then one bar longer.
         RetCode quiet = core.SMA_Impl(0, lookback - 1, new double[0], 30, b, n,
                                           new double[0]);
-        check(quiet == RetCode.Success && n.value == 0,
+        check(quiet == RetCode.SUCCESS && n.value == 0,
               "a sub-lookback range with zero-length arrays is a silent success");
         check(throwsOob(() -> core.SMA_Impl(0, lookback, new double[0], 30, b, n,
                                                 new double[0])),
@@ -1175,7 +1175,7 @@ public class NoPhantomIoTest {
             in[i] = bar("inReal", i);
         }
         check(core.SMA_Impl(0, endIdx, in, 30, b, n, new double[count])
-                  == RetCode.Success && n.value == count,
+                  == RetCode.SUCCESS && n.value == count,
               "exactly-sized input and output are enough for SMA");
         check(throwsOob(() -> core.SMA_Impl(0, endIdx, in, 30, b, n,
                                                 new double[count - 1])),

@@ -46,7 +46,7 @@ package io.github.talib;
  *
  * <p>An {@link IndexOutOfBoundsException}, which is what the API documents and
  * what a caller catches; {@link #retCode()} distinguishes
- * {@link RetCode#OutOfRangeStartIndex} from {@link RetCode#OutOfRangeEndIndex},
+ * {@link RetCode#OUT_OF_RANGE_START_INDEX} from {@link RetCode#OUT_OF_RANGE_END_INDEX},
  * which the type alone cannot.
  */
 public final class TALibIndexException extends IndexOutOfBoundsException implements TALibFailure {

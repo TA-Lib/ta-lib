@@ -45,8 +45,8 @@ package io.github.talib;
  * allocation, or an invariant it owns.
  *
  * <p>An {@link IllegalStateException}, which is what the API documents and what
- * a caller catches; {@link #retCode()} distinguishes {@link RetCode#AllocErr}
- * from {@link RetCode#InternalError}, which the type alone cannot. Neither is
+ * a caller catches; {@link #retCode()} distinguishes {@link RetCode#ALLOC_ERR}
+ * from {@link RetCode#INTERNAL_ERROR}, which the type alone cannot. Neither is
  * expected in normal use — an allocation failure terminates the JVM long before
  * it reaches here.
  */

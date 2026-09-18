@@ -96,20 +96,20 @@
       MInteger localNbElement = new MInteger();
       RetCode retCode;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
       } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
@@ -122,7 +122,7 @@
       if( optInMinPeriod > optInMaxPeriod ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -138,7 +138,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Calculate exact output size. A dedicated temp: tempInt is the cast-fed
        * period below, which the Rust backend types SIGNED (#160) — reusing it
@@ -153,7 +153,7 @@
          /* No output */
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
       /* Allocate intermediate local buffer. */
@@ -243,7 +243,7 @@
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       /* Per-period bucket cursor for the counting sort. Indexed RELATIVE to
        * minUsed: only [minUsed, maxUsed+1] is ever touched, so sizing from the
@@ -259,7 +259,7 @@
          OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
       } else {
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
@@ -307,7 +307,7 @@
                OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
-               retCode = RetCode.Success;
+               retCode = RetCode.SUCCESS;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
@@ -331,7 +331,7 @@
       /* Done. Inform the caller of the success. */
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode MAVP_Impl( int startIdx,
                       int endIdx,
@@ -369,20 +369,20 @@
       MInteger localNbElement = new MInteger();
       RetCode retCode;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
       } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
@@ -390,7 +390,7 @@
       if( optInMinPeriod > optInMaxPeriod ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
@@ -399,7 +399,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( lookbackTotal > startIdx ) {
          firstOut = lookbackTotal;
@@ -409,7 +409,7 @@
       if( firstOut > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
       localOutputArray = new double[(int)(outputSize * 1)];
@@ -452,14 +452,14 @@
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
          OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
-         retCode = RetCode.Success;
+         retCode = RetCode.SUCCESS;
       } else {
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
@@ -485,7 +485,7 @@
                OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
                localBegIdx.value = _xr1.begIdx();
                localNbElement.value = _xr1.count();
-               retCode = RetCode.Success;
+               retCode = RetCode.SUCCESS;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
                } else {
@@ -503,7 +503,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outputSize;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Moving average whose period varies per bar, driven by a companion period
@@ -575,7 +575,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -653,7 +653,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -717,7 +717,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MAVP advance", RetCode.OutOfRangeEndIndex);
+            throw failure("MAVP advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -755,9 +755,9 @@
        */
       public double update( double inReal, double inPeriods ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("MAVP update", RetCode.OutOfRangeEndIndex);
+            throw failure("MAVP update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TALibArgumentException("MAVP update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP update: BAD_PARAM", RetCode.BAD_PARAM);
          core.mavpStepImpl(this, inReal, inPeriods);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -775,7 +775,7 @@
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TALibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("MAVP peek: BAD_PARAM", RetCode.BAD_PARAM);
          MavpStream sp = this;
          int cp = (int)inPeriods;
          if( cp < sp.optInMinPeriod ) {
@@ -834,33 +834,33 @@
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inPeriods.length != inReal.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
       } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       /* An inverted [min, max] period window is invalid (batch rejects). */
       if( optInMinPeriod > optInMaxPeriod ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( historyLen < MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
        * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
@@ -870,7 +870,7 @@
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;
       if( historyLen < subStart + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       MaStream[] bank = new MaStream[nBank];
@@ -890,43 +890,43 @@
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
       sp.outRangeBegIdx = subStart;
       sp.outRangeCount = historyLen - subStart;
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    private RetCode mavpOpenAndFillImpl( MavpStream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inPeriods.length != inReal.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
       } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMaxPeriod == Integer.MIN_VALUE ) {
          optInMaxPeriod = 30;
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inPeriods ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* An inverted [min, max] period window is invalid (batch rejects). */
       if( optInMinPeriod > optInMaxPeriod ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( historyLen < lookbackTotal + 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
@@ -965,20 +965,20 @@
       sp.optInMAType = optInMAType;
       sp.bank = bank;
       sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* Internal startIdx-anchored open behind mavpOpen (composition seam). */
    MavpStream mavpOpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       MavpStream sp = new MavpStream(this);
       RetCode retCode = mavpOpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MAVP open: internal error", retCode);
       }
       throw new TALibArgumentException("MAVP open: " + retCode, retCode);
@@ -1031,13 +1031,13 @@
       RetCode retCode = mavpOpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("MAVP openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("MAVP openAndFill: " + retCode, retCode);

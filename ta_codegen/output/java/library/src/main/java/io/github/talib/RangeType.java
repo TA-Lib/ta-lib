@@ -49,7 +49,7 @@ package io.github.talib;
 
 public enum RangeType
 { 
-    RealBody,
-    HighLow,
-    Shadows
+    REAL_BODY,
+    HIGH_LOW,
+    SHADOWS
 }

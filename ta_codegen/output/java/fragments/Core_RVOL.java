@@ -50,15 +50,15 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       /* One bar more than a moving average of the same period: today is excluded
        * from its own baseline.
@@ -70,7 +70,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
@@ -97,7 +97,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode RVOL_Impl( int startIdx,
                       int endIdx,
@@ -115,15 +115,15 @@
       int trailingIdx = 0;
       int lookbackTotal = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       lookbackTotal = (int)optInTimePeriod;
       if( startIdx < lookbackTotal ) {
@@ -132,7 +132,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
@@ -154,7 +154,7 @@
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Relative Volume: today's volume as a ratio to the average volume of the
@@ -221,7 +221,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RVOL_Impl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVOL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -294,7 +294,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = RVOL_Impl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVOL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -358,7 +358,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVOL advance", RetCode.OutOfRangeEndIndex);
+            throw failure("RVOL advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -394,9 +394,9 @@
        */
       public double update( double inVolume ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVOL update", RetCode.OutOfRangeEndIndex);
+            throw failure("RVOL update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("RVOL update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL update: BAD_PARAM", RetCode.BAD_PARAM);
          core.rvolStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -414,7 +414,7 @@
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("RVOL peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVOL peek: BAD_PARAM", RetCode.BAD_PARAM);
          RvolStream sp = this;
          double baseline = 0.0;
          double todayVolume = 0.0;
@@ -500,20 +500,20 @@
       int historyLen = inVolume.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       /* One bar more than a moving average of the same period: today is excluded
        * from its own baseline.
@@ -525,7 +525,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
@@ -555,7 +555,7 @@
       /* Capture the live batch state into the handle. */
       int cap_trailingIdx = i - trailingIdx;
       if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inVolume = new double[allocN_trailingIdx];
@@ -566,7 +566,7 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* rvolOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RvolStream rvolOpenAndFillInternal( double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -575,13 +575,13 @@
       RetCode retCode = rvolOpenImpl(sp, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVOL openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RVOL openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("RVOL openAndFill: " + retCode, retCode);
@@ -596,13 +596,13 @@
       RetCode retCode = rvolOpenImpl(sp, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVOL open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("RVOL open: internal error", retCode);
       }
       throw new TALibArgumentException("RVOL open: " + retCode, retCode);
@@ -644,7 +644,7 @@
       int guardOutLen = openFillCount("RVOL openAndFill", inVolume.length, RVOL_Lookback(optInTimePeriod));
       requireLength("RVOL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("RVOL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVOL openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

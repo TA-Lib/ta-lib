@@ -1466,17 +1466,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
     s.push_str("    static final CandleSetting[] DEFAULT_CANDLE_SETTINGS = {\n");
-    s.push_str("        new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong\n");
-    s.push_str("        new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong\n");
-    s.push_str("        new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyShort\n");
-    s.push_str("        new CandleSetting(RangeType.HighLow,  10, 0.1),   // BodyDoji\n");
-    s.push_str("        new CandleSetting(RangeType.RealBody, 0,  1.0),   // ShadowLong\n");
-    s.push_str("        new CandleSetting(RangeType.RealBody, 0,  2.0),   // ShadowVeryLong\n");
-    s.push_str("        new CandleSetting(RangeType.Shadows,  10, 1.0),   // ShadowShort\n");
-    s.push_str("        new CandleSetting(RangeType.HighLow,  10, 0.1),   // ShadowVeryShort\n");
-    s.push_str("        new CandleSetting(RangeType.HighLow,  5,  0.2),   // Near\n");
-    s.push_str("        new CandleSetting(RangeType.HighLow,  5,  0.6),   // Far\n");
-    s.push_str("        new CandleSetting(RangeType.HighLow,  5,  0.05),  // Equal\n");
+    s.push_str("        new CandleSetting(RangeType.REAL_BODY, 10, 1.0),   // BodyLong\n");
+    s.push_str("        new CandleSetting(RangeType.REAL_BODY, 10, 3.0),   // BodyVeryLong\n");
+    s.push_str("        new CandleSetting(RangeType.REAL_BODY, 10, 1.0),   // BodyShort\n");
+    s.push_str("        new CandleSetting(RangeType.HIGH_LOW,  10, 0.1),   // BodyDoji\n");
+    s.push_str("        new CandleSetting(RangeType.REAL_BODY, 0,  1.0),   // ShadowLong\n");
+    s.push_str("        new CandleSetting(RangeType.REAL_BODY, 0,  2.0),   // ShadowVeryLong\n");
+    s.push_str("        new CandleSetting(RangeType.SHADOWS,  10, 1.0),   // ShadowShort\n");
+    s.push_str("        new CandleSetting(RangeType.HIGH_LOW,  10, 0.1),   // ShadowVeryShort\n");
+    s.push_str("        new CandleSetting(RangeType.HIGH_LOW,  5,  0.2),   // Near\n");
+    s.push_str("        new CandleSetting(RangeType.HIGH_LOW,  5,  0.6),   // Far\n");
+    s.push_str("        new CandleSetting(RangeType.HIGH_LOW,  5,  0.05),  // Equal\n");
     s.push_str("    };\n\n");
     // The live array is a clone, so restoring a default is a slot copy out of the
     // table above rather than a second literal that could drift from it (#215).
@@ -1485,16 +1485,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static RuntimeException failure(String funcName, RetCode retCode) {\n");
     s.push_str("        String where = funcName + \": \";\n");
     s.push_str("        switch (retCode) {\n");
-    s.push_str("            case OutOfRangeStartIndex: return new TALibIndexException(where + \"startIdx out of range\", retCode);\n");
-    s.push_str("            case OutOfRangeEndIndex: return new TALibIndexException(where + \"endIdx out of range\", retCode);\n");
+    s.push_str("            case OUT_OF_RANGE_START_INDEX: return new TALibIndexException(where + \"startIdx out of range\", retCode);\n");
+    s.push_str("            case OUT_OF_RANGE_END_INDEX: return new TALibIndexException(where + \"endIdx out of range\", retCode);\n");
     // Split exactly as the shipped `Core.java` splits it: the parity gate
     // compares these bodies token by token (issue #271 item 3).
-    s.push_str("            case BadParam: return new TALibArgumentException(\n");
+    s.push_str("            case BAD_PARAM: return new TALibArgumentException(\n");
     s.push_str("                where + \"bad parameter (out-of-range optional parameter, or two \"\n");
     s.push_str("                      + \"outputs sharing one array)\", retCode);\n");
-    s.push_str("            case AllocErr: return new TALibStateException(where + \"allocation failed\", retCode);\n");
-    s.push_str("            case InternalError: return new TALibStateException(where + \"internal error\", retCode);\n");
-    s.push_str("            case InsufficientHistory: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");
+    s.push_str("            case ALLOC_ERR: return new TALibStateException(where + \"allocation failed\", retCode);\n");
+    s.push_str("            case INTERNAL_ERROR: return new TALibStateException(where + \"internal error\", retCode);\n");
+    s.push_str("            case INSUFFICIENT_HISTORY: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");
     s.push_str("            default: return new TALibStateException(where + retCode, retCode);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1504,7 +1504,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // identity this splice exists to preserve would be an identity of text only.
     s.push_str("    static int clampedStart(String funcName, int startIdx, int lookback) {\n");
     s.push_str("        if (lookback < 0) {\n");
-    s.push_str("            throw failure(funcName, RetCode.BadParam);\n");
+    s.push_str("            throw failure(funcName, RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("        return startIdx > lookback ? startIdx : lookback;\n");
     s.push_str("    }\n\n");
@@ -1517,44 +1517,44 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("    static void checkLength(String funcName, String argName, int actual, int required) {\n");
     s.push_str("        if (actual < 0) {\n");
-    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("        if (actual < required) {\n");
     s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName\n");
-    s.push_str("                + \" has length \" + actual + \", needs \" + required, RetCode.BadParam);\n");
+    s.push_str("                + \" has length \" + actual + \", needs \" + required, RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
     s.push_str("        if (startIdx < 0 || startIdx > MAX_INDEX) {\n");
-    s.push_str("            throw failure(funcName, RetCode.OutOfRangeStartIndex);\n");
+    s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("        if (endIdx < 0 || endIdx > MAX_INDEX || endIdx < startIdx) {\n");
-    s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
+    s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static int openFillCount(String funcName, int historyLen, int lookback) {\n");
     s.push_str("        if (lookback < 0) {\n");
-    s.push_str("            throw failure(funcName, RetCode.BadParam);\n");
+    s.push_str("            throw failure(funcName, RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("        return historyLen <= lookback ? 0 : historyLen - lookback;\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireHistoryLength(String funcName, String argName, int actual, int historyLen) {\n");
     s.push_str("        if (actual != historyLen) {\n");
     s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" has length \" + actual\n");
-    s.push_str("                  + \", needs \" + historyLen, RetCode.BadParam);\n");
+    s.push_str("                  + \", needs \" + historyLen, RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireHistory(String funcName, int historyLen) {\n");
     s.push_str("        if (historyLen < 1) {\n");
-    s.push_str("            throw failure(funcName, RetCode.OutOfRangeStartIndex);\n");
+    s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("        if (historyLen > MAX_INDEX + 1) {\n");
-    s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
+    s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
     s.push_str("        if (argument == null) {\n");
-    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
+    s.push_str("            throw new TALibArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BAD_PARAM);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     for func in funcs {
@@ -1815,10 +1815,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            int rangeType = jsonInt(json, \"rangeType\");\n");
     s.push_str("            int avgPeriod = jsonInt(json, \"avgPeriod\");\n");
     s.push_str("            double factor = jsonF64Bits(json, \"factorBits\", 1.0);\n");
-    s.push_str("            if (settingType < 0 || settingType >= CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("            if (settingType < 0 || settingType >= CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
-    s.push_str("            if (rangeType < 0 || rangeType > RangeType.Shadows.ordinal()) {\n");
+    s.push_str("            if (rangeType < 0 || rangeType > RangeType.SHADOWS.ordinal()) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
     s.push_str("            if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX) {\n");
@@ -1837,10 +1837,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"restore_candle_default_settings\\\"\")) {\n");
     s.push_str("            rideGen++;\n");
     s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
-    s.push_str("            if (settingType < 0 || settingType > CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("            if (settingType < 0 || settingType > CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
     s.push_str("            }\n");
-    s.push_str("            if (settingType == CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("            if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
     s.push_str("                System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, core.candleSettings, 0,\n");
     s.push_str("                    core.candleSettings.length);\n");
     s.push_str("            } else {\n");
@@ -2014,7 +2014,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         s.push_str("        MInteger outBegIdx = new MInteger();\n");
         s.push_str("        MInteger outNBElement = new MInteger();\n");
-        s.push_str("        RetCode rc = RetCode.Success;\n");
+        s.push_str("        RetCode rc = RetCode.SUCCESS;\n");
 
         // Benchmark iteration loop with timing. Iteration 0 is always a
         // discarded warm-up — see the C emitter: it removes the cold-call bias
@@ -2077,7 +2077,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        if (bench_mode == 0) {\n");
             s.push_str("        if (jsonInt(json, \"timed\") != 0) {\n");
             s.push_str("            if (_optRejected) {\n");
-            s.push_str("                rc = RetCode.BadParam;\n");
+            s.push_str("                rc = RetCode.BAD_PARAM;\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            } else {\n");
@@ -2092,7 +2092,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            }\n");
             s.push_str("        } else {\n");
             s.push_str("            if (_optRejected) {\n");
-            s.push_str("                rc = RetCode.BadParam;\n");
+            s.push_str("                rc = RetCode.BAD_PARAM;\n");
             s.push_str("                outBegIdx.value = 0;\n");
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            } else {\n");
@@ -2100,7 +2100,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str(&format!("                OutRange _pr = core.{func_base}({pub_args});\n"));
             s.push_str("                outBegIdx.value = _pr.begIdx();\n");
             s.push_str("                outNBElement.value = _pr.count();\n");
-            s.push_str("                rc = RetCode.Success;\n");
+            s.push_str("                rc = RetCode.SUCCESS;\n");
             s.push_str("            } catch (RuntimeException _e) {\n");
             s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
             s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
@@ -2133,7 +2133,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 fill_args.push(format!("outArr{k}"));
             }
             let fill = fill_args.join(", ");
-            s.push_str("        else if (_optRejected) { rc = RetCode.BadParam; }\n");
+            s.push_str("        else if (_optRejected) { rc = RetCode.BAD_PARAM; }\n");
             s.push_str("        else { try {\n");
             s.push_str("            if (bench_mode == 1) {\n");
             s.push_str(&format!(
@@ -2153,11 +2153,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                  \x20               outNBElement.value = _wh.outRange().count();\n"
             ));
             s.push_str("            }\n");
-            s.push_str("            rc = RetCode.Success;\n");
+            s.push_str("            rc = RetCode.SUCCESS;\n");
             // Report the code the open actually raised, not a stand-in. Every
             // failure the library throws carries it (#236 step 1); anything else
             // reaching here is not the library's and stays the catch-all.
-            s.push_str("        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BadParam; } }\n");
+            s.push_str("        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }\n");
         }
         s.push_str("        }\n"); // end bench_iters loop
 
@@ -2179,7 +2179,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // The float leg is a CORRECTNESS leg, so it takes the public overload
         // for the same reason the double one does. Normalised here, same shape.
         s.push_str("            if (_optRejected) {\n");
-        s.push_str("                rc = RetCode.BadParam;\n");
+        s.push_str("                rc = RetCode.BAD_PARAM;\n");
         s.push_str("                outBegIdx.value = 0;\n");
         s.push_str("                outNBElement.value = 0;\n");
         s.push_str("            } else {\n");
@@ -2198,7 +2198,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str(&format!("                OutRange _fr = core.{func_base}({f_args});\n"));
             s.push_str("                outBegIdx.value = _fr.begIdx();\n");
             s.push_str("                outNBElement.value = _fr.count();\n");
-            s.push_str("                rc = RetCode.Success;\n");
+            s.push_str("                rc = RetCode.SUCCESS;\n");
             s.push_str("            } catch (RuntimeException _e) {\n");
             s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
             s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
@@ -2215,7 +2215,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // returned before the value response is built.
         s.push_str("        if (jsonInt(json, \"want_hash\") != 0 && jsonInt(json, \"full_output\") == 0) {\n");
         s.push_str("            long _h = svHashInit();\n");
-        s.push_str("            if (rc == RetCode.Success && outNBElement.value > 0) {\n");
+        s.push_str("            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {\n");
         for (k, out) in outputs.iter().enumerate() {
             if out.param_type == ParamType::Integer {
                 s.push_str(&format!(

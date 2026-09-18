@@ -575,14 +575,14 @@ public class MetadataTest {
            API, not by oversight: its setters take a bare pointer and carry no
            length. */
         double[] shortLeg = new double[N / 2];
-        checkRetCode(RetCode.BadParam,
+        checkRetCode(RetCode.BAD_PARAM,
             () -> sma.newCall().setInput(0, shortLeg).setOptInput(0, 30)
                      .setOutput(0, new double[N]).call(0, N - 1),
-            "an input shorter than the range -> BadParam");
-        checkRetCode(RetCode.BadParam,
+            "an input shorter than the range -> BAD_PARAM");
+        checkRetCode(RetCode.BAD_PARAM,
             () -> sma.newCall().setInput(0, CLOSE).setOptInput(0, 30)
                      .setOutput(0, new double[4]).call(0, N - 1),
-            "an output shorter than the produced count -> BadParam");
+            "an output shorter than the produced count -> BAD_PARAM");
         // Control: sized to the count actually produced, which is B5's bound --
         // not the width of the requested range.
         int lookback = sma.newCall().setOptInput(0, 30).lookback();

@@ -55,13 +55,13 @@
       double tempLow = 0;
       double tempClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( outHAOpen == outHAHigh || outHAOpen == outHALow || outHAOpen == outHAClose || outHAHigh == outHALow || outHAHigh == outHAClose || outHALow == outHAClose ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -71,7 +71,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* The summation order ((O+H)+L)+C is the bit-exactness contract with every
        * external implementation of this indicator. TA_AVGPRICE is documented as
@@ -155,7 +155,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode HA_Impl( int startIdx,
                     int endIdx,
@@ -183,13 +183,13 @@
       double tempLow = 0;
       double tempClose = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( outHAOpen == outHAHigh || outHAOpen == outHALow || outHAOpen == outHAClose || outHAHigh == outHALow || outHAHigh == outHAClose || outHALow == outHAClose ) {
-         return RetCode.BadParam ;
+         return RetCode.BAD_PARAM ;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -198,7 +198,7 @@
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       today = startIdx - lookbackTotal;
       haOpen = ((double)inOpen[today] + (double)inClose[today]) / 2.0;
@@ -262,7 +262,7 @@
       }
       outBegIdx.value = startIdx;
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with
@@ -352,7 +352,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("HA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -448,7 +448,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("HA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -512,7 +512,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("HA advance", RetCode.OutOfRangeEndIndex);
+            throw failure("HA advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -548,10 +548,10 @@
        */
       public void update( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("HA update", RetCode.OutOfRangeEndIndex);
+            throw failure("HA update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("HA update", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("HA update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA update: BAD_PARAM", RetCode.BAD_PARAM);
          core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.haOpen = this.cur_outHAOpen;
@@ -573,7 +573,7 @@
       public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
          requireArgument("HA peek", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("HA peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("HA peek: BAD_PARAM", RetCode.BAD_PARAM);
          HaStream sp = this;
          double haHigh = 0.0;
          double haLow = 0.0;
@@ -731,18 +731,18 @@
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
@@ -752,7 +752,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* The summation order ((O+H)+L)+C is the bit-exactness contract with every
        * external implementation of this indicator. TA_AVGPRICE is documented as
@@ -843,7 +843,7 @@
       sp.cur_outHAHigh = outHAHigh[(outNBElement.value - 1) * outStride];
       sp.cur_outHALow = outHALow[(outNBElement.value - 1) * outStride];
       sp.cur_outHAClose = outHAClose[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* haOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HaStream haOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
@@ -852,13 +852,13 @@
       RetCode retCode = haOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("HA openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("HA openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("HA openAndFill: " + retCode, retCode);
@@ -876,13 +876,13 @@
       RetCode retCode = haOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outHAOpen, sink_outHAHigh, sink_outHALow, sink_outHAClose, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("HA open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("HA open: internal error", retCode);
       }
       throw new TALibArgumentException("HA open: " + retCode, retCode);
@@ -937,7 +937,7 @@
       requireLength("HA openAndFill", "outHALow", outHALow, guardOutLen);
       requireLength("HA openAndFill", "outHAClose", outHAClose, guardOutLen);
       if( (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose ) {
-         throw new TALibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("HA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

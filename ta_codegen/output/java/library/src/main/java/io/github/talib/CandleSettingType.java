@@ -48,16 +48,16 @@ package io.github.talib;
 
 public enum CandleSettingType 
 {
-    BodyLong,
-    BodyVeryLong,
-    BodyShort,
-    BodyDoji,
-    ShadowLong,
-    ShadowVeryLong,
-    ShadowShort,
-    ShadowVeryShort,
-    Near,
-    Far,
-    Equal,
-    AllCandleSettings
+    BODY_LONG,
+    BODY_VERY_LONG,
+    BODY_SHORT,
+    BODY_DOJI,
+    SHADOW_LONG,
+    SHADOW_VERY_LONG,
+    SHADOW_SHORT,
+    SHADOW_VERY_SHORT,
+    NEAR,
+    FAR,
+    EQUAL,
+    ALL_CANDLE_SETTINGS
 };

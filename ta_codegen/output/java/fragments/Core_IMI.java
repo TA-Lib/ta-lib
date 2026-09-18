@@ -55,15 +55,15 @@
       int lookback = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outIdx = 0;
       lookback = IMI_Lookback(optInTimePeriod);
@@ -74,7 +74,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       while( startIdx <= endIdx ) {
@@ -99,7 +99,7 @@
          outIdx += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    RetCode IMI_Impl( int startIdx,
                      int endIdx,
@@ -113,15 +113,15 @@
       int lookback = 0;
       int outIdx = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outIdx = 0;
       lookback = IMI_Lookback(optInTimePeriod);
@@ -131,7 +131,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       outBegIdx.value = startIdx;
       while( startIdx <= endIdx ) {
@@ -152,7 +152,7 @@
          outIdx += 1;
       }
       outNBElement.value = outIdx;
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
@@ -208,7 +208,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = IMI_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("IMI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -270,7 +270,7 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = IMI_Impl(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("IMI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -334,7 +334,7 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("IMI advance", RetCode.OutOfRangeEndIndex);
+            throw failure("IMI advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -370,9 +370,9 @@
        */
       public double update( double inOpen, double inClose ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("IMI update", RetCode.OutOfRangeEndIndex);
+            throw failure("IMI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("IMI update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI update: BAD_PARAM", RetCode.BAD_PARAM);
          core.imiStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -390,7 +390,7 @@
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("IMI peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("IMI peek: BAD_PARAM", RetCode.BAD_PARAM);
          ImiStream sp = this;
          double upsum = 0.0;
          double downsum = 0.0;
@@ -488,23 +488,23 @@
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       lookback = IMI_Lookback(optInTimePeriod);
@@ -515,7 +515,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       outBegIdx.value = startIdx;
       while( startIdx <= endIdx ) {
@@ -543,7 +543,7 @@
       /* Capture the live batch state into the handle. */
       int cap_i = (int)(optInTimePeriod - 1 + 1);
       if( cap_i < 1 || cap_i > historyLen ) {
-         return RetCode.InternalError;
+         return RetCode.INTERNAL_ERROR;
       }
       double[] capWin_i_inOpen = new double[cap_i];
       System.arraycopy(inOpen, historyLen - cap_i, capWin_i_inOpen, 0, cap_i);
@@ -555,7 +555,7 @@
       sp.win_i_inOpen = capWin_i_inOpen;
       sp.win_i_inClose = capWin_i_inClose;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* imiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ImiStream imiOpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -564,13 +564,13 @@
       RetCode retCode = imiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("IMI openAndFill: internal error", retCode);
       }
       throw new TALibArgumentException("IMI openAndFill: " + retCode, retCode);
@@ -585,13 +585,13 @@
       RetCode retCode = imiOpenImpl(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("IMI open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
+      if( retCode == RetCode.INTERNAL_ERROR ) {
          throw new TALibStateException("IMI open: internal error", retCode);
       }
       throw new TALibArgumentException("IMI open: " + retCode, retCode);
@@ -637,7 +637,7 @@
       requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("IMI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("IMI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
