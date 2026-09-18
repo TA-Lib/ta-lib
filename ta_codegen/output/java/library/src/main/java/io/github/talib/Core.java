@@ -149222,7 +149222,7 @@ public final class Core {
  */
 
    /**
-    * Number of leading input bars {@link Core#RVIR} consumes before it can
+    * Number of leading input bars {@link Core#rvir} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -149236,7 +149236,7 @@ public final class Core {
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int RVIR_Lookback( int optInTimePeriod, int optInStdDevPeriod )
+   public int rvirLookback( int optInTimePeriod, int optInStdDevPeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -149253,18 +149253,18 @@ public final class Core {
        * lookback rather than restating the arithmetic, which is what makes this
        * function inherit TA_FUNC_UNST_RVI the way KC inherits its two (kc.c).
        */
-      return RVI_Lookback(optInTimePeriod, optInStdDevPeriod) ;
+      return rviLookback(optInTimePeriod, optInStdDevPeriod) ;
 
    }
-   RetCode RVIR_Impl( int startIdx,
-                      int endIdx,
-                      double inHigh[],
-                      double inLow[],
-                      int optInTimePeriod,
-                      int optInStdDevPeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode rvirImpl( int startIdx,
+                     int endIdx,
+                     double inHigh[],
+                     double inLow[],
+                     int optInTimePeriod,
+                     int optInStdDevPeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] tempHigh;
       RetCode retCode;
@@ -149273,36 +149273,36 @@ public final class Core {
       MInteger tempBegIdx = new MInteger();
       MInteger tempNbElement = new MInteger();
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+      lookbackTotal = rvirLookback(optInTimePeriod, optInStdDevPeriod);
       /* Nothing is allocated and no input is read when the range cannot produce a
        * value, so a caller-supplied input that stops short of endIdx is never
        * read past its end (kc.c).
        */
       if( lookbackTotal > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       /* Each leg is the shipped TA_RVI over this range, entered at the same
        * startIdx: same function, same parameters, same lookback, so the two
@@ -149323,14 +149323,14 @@ public final class Core {
        * leaves every value identical, which is why the aliasing test earns its
        * keep against the scratch buffer's extent rather than against this order.
        */
-      OutRange _xr0 = RVI(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, tempHigh);
+      OutRange _xr0 = rvi(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, tempHigh);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
-      retCode = RetCode.Success;
-      OutRange _xr1 = RVI(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal);
+      retCode = RetCode.SUCCESS;
+      OutRange _xr1 = rvi(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Each leg has already resolved its own zero-total case to TA_RVI's neutral
        * 50 before the average is taken, so a tie in one series never drags the
        * other. Scaling by one half is exact, so the spelling of the average is
@@ -149340,17 +149340,17 @@ public final class Core {
       for( i = 0; i < outNBElement.value; i += 1 ) {
          outReal[i] = 0.5 * (tempHigh[i] + outReal[i]);
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
-   RetCode RVIR_Impl( int startIdx,
-                      int endIdx,
-                      float inHigh[],
-                      float inLow[],
-                      int optInTimePeriod,
-                      int optInStdDevPeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode rvirImpl( int startIdx,
+                     int endIdx,
+                     float inHigh[],
+                     float inLow[],
+                     int optInTimePeriod,
+                     int optInStdDevPeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] tempHigh;
       RetCode retCode;
@@ -149359,46 +149359,46 @@ public final class Core {
       MInteger tempBegIdx = new MInteger();
       MInteger tempNbElement = new MInteger();
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
-         return RetCode.OutOfRangeStartIndex ;
+         return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+      lookbackTotal = rvirLookback(optInTimePeriod, optInStdDevPeriod);
       if( lookbackTotal > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.Success ;
+         return RetCode.SUCCESS ;
       }
       tempHigh = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = RVI(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, tempHigh);
+      OutRange _xr0 = rvi(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, tempHigh);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
-      retCode = RetCode.Success;
-      OutRange _xr1 = RVI(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal);
+      retCode = RetCode.SUCCESS;
+      OutRange _xr1 = rvi(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       for( i = 0; i < outNBElement.value; i += 1 ) {
          outReal[i] = 0.5 * (tempHigh[i] + outReal[i]);
       }
-      return RetCode.Success ;
+      return RetCode.SUCCESS ;
    }
    /**
     * Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of
@@ -149427,8 +149427,8 @@ public final class Core {
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RVIR_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#rvirLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -149456,11 +149456,11 @@ public final class Core {
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#RVI
-    * @see Core#STDDEV
-    * @see Core#ATR
+    * @see Core#rvi
+    * @see Core#stddev
+    * @see Core#atr
     */
-   public OutRange RVIR( int startIdx,
+   public OutRange rvir( int startIdx,
                          int endIdx,
                          double inHigh[],
                          double inLow[],
@@ -149469,7 +149469,7 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("RVIR", startIdx, endIdx);
-      int guardStart = clampedStart("RVIR", startIdx, RVIR_Lookback(optInTimePeriod, optInStdDevPeriod));
+      int guardStart = clampedStart("RVIR", startIdx, rvirLookback(optInTimePeriod, optInStdDevPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RVIR", "inHigh", inHigh, guardInLen);
@@ -149477,8 +149477,8 @@ public final class Core {
       requireLength("RVIR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RVIR_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      RetCode retCode = rvirImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVIR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -149513,8 +149513,8 @@ public final class Core {
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RVIR_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#rvirLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -149542,11 +149542,11 @@ public final class Core {
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#RVI
-    * @see Core#STDDEV
-    * @see Core#ATR
+    * @see Core#rvi
+    * @see Core#stddev
+    * @see Core#atr
     */
-   public OutRange RVIR( int startIdx,
+   public OutRange rvir( int startIdx,
                          int endIdx,
                          float inHigh[],
                          float inLow[],
@@ -149555,7 +149555,7 @@ public final class Core {
                          double outReal[] )
    {
       requireIndexRange("RVIR", startIdx, endIdx);
-      int guardStart = clampedStart("RVIR", startIdx, RVIR_Lookback(optInTimePeriod, optInStdDevPeriod));
+      int guardStart = clampedStart("RVIR", startIdx, rvirLookback(optInTimePeriod, optInStdDevPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RVIR", "inHigh", inHigh, guardInLen);
@@ -149563,8 +149563,8 @@ public final class Core {
       requireLength("RVIR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RVIR_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
-      if( retCode != RetCode.Success ) {
+      RetCode retCode = rvirImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.SUCCESS ) {
          throw failure("RVIR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
@@ -149573,7 +149573,7 @@ public final class Core {
 
    /**
     * A live RVIR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#RVIR} over the same series.
+    * closed bar, bit-identical to {@link Core#rvir} over the same series.
     * Open with {@link Core#rvirOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -149600,7 +149600,7 @@ public final class Core {
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#RVIR} reports over the same bars: the
+       * <p>It is what {@link Core#rvir} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -149627,7 +149627,7 @@ public final class Core {
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVIR advance", RetCode.OutOfRangeEndIndex);
+            throw failure("RVIR advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
@@ -149662,9 +149662,9 @@ public final class Core {
        */
       public double update( double inHigh, double inLow ) {
          if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
-            throw failure("RVIR update", RetCode.OutOfRangeEndIndex);
+            throw failure("RVIR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("RVIR update: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVIR update: BAD_PARAM", RetCode.BAD_PARAM);
          core.rvirStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -149682,7 +149682,7 @@ public final class Core {
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TaLibArgumentException("RVIR peek: BadParam", RetCode.BadParam);
+            throw new TALibArgumentException("RVIR peek: BAD_PARAM", RetCode.BAD_PARAM);
          RvirStream sp = this;
          double cur_tempHigh = 0.0;
          double cur_outReal = 0.0;
@@ -149742,48 +149742,48 @@ public final class Core {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.OUT_OF_RANGE_START_INDEX;
       }
       if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( optInStdDevPeriod == Integer.MIN_VALUE ) {
          optInStdDevPeriod = 10;
       } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
-         return RetCode.BadParam;
+         return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < RVIR_Lookback(optInTimePeriod, optInStdDevPeriod) + 1 ) {
-         return RetCode.InsufficientHistory;
+      if( historyLen < rvirLookback(optInTimePeriod, optInStdDevPeriod) + 1 ) {
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+      lookbackTotal = rvirLookback(optInTimePeriod, optInStdDevPeriod);
       /* Nothing is allocated and no input is read when the range cannot produce a
        * value, so a caller-supplied input that stops short of endIdx is never
        * read past its end (kc.c).
        */
       if( lookbackTotal > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
       if( startIdx > endIdx ) {
-         return RetCode.InsufficientHistory ;
+         return RetCode.INSUFFICIENT_HISTORY ;
       }
       /* Each leg is the shipped TA_RVI over this range, entered at the same
        * startIdx: same function, same parameters, same lookback, so the two
@@ -149807,11 +149807,11 @@ public final class Core {
       /* Sub-stream 0: rvi over `inHigh`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RviStream sub0 = rviOpenAndFillInternal(inHigh, startIdx, optInTimePeriod, optInStdDevPeriod, tempBegIdx, tempNbElement, tempHigh);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Sub-stream 1: rvi over `inLow`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       RviStream sub1 = rviOpenAndFillInternal(inLow, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, sc_outReal);
-      retCode = RetCode.Success;
+      retCode = RetCode.SUCCESS;
       /* Each leg has already resolved its own zero-total case to TA_RVI's neutral
        * 50 before the average is taken, so a tie in one series never drags the
        * other. Scaling by one half is exact, so the spelling of the average is
@@ -149823,14 +149823,14 @@ public final class Core {
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.InsufficientHistory;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInStdDevPeriod = optInStdDevPeriod;
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return RetCode.SUCCESS;
    }
    /* rvirOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    RvirStream rvirOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInStdDevPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -149839,16 +149839,16 @@ public final class Core {
       RetCode retCode = rvirOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVIR openAndFill: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVIR openAndFill: internal error", retCode);
+      if( retCode == RetCode.INTERNAL_ERROR ) {
+         throw new TALibStateException("RVIR openAndFill: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVIR openAndFill: " + retCode, retCode);
+      throw new TALibArgumentException("RVIR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind rvirOpen (composition seam). */
    RvirStream rvirOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
@@ -149860,22 +149860,22 @@ public final class Core {
       RetCode retCode = rvirOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
-      if( retCode == RetCode.Success ) {
+      if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
-      if( retCode == RetCode.InsufficientHistory ) {
+      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
          throw new InsufficientHistoryException("RVIR open: history shorter than lookback + 1");
       }
-      if( retCode == RetCode.InternalError ) {
-         throw new TaLibStateException("RVIR open: internal error", retCode);
+      if( retCode == RetCode.INTERNAL_ERROR ) {
+         throw new TALibStateException("RVIR open: internal error", retCode);
       }
-      throw new TaLibArgumentException("RVIR open: " + retCode, retCode);
+      throw new TALibArgumentException("RVIR open: " + retCode, retCode);
    }
    /**
     * Open a live RVIR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#RVIR} at that bar.
-    * <p>The history must hold at least {@code RVIR_Lookback(...) + 1} bars
+    * to {@link Core#rvir} at that bar.
+    * <p>The history must hold at least {@code rvirLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -149894,7 +149894,7 @@ public final class Core {
    }
    /**
     * {@link Core#rvirOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#RVIR} over the whole history in the same single pass
+    * to {@link Core#rvir} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -149908,11 +149908,11 @@ public final class Core {
       requireArgument("RVIR openAndFill", "inHigh", inHigh);
       requireHistory("RVIR openAndFill", inHigh.length);
       requireArgument("RVIR openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("RVIR openAndFill", inHigh.length, RVIR_Lookback(optInTimePeriod, optInStdDevPeriod));
+      int guardOutLen = openFillCount("RVIR openAndFill", inHigh.length, rvirLookback(optInTimePeriod, optInStdDevPeriod));
       requireHistoryLength("RVIR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("RVIR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TaLibArgumentException("RVIR openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+         throw new TALibArgumentException("RVIR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

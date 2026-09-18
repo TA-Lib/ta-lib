@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::RVIR`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::rvir`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -79,7 +79,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_RVIR_Lookback")]
     #[inline]
-    pub fn RVIR_Lookback(&self, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32) -> Result<usize, RetCode> {
+    pub fn rvir_lookback(&self, mut optInTimePeriod: i32, mut optInStdDevPeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -94,12 +94,12 @@ impl Core {
         // the same bar and there is no max() to take. Stated as the callee's
         // lookback rather than restating the arithmetic, which is what makes this
         // function inherit TA_FUNC_UNST_RVI the way KC inherits its two (kc.c).
-        return Ok(self.RVI_Lookback(optInTimePeriod, optInStdDevPeriod)?);
+        return Ok(self.rvi_lookback(optInTimePeriod, optInStdDevPeriod)?);
     }
-    /// C-shaped body behind [`Core::RVIR`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::rvir`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn RVIR_Impl(
+    pub(crate) fn rvir_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -127,7 +127,7 @@ impl Core {
         } else if (((optInStdDevPeriod) as i32) < 2) || (((optInStdDevPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -141,7 +141,7 @@ impl Core {
         let mut tempNbElement: usize = 0_usize;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
         // Nothing is allocated and no input is read when the range cannot produce a
         // value, so a caller-supplied input that stops short of endIdx is never
         // read past its end (kc.c).
@@ -171,11 +171,11 @@ impl Core {
         // implementation detail, not what makes the aliasing safe. Swapping them
         // leaves every value identical, which is why the aliasing test earns its
         // keep against the scratch buffer's extent rather than against this order.
-        let _xr0 = match self.RVI(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, &mut tempHigh[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.rvi(startIdx, endIdx, inHigh, optInTimePeriod, optInStdDevPeriod, &mut tempHigh[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
         retCode = RetCode::Success;
-        let _xr1 = match self.RVI(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr1 = match self.rvi(startIdx, endIdx, inLow, optInTimePeriod, optInStdDevPeriod, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
@@ -246,7 +246,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.RVIR(0, high.len() - 1, &high, &low, 14, 10, &mut out)?;
+    /// let out_range = core.rvir(0, high.len() - 1, &high, &low, 14, 10, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -254,7 +254,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::RVI`] · [`Core::STDDEV`] · [`Core::ATR`]
+    /// [`RVI`](Core::rvi) · [`STDDEV`](Core::stddev) · [`ATR`](Core::atr)
     ///
     /// # References
     ///
@@ -263,7 +263,7 @@ impl Core {
     /// * Dorsey, Donald. "The Relative Volatility Index." *Technical Analysis of Stocks &
     ///   Commodities*, V.11:6 (June 1993), 253-256.
     #[doc(alias = "TA_RVIR")]
-    pub fn RVIR(
+    pub fn rvir(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -279,7 +279,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod)?;
+        let _guardLb = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -293,7 +293,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.RVIR_Impl(
+        let retCode = self.rvir_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -313,7 +313,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live RVIR stream: one value per closed bar, bit-identical to [`Core::RVIR`]
+/// Live RVIR stream: one value per closed bar, bit-identical to [`Core::rvir`]
 /// over the same series. Open with [`Core::rvir_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -402,7 +402,7 @@ impl Core {
         let mut tempNbElement: usize = 0_usize;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod)?;
+        lookbackTotal = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
         // Nothing is allocated and no input is read when the range cannot produce a
         // value, so a caller-supplied input that stops short of endIdx is never
         // read past its end (kc.c).
@@ -483,7 +483,7 @@ impl Core {
     }
 
     /// Open a live RVIR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::RVIR`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::rvir`] at that bar.
     ///
     /// # Errors
     ///
@@ -514,7 +514,7 @@ impl Core {
     }
 
     /// [`Core::rvir_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::RVIR`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::rvir`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -532,7 +532,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.RVIR(0, high.len() - 1, &high, &low, 14, 10, &mut batch_out)?;
+    /// let batch = core.rvir(0, high.len() - 1, &high, &low, 14, 10, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.rvir_open_and_fill(&high, &low, 14, 10, &mut out)?;
@@ -553,7 +553,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod)?;
+        let _guardLb = self.rvir_lookback(optInTimePeriod, optInStdDevPeriod)?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -669,7 +669,7 @@ impl RvirStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::RVIR`] reports over the same bars: the opener sets it
+    /// It is what [`Core::rvir`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

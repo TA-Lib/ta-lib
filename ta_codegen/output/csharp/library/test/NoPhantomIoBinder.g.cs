@@ -1095,7 +1095,7 @@ internal static class NoPhantomIoBinder
         },
         ["RVIR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RVIR_Impl(
+            RetCode rc = core.RvirImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },

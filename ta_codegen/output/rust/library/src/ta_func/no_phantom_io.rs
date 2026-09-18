@@ -14394,14 +14394,14 @@ const V_RVIR: &[(&str, i32, i32)] = &[
 fn sub_RVIR(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod, optInStdDevPeriod) in V_RVIR {
-        let Ok(lb) = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod) else { continue; };
+        let Ok(lb) = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod) else { continue; };
         r.control("RVIR", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.RVIR_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.rvir_impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("RVIR", label); continue; }
@@ -14411,7 +14411,7 @@ fn sub_RVIR(r: &mut Report) {
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.RVIR_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.rvir_impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -14421,7 +14421,7 @@ fn legs_RVIR(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
     let optInStdDevPeriod = i32::MIN;
-    let Ok(lb) = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod) else { r.no_legs("RVIR"); return; };
+    let Ok(lb) = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod) else { r.no_legs("RVIR"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -14430,7 +14430,7 @@ fn legs_RVIR(r: &mut Report) {
         r.legs_control("RVIR", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.rvir_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -14441,7 +14441,7 @@ fn legs_RVIR(r: &mut Report) {
         r.leg("RVIR", "inHigh", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.rvir_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -14452,7 +14452,7 @@ fn legs_RVIR(r: &mut Report) {
         r.leg("RVIR", "inLow", 1, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.RVIR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.rvir_impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
