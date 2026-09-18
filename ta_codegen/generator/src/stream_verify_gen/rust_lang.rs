@@ -56,11 +56,9 @@ fn rust_canary_check(out_is_int: &[bool]) -> String {
 #[allow(clippy::too_many_lines)]
 fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
-    // The server-local verify fn stays snake_case (`sv_sma`); library calls use
-    // the verbatim function name.
-    let sn = func.name.to_lowercase();
-    let fname = &crate::backends::common::snake_words(&func.name);
-    let fname_snake = crate::backends::common::snake_words(fname);
+    let sn = crate::backends::common::snake_words(&func.name);
+    let fname = &sn;
+    let fname_snake = sn.clone();
     let candle = func.name.starts_with("CDL");
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;

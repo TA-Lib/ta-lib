@@ -103,9 +103,9 @@ impl Core {
         outBearPower: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, eri_impl_fma, eri_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower));
+        return ta_lib_dispatch::dispatch_fma!(self, eri_impl_fma, eri_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower));
         #[cfg(not(target_arch = "x86_64"))]
-        self.eri_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
+        self.eri_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -122,10 +122,10 @@ impl Core {
         outBullPower: &mut [f64],
         outBearPower: &mut [f64],
     ) -> RetCode {
-        self.eri_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
+        self.eri_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
     }
     #[inline(always)]
-    fn eri_impl_impl(
+    fn eri_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

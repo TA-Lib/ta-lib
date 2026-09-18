@@ -226,8 +226,10 @@ pub fn check_java_variants(j: &str, name: &str) {
             || j.contains(&format!("RetCode {fold}Impl (")),
         "{name}: Java missing {name} body"
     );
+    // Spelled through the same fold the emitter uses: `sma_Internal` mixes the
+    // new stem with the old separator, so nothing could ever emit it.
     assert!(
-        !j.contains(&format!("{fold}_Internal")),
+        !j.contains(&format!("{fold}Internal(")),
         "{name}: the deleted C-shaped tier must not come back"
     );
     assert!(

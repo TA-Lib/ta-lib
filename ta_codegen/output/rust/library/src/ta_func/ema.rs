@@ -103,9 +103,9 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ema_impl_fma, ema_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, ema_impl_fma, ema_impl_scalar, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ema_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.ema_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -119,10 +119,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ema_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.ema_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ema_impl_impl(
+    fn ema_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

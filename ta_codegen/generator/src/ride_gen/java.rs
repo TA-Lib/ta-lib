@@ -111,8 +111,12 @@ const RIDE_JAVA_SUPPORT: &str = r#"
 
 #[allow(clippy::too_many_lines)]
 fn emit_java_ridealong_fn(func: &FuncDef) -> String {
+    // `n` names the LIBRARY method (lowerCamel). The ride-along helpers below sit
+    // behind a lowercase prefix, so the stem capitalizes there or `ride` + `sma`
+    // reads `ridesma`.
     let n = crate::backends::common::camel_words(&func.name);
-    let base = crate::backends::common::camel_words(&func.name);
+    let base = n.clone();
+    let pas = crate::backends::common::pascal_words(&func.name);
     let input_names = expand_input_names(&func.inputs);
     let outs = &func.outputs;
     let multi = outs.len() > 1;
@@ -205,13 +209,13 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
 
     let _ = writeln!(
         s,
-        "    static void ride{n}(Core core, String json, int endIdx, {sig_ins}{sig_opts}StringBuilder sb) {{"
+        "    static void ride{pas}(Core core, String json, int endIdx, {sig_ins}{sig_opts}StringBuilder sb) {{"
     );
     s.push_str("        if (!rideGate(json)) return;\n");
     s.push_str("        RideResult r = new RideResult();\n");
     let _ = writeln!(
         s,
-        "        rideBody{n}(core, json, endIdx, {}{}r);",
+        "        rideBody{pas}(core, json, endIdx, {}{}r);",
         ride_arg_list(&input_names),
         opt_args
     );
@@ -219,7 +223,7 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
 
     let _ = writeln!(
         s,
-        "    @SuppressWarnings(\"unused\")\n    static void rideBody{n}(Core core, String json, int endIdx, {sig_ins}{sig_opts}RideResult r) {{"
+        "    @SuppressWarnings(\"unused\")\n    static void rideBody{pas}(Core core, String json, int endIdx, {sig_ins}{sig_opts}RideResult r) {{"
     );
     // A negative lookback is a REJECTED parameter and travels on: it is the
     // only rejection the ride can reach, and the reject leg below is what

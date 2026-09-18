@@ -92,9 +92,9 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cdlpiercing_impl_fma, cdlpiercing_impl_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, cdlpiercing_impl_fma, cdlpiercing_impl_scalar, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cdlpiercing_impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.cdlpiercing_impl_scalar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -110,10 +110,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.cdlpiercing_impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.cdlpiercing_impl_scalar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn cdlpiercing_impl_impl(
+    fn cdlpiercing_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

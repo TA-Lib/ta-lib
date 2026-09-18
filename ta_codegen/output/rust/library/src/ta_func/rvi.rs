@@ -108,9 +108,9 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, rvi_impl_fma, rvi_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, rvi_impl_fma, rvi_impl_scalar, (startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.rvi_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal)
+        self.rvi_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -125,10 +125,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.rvi_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal)
+        self.rvi_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn rvi_impl_impl(
+    fn rvi_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

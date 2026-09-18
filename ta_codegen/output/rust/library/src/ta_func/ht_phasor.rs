@@ -86,9 +86,9 @@ impl Core {
         outQuadrature: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_impl_fma, ht_phasor_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_impl_fma, ht_phasor_impl_scalar, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_phasor_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.ht_phasor_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -102,10 +102,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        self.ht_phasor_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.ht_phasor_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[inline(always)]
-    fn ht_phasor_impl_impl(
+    fn ht_phasor_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

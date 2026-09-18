@@ -115,9 +115,9 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningstar_impl_fma, cdlmorningstar_impl_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningstar_impl_fma, cdlmorningstar_impl_scalar, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cdlmorningstar_impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.cdlmorningstar_impl_scalar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -134,10 +134,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.cdlmorningstar_impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.cdlmorningstar_impl_scalar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn cdlmorningstar_impl_impl(
+    fn cdlmorningstar_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

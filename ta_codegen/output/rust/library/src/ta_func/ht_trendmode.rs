@@ -99,9 +99,9 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_impl_fma, ht_trendmode_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_impl_fma, ht_trendmode_impl_scalar, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_trendmode_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.ht_trendmode_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -114,10 +114,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.ht_trendmode_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.ht_trendmode_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn ht_trendmode_impl_impl(
+    fn ht_trendmode_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

@@ -183033,7 +183033,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideac(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
+            rideAc(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183045,7 +183045,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideac(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
+        rideAc(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183198,7 +183198,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideaccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideAccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183212,7 +183212,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideaccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideAccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183346,7 +183346,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideacos(core, json, endIdx, inReal, hb);
+            rideAcos(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183358,7 +183358,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideacos(core, json, endIdx, inReal, sb);
+        rideAcos(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183513,7 +183513,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridead(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
+            rideAd(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183525,7 +183525,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridead(core, json, endIdx, inHigh, inLow, inClose, inVolume, sb);
+        rideAd(core, json, endIdx, inHigh, inLow, inClose, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183666,7 +183666,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideadd(core, json, endIdx, inReal0, inReal1, hb);
+            rideAdd(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183678,7 +183678,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideadd(core, json, endIdx, inReal0, inReal1, sb);
+        rideAdd(core, json, endIdx, inReal0, inReal1, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183835,7 +183835,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideadosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, hb);
+            rideAdosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -183847,7 +183847,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideadosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, sb);
+        rideAdosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -183989,7 +183989,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideadr(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideAdr(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184001,7 +184001,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideadr(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideAdr(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184151,7 +184151,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideadx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideAdx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184163,7 +184163,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideadx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideAdx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184312,7 +184312,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideadxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideAdxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184324,7 +184324,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideadxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideAdxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184467,7 +184467,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideao(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
+            rideAo(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184479,7 +184479,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideao(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, sb);
+        rideAo(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184618,7 +184618,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideapo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
+            rideApo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184630,7 +184630,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideapo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
+        rideApo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184774,7 +184774,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridearoon(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideAroon(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184787,7 +184787,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridearoon(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideAroon(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -184929,7 +184929,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridearoonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideAroonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -184941,7 +184941,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridearoonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideAroonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185075,7 +185075,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideasin(core, json, endIdx, inReal, hb);
+            rideAsin(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185087,7 +185087,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideasin(core, json, endIdx, inReal, sb);
+        rideAsin(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185221,7 +185221,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideatan(core, json, endIdx, inReal, hb);
+            rideAtan(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185233,7 +185233,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideatan(core, json, endIdx, inReal, sb);
+        rideAtan(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185383,7 +185383,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideAtr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185395,7 +185395,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideAtr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185530,7 +185530,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideavgdev(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideAvgdev(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185542,7 +185542,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideavgdev(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideAvgdev(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185697,7 +185697,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideavgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideAvgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185709,7 +185709,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideavgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideAvgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -185853,7 +185853,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridebbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
+            rideBbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -185867,7 +185867,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridebbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sb);
+        rideBbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186009,7 +186009,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridebeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
+            rideBeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186021,7 +186021,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridebeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, sb);
+        rideBeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186176,7 +186176,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridebop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideBop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186188,7 +186188,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridebop(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideBop(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186337,7 +186337,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideCci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186349,7 +186349,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideCci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186504,7 +186504,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186516,7 +186516,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186671,7 +186671,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186683,7 +186683,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -186838,7 +186838,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -186850,7 +186850,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187005,7 +187005,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187017,7 +187017,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187172,7 +187172,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187184,7 +187184,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187339,7 +187339,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187351,7 +187351,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187506,7 +187506,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187518,7 +187518,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187674,7 +187674,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187686,7 +187686,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -187841,7 +187841,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -187853,7 +187853,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188008,7 +188008,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188020,7 +188020,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188175,7 +188175,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188187,7 +188187,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188342,7 +188342,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188354,7 +188354,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188509,7 +188509,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188521,7 +188521,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188676,7 +188676,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188688,7 +188688,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -188844,7 +188844,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -188856,7 +188856,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189011,7 +189011,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189023,7 +189023,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189178,7 +189178,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189190,7 +189190,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189345,7 +189345,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189357,7 +189357,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189512,7 +189512,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189524,7 +189524,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189680,7 +189680,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189692,7 +189692,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -189848,7 +189848,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -189860,7 +189860,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190015,7 +190015,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190027,7 +190027,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190182,7 +190182,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190194,7 +190194,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190349,7 +190349,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190361,7 +190361,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190516,7 +190516,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190528,7 +190528,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190683,7 +190683,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190695,7 +190695,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -190850,7 +190850,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -190862,7 +190862,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191017,7 +191017,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191029,7 +191029,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191184,7 +191184,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191196,7 +191196,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191351,7 +191351,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191363,7 +191363,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191518,7 +191518,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191530,7 +191530,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191685,7 +191685,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191697,7 +191697,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -191852,7 +191852,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -191864,7 +191864,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192019,7 +192019,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192031,7 +192031,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192186,7 +192186,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192198,7 +192198,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192353,7 +192353,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192365,7 +192365,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192520,7 +192520,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192532,7 +192532,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192687,7 +192687,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192699,7 +192699,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -192854,7 +192854,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -192866,7 +192866,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193021,7 +193021,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193033,7 +193033,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193188,7 +193188,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193200,7 +193200,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193356,7 +193356,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193368,7 +193368,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193524,7 +193524,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193536,7 +193536,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193692,7 +193692,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
+            rideCdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193704,7 +193704,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
+        rideCdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -193859,7 +193859,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -193871,7 +193871,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194026,7 +194026,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194038,7 +194038,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194193,7 +194193,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194205,7 +194205,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194360,7 +194360,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194372,7 +194372,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194527,7 +194527,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194539,7 +194539,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194694,7 +194694,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194706,7 +194706,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -194861,7 +194861,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -194873,7 +194873,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195028,7 +195028,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195040,7 +195040,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195195,7 +195195,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195207,7 +195207,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195362,7 +195362,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195374,7 +195374,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195529,7 +195529,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195541,7 +195541,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195696,7 +195696,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195708,7 +195708,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -195863,7 +195863,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -195875,7 +195875,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196030,7 +196030,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196042,7 +196042,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196197,7 +196197,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196209,7 +196209,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196364,7 +196364,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196376,7 +196376,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196531,7 +196531,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideCdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196543,7 +196543,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideCdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196677,7 +196677,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideceil(core, json, endIdx, inReal, hb);
+            rideCeil(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196689,7 +196689,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideceil(core, json, endIdx, inReal, sb);
+        rideCeil(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196845,7 +196845,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
+            rideCmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -196857,7 +196857,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, sb);
+        rideCmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -196993,7 +196993,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecmo(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideCmo(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197005,7 +197005,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecmo(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideCmo(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197140,7 +197140,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecmou(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideCmou(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197152,7 +197152,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecmou(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideCmou(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197289,7 +197289,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, hb);
+            rideCoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197301,7 +197301,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, sb);
+        rideCoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197443,7 +197443,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
+            rideCorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197455,7 +197455,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, sb);
+        rideCorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197589,7 +197589,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecos(core, json, endIdx, inReal, hb);
+            rideCos(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197601,7 +197601,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecos(core, json, endIdx, inReal, sb);
+        rideCos(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197735,7 +197735,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecosh(core, json, endIdx, inReal, hb);
+            rideCosh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197747,7 +197747,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecosh(core, json, endIdx, inReal, sb);
+        rideCosh(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -197881,7 +197881,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecumsum(core, json, endIdx, inReal, hb);
+            rideCumsum(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -197893,7 +197893,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecumsum(core, json, endIdx, inReal, sb);
+        rideCumsum(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198036,7 +198036,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridecvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, hb);
+            rideCvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198048,7 +198048,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridecvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, sb);
+        rideCvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198183,7 +198183,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridedema(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideDema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198195,7 +198195,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridedema(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideDema(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198336,7 +198336,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridediv(core, json, endIdx, inReal0, inReal1, hb);
+            rideDiv(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198348,7 +198348,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridediv(core, json, endIdx, inReal0, inReal1, sb);
+        rideDiv(core, json, endIdx, inReal0, inReal1, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198494,7 +198494,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridedonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideDonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198508,7 +198508,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridedonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideDonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198643,7 +198643,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridedpo(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideDpo(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198655,7 +198655,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridedpo(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideDpo(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198805,7 +198805,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridedx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideDx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198817,7 +198817,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridedx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideDx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -198959,7 +198959,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideefi(core, json, endIdx, inClose, inVolume, optInTimePeriod, hb);
+            rideEfi(core, json, endIdx, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -198971,7 +198971,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideefi(core, json, endIdx, inClose, inVolume, optInTimePeriod, sb);
+        rideEfi(core, json, endIdx, inClose, inVolume, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199107,7 +199107,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideema(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideEma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199119,7 +199119,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideema(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideEma(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199254,7 +199254,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideer(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideEr(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199266,7 +199266,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideer(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideEr(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199417,7 +199417,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideeri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideEri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199430,7 +199430,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideeri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideEri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199564,7 +199564,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideexp(core, json, endIdx, inReal, hb);
+            rideExp(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199576,7 +199576,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideexp(core, json, endIdx, inReal, sb);
+        rideExp(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199710,7 +199710,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridefloor(core, json, endIdx, inReal, hb);
+            rideFloor(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199722,7 +199722,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridefloor(core, json, endIdx, inReal, sb);
+        rideFloor(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -199857,7 +199857,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridefosc(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideFosc(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -199869,7 +199869,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridefosc(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideFosc(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200014,7 +200014,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridefractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, hb);
+            rideFractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200027,7 +200027,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridefractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, sb);
+        rideFractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200189,7 +200189,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideha(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
+            rideHa(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200204,7 +200204,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal3\":").append(doubleArrayToJson(outArr3, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideha(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
+        rideHa(core, json, endIdx, inOpen, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200339,7 +200339,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehma(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideHma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200351,7 +200351,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehma(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideHma(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200486,7 +200486,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtDcperiod(core, json, endIdx, inReal, hb);
+            rideHtDcperiod(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200498,7 +200498,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtDcperiod(core, json, endIdx, inReal, sb);
+        rideHtDcperiod(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200633,7 +200633,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtDcphase(core, json, endIdx, inReal, hb);
+            rideHtDcphase(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200645,7 +200645,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtDcphase(core, json, endIdx, inReal, sb);
+        rideHtDcphase(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200782,7 +200782,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtPhasor(core, json, endIdx, inReal, hb);
+            rideHtPhasor(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200795,7 +200795,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtPhasor(core, json, endIdx, inReal, sb);
+        rideHtPhasor(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -200932,7 +200932,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtSine(core, json, endIdx, inReal, hb);
+            rideHtSine(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -200945,7 +200945,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtSine(core, json, endIdx, inReal, sb);
+        rideHtSine(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201080,7 +201080,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtTrendline(core, json, endIdx, inReal, hb);
+            rideHtTrendline(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201092,7 +201092,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtTrendline(core, json, endIdx, inReal, sb);
+        rideHtTrendline(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201227,7 +201227,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridehtTrendmode(core, json, endIdx, inReal, hb);
+            rideHtTrendmode(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201239,7 +201239,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridehtTrendmode(core, json, endIdx, inReal, sb);
+        rideHtTrendmode(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201381,7 +201381,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideimi(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
+            rideImi(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201393,7 +201393,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideimi(core, json, endIdx, inOpen, inClose, optInTimePeriod, sb);
+        rideImi(core, json, endIdx, inOpen, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201529,7 +201529,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridekama(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideKama(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201541,7 +201541,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridekama(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideKama(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201696,7 +201696,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridekc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, hb);
+            rideKc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201710,7 +201710,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridekc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, sb);
+        rideKc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -201871,7 +201871,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridekdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
+            rideKdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -201885,7 +201885,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridekdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sb);
+        rideKdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202020,7 +202020,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridelinearreg(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideLinearreg(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202032,7 +202032,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridelinearreg(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideLinearreg(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202167,7 +202167,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridelinearregAngle(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideLinearregAngle(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202179,7 +202179,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridelinearregAngle(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideLinearregAngle(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202314,7 +202314,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridelinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideLinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202326,7 +202326,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridelinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideLinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202461,7 +202461,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridelinearregSlope(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideLinearregSlope(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202473,7 +202473,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridelinearregSlope(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideLinearregSlope(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202607,7 +202607,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideln(core, json, endIdx, inReal, hb);
+            rideLn(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202619,7 +202619,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideln(core, json, endIdx, inReal, sb);
+        rideLn(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202753,7 +202753,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridelog10(core, json, endIdx, inReal, hb);
+            rideLog10(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202765,7 +202765,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridelog10(core, json, endIdx, inReal, sb);
+        rideLog10(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -202903,7 +202903,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridema(core, json, endIdx, inReal, optInTimePeriod, optInMAType, hb);
+            rideMa(core, json, endIdx, inReal, optInTimePeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -202915,7 +202915,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridema(core, json, endIdx, inReal, optInTimePeriod, optInMAType, sb);
+        rideMa(core, json, endIdx, inReal, optInTimePeriod, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203056,7 +203056,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
+            rideMacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203070,7 +203070,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
+        rideMacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203220,7 +203220,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, hb);
+            rideMacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203234,7 +203234,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sb);
+        rideMacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203373,7 +203373,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemacdfix(core, json, endIdx, inReal, optInSignalPeriod, hb);
+            rideMacdfix(core, json, endIdx, inReal, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203387,7 +203387,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemacdfix(core, json, endIdx, inReal, optInSignalPeriod, sb);
+        rideMacdfix(core, json, endIdx, inReal, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203526,7 +203526,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, hb);
+            rideMama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203539,7 +203539,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, sb);
+        rideMama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203687,7 +203687,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemarketfi(core, json, endIdx, inHigh, inLow, inVolume, hb);
+            rideMarketfi(core, json, endIdx, inHigh, inLow, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203699,7 +203699,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemarketfi(core, json, endIdx, inHigh, inLow, inVolume, sb);
+        rideMarketfi(core, json, endIdx, inHigh, inLow, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -203842,7 +203842,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
+            rideMassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -203854,7 +203854,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, sb);
+        rideMassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204000,7 +204000,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, hb);
+            rideMavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204012,7 +204012,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, sb);
+        rideMavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204147,7 +204147,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemax(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMax(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204159,7 +204159,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemax(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMax(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204294,7 +204294,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204306,7 +204306,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemaxindex(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMaxindex(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204447,7 +204447,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemedprice(core, json, endIdx, inHigh, inLow, hb);
+            rideMedprice(core, json, endIdx, inHigh, inLow, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204459,7 +204459,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemedprice(core, json, endIdx, inHigh, inLow, sb);
+        rideMedprice(core, json, endIdx, inHigh, inLow, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204615,7 +204615,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
+            rideMfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204627,7 +204627,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, sb);
+        rideMfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204762,7 +204762,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemidpoint(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMidpoint(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204774,7 +204774,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemidpoint(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMidpoint(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -204916,7 +204916,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideMidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -204928,7 +204928,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideMidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205063,7 +205063,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemin(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMin(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205075,7 +205075,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemin(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMin(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205210,7 +205210,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideminindex(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMinindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205222,7 +205222,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideminindex(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMinindex(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205359,7 +205359,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideminmax(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMinmax(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205372,7 +205372,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideminmax(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMinmax(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205509,7 +205509,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideminmaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMinmaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205522,7 +205522,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideminmaxindex(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMinmaxindex(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205672,7 +205672,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideminusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideMinusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205684,7 +205684,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideminusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideMinusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205827,7 +205827,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideminusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            rideMinusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205839,7 +205839,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideminusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        rideMinusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -205974,7 +205974,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemom(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideMom(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -205986,7 +205986,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemom(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideMom(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206127,7 +206127,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridemult(core, json, endIdx, inReal0, inReal1, hb);
+            rideMult(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206139,7 +206139,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridemult(core, json, endIdx, inReal0, inReal1, sb);
+        rideMult(core, json, endIdx, inReal0, inReal1, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206289,7 +206289,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridenatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideNatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206301,7 +206301,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridenatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideNatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206442,7 +206442,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridenvi(core, json, endIdx, inClose, inVolume, hb);
+            rideNvi(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206454,7 +206454,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridenvi(core, json, endIdx, inClose, inVolume, sb);
+        rideNvi(core, json, endIdx, inClose, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206595,7 +206595,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideobv(core, json, endIdx, inReal, inVolume, hb);
+            rideObv(core, json, endIdx, inReal, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206607,7 +206607,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideobv(core, json, endIdx, inReal, inVolume, sb);
+        rideObv(core, json, endIdx, inReal, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206743,7 +206743,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridepercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, hb);
+            ridePercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206755,7 +206755,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridepercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, sb);
+        ridePercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -206890,7 +206890,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridepercentrank(core, json, endIdx, inReal, optInTimePeriod, hb);
+            ridePercentrank(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -206902,7 +206902,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridepercentrank(core, json, endIdx, inReal, optInTimePeriod, sb);
+        ridePercentrank(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207052,7 +207052,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideplusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            ridePlusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207064,7 +207064,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideplusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        ridePlusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207207,7 +207207,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideplusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
+            ridePlusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207219,7 +207219,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideplusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
+        ridePlusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207358,7 +207358,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideppo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
+            ridePpo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207370,7 +207370,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideppo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
+        ridePpo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207511,7 +207511,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridepvi(core, json, endIdx, inClose, inVolume, hb);
+            ridePvi(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207523,7 +207523,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridepvi(core, json, endIdx, inClose, inVolume, sb);
+        ridePvi(core, json, endIdx, inClose, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207662,7 +207662,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridepvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
+            ridePvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207674,7 +207674,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridepvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
+        ridePvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207815,7 +207815,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridepvt(core, json, endIdx, inClose, inVolume, hb);
+            ridePvt(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207827,7 +207827,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridepvt(core, json, endIdx, inClose, inVolume, sb);
+        ridePvt(core, json, endIdx, inClose, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -207969,7 +207969,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideqstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
+            rideQstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -207981,7 +207981,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideqstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, sb);
+        rideQstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208117,7 +208117,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            riderma(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208129,7 +208129,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        riderma(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRma(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208264,7 +208264,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideroc(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRoc(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208276,7 +208276,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideroc(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRoc(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208411,7 +208411,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            riderocp(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRocp(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208423,7 +208423,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        riderocp(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRocp(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208558,7 +208558,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            riderocr(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRocr(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208570,7 +208570,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        riderocr(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRocr(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208705,7 +208705,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            riderocr100(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRocr100(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208717,7 +208717,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        riderocr100(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRocr100(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -208853,7 +208853,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridersi(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideRsi(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -208865,7 +208865,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridersi(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideRsi(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209002,7 +209002,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridervi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, hb);
+            rideRvi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209014,7 +209014,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridervi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, sb);
+        rideRvi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209149,7 +209149,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridervol(core, json, endIdx, inVolume, optInTimePeriod, hb);
+            rideRvol(core, json, endIdx, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209161,7 +209161,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridervol(core, json, endIdx, inVolume, optInTimePeriod, sb);
+        rideRvol(core, json, endIdx, inVolume, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209304,7 +209304,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, hb);
+            rideSar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209316,7 +209316,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, sb);
+        rideSar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209465,7 +209465,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, hb);
+            rideSarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209477,7 +209477,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sb);
+        rideSarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209611,7 +209611,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesin(core, json, endIdx, inReal, hb);
+            rideSin(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209623,7 +209623,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesin(core, json, endIdx, inReal, sb);
+        rideSin(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209757,7 +209757,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesinh(core, json, endIdx, inReal, hb);
+            rideSinh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209769,7 +209769,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesinh(core, json, endIdx, inReal, sb);
+        rideSinh(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -209904,7 +209904,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesma(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideSma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -209916,7 +209916,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesma(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideSma(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210070,7 +210070,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
+            rideSmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210083,7 +210083,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
+        rideSmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210217,7 +210217,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesqrt(core, json, endIdx, inReal, hb);
+            rideSqrt(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210229,7 +210229,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesqrt(core, json, endIdx, inReal, sb);
+        rideSqrt(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210365,7 +210365,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridestddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
+            rideStddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210377,7 +210377,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridestddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, sb);
+        rideStddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210536,7 +210536,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridestoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
+            rideStoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210549,7 +210549,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridestoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sb);
+        rideStoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210704,7 +210704,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridestochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
+            rideStochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210717,7 +210717,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridestochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sb);
+        rideStochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -210859,7 +210859,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridestochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
+            rideStochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -210872,7 +210872,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridestochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sb);
+        rideStochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211013,7 +211013,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesub(core, json, endIdx, inReal0, inReal1, hb);
+            rideSub(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211025,7 +211025,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesub(core, json, endIdx, inReal0, inReal1, sb);
+        rideSub(core, json, endIdx, inReal0, inReal1, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211160,7 +211160,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesum(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideSum(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211172,7 +211172,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesum(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideSum(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211324,7 +211324,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridesupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, hb);
+            rideSupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211337,7 +211337,7 @@ public class TaCodegenServe {
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridesupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, sb);
+        rideSupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211474,7 +211474,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridet3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, hb);
+            rideT3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211486,7 +211486,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridet3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, sb);
+        rideT3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211620,7 +211620,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetan(core, json, endIdx, inReal, hb);
+            rideTan(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211632,7 +211632,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetan(core, json, endIdx, inReal, sb);
+        rideTan(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211766,7 +211766,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetanh(core, json, endIdx, inReal, hb);
+            rideTanh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211778,7 +211778,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetanh(core, json, endIdx, inReal, sb);
+        rideTanh(core, json, endIdx, inReal, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -211913,7 +211913,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetema(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideTema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -211925,7 +211925,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetema(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideTema(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212073,7 +212073,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetrange(core, json, endIdx, inHigh, inLow, inClose, hb);
+            rideTrange(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212085,7 +212085,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetrange(core, json, endIdx, inHigh, inLow, inClose, sb);
+        rideTrange(core, json, endIdx, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212220,7 +212220,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetrima(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideTrima(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212232,7 +212232,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetrima(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideTrima(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212367,7 +212367,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetrix(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideTrix(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212379,7 +212379,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetrix(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideTrix(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212514,7 +212514,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetsf(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideTsf(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212526,7 +212526,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetsf(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideTsf(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212662,7 +212662,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, hb);
+            rideTsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212674,7 +212674,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, sb);
+        rideTsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212822,7 +212822,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridetypprice(core, json, endIdx, inHigh, inLow, inClose, hb);
+            rideTypprice(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212834,7 +212834,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridetypprice(core, json, endIdx, inHigh, inLow, inClose, sb);
+        rideTypprice(core, json, endIdx, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -212985,7 +212985,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            rideultosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, hb);
+            rideUltosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -212997,7 +212997,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        rideultosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sb);
+        rideUltosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213133,7 +213133,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridevar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
+            rideVar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213145,7 +213145,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridevar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, sb);
+        rideVar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213280,7 +213280,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridevhf(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideVhf(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213292,7 +213292,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridevhf(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideVhf(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213443,7 +213443,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridevortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideVortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213456,7 +213456,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridevortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideVortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213611,7 +213611,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridevwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
+            rideVwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213623,7 +213623,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridevwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, sb);
+        rideVwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213765,7 +213765,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridevwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, hb);
+            rideVwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213777,7 +213777,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridevwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, sb);
+        rideVwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -213925,7 +213925,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridewad(core, json, endIdx, inHigh, inLow, inClose, hb);
+            rideWad(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -213937,7 +213937,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridewad(core, json, endIdx, inHigh, inLow, inClose, sb);
+        rideWad(core, json, endIdx, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -214085,7 +214085,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridewclprice(core, json, endIdx, inHigh, inLow, inClose, hb);
+            rideWclprice(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -214097,7 +214097,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridewclprice(core, json, endIdx, inHigh, inLow, inClose, sb);
+        rideWclprice(core, json, endIdx, inHigh, inLow, inClose, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -214246,7 +214246,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridewillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
+            rideWillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -214258,7 +214258,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridewillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
+        rideWillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -214393,7 +214393,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridewma(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideWma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -214405,7 +214405,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridewma(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideWma(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -214540,7 +214540,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
-            ridezlema(core, json, endIdx, inReal, optInTimePeriod, hb);
+            rideZlema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
         }
@@ -214552,7 +214552,7 @@ public class TaCodegenServe {
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
-        ridezlema(core, json, endIdx, inReal, optInTimePeriod, sb);
+        rideZlema(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -245770,15 +245770,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideac(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
+    static void rideAc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyac(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
+        rideBodyAc(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyac(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
+    static void rideBodyAc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
         try { r.lb = core.acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -245871,15 +245871,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideaccbands(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideAccbands(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyaccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyAccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyaccbands(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyAccbands(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.accbandsLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -245983,15 +245983,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideacos(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideAcos(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyacos(core, json, endIdx, inReal, r);
+        rideBodyAcos(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyacos(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyAcos(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.acosLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246079,15 +246079,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridead(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, StringBuilder sb) {
+    static void rideAd(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyad(core, json, endIdx, inHigh, inLow, inClose, inVolume, r);
+        rideBodyAd(core, json, endIdx, inHigh, inLow, inClose, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyad(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
+    static void rideBodyAd(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
         try { r.lb = core.adLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246181,15 +246181,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideadd(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
+    static void rideAdd(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyadd(core, json, endIdx, inReal0, inReal1, r);
+        rideBodyAdd(core, json, endIdx, inReal0, inReal1, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyadd(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
+    static void rideBodyAdd(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
         try { r.lb = core.addLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246279,15 +246279,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideadosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
+    static void rideAdosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyadosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, r);
+        rideBodyAdosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyadosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
+    static void rideBodyAdosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
         try { r.lb = core.adoscLookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246383,15 +246383,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideadr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideAdr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyadr(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyAdr(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyadr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyAdr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.adrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246482,15 +246482,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideadx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideAdx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyadx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyAdx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyadx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyAdx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.adxLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246583,15 +246583,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideadxr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideAdxr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyadxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyAdxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyadxr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyAdxr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.adxrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246684,15 +246684,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideao(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
+    static void rideAo(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyao(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, r);
+        rideBodyAo(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyao(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
+    static void rideBodyAo(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
         try { r.lb = core.aoLookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246784,15 +246784,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideapo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
+    static void rideApo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyapo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, r);
+        rideBodyApo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyapo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
+    static void rideBodyApo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
         try { r.lb = core.apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246883,15 +246883,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridearoon(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideAroon(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyaroon(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyAroon(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyaroon(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyAroon(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.aroonLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -246987,15 +246987,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridearoonosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideAroonosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyaroonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyAroonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyaroonosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyAroonosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.aroonoscLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247086,15 +247086,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideasin(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideAsin(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyasin(core, json, endIdx, inReal, r);
+        rideBodyAsin(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyasin(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyAsin(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.asinLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247182,15 +247182,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideatan(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideAtan(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyatan(core, json, endIdx, inReal, r);
+        rideBodyAtan(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyatan(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyAtan(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.atanLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247278,15 +247278,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideAtr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyAtr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyAtr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.atrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247379,15 +247379,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideavgdev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideAvgdev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyavgdev(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyAvgdev(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyavgdev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyAvgdev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.avgdevLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247476,15 +247476,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideavgprice(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideAvgprice(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyavgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyAvgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyavgprice(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyAvgprice(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.avgpriceLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247578,15 +247578,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridebbands(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, StringBuilder sb) {
+    static void rideBbands(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodybbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, r);
+        rideBodyBbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodybbands(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, RideResult r) {
+    static void rideBodyBbands(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, RideResult r) {
         try { r.lb = core.bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247689,15 +247689,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridebeta(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, StringBuilder sb) {
+    static void rideBeta(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodybeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, r);
+        rideBodyBeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodybeta(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
+    static void rideBodyBeta(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
         try { r.lb = core.betaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247788,15 +247788,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridebop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideBop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodybop(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyBop(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodybop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyBop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.bopLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247890,15 +247890,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecci(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideCci(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyCci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycci(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyCci(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.cciLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -247991,15 +247991,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl2crowsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248093,15 +248093,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3blackcrows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3blackcrows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3blackcrows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3blackcrows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3blackcrowsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248195,15 +248195,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3inside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3inside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3inside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3inside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3insideLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248297,15 +248297,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3linestrike(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3linestrike(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3linestrike(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3linestrike(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3linestrikeLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248399,15 +248399,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3outside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3outside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3outside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3outside(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3outsideLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248501,15 +248501,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3starsinsouth(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3starsinsouth(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3starsinsouth(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3starsinsouth(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3starsinsouthLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248603,15 +248603,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdl3whitesoldiers(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdl3whitesoldiers(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdl3whitesoldiers(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdl3whitesoldiers(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdl3whitesoldiersLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248705,15 +248705,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlabandonedbaby(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdlabandonedbaby(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlabandonedbaby(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdlabandonedbaby(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdlabandonedbabyLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248808,15 +248808,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdladvanceblock(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdladvanceblock(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdladvanceblock(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdladvanceblock(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdladvanceblockLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -248910,15 +248910,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlbelthold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlbelthold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlbelthold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlbelthold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlbeltholdLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249012,15 +249012,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlbreakaway(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlbreakaway(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlbreakaway(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlbreakaway(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlbreakawayLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249114,15 +249114,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlclosingmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlclosingmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlclosingmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlclosingmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlclosingmarubozuLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249216,15 +249216,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlconcealbabyswall(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlconcealbabyswall(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlconcealbabyswall(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlconcealbabyswall(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlconcealbabyswallLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249318,15 +249318,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlcounterattack(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlcounterattack(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlcounterattack(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlcounterattack(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlcounterattackLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249420,15 +249420,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdldarkcloudcover(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdldarkcloudcover(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdldarkcloudcover(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdldarkcloudcover(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdldarkcloudcoverLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249523,15 +249523,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdldoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdldoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdldoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdldoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdldojiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249625,15 +249625,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdldojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdldojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdldojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdldojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdldojistarLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249727,15 +249727,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdldragonflydoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdldragonflydoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdldragonflydoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdldragonflydoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdldragonflydojiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249829,15 +249829,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlengulfing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlengulfing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlengulfing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlengulfing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlengulfingLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -249931,15 +249931,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdleveningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdleveningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdleveningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdleveningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdleveningdojistarLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250034,15 +250034,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdleveningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdleveningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdleveningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdleveningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdleveningstarLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250137,15 +250137,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlgapsidesidewhite(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlgapsidesidewhite(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlgapsidesidewhite(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlgapsidesidewhite(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlgapsidesidewhiteLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250239,15 +250239,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlgravestonedoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlgravestonedoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlgravestonedoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlgravestonedoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlgravestonedojiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250341,15 +250341,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhammerLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250443,15 +250443,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhangingman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhangingman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhangingman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhangingman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhangingmanLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250545,15 +250545,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlharami(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlharami(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlharami(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlharami(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlharamiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250647,15 +250647,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlharamicross(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlharamicross(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlharamicross(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlharamicross(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlharamicrossLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250749,15 +250749,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhighwave(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhighwave(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhighwave(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhighwave(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhighwaveLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250851,15 +250851,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhikkake(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhikkake(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhikkake(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhikkake(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhikkakeLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -250953,15 +250953,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhikkakemod(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhikkakemod(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhikkakemod(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhikkakemod(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhikkakemodLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251055,15 +251055,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlhomingpigeon(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlhomingpigeon(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlhomingpigeon(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlhomingpigeon(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlhomingpigeonLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251157,15 +251157,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlidentical3crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlidentical3crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlidentical3crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlidentical3crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlidentical3crowsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251259,15 +251259,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlinneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlinneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlinneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlinneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlinneckLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251361,15 +251361,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlinvertedhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlinvertedhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlinvertedhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlinvertedhammer(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlinvertedhammerLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251463,15 +251463,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlkicking(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlkicking(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlkicking(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlkicking(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlkickingLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251565,15 +251565,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlkickingbylength(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlkickingbylength(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlkickingbylength(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlkickingbylength(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlkickingbylengthLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251667,15 +251667,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlladderbottom(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlladderbottom(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlladderbottom(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlladderbottom(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlladderbottomLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251769,15 +251769,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdllongleggeddoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdllongleggeddoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdllongleggeddoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdllongleggeddoji(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdllongleggeddojiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251871,15 +251871,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdllongline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdllongline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdllongline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdllongline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdllonglineLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -251973,15 +251973,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlmarubozu(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlmarubozuLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252075,15 +252075,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlmatchinglow(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlmatchinglow(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlmatchinglow(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlmatchinglow(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlmatchinglowLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252177,15 +252177,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlmathold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdlmathold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlmathold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdlmathold(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdlmatholdLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252280,15 +252280,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlmorningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdlmorningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlmorningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdlmorningdojistar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdlmorningdojistarLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252383,15 +252383,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlmorningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
+    static void rideCdlmorningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
+        rideBodyCdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlmorningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
+    static void rideBodyCdlmorningstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, RideResult r) {
         try { r.lb = core.cdlmorningstarLookback(optInPenetration); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252486,15 +252486,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlonneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlonneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlonneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlonneck(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlonneckLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252588,15 +252588,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlpiercing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlpiercing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlpiercing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlpiercing(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlpiercingLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252690,15 +252690,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlrickshawman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlrickshawman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlrickshawman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlrickshawman(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlrickshawmanLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252792,15 +252792,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlrisefall3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlrisefall3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlrisefall3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlrisefall3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlrisefall3methodsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252894,15 +252894,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlseparatinglines(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlseparatinglines(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlseparatinglines(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlseparatinglines(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlseparatinglinesLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -252996,15 +252996,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlshootingstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlshootingstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlshootingstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlshootingstar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlshootingstarLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253098,15 +253098,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlshortline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlshortline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlshortline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlshortline(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlshortlineLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253200,15 +253200,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlspinningtop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlspinningtop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlspinningtop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlspinningtop(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlspinningtopLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253302,15 +253302,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlstalledpattern(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlstalledpattern(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlstalledpattern(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlstalledpattern(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlstalledpatternLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253404,15 +253404,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlsticksandwich(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlsticksandwich(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlsticksandwich(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlsticksandwich(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlsticksandwichLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253506,15 +253506,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdltakuri(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdltakuri(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdltakuri(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdltakuri(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdltakuriLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253608,15 +253608,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdltasukigap(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdltasukigap(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdltasukigap(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdltasukigap(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdltasukigapLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253710,15 +253710,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlthrusting(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlthrusting(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlthrusting(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlthrusting(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlthrustingLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253812,15 +253812,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdltristar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdltristar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdltristar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdltristar(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdltristarLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -253914,15 +253914,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlunique3river(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlunique3river(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlunique3river(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlunique3river(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlunique3riverLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254016,15 +254016,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlupsidegap2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlupsidegap2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlupsidegap2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlupsidegap2crows(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlupsidegap2crowsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254118,15 +254118,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecdlxsidegap3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideCdlxsidegap3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyCdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycdlxsidegap3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyCdlxsidegap3methods(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.cdlxsidegap3methodsLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254220,15 +254220,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideceil(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideCeil(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyceil(core, json, endIdx, inReal, r);
+        rideBodyCeil(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyceil(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyCeil(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.ceilLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254316,15 +254316,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecmf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
+    static void rideCmf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, r);
+        rideBodyCmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycmf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
+    static void rideBodyCmf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
         try { r.lb = core.cmfLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254419,15 +254419,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecmo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideCmo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycmo(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyCmo(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycmo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyCmo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.cmoLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254516,15 +254516,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecmou(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideCmou(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycmou(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyCmou(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycmou(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyCmou(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.cmouLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254613,15 +254613,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecoppock(Core core, String json, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, StringBuilder sb) {
+    static void rideCoppock(Core core, String json, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, r);
+        rideBodyCoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycoppock(Core core, String json, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, RideResult r) {
+    static void rideBodyCoppock(Core core, String json, int endIdx, double[] inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, RideResult r) {
         try { r.lb = core.coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254712,15 +254712,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecorrel(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, StringBuilder sb) {
+    static void rideCorrel(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, r);
+        rideBodyCorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycorrel(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
+    static void rideBodyCorrel(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInTimePeriod, RideResult r) {
         try { r.lb = core.correlLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254811,15 +254811,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecos(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideCos(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycos(core, json, endIdx, inReal, r);
+        rideBodyCos(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycos(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyCos(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.cosLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -254907,15 +254907,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecosh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideCosh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycosh(core, json, endIdx, inReal, r);
+        rideBodyCosh(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycosh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyCosh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.coshLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255003,15 +255003,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecumsum(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideCumsum(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycumsum(core, json, endIdx, inReal, r);
+        rideBodyCumsum(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycumsum(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyCumsum(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.cumsumLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255099,15 +255099,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridecvi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, StringBuilder sb) {
+    static void rideCvi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodycvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, r);
+        rideBodyCvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodycvi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, RideResult r) {
+    static void rideBodyCvi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, int optInROCPeriod, RideResult r) {
         try { r.lb = core.cviLookback(optInTimePeriod, optInROCPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255199,15 +255199,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridedema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideDema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodydema(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyDema(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodydema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyDema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.demaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255296,15 +255296,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridediv(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
+    static void rideDiv(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodydiv(core, json, endIdx, inReal0, inReal1, r);
+        rideBodyDiv(core, json, endIdx, inReal0, inReal1, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodydiv(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
+    static void rideBodyDiv(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
         try { r.lb = core.divLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255394,15 +255394,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridedonchian(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideDonchian(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodydonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyDonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodydonchian(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyDonchian(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.donchianLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255504,15 +255504,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridedpo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideDpo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodydpo(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyDpo(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodydpo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyDpo(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.dpoLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255601,15 +255601,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridedx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideDx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodydx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyDx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodydx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyDx(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.dxLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255702,15 +255702,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideefi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
+    static void rideEfi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyefi(core, json, endIdx, inClose, inVolume, optInTimePeriod, r);
+        rideBodyEfi(core, json, endIdx, inClose, inVolume, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyefi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
+    static void rideBodyEfi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
         try { r.lb = core.efiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255801,15 +255801,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideEma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyema(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyEma(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyEma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.emaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255898,15 +255898,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideer(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideEr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyer(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyEr(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyer(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyEr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.erLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -255995,15 +255995,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideeri(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideEri(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyeri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyEri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyeri(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyEri(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.eriLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256101,15 +256101,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideexp(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideExp(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyexp(core, json, endIdx, inReal, r);
+        rideBodyExp(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyexp(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyExp(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.expLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256197,15 +256197,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridefloor(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideFloor(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyfloor(core, json, endIdx, inReal, r);
+        rideBodyFloor(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyfloor(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyFloor(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.floorLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256293,15 +256293,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridefosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideFosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyfosc(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyFosc(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyfosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyFosc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.foscLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256390,15 +256390,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridefractal(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, StringBuilder sb) {
+    static void rideFractal(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyfractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, r);
+        rideBodyFractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyfractal(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, RideResult r) {
+    static void rideBodyFractal(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInLeftBars, int optInRightBars, RideResult r) {
         try { r.lb = core.fractalLookback(optInLeftBars, optInRightBars); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256495,15 +256495,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideha(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideHa(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyha(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
+        rideBodyHa(core, json, endIdx, inOpen, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyha(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyHa(Core core, String json, int endIdx, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.haLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256614,15 +256614,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideHma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhma(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyHma(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyHma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.hmaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256711,15 +256711,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtDcperiod(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtDcperiod(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtDcperiod(core, json, endIdx, inReal, r);
+        rideBodyHtDcperiod(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtDcperiod(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtDcperiod(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htDcperiodLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256807,15 +256807,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtDcphase(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtDcphase(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtDcphase(core, json, endIdx, inReal, r);
+        rideBodyHtDcphase(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtDcphase(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtDcphase(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htDcphaseLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -256903,15 +256903,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtPhasor(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtPhasor(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtPhasor(core, json, endIdx, inReal, r);
+        rideBodyHtPhasor(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtPhasor(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtPhasor(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htPhasorLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257004,15 +257004,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtSine(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtSine(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtSine(core, json, endIdx, inReal, r);
+        rideBodyHtSine(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtSine(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtSine(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htSineLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257105,15 +257105,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtTrendline(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtTrendline(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtTrendline(core, json, endIdx, inReal, r);
+        rideBodyHtTrendline(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtTrendline(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtTrendline(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htTrendlineLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257201,15 +257201,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridehtTrendmode(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideHtTrendmode(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyhtTrendmode(core, json, endIdx, inReal, r);
+        rideBodyHtTrendmode(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyhtTrendmode(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyHtTrendmode(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.htTrendmodeLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257297,15 +257297,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideimi(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideImi(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyimi(core, json, endIdx, inOpen, inClose, optInTimePeriod, r);
+        rideBodyImi(core, json, endIdx, inOpen, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyimi(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyImi(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.imiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257396,15 +257396,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridekama(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideKama(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodykama(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyKama(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodykama(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyKama(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.kamaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257493,15 +257493,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridekc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, StringBuilder sb) {
+    static void rideKc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodykc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, r);
+        rideBodyKc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodykc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, RideResult r) {
+    static void rideBodyKc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, RideResult r) {
         try { r.lb = core.kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257607,15 +257607,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridekdj(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, StringBuilder sb) {
+    static void rideKdj(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodykdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r);
+        rideBodyKdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodykdj(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
+    static void rideBodyKdj(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
         try { r.lb = core.kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257723,15 +257723,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridelinearreg(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideLinearreg(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodylinearreg(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyLinearreg(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodylinearreg(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyLinearreg(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.linearregLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257820,15 +257820,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridelinearregAngle(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideLinearregAngle(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodylinearregAngle(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyLinearregAngle(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodylinearregAngle(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyLinearregAngle(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.linearregAngleLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -257917,15 +257917,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridelinearregIntercept(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideLinearregIntercept(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodylinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyLinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodylinearregIntercept(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyLinearregIntercept(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.linearregInterceptLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258014,15 +258014,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridelinearregSlope(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideLinearregSlope(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodylinearregSlope(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyLinearregSlope(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodylinearregSlope(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyLinearregSlope(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.linearregSlopeLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258111,15 +258111,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideln(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideLn(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyln(core, json, endIdx, inReal, r);
+        rideBodyLn(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyln(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyLn(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.lnLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258207,15 +258207,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridelog10(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideLog10(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodylog10(core, json, endIdx, inReal, r);
+        rideBodyLog10(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodylog10(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyLog10(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.log10Lookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258303,15 +258303,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, StringBuilder sb) {
+    static void rideMa(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyma(core, json, endIdx, inReal, optInTimePeriod, optInMAType, r);
+        rideBodyMa(core, json, endIdx, inReal, optInTimePeriod, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, RideResult r) {
+    static void rideBodyMa(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, MAType optInMAType, RideResult r) {
         try { r.lb = core.maLookback(optInTimePeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258401,15 +258401,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemacd(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
+    static void rideMacd(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
+        rideBodyMacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymacd(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
+    static void rideBodyMacd(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
         try { r.lb = core.macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258511,15 +258511,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemacdext(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, StringBuilder sb) {
+    static void rideMacdext(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, r);
+        rideBodyMacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymacdext(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, RideResult r) {
+    static void rideBodyMacdext(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, RideResult r) {
         try { r.lb = core.macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258624,15 +258624,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemacdfix(Core core, String json, int endIdx, double[] inReal, int optInSignalPeriod, StringBuilder sb) {
+    static void rideMacdfix(Core core, String json, int endIdx, double[] inReal, int optInSignalPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymacdfix(core, json, endIdx, inReal, optInSignalPeriod, r);
+        rideBodyMacdfix(core, json, endIdx, inReal, optInSignalPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymacdfix(Core core, String json, int endIdx, double[] inReal, int optInSignalPeriod, RideResult r) {
+    static void rideBodyMacdfix(Core core, String json, int endIdx, double[] inReal, int optInSignalPeriod, RideResult r) {
         try { r.lb = core.macdfixLookback(optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258732,15 +258732,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemama(Core core, String json, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, StringBuilder sb) {
+    static void rideMama(Core core, String json, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, r);
+        rideBodyMama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymama(Core core, String json, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, RideResult r) {
+    static void rideBodyMama(Core core, String json, int endIdx, double[] inReal, double optInFastLimit, double optInSlowLimit, RideResult r) {
         try { r.lb = core.mamaLookback(optInFastLimit, optInSlowLimit); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258835,15 +258835,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemarketfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, StringBuilder sb) {
+    static void rideMarketfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymarketfi(core, json, endIdx, inHigh, inLow, inVolume, r);
+        rideBodyMarketfi(core, json, endIdx, inHigh, inLow, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymarketfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, RideResult r) {
+    static void rideBodyMarketfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inVolume, RideResult r) {
         try { r.lb = core.marketfiLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -258935,15 +258935,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemassi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
+    static void rideMassi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, r);
+        rideBodyMassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymassi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
+    static void rideBodyMassi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInFastPeriod, int optInSlowPeriod, RideResult r) {
         try { r.lb = core.massiLookback(optInFastPeriod, optInSlowPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259035,15 +259035,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemavp(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, StringBuilder sb) {
+    static void rideMavp(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, r);
+        rideBodyMavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymavp(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, RideResult r) {
+    static void rideBodyMavp(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, RideResult r) {
         try { r.lb = core.mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259136,15 +259136,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymax(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMax(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.maxLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259233,15 +259233,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymaxindex(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMaxindex(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.maxindexLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259330,15 +259330,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemedprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, StringBuilder sb) {
+    static void rideMedprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymedprice(core, json, endIdx, inHigh, inLow, r);
+        rideBodyMedprice(core, json, endIdx, inHigh, inLow, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymedprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, RideResult r) {
+    static void rideBodyMedprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, RideResult r) {
         try { r.lb = core.medpriceLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259428,15 +259428,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
+    static void rideMfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, r);
+        rideBodyMfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
+    static void rideBodyMfi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, RideResult r) {
         try { r.lb = core.mfiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259531,15 +259531,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemidpoint(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMidpoint(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymidpoint(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMidpoint(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymidpoint(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMidpoint(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.midpointLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259628,15 +259628,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemidprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideMidprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyMidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymidprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyMidprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.midpriceLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259727,15 +259727,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemin(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMin(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymin(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMin(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymin(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMin(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259824,15 +259824,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideminindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMinindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyminindex(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMinindex(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyminindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMinindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minindexLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -259921,15 +259921,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideminmax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMinmax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyminmax(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMinmax(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyminmax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMinmax(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minmaxLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260023,15 +260023,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideminmaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMinmaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyminmaxindex(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMinmaxindex(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyminmaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMinmaxindex(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minmaxindexLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260125,15 +260125,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideminusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideMinusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyminusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyMinusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyminusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyMinusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minusDiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260226,15 +260226,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideminusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void rideMinusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyminusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyMinusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyminusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyMinusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.minusDmLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260325,15 +260325,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemom(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideMom(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymom(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyMom(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymom(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyMom(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.momLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260422,15 +260422,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridemult(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
+    static void rideMult(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodymult(core, json, endIdx, inReal0, inReal1, r);
+        rideBodyMult(core, json, endIdx, inReal0, inReal1, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodymult(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
+    static void rideBodyMult(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
         try { r.lb = core.multLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260520,15 +260520,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridenatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideNatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodynatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyNatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodynatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyNatr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.natrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260621,15 +260621,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridenvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
+    static void rideNvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodynvi(core, json, endIdx, inClose, inVolume, r);
+        rideBodyNvi(core, json, endIdx, inClose, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodynvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
+    static void rideBodyNvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
         try { r.lb = core.nviLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260719,15 +260719,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideobv(Core core, String json, int endIdx, double[] inReal, double[] inVolume, StringBuilder sb) {
+    static void rideObv(Core core, String json, int endIdx, double[] inReal, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyobv(core, json, endIdx, inReal, inVolume, r);
+        rideBodyObv(core, json, endIdx, inReal, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyobv(Core core, String json, int endIdx, double[] inReal, double[] inVolume, RideResult r) {
+    static void rideBodyObv(Core core, String json, int endIdx, double[] inReal, double[] inVolume, RideResult r) {
         try { r.lb = core.obvLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260817,15 +260817,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridepercentile(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, StringBuilder sb) {
+    static void ridePercentile(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodypercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, r);
+        rideBodyPercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodypercentile(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, RideResult r) {
+    static void rideBodyPercentile(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInPercentile, RideResult r) {
         try { r.lb = core.percentileLookback(optInTimePeriod, optInPercentile); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -260915,15 +260915,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridepercentrank(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void ridePercentrank(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodypercentrank(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyPercentrank(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodypercentrank(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyPercentrank(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.percentrankLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261012,15 +261012,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideplusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void ridePlusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyplusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyPlusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyplusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyPlusDi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.plusDiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261113,15 +261113,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideplusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
+    static void ridePlusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyplusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
+        rideBodyPlusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyplusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
+    static void rideBodyPlusDm(Core core, String json, int endIdx, double[] inHigh, double[] inLow, int optInTimePeriod, RideResult r) {
         try { r.lb = core.plusDmLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261212,15 +261212,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideppo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
+    static void ridePpo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyppo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, r);
+        rideBodyPpo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyppo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
+    static void rideBodyPpo(Core core, String json, int endIdx, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
         try { r.lb = core.ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261311,15 +261311,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridepvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
+    static void ridePvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodypvi(core, json, endIdx, inClose, inVolume, r);
+        rideBodyPvi(core, json, endIdx, inClose, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodypvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
+    static void rideBodyPvi(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
         try { r.lb = core.pviLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261409,15 +261409,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridepvo(Core core, String json, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
+    static void ridePvo(Core core, String json, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodypvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, r);
+        rideBodyPvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodypvo(Core core, String json, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
+    static void rideBodyPvo(Core core, String json, int endIdx, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, RideResult r) {
         try { r.lb = core.pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261508,15 +261508,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridepvt(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
+    static void ridePvt(Core core, String json, int endIdx, double[] inClose, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodypvt(core, json, endIdx, inClose, inVolume, r);
+        rideBodyPvt(core, json, endIdx, inClose, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodypvt(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
+    static void rideBodyPvt(Core core, String json, int endIdx, double[] inClose, double[] inVolume, RideResult r) {
         try { r.lb = core.pvtLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261606,15 +261606,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideqstick(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideQstick(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyqstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, r);
+        rideBodyQstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyqstick(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyQstick(Core core, String json, int endIdx, double[] inOpen, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.qstickLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261705,15 +261705,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void riderma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrma(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRma(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rmaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261802,15 +261802,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideroc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRoc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyroc(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRoc(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyroc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRoc(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rocLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261899,15 +261899,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void riderocp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRocp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrocp(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRocp(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrocp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRocp(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rocpLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -261996,15 +261996,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void riderocr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRocr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrocr(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRocr(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrocr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRocr(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rocrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262093,15 +262093,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void riderocr100(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRocr100(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrocr100(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRocr100(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrocr100(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRocr100(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rocr100Lookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262190,15 +262190,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridersi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideRsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrsi(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyRsi(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyRsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rsiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262287,15 +262287,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridervi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, StringBuilder sb) {
+    static void rideRvi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrvi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, r);
+        rideBodyRvi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrvi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, RideResult r) {
+    static void rideBodyRvi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInStdDevPeriod, RideResult r) {
         try { r.lb = core.rviLookback(optInTimePeriod, optInStdDevPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262385,15 +262385,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridervol(Core core, String json, int endIdx, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
+    static void rideRvol(Core core, String json, int endIdx, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyrvol(core, json, endIdx, inVolume, optInTimePeriod, r);
+        rideBodyRvol(core, json, endIdx, inVolume, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyrvol(Core core, String json, int endIdx, double[] inVolume, int optInTimePeriod, RideResult r) {
+    static void rideBodyRvol(Core core, String json, int endIdx, double[] inVolume, int optInTimePeriod, RideResult r) {
         try { r.lb = core.rvolLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262482,15 +262482,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesar(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, StringBuilder sb) {
+    static void rideSar(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, r);
+        rideBodySar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysar(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, RideResult r) {
+    static void rideBodySar(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, RideResult r) {
         try { r.lb = core.sarLookback(optInAcceleration, optInMaximum); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262582,15 +262582,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesarext(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, StringBuilder sb) {
+    static void rideSarext(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, r);
+        rideBodySarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysarext(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, RideResult r) {
+    static void rideBodySarext(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, RideResult r) {
         try { r.lb = core.sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262688,15 +262688,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesin(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideSin(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysin(core, json, endIdx, inReal, r);
+        rideBodySin(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysin(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodySin(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.sinLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262784,15 +262784,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesinh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideSinh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysinh(core, json, endIdx, inReal, r);
+        rideBodySinh(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysinh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodySinh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.sinhLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262880,15 +262880,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideSma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysma(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodySma(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodySma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.smaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -262977,15 +262977,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesmi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
+    static void rideSmi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
+        rideBodySmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysmi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
+    static void rideBodySmi(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
         try { r.lb = core.smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263086,15 +263086,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesqrt(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideSqrt(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysqrt(core, json, endIdx, inReal, r);
+        rideBodySqrt(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysqrt(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodySqrt(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.sqrtLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263182,15 +263182,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridestddev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, StringBuilder sb) {
+    static void rideStddev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodystddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, r);
+        rideBodyStddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodystddev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
+    static void rideBodyStddev(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
         try { r.lb = core.stddevLookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263280,15 +263280,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridestoch(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, StringBuilder sb) {
+    static void rideStoch(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodystoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r);
+        rideBodyStoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodystoch(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
+    static void rideBodyStoch(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, RideResult r) {
         try { r.lb = core.stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263390,15 +263390,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridestochf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, StringBuilder sb) {
+    static void rideStochf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodystochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r);
+        rideBodyStochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodystochf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
+    static void rideBodyStochf(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
         try { r.lb = core.stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263498,15 +263498,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridestochrsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, StringBuilder sb) {
+    static void rideStochrsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodystochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r);
+        rideBodyStochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodystochrsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
+    static void rideBodyStochrsi(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, RideResult r) {
         try { r.lb = core.stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263603,15 +263603,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesub(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
+    static void rideSub(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysub(core, json, endIdx, inReal0, inReal1, r);
+        rideBodySub(core, json, endIdx, inReal0, inReal1, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysub(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
+    static void rideBodySub(Core core, String json, int endIdx, double[] inReal0, double[] inReal1, RideResult r) {
         try { r.lb = core.subLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263701,15 +263701,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesum(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideSum(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysum(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodySum(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysum(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodySum(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.sumLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263798,15 +263798,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridesupertrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, StringBuilder sb) {
+    static void rideSupertrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodysupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, r);
+        rideBodySupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodysupertrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, RideResult r) {
+    static void rideBodySupertrend(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double optInMultiplier, RideResult r) {
         try { r.lb = core.supertrendLookback(optInTimePeriod, optInMultiplier); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -263905,15 +263905,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridet3(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, StringBuilder sb) {
+    static void rideT3(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyt3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, r);
+        rideBodyT3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyt3(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, RideResult r) {
+    static void rideBodyT3(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInVFactor, RideResult r) {
         try { r.lb = core.t3Lookback(optInTimePeriod, optInVFactor); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264003,15 +264003,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetan(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideTan(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytan(core, json, endIdx, inReal, r);
+        rideBodyTan(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytan(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyTan(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.tanLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264099,15 +264099,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetanh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
+    static void rideTanh(Core core, String json, int endIdx, double[] inReal, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytanh(core, json, endIdx, inReal, r);
+        rideBodyTanh(core, json, endIdx, inReal, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytanh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
+    static void rideBodyTanh(Core core, String json, int endIdx, double[] inReal, RideResult r) {
         try { r.lb = core.tanhLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264195,15 +264195,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideTema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytema(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyTema(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyTema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.temaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264292,15 +264292,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetrange(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideTrange(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytrange(core, json, endIdx, inHigh, inLow, inClose, r);
+        rideBodyTrange(core, json, endIdx, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytrange(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyTrange(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.trangeLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264392,15 +264392,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetrima(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideTrima(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytrima(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyTrima(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytrima(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyTrima(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.trimaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264489,15 +264489,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetrix(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideTrix(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytrix(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyTrix(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytrix(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyTrix(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.trixLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264586,15 +264586,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideTsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytsf(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyTsf(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyTsf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.tsfLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264683,15 +264683,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetsi(Core core, String json, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, StringBuilder sb) {
+    static void rideTsi(Core core, String json, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, r);
+        rideBodyTsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytsi(Core core, String json, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, RideResult r) {
+    static void rideBodyTsi(Core core, String json, int endIdx, double[] inReal, int optInFirstPeriod, int optInSecondPeriod, RideResult r) {
         try { r.lb = core.tsiLookback(optInFirstPeriod, optInSecondPeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264781,15 +264781,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridetypprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideTypprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodytypprice(core, json, endIdx, inHigh, inLow, inClose, r);
+        rideBodyTypprice(core, json, endIdx, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodytypprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyTypprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.typpriceLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264881,15 +264881,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void rideultosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, StringBuilder sb) {
+    static void rideUltosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyultosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, r);
+        rideBodyUltosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyultosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, RideResult r) {
+    static void rideBodyUltosc(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, RideResult r) {
         try { r.lb = core.ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -264984,15 +264984,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridevar(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, StringBuilder sb) {
+    static void rideVar(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyvar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, r);
+        rideBodyVar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyvar(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
+    static void rideBodyVar(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInNbDev, RideResult r) {
         try { r.lb = core.varLookback(optInTimePeriod, optInNbDev); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265082,15 +265082,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridevhf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideVhf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyvhf(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyVhf(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyvhf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyVhf(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.vhfLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265179,15 +265179,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridevortex(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideVortex(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyvortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyVortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyvortex(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyVortex(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.vortexLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265285,15 +265285,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridevwap(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, StringBuilder sb) {
+    static void rideVwap(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyvwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, r);
+        rideBodyVwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyvwap(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
+    static void rideBodyVwap(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, RideResult r) {
         try { r.lb = core.vwapLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265387,15 +265387,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridevwma(Core core, String json, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
+    static void rideVwma(Core core, String json, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyvwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, r);
+        rideBodyVwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyvwma(Core core, String json, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, RideResult r) {
+    static void rideBodyVwma(Core core, String json, int endIdx, double[] inReal, double[] inVolume, int optInTimePeriod, RideResult r) {
         try { r.lb = core.vwmaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265486,15 +265486,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridewad(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideWad(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodywad(core, json, endIdx, inHigh, inLow, inClose, r);
+        rideBodyWad(core, json, endIdx, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodywad(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyWad(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.wadLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265586,15 +265586,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridewclprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
+    static void rideWclprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodywclprice(core, json, endIdx, inHigh, inLow, inClose, r);
+        rideBodyWclprice(core, json, endIdx, inHigh, inLow, inClose, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodywclprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
+    static void rideBodyWclprice(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, RideResult r) {
         try { r.lb = core.wclpriceLookback(); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265686,15 +265686,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridewillr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
+    static void rideWillr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodywillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
+        rideBodyWillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodywillr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
+    static void rideBodyWillr(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, RideResult r) {
         try { r.lb = core.willrLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265787,15 +265787,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridewma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideWma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodywma(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyWma(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodywma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyWma(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.wmaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;
@@ -265884,15 +265884,15 @@ public class TaCodegenServe {
         }
     }
 
-    static void ridezlema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+    static void rideZlema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
         if (!rideGate(json)) return;
         RideResult r = new RideResult();
-        rideBodyzlema(core, json, endIdx, inReal, optInTimePeriod, r);
+        rideBodyZlema(core, json, endIdx, inReal, optInTimePeriod, r);
         r.emit(sb);
     }
 
     @SuppressWarnings("unused")
-    static void rideBodyzlema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+    static void rideBodyZlema(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
         try { r.lb = core.zlemaLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
         int lb = r.lb;
         int navail = endIdx + 1;

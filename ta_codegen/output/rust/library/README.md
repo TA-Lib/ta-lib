@@ -43,7 +43,7 @@ Every indicator is a method on `Core` with the same calling pattern: `&[f64]`
 input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 `Result<OutRange, RetCode>`. On success the `OutRange` says where the values
 start (`beg_idx`, in the input series' coordinates) and how many there are
-(`count`); `*_Lookback` methods return how many leading values an indicator
+(`count`); `*_lookback` methods return how many leading values an indicator
 consumes before the first one exists.
 
 A range shorter than the lookback is a **success with no values** (`count == 0`),

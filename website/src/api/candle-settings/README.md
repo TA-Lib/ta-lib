@@ -59,12 +59,12 @@ import io.github.talib.RangeType;
 
 // Treat a "long body" as 1.2x the average real body of the last 10 candles:
 Core core = Core.builder()
-    .candleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.2)
+    .candleSetting(CandleSettingType.BODY_LONG, RangeType.REAL_BODY, 10, 1.2)
     .build();
 
 // ...later, restore the default for that one setting:
 Core restored = core.toBuilder()
-    .restoreCandleDefault(CandleSettingType.BodyLong)
+    .restoreCandleDefault(CandleSettingType.BODY_LONG)
     .build();
 ```
 
@@ -89,8 +89,8 @@ Core restored = core.ToBuilder()
 ## Setting types and defaults
 
 The setting types, with the defaults every binding starts from. C spells them
-`TA_BodyLong`; Rust spells them `CandleSettingType::BodyLong`; Java and C# spell
-them `CandleSettingType.BodyLong`.
+`TA_BodyLong`; Rust `CandleSettingType::BodyLong`; C# `CandleSettingType.BodyLong`;
+Java takes its own constant case, `CandleSettingType.BODY_LONG`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|

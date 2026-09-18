@@ -2792,10 +2792,12 @@ mod tests {
         // #236 step 5: the C-shaped tier is GONE. Two tiers remain -- the
         // public wrapper and the body it calls -- and nothing in the shipped
         // library answers a RetCode any more.
-        assert!(!output.contains("SMA_Internal"), "the C-shaped tier must not come back");
+        assert!(!output.contains("smaInternal("), "the C-shaped tier must not come back");
         assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
+        // `public RetCode` with no name attached: the needle has to survive a
+        // rename of the method, which is what blinded its predecessor.
         assert!(
-            !output.contains("public RetCode SMA"),
+            !output.contains("public RetCode"),
             "cores must be package-private — RetCode never appears on the public surface"
         );
 

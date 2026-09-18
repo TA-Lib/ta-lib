@@ -133,9 +133,9 @@ impl Core {
         outSMISignal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, smi_impl_fma, smi_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal));
+        return ta_lib_dispatch::dispatch_fma!(self, smi_impl_fma, smi_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.smi_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
+        self.smi_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -155,10 +155,10 @@ impl Core {
         outSMI: &mut [f64],
         outSMISignal: &mut [f64],
     ) -> RetCode {
-        self.smi_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
+        self.smi_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
     }
     #[inline(always)]
-    fn smi_impl_impl(
+    fn smi_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

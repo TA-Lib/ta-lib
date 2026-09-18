@@ -109,9 +109,9 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cvi_impl_fma, cvi_impl_impl, (startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, cvi_impl_fma, cvi_impl_scalar, (startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cvi_impl_impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal)
+        self.cvi_impl_scalar(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -127,10 +127,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.cvi_impl_impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal)
+        self.cvi_impl_scalar(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn cvi_impl_impl(
+    fn cvi_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

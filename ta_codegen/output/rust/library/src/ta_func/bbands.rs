@@ -160,9 +160,9 @@ impl Core {
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, bbands_impl_fma, bbands_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
+        return ta_lib_dispatch::dispatch_fma!(self, bbands_impl_fma, bbands_impl_scalar, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
         #[cfg(not(target_arch = "x86_64"))]
-        self.bbands_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+        self.bbands_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -181,10 +181,10 @@ impl Core {
         outRealMiddleBand: &mut [f64],
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
-        self.bbands_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+        self.bbands_impl_scalar(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
     }
     #[inline(always)]
-    fn bbands_impl_impl(
+    fn bbands_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

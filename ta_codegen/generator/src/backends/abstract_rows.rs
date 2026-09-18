@@ -25,9 +25,9 @@
 //! vocabulary `flag_sync` pins against `include/ta_abstract.h` — are shared
 //! precisely because an independent gate already covers them.
 //!
-//! A row carries no derived name: there is one identity, `name`, and every
-//! backend spells it verbatim, so there is nothing per-backend to store or to
-//! drift from the real signature.
+//! A row carries no derived name: there is one identity, `name`, and each
+//! backend folds its own spelling from it, so there is nothing per-backend to
+//! store or to drift from the real signature.
 
 use std::collections::HashMap;
 

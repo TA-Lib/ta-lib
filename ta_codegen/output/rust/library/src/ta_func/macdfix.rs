@@ -109,9 +109,9 @@ impl Core {
         outMACDHist: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, macdfix_impl_fma, macdfix_impl_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        return ta_lib_dispatch::dispatch_fma!(self, macdfix_impl_fma, macdfix_impl_scalar, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
         #[cfg(not(target_arch = "x86_64"))]
-        self.macdfix_impl_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.macdfix_impl_scalar(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -127,10 +127,10 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        self.macdfix_impl_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.macdfix_impl_scalar(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[inline(always)]
-    fn macdfix_impl_impl(
+    fn macdfix_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

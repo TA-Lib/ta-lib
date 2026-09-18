@@ -2241,7 +2241,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
             s.push_str(&format!(
                 "            ride{}(core, json, endIdx, {}hb);\n",
-                crate::backends::common::camel_words(&func.name),
+                crate::backends::common::pascal_words(&func.name),
                 ride_args
             ));
         }
@@ -2289,7 +2289,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
             s.push_str(&format!(
                 "        ride{}(core, json, endIdx, {}sb);\n",
-                crate::backends::common::camel_words(&func.name),
+                crate::backends::common::pascal_words(&func.name),
                 ride_args
             ));
         }

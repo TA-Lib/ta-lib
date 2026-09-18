@@ -290,8 +290,6 @@ impl LanguageBackend for RustBackend {
     fn reserved_words(&self) -> &'static [&'static str] {
         rust_lang::RESERVED_WORDS
     }
-    /// Verbatim — Rust spells an indicator exactly as `input/` names it. Only
-    /// the module/file path stays lower-cased, and that is not public API.
     fn generate_server(
         &self,
         funcs: &[FuncDef],
@@ -339,7 +337,6 @@ impl LanguageBackend for JavaBackend {
     fn reserved_words(&self) -> &'static [&'static str] {
         java::RESERVED_WORDS
     }
-    /// Verbatim — Java spells an indicator exactly as `input/` names it.
     fn generate_server(
         &self,
         funcs: &[FuncDef],
@@ -403,7 +400,6 @@ impl LanguageBackend for CSharpBackend {
     fn reserved_words(&self) -> &'static [&'static str] {
         csharp::RESERVED_WORDS
     }
-    /// Verbatim — C# spells an indicator exactly as `input/` names it.
     fn generate_server(
         &self,
         funcs: &[FuncDef],

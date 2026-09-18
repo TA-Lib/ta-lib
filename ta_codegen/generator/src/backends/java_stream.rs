@@ -71,12 +71,9 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     streaming::validate_streamable(&func.resolved_for(crate::ir::Lang::Java), lookup).is_ok()
 }
 
-/// The base every Java *batch-tier* identifier for this function is spelled
-/// from: the YAML `name:` verbatim (`SMA`, `MA`, `CDL2CROWS`). The streaming
-/// family below is idiomatic Java instead (camelCase methods, PascalCase
-/// types — issue #278), so this stays reserved for batch cross-references
-/// (`Core#{base}`, `{base}_Lookback`) that must keep resolving to the
-/// unchanged batch symbol.
+/// The YAML `name:` for this function (`SMA`, `MA`, `CDL2CROWS`). Every Java
+/// identifier folds from it; callers that want an identifier pass it through
+/// `camel_words`/`pascal_words` themselves.
 fn base_name(func: &FuncDef) -> String {
     func.name.clone()
 }

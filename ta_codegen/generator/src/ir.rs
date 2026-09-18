@@ -624,8 +624,10 @@ pub struct EnumDef {
 /// A single variant of an enum type.
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
-    /// The variant identity, e.g. `SMA` or `HT_DCPERIOD`. Spelled verbatim by
-    /// Rust, Java and C#, and used as the source case label (`MAType_SMA`).
+    /// The variant identity, e.g. `SMA` or `HT_DCPERIOD`, and the source case
+    /// label (`MAType_SMA`). Kept verbatim in every backend only where the
+    /// member is published metadata (`MAType`, `FuncUnstId`); the enums we
+    /// coined take each backend's own case (docs/naming-spec.md section 4).
     pub name: String,
     /// C constant name, e.g. `TA_MAType_SMA`. Composed from the enum's
     /// `c_prefix` — derived, never authored.

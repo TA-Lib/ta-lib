@@ -665,7 +665,7 @@ mod binder_tests {
     ///
     /// Since #265 the bound is the public entry point's, not this tier's own, so
     /// what is asserted here is that binding through the catalogue answers what
-    /// calling `Core::SMA` directly answers — which is also what Java's binder
+    /// calling `Core::sma` directly answers — which is also what Java's binder
     /// and C's frames have always done.
     #[test]
     fn an_undersized_output_is_rejected_not_written_past() {

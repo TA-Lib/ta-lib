@@ -129,9 +129,9 @@ impl Core {
         outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, mama_impl_fma, mama_impl_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        return ta_lib_dispatch::dispatch_fma!(self, mama_impl_fma, mama_impl_scalar, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
         #[cfg(not(target_arch = "x86_64"))]
-        self.mama_impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.mama_impl_scalar(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -147,10 +147,10 @@ impl Core {
         outMAMA: &mut [f64],
         outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
-        self.mama_impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.mama_impl_scalar(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[inline(always)]
-    fn mama_impl_impl(
+    fn mama_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

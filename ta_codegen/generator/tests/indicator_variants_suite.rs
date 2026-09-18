@@ -474,7 +474,7 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
             continue;
         };
         // Spans the FMA dispatch trio where there is one: the two wrappers carry
-        // no prologue, so the markers below still land in `_Impl_impl`.
+        // no prologue, so the markers below still land in `_impl_scalar`.
         let section = extract_section(
             &out.rust,
             &format!("pub(crate) fn {}_impl(", backends::common::snake_words(&func.name)),
@@ -704,7 +704,7 @@ fn rust_binder_calls_the_public_tier() {
             "{n}: the binder arm does not call the public entry point"
         );
         assert!(
-            !out.contains(&format!("self.core.{n}_Impl(")),
+            !out.contains(&format!("self.core.{fold}_impl(")),
             "{n}: the binder arm still calls the numerics tier — the argument \
              contract stops applying to it"
         );
@@ -929,8 +929,8 @@ fn rust_cross_calls_target_the_public_tier() {
                 "{name}: the cross-call to {public} does not name the public tier"
             );
             assert!(
-                !rust.contains(&format!("self.{public}_Impl(")),
-                "{name}: still calls {public}_Impl — the argument contract stops \
+                !rust.contains(&format!("self.{public}_impl(")),
+                "{name}: still calls {public}_impl — the argument contract stops \
                  applying to that path"
             );
         }
@@ -1044,7 +1044,7 @@ fn an_answered_cross_call_guard_is_folded_in_every_ported_backend() {
 
         for (src, success, lang) in [
             (&rust, "RetCode::Success", "rust"),
-            (&java, "RetCode.Success", "java"),
+            (&java, "RetCode.SUCCESS", "java"),
             (&csharp, "RetCode.Success", "csharp"),
         ] {
             let (a, d) = scan(src, success);
@@ -1313,7 +1313,7 @@ fn test_java_synth_private_omits_validation() {
 
     let private = extract_section(&out.java, "RetCode synth4Private(", "RetCode synth4Impl(");
     assert!(
-        !private.contains("OutOfRangeStartIndex"),
+        !private.contains("OUT_OF_RANGE_START_INDEX"),
         "Java synth4Private should NOT have start index validation"
     );
 }

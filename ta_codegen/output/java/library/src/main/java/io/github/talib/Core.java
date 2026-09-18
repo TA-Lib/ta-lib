@@ -360,7 +360,7 @@ public final class Core {
     *
     * <p>Java is the only backend where this can happen: C# enums are value
     * types, C's are integers, and Rust's cannot be absent. Left to itself a null
-    * one reaches the {@code switch} inside the function's own {@code _Lookback}
+    * one reaches the {@code switch} inside the function's own {@code Lookback}
     * and surfaces as a bare {@link NullPointerException} naming neither the
     * function nor the parameter.
     *
@@ -384,7 +384,7 @@ public final class Core {
     * bounds that follow it.
     *
     * <p>A negative {@code lookback} is the rejection signal
-    * {@code <N>_Lookback} returns for a parameter outside its documented domain,
+    * {@code <n>Lookback} returns for a parameter outside its documented domain,
     * and rule L2 makes that decision identical to the one the core would reach
     * on the same parameters. Raising it here is what puts B3 ahead of the buffer
     * rules: without it a null array reported the array, and the caller never saw

@@ -60,7 +60,7 @@
  * }</pre>
  *
  * <p>Output is written from index {@code 0}, not from {@code begIdx}: an
- * indicator needs {@code <NAME>_Lookback(params)} bars before it can produce
+ * indicator needs {@code <name>Lookback(params)} bars before it can produce
  * anything, so {@code begIdx} says where in the <i>input</i> the first value
  * belongs. A range shorter than the lookback is a success with a count of
  * zero, never an exception.

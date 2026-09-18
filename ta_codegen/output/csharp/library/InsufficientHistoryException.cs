@@ -49,7 +49,7 @@ namespace TALib;
 /// <see cref="ArgumentException"/> by inheritance, so an existing <c>catch</c>
 /// keeps working, and it reports <see cref="RetCode.InsufficientHistory"/>
 /// through <see cref="ITALibFailure.RetCode"/>.</para>
-/// <para>It is knowable in advance: query the matching <c>*_Lookback</c> method
+/// <para>It is knowable in advance: query the matching <c>*Lookback</c> method
 /// and feed one more bar than it returns.</para>
 /// <para>Deliberately not serializable. Stream handles are not serializable
 /// either — the sanctioned checkpoint story is to retain the history and

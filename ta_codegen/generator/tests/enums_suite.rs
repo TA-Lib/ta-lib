@@ -428,9 +428,15 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
                 )),
                 "{name}: guarded variant lost its FMA clone"
             );
-            // The fused sites live on in the renamed portable impl.
+            // The fused sites live on in the renamed portable arm. Named
+            // `_scalar(`, not `_impl(`: the numerics tier is itself `<n>_impl`,
+            // so the looser needle is satisfied by the dispatcher alone and
+            // cannot fail.
             assert!(
-                out.contains("_impl(") && out.contains(".mul_add("),
+                out.contains(&format!(
+                    "fn {}_impl_scalar(",
+                    backends::common::snake_words(&func.name)
+                )) && out.contains(".mul_add("),
                 "{name}: dispatch emitted but trio structure incomplete"
             );
             dispatched.push(name);

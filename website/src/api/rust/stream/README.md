@@ -8,7 +8,7 @@ toc: false
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/rust/) (`core.SMA`, `core.RSI`, …) would return by recomputing over the whole slice.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
 
 Each streamable function adds two constructors on `Core` and a handful of methods on its stream:
 

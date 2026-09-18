@@ -170,7 +170,7 @@ var range = f.CreateCall()
     .SetInput(0, close)
     .SetOptInput(0, 30)
     .SetOutput(0, outReal)
-    .Invoke(0, close.Length - 1);
+    .Call(0, close.Length - 1);
 ```
 
 An index out of range, a type that does not match the declared parameter, or an unbound input or output at call time throws `ArgumentException`. Optional parameters left unbound take their documented defaults. A `ParamHolder` is not thread-safe: confine one to one thread, or build one per call. The `FunctionCatalog` it comes from is immutable and shared freely.

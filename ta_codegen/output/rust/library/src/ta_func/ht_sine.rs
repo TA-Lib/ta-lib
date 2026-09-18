@@ -92,9 +92,9 @@ impl Core {
         outLeadSine: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_impl_fma, ht_sine_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_impl_fma, ht_sine_impl_scalar, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_sine_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+        self.ht_sine_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -108,10 +108,10 @@ impl Core {
         outSine: &mut [f64],
         outLeadSine: &mut [f64],
     ) -> RetCode {
-        self.ht_sine_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+        self.ht_sine_impl_scalar(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
     }
     #[inline(always)]
-    fn ht_sine_impl_impl(
+    fn ht_sine_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

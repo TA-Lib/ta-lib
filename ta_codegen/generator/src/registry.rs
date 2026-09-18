@@ -17,8 +17,8 @@ pub struct Registry {
     /// Sorted by descending length so longest-match wins in `parse_func_name`.
     indicators: Vec<String>,
     /// Maps a lowercase indicator dir-name (`ma`, `willr`) to the YAML `name:`
-    /// it declares (`MA`, `WILLR`) — the one identity every backend spells
-    /// verbatim.
+    /// it declares (`MA`, `WILLR`) — the one identity every backend keys its
+    /// metadata on, whatever its own fold calls the method.
     names: HashMap<String, String>,
     /// Per-indicator signature facts for the streaming dispatch/composed
     /// analysis (stream flag + input/opt/output counts), from the YAML.
@@ -85,8 +85,8 @@ impl Registry {
         self.callee_sigs.get(key).map_or(&[][..], |s| s.out_nullable.as_slice())
     }
 
-    /// The declared name of an indicator dir-name — what every backend spells
-    /// verbatim, and what C prefixes with `TA_`.
+    /// The declared name of an indicator dir-name — the canonical identity each
+    /// backend folds its own spelling from, and what C prefixes with `TA_`.
     pub(crate) fn name_of(&self, key: &str) -> String {
         self.names.get(key).cloned().unwrap_or_else(|| key.to_uppercase())
     }

@@ -116,9 +116,9 @@ impl Core {
         outTrend: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, supertrend_impl_fma, supertrend_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend));
+        return ta_lib_dispatch::dispatch_fma!(self, supertrend_impl_fma, supertrend_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend));
         #[cfg(not(target_arch = "x86_64"))]
-        self.supertrend_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
+        self.supertrend_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -136,10 +136,10 @@ impl Core {
         outSupertrend: &mut [f64],
         outTrend: &mut [i32],
     ) -> RetCode {
-        self.supertrend_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
+        self.supertrend_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[inline(always)]
-    fn supertrend_impl_impl(
+    fn supertrend_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

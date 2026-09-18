@@ -102,7 +102,7 @@ Outputs are written through their pointer/array parameters: `*outBegIdx = ...`,
 
 Return values are the real `ta_defs.h` codes: `TA_SUCCESS`, `TA_BAD_PARAM`,
 `TA_ALLOC_ERR`. The generator maps these to each language's enum
-(`RetCode::Success` in Rust, `RetCode.Success` in Java, etc.).
+(`RetCode::Success` in Rust and C#, `RetCode.SUCCESS` in Java).
 
 ## Control flow & expressions
 

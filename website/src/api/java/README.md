@@ -197,7 +197,7 @@ import io.github.talib.Core;
 import io.github.talib.RangeType;
 
 Core core = Core.builder()
-    .candleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.0)
+    .candleSetting(CandleSettingType.BODY_LONG, RangeType.REAL_BODY, 10, 1.0)
     .build();
 ```
 

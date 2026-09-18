@@ -94,8 +94,8 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     streaming::validate_streamable(&func.resolved_for(crate::ir::Lang::CSharp), lookup).is_ok()
 }
 
-/// The base every C# identifier for this function is spelled from: the YAML
-/// `name:` verbatim (`SMA`, `MA`, `CDL2CROWS`), matching `Lang::CSharp` in
+/// The YAML `name:` for this function (`SMA`, `MA`, `CDL2CROWS`). Every C#
+/// identifier folds from it through `pascal_words`, matching `Lang::CSharp` in
 /// `registry.rs`.
 fn base_name(func: &FuncDef) -> String {
     func.name.clone()
@@ -2684,10 +2684,6 @@ fn emit_open_wrappers(
     merged: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
-    // `base` stays the raw verbatim name: it feeds `_Lookback` references and
-    // `opt_param_desc`, both pointing at the unchanged batch tier (issue #278
-    // is streaming-only). `cbase` is the PascalCase form for this file's own
-    // `_Open`/`_OpenAndFill`/`_OpenInternal`/`_Impl` family.
     let base = pascal_words(&base_name(func));
     let cbase = base.clone();
     let class = stream_class_name(func);
@@ -3549,10 +3545,7 @@ fn emit_period_bank(
 ) {
     let _ = helpers;
     let callee = plan.callee.as_str();
-    // `callee_base` stays raw for the callee's (unchanged, batch-tier) `_Lookback`;
-    // `callee_pascal` is the PascalCase form for the callee's own stream `_Open*` family.
-    let callee_base = registry.name_of(callee);
-    let callee_pascal = pascal_words(&callee_base);
+    let callee_pascal = pascal_words(&registry.name_of(callee));
     let subty = callee_stream_class(registry, callee);
     let callee_out0 = registry.callee_outputs(callee)[0].clone();
     let min = plan.min_param.as_str();
@@ -3652,7 +3645,7 @@ fn emit_period_bank(
          \x20      * (smaller) lookback would seed the recurrence from a different bar and\n\
          \x20      * diverge for every period < maxPeriod. */"
     );
-    let _ = writeln!(o, "      int lookbackTotal = {}Lookback({lb_args});", pascal_words(&callee_base));
+    let _ = writeln!(o, "      int lookbackTotal = {callee_pascal}Lookback({lb_args});");
     let _ = writeln!(o, "      int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;");
     // The bank is opened at `subStart`, so the history has to reach it.
     let _ = writeln!(o, "      if( historyLen < subStart + 1 ) {{");
@@ -3693,7 +3686,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      if( {min} > {max} ) {{");
     let _ = writeln!(o, "         return RetCode.BadParam;");
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      int lookbackTotal = {}Lookback({lb_args});", pascal_words(&callee_base));
+    let _ = writeln!(o, "      int lookbackTotal = {callee_pascal}Lookback({lb_args});");
     let _ = writeln!(o, "      if( historyLen < lookbackTotal + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");

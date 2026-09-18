@@ -88,9 +88,9 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, wclprice_impl_fma, wclprice_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, wclprice_impl_fma, wclprice_impl_scalar, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.wclprice_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.wclprice_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -105,10 +105,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.wclprice_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.wclprice_impl_scalar(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn wclprice_impl_impl(
+    fn wclprice_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,

@@ -481,7 +481,7 @@ fn gen_imports() -> String {
 /// Runtime FMA dispatch (issue #156). When a rendered batch variant contains
 /// fused multiply-adds, restructure it into the Rust analogue of the C
 /// backend's `TA_FMA_MULTIVERSION` (`target_clones("default","fma")`): the
-/// body moves verbatim to a private `{name}_impl` (`#[inline(always)]`, so it
+/// body moves verbatim to a private `{name}_scalar` (`#[inline(always)]`, so it
 /// compiles once per clone), `{name}_fma` is a `#[target_feature(enable =
 /// "fma")]` clone whose codegen turns every `mul_add` into a hardware
 /// `vfmadd`, and the public name becomes a dispatcher through
@@ -545,10 +545,10 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     out.push_str(sig_close);
     out.push_str("        #[cfg(target_arch = \"x86_64\")]\n");
     out.push_str(&format!(
-        "        return ta_lib_dispatch::dispatch_fma!(self, {fn_name}_fma, {fn_name}_impl, ({args}));\n"
+        "        return ta_lib_dispatch::dispatch_fma!(self, {fn_name}_fma, {fn_name}_scalar, ({args}));\n"
     ));
     out.push_str("        #[cfg(not(target_arch = \"x86_64\"))]\n");
-    out.push_str(&format!("        self.{fn_name}_impl({args})\n"));
+    out.push_str(&format!("        self.{fn_name}_scalar({args})\n"));
     out.push_str("    }\n");
     // 2. The FMA clone: same body via forced inlining, codegen'd with fma on.
     out.push_str("    #[cfg(target_arch = \"x86_64\")]\n");
@@ -556,11 +556,11 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
     out.push_str(&format!("    fn {fn_name}_fma(\n"));
     out.push_str(&clean_sig);
     out.push_str(sig_close);
-    out.push_str(&format!("        self.{fn_name}_impl({args})\n"));
+    out.push_str(&format!("        self.{fn_name}_scalar({args})\n"));
     out.push_str("    }\n");
     // 3. The portable implementation: the original function, renamed.
     out.push_str("    #[inline(always)]\n");
-    out.push_str(&format!("    fn {fn_name}_impl(\n"));
+    out.push_str(&format!("    fn {fn_name}_scalar(\n"));
     out.push_str(raw_params);
     out.push_str(sig_close);
     out.push_str(body);

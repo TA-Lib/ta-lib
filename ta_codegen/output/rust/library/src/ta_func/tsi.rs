@@ -112,9 +112,9 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, tsi_impl_fma, tsi_impl_impl, (startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, tsi_impl_fma, tsi_impl_scalar, (startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.tsi_impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
+        self.tsi_impl_scalar(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -129,10 +129,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.tsi_impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
+        self.tsi_impl_scalar(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn tsi_impl_impl(
+    fn tsi_impl_scalar(
         &self,
         startIdx: usize,
         endIdx: usize,
