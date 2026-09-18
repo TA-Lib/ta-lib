@@ -19973,7 +19973,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
+            let _lb = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -19984,7 +19984,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            let _out = core.RVIR(
+            let _out = core.rvir(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -20016,7 +20016,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 hresp.push('}');
                 return hresp;
             }
-            let lookback: i64 = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).map_or(-1, |v| v as i64);
+            let lookback: i64 = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rvir(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut resp);
@@ -49094,8 +49094,8 @@ fn sv_rvir(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = match c2.RVIR(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, optInStdDevPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
-        let lb = c2.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
+        let rc = match c2.rvir(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, optInStdDevPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
+        let lb = c2.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.rvir_open(&fz_h, &fz_l, optInTimePeriod, optInStdDevPeriod).is_err();
             return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
@@ -71435,7 +71435,7 @@ fn ride_rvi(core: &Core, params: &Value, endIdx: usize, inReal: &[f64], optInTim
 fn ride_rvir(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32, optInStdDevPeriod: i32, resp: &mut String) {
     if !ride_gate(params) { return; }
     let mut r = RideResult::new();
-    let lb_opt = core.RVIR_Lookback(optInTimePeriod, optInStdDevPeriod).ok();
+    let lb_opt = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).ok();
     r.lb = match lb_opt { Some(v) => v as i32, None => -1 };
     let mut navail = endIdx + 1;
     if inHigh.len() < navail { navail = inHigh.len(); }
@@ -71464,7 +71464,7 @@ fn ride_rvir(core: &Core, params: &Value, endIdx: usize, inHigh: &[f64], inLow: 
     }
 
     let mut rb0 = vec![0.0f64; m];
-    let (beg, nb) = match core.RVIR(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, optInStdDevPeriod, &mut rb0) {
+    let (beg, nb) = match core.rvir(0, m - 1, &inHigh[..m], &inLow[..m], optInTimePeriod, optInStdDevPeriod, &mut rb0) {
         Ok(rr) => (rr.beg_idx, rr.count),
         Err(rc) => {
             r.rc_batch = retcode_to_int(rc);
