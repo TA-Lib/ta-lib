@@ -337,6 +337,7 @@
 //! * [`LINEARREG_ANGLE`](Core::linearreg_angle) — Linear Regression Angle
 //! * [`LINEARREG_INTERCEPT`](Core::linearreg_intercept) — Linear Regression Intercept
 //! * [`LINEARREG_SLOPE`](Core::linearreg_slope) — Linear Regression Slope
+//! * [`MEDIAN`](Core::median) — Rolling Median
 //! * [`PERCENTILE`](Core::percentile) — Percentile (nearest rank)
 //! * [`PERCENTRANK`](Core::percentrank) — Percent Rank
 //! * [`STDDEV`](Core::stddev) — Standard Deviation
