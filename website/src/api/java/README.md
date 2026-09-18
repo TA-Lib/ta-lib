@@ -205,7 +205,7 @@ Core core = Core.builder()
     .build();
 ```
 
-Each setter throws immediately (`IllegalArgumentException`) if an argument is out of range; unlike Rust and C#, a Java builder has no `build()`-time rejection to defer to.
+Each setter throws immediately (`IllegalArgumentException`) if an argument is out of range, so the rejection names the call that caused it, and `build()` cannot fail. C# behaves the same way; Rust is the one backend that defers, because a setter there cannot throw.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 

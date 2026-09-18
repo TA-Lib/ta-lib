@@ -197,7 +197,7 @@ var core = Core.Builder()
     .Build();
 ```
 
-The setters chain, so they cannot report a rejection at the point it happens; the first one is latched and surfaced by `Build()`, which throws `ArgumentOutOfRangeException`.
+Each setter throws `ArgumentOutOfRangeException` immediately if an argument is out of range, so the rejection names the call that caused it. `Build()` cannot fail. Rust is the one backend that defers: a setter there cannot throw, so `build()` returns a `Result`.
 
 ### 4.4 Input Type: float vs. double {#input_type}
 
